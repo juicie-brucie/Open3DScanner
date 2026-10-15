@@ -1,0 +1,2 @@
+add_executable(scan_server main.cpp)
+target_link_libraries(scan_server PRIVATE openscanner_engine)

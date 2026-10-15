@@ -1,0 +1,15 @@
+build/
+cmake-build-*/
+.vs/
+.vscode/
+*.user
+GPPLog.txt
+.DS_Store
+
+# Vendor installers/firmware/config packages kept locally for
+# reverse-engineering reference only. Never commit these — see README.md
+# "What this is, concretely": this project doesn't bundle Creality/Orbbec
+# binaries.
+/CrealityScan_mac_*.pkg
+/CrealityScan_win_*.exe
+/CR-Scan_Raptor_*

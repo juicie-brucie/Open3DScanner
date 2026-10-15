@@ -1,0 +1,2 @@
+add_executable(capture_pipeline_smoke_test main.cpp)
+target_link_libraries(capture_pipeline_smoke_test PRIVATE openscanner_engine openscanner_mesh)

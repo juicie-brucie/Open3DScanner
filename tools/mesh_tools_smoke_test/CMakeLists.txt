@@ -1,0 +1,2 @@
+add_executable(mesh_tools_smoke_test main.cpp)
+target_link_libraries(mesh_tools_smoke_test PRIVATE openscanner_mesh)

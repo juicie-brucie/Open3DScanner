@@ -1,0 +1,8 @@
+[submodule "third_party/manifold"]
+	path = third_party/manifold
+	url = https://github.com/elalish/manifold
+	shallow = true
+[submodule "third_party/libigl"]
+	path = third_party/libigl
+	url = https://github.com/libigl/libigl
+	shallow = true
