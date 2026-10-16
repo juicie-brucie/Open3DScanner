@@ -13,3 +13,7 @@ GPPLog.txt
 /CrealityScan_mac_*.pkg
 /CrealityScan_win_*.exe
 /CR-Scan_Raptor_*
+
+# REA/Ghidra snapshots and local vendor binaries used for ABI recovery.
+# Large and reference-only — never committed. See docs/recon/README.md.
+/.recon-cache/

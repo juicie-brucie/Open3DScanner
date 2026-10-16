@@ -13,9 +13,11 @@
 // binding is written against a third-party ABI.
 //
 // Struct field offsets are inferred from IL2CPP's recorded managed-struct
-// layout and have not yet been independently verified against the native
-// struct via disassembly; treat them as a working hypothesis until a
-// smoke test confirms round-tripping (see tools/smoke_test).
+// layout unless a comment marks them otherwise; treat them as a working
+// hypothesis until a smoke test confirms round-tripping (see tools/smoke_test).
+// Natively verified so far: ObScanDeviceMessage (16 bytes: int32 msg_id,
+// int32 pad, void* data), the ObScanDeviceMessageID enum, and the whole
+// ObScanStatus enum (checked against the vendor's own status-name table).
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -26,6 +28,12 @@ extern "C" {
 
 // ---------------------------------------------------------------------------
 // Status / error codes (OBScan.SDK.OBScanStatus)
+//
+// Complete and natively verified against the vendor's own status-name table:
+// 42 named values plus 26 genuinely reserved slots (…010a-0f, …011a-20,
+// …012a-2f, …0139-3f). Quirk worth knowing: every obscan_* wrapper returns
+// OB_SCAN_ERROR_DEADLINE_EXCEEDED when its primary handle is NULL, so that
+// code does not necessarily mean a timeout.
 // ---------------------------------------------------------------------------
 typedef enum ObScanStatus {
     OB_SCAN_SUCCESS = 0,
@@ -270,17 +278,33 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // OBScan.SDK.OBScanDeviceMessage / OBScanDeviceMessageDelegate /
 // OBScanDeviceMessageListener (IL2CPP TypeDefIndex 12707-12709).
 //
-// This is the actual trigger for device detection: obscan_context_create()
-// and obscan_context_get_device_management() do NOT start the vendor SDK's
-// IOKit device-watcher thread by themselves (confirmed by Frida-tracing
+// This is the trigger for device detection: obscan_context_create()
+// and obscan_context_get_device_management() do NOT by themselves cause the
+// process's IOKit device watcher to register (confirmed by Frida-tracing
 // IOServiceAddMatchingNotification/CFRunLoopAddSource against our own
-// process: zero registrations happen without a listener). The watcher
-// thread is only started as a side effect of registering a real listener
-// via obscan_device_management_add_device_msg_listener(). Once a device is
-// physically connected, the SDK delivers a message to onMessage (confirmed:
-// msg_id=0 with a non-NULL data pointer corresponds to a real connect
-// event, and obscan_device_management_get_device_num() called synchronously
-// inside that callback correctly returns count=1).
+// process: zero registrations happen without a listener). Registration goes
+// through obscan_device_management_add_device_msg_listener().
+//
+// Correction to an earlier reading: the watcher itself is NOT implemented in
+// this library. liborbbec_scan imports no IOKit or CFRunLoop symbols at all,
+// so the matching-notification watcher lives in the separate Orbbec SDK dylib
+// it links against. What registration does here is install the message
+// callback and then immediately re-evaluate the current device list via the
+// device object's connect callback — which is why a DISCONNECT arrives
+// synchronously inside the add call. Once a device is physically connected,
+// the SDK delivers a message to onMessage (confirmed: msg_id=0 with a
+// non-NULL data pointer corresponds to a real connect event, and
+// obscan_device_management_get_device_num() called synchronously inside that
+// callback correctly returns count=1).
+//
+// Registration guards, recovered natively: a NULL listener, or a second
+// registration while one is already installed and never removed, both fail
+// with OB_SCAN_ERROR_INVALID_ARGUMENT. The slot is single. Messages emitted
+// while no listener is installed are dropped, not queued. The listener object
+// is referenced (a pointer to it is captured), never copied, so the caller
+// must keep it alive until it is removed or the context is destroyed.
+// Delivery happens on the emitting (vendor) thread, so a listener must be
+// thread-safe. See docs/recon/findings/device-message-listener.md.
 //
 // Message IDs, confirmed against the vendor's own native log, which writes
 // "send device msg id : <NAME>" at the moment each one is delivered:
@@ -300,16 +324,32 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // that registers this listener inside a disposable worker process (see
 // worker_process.h), not in a process that cannot afford to crash.
 // ---------------------------------------------------------------------------
-// OBScan.SDK.OBScanDeviceMessageID — only the two values confirmed so far.
+// OBScan.SDK.OBScanDeviceMessageID — the complete device family, recovered by
+// decoding the vendor's own OBScanDeviceMessageID_name() lookup table. The
+// connect-with-problem variants are directly actionable: they explain a device
+// that enumerates (see get_device_num) but cannot be opened for scanning.
 typedef enum ObScanDeviceMessageID {
     OB_SCAN_MESSAGE_ID_DEVICE_CONNECT = 0,
     OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT = 308412672,
+    OB_SCAN_MESSAGE_ID_DEVICE_UPGRADE_SUCCESS = 308412688,
+    OB_SCAN_MESSAGE_ID_DEVICE_UPGRADE_FAILED = 308412689,
+    OB_SCAN_MESSAGE_ID_DEVICE_UPGRADE_REBOOT_FAILED = 308412690,
+    OB_SCAN_MESSAGE_ID_DEVICE_UPGRADE_FAILED_IMAGE_PROBLEM = 308412691,
+    OB_SCAN_MESSAGE_ID_DEVICE_CONNECT_NEED_CALIBRATION = 308412692,
+    OB_SCAN_MESSAGE_ID_DEVICE_UPGRADE_REBOOT_SUCCESS = 308412693,
+    OB_SCAN_MESSAGE_ID_DEVICE_CONNECT_WITH_PROBLEM = 308412694,
+    OB_SCAN_MESSAGE_ID_DEVICE_CONNECT_READ_PARAMS_FAILED = 308412695,
+    OB_SCAN_MESSAGE_ID_DEVICE_CONNECT_CRC_CHECK_FAILED = 308412696,
+    OB_SCAN_MESSAGE_ID_DEVICE_UPGRADE_FAILED_LOW_VERSION = 308412697,
 } ObScanDeviceMessageID;
 
+// Field offsets below are natively verified (the message is passed by value in
+// two registers and materialised with one 16-byte store).
 typedef struct ObScanDeviceMessage {
     int32_t msg_id;  // 0x00 — ObScanDeviceMessageID.
     int32_t _pad;    // 0x04 — alignment padding to 8-byte boundary for `data`.
-    void* data;      // 0x08 — NULL on the initial DISCONNECT; non-NULL on a real connect event.
+    void* data;      // 0x08 — payload; meaning is per-emitter (see findings OQ-1).
+                     //        NULL on the initial DISCONNECT.
 } ObScanDeviceMessage;
 
 typedef void (*ObScanDeviceMessageDelegate)(ObScanDeviceMessage msg);
@@ -391,10 +431,12 @@ typedef ObScanStatus (*fn_obscan_device_management_get_device_info)(ObScanDevice
 typedef ObScanStatus (*fn_obscan_device_management_get_active_idx)(ObScanDeviceManagementHandle device_handle, int32_t* out_active_idx);
 typedef ObScanStatus (*fn_obscan_device_management_select_active_device)(ObScanDeviceManagementHandle device_handle, int32_t active_idx);
 
-// The actual trigger for device detection — see the ObScanDeviceMessage*
-// block above. `listener` must stay alive for as long as the SDK might
-// still invoke it; this project always owns one for the lifetime of the
-// context that registered it.
+// The trigger for device detection — see the ObScanDeviceMessage* block above.
+// Single-slot: registering a second listener without removing the first, or
+// passing NULL, returns OB_SCAN_ERROR_INVALID_ARGUMENT. `listener` must stay
+// alive for as long as the SDK might still invoke it (it is referenced, not
+// copied); this project always owns one for the lifetime of the context that
+// registered it.
 typedef ObScanStatus (*fn_obscan_device_management_add_device_msg_listener)(ObScanDeviceManagementHandle device_handle, ObScanDeviceMessageListener* listener);
 
 // Session / scan lifecycle — the live-capture path this project actually
