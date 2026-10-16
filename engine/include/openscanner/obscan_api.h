@@ -425,6 +425,16 @@ typedef ObScanStatus (*fn_obscan_scan_get_raw_cloud)(ObScanScanHandle scan, ObSc
 typedef ObScanStatus (*fn_obscan_scan_get_realtime_model_mesh)(ObScanScanHandle scan, ObScanTriangleMesh* out_mesh);
 typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, ObScanModeConfig* out_config);
 
+// OBScanTarget.ConfigCombinedExposureAndLaserCurrent(int value) — a
+// single combined IR-exposure/laser-current slider, range [1, 1000]
+// (OBScanRealTimeConfig.combined_exposure_and_laser_current; ground
+// truth for this device's LaserFrameRenderParam: default ~500, last
+// used 540). Confirmed necessary: physical markers for fuse_mode=Marker
+// went undetected in the real CrealityScan app until exposure was
+// turned up well above default.
+typedef ObScanStatus (*fn_obscan_scan_config_combined_exposure_and_laser_current)(ObScanScanHandle scan,
+                                                                                   int32_t value);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

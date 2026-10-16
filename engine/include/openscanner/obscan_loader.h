@@ -68,6 +68,8 @@ public:
     fn_obscan_scan_get_raw_cloud obscan_scan_get_raw_cloud = nullptr;
     fn_obscan_scan_get_realtime_model_mesh obscan_scan_get_realtime_model_mesh = nullptr;
     fn_obscan_scan_get_mode_config obscan_scan_get_mode_config = nullptr;
+    fn_obscan_scan_config_combined_exposure_and_laser_current obscan_scan_config_combined_exposure_and_laser_current =
+        nullptr;
 
 private:
     void* handle_ = nullptr;

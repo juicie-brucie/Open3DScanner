@@ -271,6 +271,15 @@ int RunLiveCapture(const std::string& library_path) {
     Report("obscan_scan_preview", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
+    // Confirmed against the real CrealityScan app: with this device's
+    // default/auto exposure (~500 on a 1-1000 scale), physical markers
+    // for fuse_mode=Marker went completely undetected — the real app
+    // only found them after the user turned exposure up well above
+    // default. Set it high before waiting for frames, so every frame
+    // used for marker detection is already bright enough.
+    status = lib.obscan_scan_config_combined_exposure_and_laser_current(scan, 900);
+    Report("obscan_scan_config_combined_exposure_and_laser_current", status);
+
     // A fixed 2s wait wasn't enough — obscan_scan_start still failed with
     // "cannot called start !" while early frames were still being
     // dropped (size mismatches while the pipeline settles). Calling
@@ -299,6 +308,13 @@ int RunLiveCapture(const std::string& library_path) {
 #else
         std::this_thread::sleep_for(std::chrono::milliseconds(kPollIntervalMs));
 #endif
+        // Setting this once wasn't enough — the native log showed
+        // exposure_time decaying from our requested 900 down to a
+        // steady 500 over ~15s (auto-exposure, IrAutoMode, overriding
+        // it back to its own target). No dedicated auto/manual toggle
+        // call exists in the ABI, so re-assert every poll instead.
+        lib.obscan_scan_config_combined_exposure_and_laser_current(scan, 900);
+
         ObScanPointClouds cloud = {};
         status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
         std::printf("[worker] poll %2d/%d: obscan_scan_get_raw_cloud -> %s, num_points=%u\n", i + 1, kPollCount,

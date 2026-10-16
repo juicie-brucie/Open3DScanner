@@ -108,6 +108,9 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
         resolve("obscan_scan_get_realtime_model_mesh"));
     obscan_scan_get_mode_config =
         reinterpret_cast<fn_obscan_scan_get_mode_config>(resolve("obscan_scan_get_mode_config"));
+    obscan_scan_config_combined_exposure_and_laser_current =
+        reinterpret_cast<fn_obscan_scan_config_combined_exposure_and_laser_current>(
+            resolve("obscan_scan_config_combined_exposure_and_laser_current"));
 }
 
 ObscanLibrary::~ObscanLibrary() {
