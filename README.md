@@ -47,17 +47,25 @@ worker-process isolation as `smoke_test`.
 
 Verified end-to-end against a physical CR-Scan Raptor Pro: device
 enumeration, session/scan creation, preview, and start all return
-`OB_SCAN_SUCCESS`. Getting there required three things undocumented
+`OB_SCAN_SUCCESS`, **and `obscan_scan_pause` / `obscan_scan_stop` /
+`obscan_session_destroy` now complete cleanly too — confirmed by a real
+reconstructed mesh (`obscan_scan_get_realtime_model_mesh`, read only
+after pause: thousands of real vertices/triangles) and full device
+release (`rpc client destroyed` for all four client ports: RGB, IR,
+IMU, depth).** Getting there required several things undocumented
 anywhere outside CrealityScan's own behavior (see "Known issues" below
 for the full story): registering a device-message listener (the actual
 trigger for the vendor SDK's device-watcher thread), registering data-
 and process-message listeners before `obscan_scan_preview` (otherwise
-`OB_SCAN_ERROR_LISTENER_NOT_FOUND`), and pointing
+`OB_SCAN_ERROR_LISTENER_NOT_FOUND`), pointing
 `ObScanContextConfig::input_algo_dependent_files_dir` at CrealityScan's
 own Unity `StreamingAssets` directory (the SDK aborts outright without
-it). Teardown (`obscan_scan_stop` / `obscan_context_destroy`) is still
-flaky, and getting a non-zero point count from `obscan_scan_get_raw_cloud`
-in practice is tracked as follow-up work — see "Known issues".
+it), using `obscan_scan_stop`'s real 4-argument shape — its public C#
+wrapper's 2-argument signature is not the native ABI, the same trap as
+`obscan_scan_preview` below — and reading the realtime mesh only after
+`obscan_scan_pause`, not during active scanning. `obscan_context_destroy`
+can still take long enough to exceed a generous worker timeout now that
+there's real teardown work for it to do — see "Known issues".
 
 ## Known issues
 
@@ -93,12 +101,12 @@ The POSIX (macOS) side of `worker_process.cpp` is tested and working. The
 Windows side (`CreateProcessW`-based re-exec) is written to the same
 design but not yet tested on Windows.
 
-**~~`obscan_scan_start()` can hang indefinitely (not crash) after the USB
-device has been through several hard-killed sessions~~ — fixed.** The
-root cause wasn't a config field (a full isolation pass — `accuracy`,
+**`obscan_scan_start()` can hang indefinitely (not crash) after the USB
+device has been through several hard-killed sessions.** The root cause
+wasn't a config field (a full isolation pass — `accuracy`,
 `light_type`, both voxel-size fields, one at a time, rebuilt and
 retested against the physical device each time — ruled all of them
-out): it was `obscan_context_destroy()` constructing Creality's
+out): it's `obscan_context_destroy()` constructing Creality's
 SuperPoint feature-matching network (ncnn + Vulkan/MoltenVK) purely to
 immediately tear it down, which on this hardware can hang indefinitely
 building a Vulkan device — and that hang happens *before* the vendor
@@ -109,11 +117,24 @@ state that then manifests as `obscan_scan_start()` hanging on the
 `vkCreateInstance`/`vkCreateDevice` to fail fast instead, loaded only
 into the worker subprocess via `DYLD_INSERT_LIBRARIES`
 (`tools/live_capture_test/main.cpp`) — never touching Creality's own
-files. Confirmed fixed: three consecutive full
-preview→start→poll→pause→stop→destroy cycles against the physical
-Raptor Pro with **zero power cycles** in between, where previously
-every single crash required one. `obscan_context_destroy()` now
-returns in ~0ms instead of hanging for 15+ minutes.
+files.
+
+**Status: fix exists, but "confirmed fixed" claimed here earlier was
+premature — correcting that now.** Three consecutive runs did complete
+with `obscan_context_destroy()` returning in ~0ms and no power cycle
+needed, but a separate bug (below) meant `obscan_scan_stop()` was
+silently a no-op in all three: `obscan_session_destroy()` then hit
+`OB_SCAN_ERROR_MULTI_CALLED` and refused immediately, *before*
+`obscan_context_destroy()` could ever reach the SuperPoint/Vulkan path
+at all. A 0ms destroy in those runs proved nothing about the Vulkan
+interposer. With `obscan_scan_stop()` actually fixed (confirmed: real
+mesh data back, real device release, `rpc client destroyed` for all
+four client ports — see below), `obscan_context_destroy()` now runs
+long enough to exceed the 90s worker timeout in `live_capture_test`,
+which force-killed it cleanly (no hang requiring manual recovery, so
+that part of the fix still holds) — but whether the Vulkan interposer
+itself is actually helping once `obscan_context_destroy()` has real
+work to do is still open and needs a longer-timeout retest.
 
 The underlying lesson, still worth keeping in mind for any future
 vendor-SDK crash/hang: prefer letting a hung worker's launcher time out
