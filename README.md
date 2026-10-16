@@ -93,27 +93,36 @@ The POSIX (macOS) side of `worker_process.cpp` is tested and working. The
 Windows side (`CreateProcessW`-based re-exec) is written to the same
 design but not yet tested on Windows.
 
-**`obscan_scan_start()` can hang indefinitely (not crash) after the USB
-device has been through several hard-killed sessions.** During testing,
-after `kill -9`ing the worker process mid-stream several times in a row
-(necessary when iterating on config — the worker was still inside vendor
-SDK code with the laser active each time), `obscan_scan_preview()` stopped
-producing *any* data messages at all (not even `NEW_RGB_IMAGE`), and the
-subsequent `obscan_scan_start()` call hung forever at low CPU, stuck right
-after the native log line `"set ir line laser control fill light, blue
-light enable:1"`. A full isolation pass — varying `accuracy`, `light_type`,
-and both voxel-size fields one at a time, rebuilding and retesting against
-the physical device each time, including restoring the exact combination
-that had worked minutes earlier — ruled out every `ObScanModeConfig` field
-as the cause. This points at the vendor SDK (or the USB stack's view of the
-device) being left in a bad state by the improper teardown a `SIGKILL`
-causes — it never runs the SDK's own close/release path. Try a physical
-USB reconnect (or OS sleep/wake) before chasing this as a config bug. The
-underlying lesson: prefer letting a hung worker's launcher time out and
-request a clean `obscan_scan_stop`/`obscan_context_destroy` over `kill -9`
-wherever possible; this is also a case `RunSelfAsWorker` doesn't currently
-protect against, since the risk here isn't our process crashing, it's the
-*hardware/vendor-library state* outliving our process after a hard kill.
+**~~`obscan_scan_start()` can hang indefinitely (not crash) after the USB
+device has been through several hard-killed sessions~~ — fixed.** The
+root cause wasn't a config field (a full isolation pass — `accuracy`,
+`light_type`, both voxel-size fields, one at a time, rebuilt and
+retested against the physical device each time — ruled all of them
+out): it was `obscan_context_destroy()` constructing Creality's
+SuperPoint feature-matching network (ncnn + Vulkan/MoltenVK) purely to
+immediately tear it down, which on this hardware can hang indefinitely
+building a Vulkan device — and that hang happens *before* the vendor
+SDK's own USB/RPC device-release steps run, leaving the device in a bad
+state that then manifests as `obscan_scan_start()` hanging on the
+*next* attempt (not necessarily the same one that hung).
+`engine/src/vulkan_disable_interpose.c` interposes MoltenVK's
+`vkCreateInstance`/`vkCreateDevice` to fail fast instead, loaded only
+into the worker subprocess via `DYLD_INSERT_LIBRARIES`
+(`tools/live_capture_test/main.cpp`) — never touching Creality's own
+files. Confirmed fixed: three consecutive full
+preview→start→poll→pause→stop→destroy cycles against the physical
+Raptor Pro with **zero power cycles** in between, where previously
+every single crash required one. `obscan_context_destroy()` now
+returns in ~0ms instead of hanging for 15+ minutes.
+
+The underlying lesson, still worth keeping in mind for any future
+vendor-SDK crash/hang: prefer letting a hung worker's launcher time out
+and request a clean `obscan_scan_stop`/`obscan_context_destroy` over
+`kill -9` wherever possible, since the risk isn't our own process
+crashing (that part `RunSelfAsWorker`'s timeout already handles) — it's
+*hardware/vendor-library state* outliving our process after a hard
+kill, which no amount of process-level cleanup on our side can fix
+after the fact.
 
 **~~Device enumeration returns 0 devices even with a scanner physically
 connected~~ — resolved.** The RPCServer/privileged-helper theory below was
