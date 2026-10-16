@@ -9,7 +9,8 @@
 
 namespace openscanner {
 
-bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_code, std::string* out_reason) {
+bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_code, std::string* out_reason,
+                      int timeout_seconds) {
     wchar_t self_path[MAX_PATH];
     DWORD len = GetModuleFileNameW(nullptr, self_path, MAX_PATH);
     if (len == 0 || len == MAX_PATH) {
@@ -37,7 +38,18 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
         return false;
     }
 
-    WaitForSingleObject(pi.hProcess, INFINITE);
+    DWORD wait_result = WaitForSingleObject(pi.hProcess, static_cast<DWORD>(timeout_seconds) * 1000);
+    if (wait_result == WAIT_TIMEOUT) {
+        TerminateProcess(pi.hProcess, /*uExitCode=*/1);
+        WaitForSingleObject(pi.hProcess, INFINITE);  // Reap it; TerminateProcess is async.
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        if (out_reason != nullptr) {
+            *out_reason = "child timed out after " + std::to_string(timeout_seconds) + "s and was force-killed";
+        }
+        return false;
+    }
+
     DWORD exit_code = 0;
     GetExitCodeProcess(pi.hProcess, &exit_code);
     CloseHandle(pi.hProcess);
@@ -64,6 +76,7 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
 #else  // POSIX
 
 #include <climits>
+#include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <sys/wait.h>
@@ -106,7 +119,8 @@ bool GetSelfExecutablePath(std::string* out_path) {
 
 }  // namespace
 
-bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_code, std::string* out_reason) {
+bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_code, std::string* out_reason,
+                      int timeout_seconds) {
     std::string self_path;
     if (!GetSelfExecutablePath(&self_path)) {
         if (out_reason != nullptr) *out_reason = "could not resolve own executable path";
@@ -133,9 +147,34 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
         _exit(127);
     }
 
+    // Poll rather than block on waitpid(..., 0): that call has no timeout
+    // parameter, and we need to be able to reclaim a worker that's still
+    // alive but not making progress (see the "no further logging at all"
+    // case documented in worker_process.h), not just one that's exited or
+    // been killed by a signal.
     int status = 0;
-    if (waitpid(pid, &status, 0) < 0) {
-        if (out_reason != nullptr) *out_reason = std::string("waitpid failed: ") + strerror(errno);
+    bool exited = false;
+    const int kPollIntervalMs = 100;
+    const int kMaxPolls = (timeout_seconds * 1000) / kPollIntervalMs;
+    for (int poll_count = 0; poll_count < kMaxPolls; ++poll_count) {
+        pid_t wait_ret = waitpid(pid, &status, WNOHANG);
+        if (wait_ret < 0) {
+            if (out_reason != nullptr) *out_reason = std::string("waitpid failed: ") + strerror(errno);
+            return false;
+        }
+        if (wait_ret == pid) {
+            exited = true;
+            break;
+        }
+        usleep(kPollIntervalMs * 1000);
+    }
+
+    if (!exited) {
+        kill(pid, SIGKILL);
+        waitpid(pid, &status, 0);  // Reap it — SIGKILL is asynchronous.
+        if (out_reason != nullptr) {
+            *out_reason = "child timed out after " + std::to_string(timeout_seconds) + "s and was force-killed";
+        }
         return false;
     }
 

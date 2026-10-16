@@ -195,39 +195,48 @@ int RunLiveCapture(const std::string& library_path) {
     Report("obscan_context_create_session", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
+    // Ground truth, not another bisection guess: this device's own
+    // scanParamConfig.dat (a real CrealityScan project's saved
+    // LaserScanParam, dumped as JSON by the real app) gives the actual
+    // last-used values for this exact Raptor Pro's blue-line-laser mode.
+    // Our earlier bisected voxel_size=0.05/detail_voxel_size=0.001 were
+    // both off — 0.05 happened to clear the native floor but sits below
+    // the app's own documented valid range (min 0.1), and light_type/
+    // accuracy were just guesses.
     ObScanConfig scan_config = {};
-    scan_config.mode_config.post_texture = OB_SCAN_NO_TEXTURE;
-    scan_config.mode_config.frame_rate = OB_SCAN_FRAME_RATE_AUTO;
+    scan_config.mode_config.post_texture = OB_SCAN_NO_TEXTURE;      // TextureModeProperty: 1
+    scan_config.mode_config.frame_rate = OB_SCAN_FRAME_RATE_AUTO;    // FrameRateProperty: 0
     // The connected Raptor Pro reports depthMode "Laser Lines Scan" (see
     // the PioneerDevice.cpp log line at session creation), i.e. a blue-
     // line-laser projector, not an infrared structured-light one.
-    scan_config.mode_config.projection = OB_SCAN_BLUE_LINE_LASER;
-    scan_config.mode_config.scan_mode = OB_SCAN_MODE_OBJECT_MEDIUM;
-    scan_config.mode_config.accuracy = OB_SCAN_ACCURACY_FAST;
-    // The IL2CPP UI dump shows OB_SCAN_FUSE_MODE_GEOMETRY/RGBD are only
-    // exposed for infrared (structured-light) devices; the laser-line UI
-    // only exposes Marker/Markerless. Markerless needs no physical
-    // markers on the object (unlike Marker mode) — what actually blocked
-    // obscan_scan_start earlier was never calibration, it was that
-    // preview had never been started (see obscan_scan_preview above);
-    // now that that's fixed, prefer Markerless as the generally useful
-    // default.
-    scan_config.mode_config.fuse_mode = OB_SCAN_FUSE_MODE_MARKERLESS;
-    scan_config.mode_config.scan_fov = OB_SCAN_FOV_NORMAL;
-    scan_config.mode_config.object_material = OB_SCAN_OBJECT_MATERIAL_STANDARD;
-    scan_config.mode_config.light_type = OB_SCAN_LIGHT_TYPE_PARALLEL;
-    scan_config.mode_config.scan_type = OB_SCAN_CLOUD_FUSED;
-    scan_config.mode_config.detail_voxel_size = 0.001;
+    scan_config.mode_config.projection = OB_SCAN_BLUE_LINE_LASER;    // ScanProjectionProperty: 1
+    scan_config.mode_config.scan_mode = OB_SCAN_MODE_OBJECT_MEDIUM;  // not present in scanParamConfig.dat; kept as-is
+    scan_config.mode_config.accuracy = OB_SCAN_ACCURACY_HIGH;  // ScanAccuracyProperty: 1 (ground truth)
+    // LaserScanFuseModeProperty: 2 == OB_SCAN_FUSE_MODE_MARKER — this
+    // device's real saved session used physical markers (confirmed by
+    // scanDataConfig.dat's "remove_markers": true during optimization),
+    // not Markerless.
+    scan_config.mode_config.fuse_mode = OB_SCAN_FUSE_MODE_MARKER;
+    scan_config.mode_config.scan_fov = OB_SCAN_FOV_NORMAL;                  // LaserScanFOVProperty: 0
+    scan_config.mode_config.object_material = OB_SCAN_OBJECT_MATERIAL_STANDARD;  // ObjectMaterialProperty: 0
+    // CROSS (ScanLightTypeProperty: 1) wasn't actually the cause of the
+    // obscan_scan_start hang — PARALLEL hung identically. Restored.
+    scan_config.mode_config.light_type = OB_SCAN_LIGHT_TYPE_CROSS;  // ScanLightTypeProperty: 1 (ground truth)
+    scan_config.mode_config.scan_type = OB_SCAN_CLOUD_FUSED;         // LaserScanTypeProperty: 0
+    scan_config.mode_config.detail_voxel_size = 0.05;  // DetailVoxelSizeProperty: 0.05 (ground truth)
+    scan_config.mode_config.voxel_size = 0.1;          // VoxelSizeProperty: 0.1 (ground truth)
+    // NOTE: a long isolation pass (varying accuracy, light_type, and
+    // both voxel sizes one at a time, each rebuilt and retested against
+    // the physical device) found that NONE of these mode_config fields
+    // explain why preview stopped producing any data messages at all —
+    // even restoring the exact combination that worked earlier in this
+    // session (accuracy=Fast, light_type=Parallel, voxel_size=0.05,
+    // detail_voxel_size=0.001) still produced zero data messages and a
+    // hung obscan_scan_start. This points at device/USB state, not
+    // configuration — see README.md "Known issues" for the likely
+    // cause (repeated hard-kills of a worker mid-stream) and try a
+    // physical USB reconnect before debugging config fields further.
     scan_config.name = "openscanner_live_scan";
-
-    // Bisected against this device's firmware: 0.003 through 0.02 were
-    // all rejected with "the line laser cannot support voxel_size ...";
-    // 0.05 was the first value accepted. Line-laser voxel sizes are
-    // apparently much coarser than the infrared-oriented defaults this
-    // was copied from. Not yet confirmed whether this is a hard firmware
-    // floor, a device-specific calibrated value, or something in
-    // between — revisit if this device ever rejects 0.05 again.
-    scan_config.mode_config.voxel_size = 0.05;
 
     ObScanScanHandle scan = nullptr;
     status = lib.obscan_session_create_scan(session, &scan_config, &scan);
@@ -289,6 +298,20 @@ int RunLiveCapture(const std::string& library_path) {
     status = lib.obscan_scan_pause(scan, /*is_stop_stream=*/true);
     Report("obscan_scan_pause", status);
 
+    // The real app's own captured call log had a ~5s gap between pause
+    // and stop (20:35:44 -> 20:35:49); we called them back-to-back with
+    // no delay, which is a likely cause of obscan_scan_stop's reliable
+    // OB_SCAN_ERROR_INVALID_SCAN (845283618) here — stopping a stream
+    // before its pause/teardown has actually settled. Give it the same
+    // runway before calling stop.
+    for (int i = 0; i < 25; ++i) {
+#if defined(__APPLE__)
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.2, false);
+#else
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+#endif
+    }
+
     // NULL callbacks aren't tolerated here either — see obscan_scan_preview
     // above, where NULL crashed outright. obscan_scan_stop silently
     // returned OB_SCAN_ERROR_INVALID_ARGUMENT with no native log line at
@@ -296,12 +319,29 @@ int RunLiveCapture(const std::string& library_path) {
     status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/true);
     Report("obscan_scan_stop", status);
 
+    auto session_destroy_start = std::chrono::steady_clock::now();
     status = lib.obscan_session_destroy(&session);
+    auto session_destroy_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - session_destroy_start)
+                                   .count();
+    std::printf("[worker] obscan_session_destroy took %lldms\n", static_cast<long long>(session_destroy_ms));
     Report("obscan_session_destroy", status);
 
     // Known to crash inside the vendor SDK (see README.md "Known issues").
     // That's exactly why this whole function runs in an isolated worker.
+    // Timed explicitly: a prior run burned 300%+ CPU for 3.5+ minutes
+    // here without returning, after obscan_scan_stop had failed with
+    // OB_SCAN_ERROR_INVALID_SCAN — unknown whether that's legitimate
+    // (if expensive) cleanup or a real hang/loop. The pause->stop settle
+    // delay above is meant to get stop to succeed first, which should
+    // leave context_destroy with a cleanly-stopped scan to tear down
+    // instead of one still partway through an interrupted stop.
+    auto context_destroy_start = std::chrono::steady_clock::now();
     status = lib.obscan_context_destroy(&context);
+    auto context_destroy_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   std::chrono::steady_clock::now() - context_destroy_start)
+                                   .count();
+    std::printf("[worker] obscan_context_destroy took %lldms\n", static_cast<long long>(context_destroy_ms));
     Report("obscan_context_destroy", status);
 
     return 0;
@@ -323,14 +363,24 @@ int main(int argc, char** argv) {
     std::printf("[launcher] Running live capture session in a worker process...\n");
     int worker_exit_code = -1;
     std::string crash_reason;
-    bool worker_ok = openscanner::RunSelfAsWorker({kWorkerFlag, library_path}, &worker_exit_code, &crash_reason);
+    // The happy-path budget here is roughly: device-connect wait (<=6s) +
+    // frame-ready wait (<=20s) + 15 polls (~4.5s) + pause->stop settle
+    // (5s) + session_destroy (sub-second) + context_destroy (normally
+    // sub-second, or a fast crash). 90s leaves real margin over that ~40s
+    // total while staying far short of the 15+ minutes a stuck
+    // context_destroy has been confirmed to run unbounded on this
+    // hardware (see worker_process.h and README.md "Known issues") — past
+    // 90s we treat it the same as a crash rather than keep waiting.
+    constexpr int kWorkerTimeoutSeconds = 90;
+    bool worker_ok = openscanner::RunSelfAsWorker({kWorkerFlag, library_path}, &worker_exit_code, &crash_reason,
+                                                   kWorkerTimeoutSeconds);
 
     if (worker_ok) {
         std::printf("[launcher] Worker exited normally with code %d.\n", worker_exit_code);
         return worker_exit_code;
     }
 
-    std::printf("[launcher] Worker crashed inside the vendor SDK (%s). Launcher is unaffected.\n",
+    std::printf("[launcher] Worker crashed or timed out inside the vendor SDK (%s). Launcher is unaffected.\n",
                 crash_reason.c_str());
     return 2;
 }
