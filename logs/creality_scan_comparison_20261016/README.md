@@ -99,3 +99,31 @@ independent of which implementation (this project's or Creality's own)
 is doing the tracking. A flatter, wider object sitting directly on/
 surrounded by markers, or markers placed on the object itself, would be
 a more favorable next test case for either tool.
+
+### Correction from the native scan log: laser extraction was starved too
+
+Counting the per-frame `lasere total_points_num` lines in
+`native_logs/scan_log_20261016-024738.txt` (done later, for
+`docs/research/pipeline-quality-assessment.md`) adds something the
+conclusion above did not have:
+
+- The first scan attempt (`BTN_STATUS_START` at 02:48:28, deleted at
+  02:48:54) produced **zero laser points on all 1,916 frames** while the
+  laser was on. The laser light type stayed at 3 for the whole attempt
+  instead of alternating 3/4 as it does in preview and in every healthy
+  run. Nothing from that attempt ever reached fusion.
+- The restarted attempt (02:49:01 onward) extracted about 1,500 points
+  per frame for its first minute and about 3,000 for its second. The
+  clean session in `logs/creality_scan_comparison2_20261016/` averaged
+  about 7,500 on the same scanner. This session's saved
+  `scanParamConfig.dat` ends with `IrAutoMode: false` and
+  `IrExpAndLaserValue: 270`, whereas the config loaded at 02:48:15 had
+  auto mode on at 500, so the exposure slider was changed in the UI at
+  some point the native log does not record.
+
+So the bundle adjuster here was fed two to five times fewer points per
+frame than in the clean session, after a first attempt that fed it
+nothing. Marker density relative to the object is probably still part
+of it, but "a physical scanning-technique limitation shared by both
+tools" overstates what this log supports: exposure and laser state were
+at least as different between the two sessions as the marker layout was.
