@@ -9,6 +9,13 @@ hardware/scene.
 
 ## What this folder contains
 
+- `physical_setup/` — three reference photos of the actual physical
+  scene from the scanner's own point of view: a stack of red plastic
+  cups (each printed with a dot pattern of its own) standing on a
+  wooden surface, surrounded by a printed reference-marker mat (small
+  black-ringed circular dots in a grid). This is the scene behind every
+  number below and in `logs/stop_abi_fix_validation/` from the same
+  session.
 - `screenshots/` — three screenshots taken during the live session:
   1. `1_live_scan_view.webp` — the live point-cloud/marker view mid-scan.
   2. `2_scan_settings_panel.png` — the exact scan settings in use.
@@ -76,3 +83,19 @@ project's own tooling to 5900+ real mesh vertices — see
 `logs/stop_abi_fix_validation/` — so the pipeline itself is confirmed
 capable of producing real data; this particular marker layout was
 evidently a harder case for both implementations.)
+
+### Why, looking at `physical_setup/`
+
+The reference-marker mat on the table has decent density (a regular
+grid of small dot markers), but the actual scan target — a stack of
+tall, narrow, cylindrical plastic cups — has very little of its *own*
+trackable surface: a cylinder presents a constantly-changing silhouette
+as the scanner moves around it, and the mat's markers are mostly
+beside/behind the cups rather than on or near the object itself. Marker-
+based multi-view registration needs several shared markers visible and
+stable across consecutive frames; a tall narrow object sitting apart
+from a flat mat of markers is a comparatively hard case for that,
+independent of which implementation (this project's or Creality's own)
+is doing the tracking. A flatter, wider object sitting directly on/
+surrounded by markers, or markers placed on the object itself, would be
+a more favorable next test case for either tool.
