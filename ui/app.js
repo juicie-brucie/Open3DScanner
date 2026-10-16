@@ -117,6 +117,45 @@
   let lastFrameId = -1;
   let framesReceived = 0;
   let bytesReceived = 0;
+
+  // Real scan data (mm-scale, arbitrary origin) has a totally different
+  // scale/offset than the synthetic demo sphere (unit-radius, centered at
+  // the origin) the fixed camera below was tuned for. Auto-fit to each
+  // incoming frame's bounding sphere so both sources render visibly
+  // instead of real data showing as a tiny off-center speck.
+  let viewCenter = [0, 0, 0];
+  let viewDistance = 4.2;
+  let viewRadius = 1.0;
+
+  function updateViewFit(positions, count) {
+    if (count === 0) return;
+    // Mean + RMS spread rather than a min/max bounding box: a real
+    // reconstructed mesh can have a handful of far stray vertices, and a
+    // pure min/max box lets a few outliers blow up the fit distance,
+    // leaving the dense, visually-relevant cluster a tiny speck in the
+    // middle of an otherwise-empty frame. RMS distance from the mean is
+    // dominated by where most of the points actually are.
+    let sx = 0, sy = 0, sz = 0;
+    for (let i = 0; i < count; i++) {
+      sx += positions[i * 3];
+      sy += positions[i * 3 + 1];
+      sz += positions[i * 3 + 2];
+    }
+    const cx = sx / count, cy = sy / count, cz = sz / count;
+    let sumSq = 0;
+    for (let i = 0; i < count; i++) {
+      const dx = positions[i * 3] - cx, dy = positions[i * 3 + 1] - cy, dz = positions[i * 3 + 2] - cz;
+      sumSq += dx * dx + dy * dy + dz * dz;
+    }
+    const rms = Math.sqrt(sumSq / count);
+    const radius = Math.max(rms * 2.0, 0.001);  // ~2 sigma covers the dense cluster.
+    viewCenter = [cx, cy, cz];
+    viewRadius = radius;
+    // Distance needed to fit `radius` within the vertical half-FOV, plus
+    // headroom so the cloud isn't touching the viewport edges.
+    const fovyRad = (45 * Math.PI) / 180;
+    viewDistance = (radius / Math.tan(fovyRad / 2)) * 1.6;
+  }
   const latencySamples = [];
   const kLatencyWindow = 30;
 
@@ -148,6 +187,7 @@
       const positions = new Float32Array(buf, 16, count * 3);
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, positions, gl.DYNAMIC_DRAW);
+      updateViewFit(positions, count);
       pointCount = count;
       lastFrameId = frameId;
       framesReceived++;
@@ -171,8 +211,15 @@
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     if (pointCount > 0) {
       const aspect = canvas.width / canvas.height;
-      const proj = perspective((45 * Math.PI) / 180, aspect, 0.1, 100.0);
-      const view = translation(0, 0, -4.2);
+      // Fixed 0.1/100.0 near/far planes (fine for the synthetic unit
+      // sphere) clip almost all of a real scan's mm-scale geometry, since
+      // viewDistance there is easily in the hundreds — scale the clip
+      // planes to the fitted distance/radius instead so content at any
+      // scale stays inside the frustum.
+      const near = Math.max(viewDistance - viewRadius * 4, viewDistance * 0.01, 0.001);
+      const far = viewDistance + viewRadius * 4;
+      const proj = perspective((45 * Math.PI) / 180, aspect, near, far);
+      const view = translation(-viewCenter[0], -viewCenter[1], -viewCenter[2] - viewDistance);
       const matrix = multiply(proj, view);
       gl.useProgram(program);
       gl.bindVertexArray(vao);

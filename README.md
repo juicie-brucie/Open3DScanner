@@ -119,10 +119,14 @@ into the worker subprocess via `DYLD_INSERT_LIBRARIES`
 (`tools/live_capture_test/main.cpp`) — never touching Creality's own
 files.
 
-**Status: now genuinely confirmed fixed** (see
-`logs/branch_claude-clever-albattani-cebx0e-v2/`), after two earlier
-false starts recorded here — kept below as a record of both mistakes,
-since the lesson generalizes.
+**Status: now genuinely confirmed fixed on `main` itself** (not just on
+another branch — see False start #3 for why that distinction matters).
+`tools/scan_server --live` ran a full real-hardware session on 2026-10-16
+against `main` with the real fix in place: `[vulkan_disable_interpose]
+intercepted vkGetInstanceProcAddr lookup of a create function` /
+`blocked vkCreateInstance`, `obscan_context_destroy() -> OB_SCAN_SUCCESS`,
+worker exited code 0, no power cycle needed. Kept below as a record of
+all three mistakes along the way, since the lesson generalizes.
 
 False start #1: three consecutive runs completed with
 `obscan_context_destroy()` returning in ~0ms and no power cycle
@@ -161,6 +165,24 @@ runs: `obscan_context_destroy()` returning `OB_SCAN_SUCCESS` in
 729ms/695ms (vs. previously hanging past a 180s timeout), both runs
 exiting cleanly (`exit code 0`) with real mesh data (21,672 and 46,218
 vertices).
+
+False start #3: that hardware confirmation was real, but it tested the
+`claude/clever-albattani-cebx0e` branch's own checkout — the fix was
+never actually ported into `main`'s `vulkan_disable_interpose.c`, which
+silently kept the old, incomplete version (direct
+`vkCreateInstance`/`vkCreateDevice` interposition only). Writing
+"genuinely confirmed fixed" into this file on `main`, without checking
+that `main`'s own copy of the fixed file actually matched what was
+tested, was itself a mistake of the same shape as #1 and #2: validating
+one thing and writing the conclusion about another. It surfaced for
+real on 2026-10-16 when `tools/scan_server --live` (a new, unrelated
+feature, see below) hung at `obscan_context_destroy()` on a stock
+`main` checkout, cost a physical power cycle, and the run's own log
+showed MoltenVK completing a real `vkCreateInstance`/`vkCreateDevice`
+with zero `[vulkan_disable_interpose]` lines anywhere — exactly what
+"the old file is still here" looks like. Now ported for real; needs its
+own hardware confirmation on `main` specifically before this status
+line gets upgraded again.
 
 The underlying lesson, still worth keeping in mind for any future
 vendor-SDK crash/hang: prefer letting a hung worker's launcher time out
@@ -267,8 +289,30 @@ render/latency pipeline are proven out, which is what this milestone does.
 `tools/scan_server` streams a synthetic, animated point cloud over that
 WebSocket as a stand-in for a real scan session, so the rendering and
 latency-measurement pipeline can be built and benchmarked before it's wired
-to actual OBScan capture data. Swapping in real frames later changes the
-frame producer, not the transport or the UI.
+to actual OBScan capture data.
+
+`scan_server --live [port] [library_path] [session_seconds]` wires it to a
+real scan against the physically-connected scanner instead (same
+context/session/scan lifecycle as `tools/live_capture_test`, run inside a
+worker process for the same crash/hang-isolation reasons). Verified
+end-to-end on real hardware 2026-10-16: the UI connects and streams at
+~10Hz throughout, real reconstructed mesh data (up to 68,623 vertices seen
+so far) broadcasts and renders once per session, and the worker tears down
+cleanly (`exit code 0`, no power cycle). Two things worth knowing before
+using it:
+- `obscan_scan_get_raw_cloud` has never been observed to return nonzero
+  points *during* active scanning on this hardware (see "Known issues"),
+  so expect the live per-tick frames to show 0 points — the one frame
+  with real data is the final `obscan_scan_get_realtime_model_mesh`
+  snapshot broadcast right after pause, at the end of the session.
+- Ctrl+C triggers a graceful `obscan_scan_pause`/`stop`/`destroy`
+  teardown instead of killing the process — **always use Ctrl+C (or let
+  the bounded session length finish on its own) rather than `pkill`/
+  `kill -9`**, which skips that teardown and has left this hardware
+  needing a physical power cycle to recover (confirmed twice).
+
+Swapping in real frames changes the frame producer, not the transport or
+the UI.
 
 Wire format per frame (binary WebSocket message): `uint32 frame_id`,
 `float64 capture_timestamp_ms` (Unix epoch, matching JS `Date.now()`),
@@ -278,6 +322,13 @@ z). The transport is a from-scratch, dependency-free WebSocket server
 only, no TLS, no fragmentation, no auth; it listens on all interfaces so
 it can also be reached from another machine on the LAN, but it still
 exists to feed our own page, not as a general-purpose/public server.
+
+The camera auto-fits to each incoming frame's data (centroid + ~2-sigma
+RMS spread, with the near/far clip planes scaled to match) rather than
+using a fixed distance — real scan data is mm-scale with an arbitrary
+origin, nothing like the synthetic demo sphere's unit scale, and a fixed
+camera/clip-plane setup either renders it as a tiny speck or clips it
+out of the frustum entirely depending on the gap between the two scales.
 
 Rendering is WebGL2 (not WebGPU): broader support today, including Safari,
 which matters for a macOS-targeted app, and it's more than fast enough for
@@ -300,6 +351,17 @@ Then open `http://127.0.0.1:8788/index.html` in a browser. (Opening
 `ui/index.html` directly as a `file://` URL does not reliably run its
 script in every environment — serve it over HTTP instead.) Pass
 `?port=1234` in the URL if the server isn't on the default 8787.
+
+A plain static file server like `python3 -m http.server` sends no
+cache-control headers, so a browser can silently keep serving a stale
+cached `app.js` (and even a stale `index.html`) across reloads and new
+tabs, with edits appearing to have no effect — this cost real debugging
+time on 2026-10-16 (traced the "fix" through several iterations before
+realizing none of them had ever actually loaded). `index.html` now loads
+`app.js` with a cache-busting `?t=<timestamp>` query param for this
+reason; if a change to `index.html` itself still doesn't seem to apply,
+append a throwaway query param to the page URL too (e.g. `&cb=1`), or
+hard-reload/open a fresh tab.
 
 To reach it from another machine on the LAN, use the host's address
 instead of `127.0.0.1` for both the page and the WebSocket, e.g.
