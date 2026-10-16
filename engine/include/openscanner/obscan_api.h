@@ -415,13 +415,41 @@ typedef ObScanStatus (*fn_obscan_scan_start)(ObScanScanHandle scan);
 // extra argument just sits in a register the real function never
 // reads), but it was never real and is removed for accuracy.
 typedef ObScanStatus (*fn_obscan_scan_pause)(ObScanScanHandle scan);
-// OBScanTarget.StopScan(bool isBlock = false, Action<OBScanStatus>
-// statusCallback) — two params, isBlock FIRST, no progress callback at
-// all. Our earlier 4-arg (scan, progress_cb, status_cb, is_block) had
-// both the wrong count and the wrong order; this is the likely cause of
-// the reliable OB_SCAN_ERROR_INVALID_SCAN seen calling the old shape.
-typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, bool is_block, ObScanStatusCallback status_callback);
+// CORRECTED (again): this is the real native shape after all —
+// (scan, progress_cb, status_cb, is_block), the same two-callback
+// pairing as obscan_scan_preview. OBScanTarget.StopScan's public C#
+// signature (bool isBlock, Action<OBScanStatus> statusCallback) is NOT
+// the P/Invoke signature — like Preview, this call has its own
+// class-level progress trampoline that isn't exposed in the managed
+// method's parameter list, and a *different* Claude session caught
+// that this file's previous version (the 2-param shape below, briefly
+// on main) was a regression: it returns OB_SCAN_SUCCESS immediately
+// but the native log shows nothing after "obscan_scan_stop" — no stop
+// progress, no pipeline teardown, callback never invoked — and both
+// subsequent destroys are refused with OB_SCAN_ERROR_MULTI_CALLED
+// ("must first wait other process finshed: destroy session !"),
+// leaving the device unreleased. Verified directly against this
+// project's own committed logs: with THIS (4-arg) shape, the native
+// log shows real "stop progress 0.01 ... 1.0" / "change to stop
+// success !" lines and the progress callback receives exactly those
+// values (logs/native_scan_log/scan_log_20261015-215147.txt); with the
+// old 2-param shape, "obscan_scan_stop" is immediately followed by
+// "obscan_session_destroy" with nothing in between
+// (logs/native_scan_log/scan_log_20261016-020420.txt). An
+// OB_SCAN_ERROR_INVALID_SCAN from the status callback after a real
+// "change to stop success !" is a verdict on the scan's content (e.g.
+// a near-empty model), not a failed stop call. NULL callbacks are
+// rejected, same as preview.
+//
+// typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, bool is_block, ObScanStatusCallback status_callback);  // WRONG — kept here as a record of the dead end, do not resurrect.
+typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, ObScanProgressCallback progress_callback,
+                                             ObScanStatusCallback status_callback, bool is_block);
 typedef ObScanStatus (*fn_obscan_scan_get_raw_cloud)(ObScanScanHandle scan, ObScanPointClouds* out_cloud);
+// Only valid while the scan is paused — called during an active scan it
+// fails with OB_SCAN_ERROR_MULTI_CALLED and the native log line "get
+// model mesh must first pause scan !". Confirmed against this
+// project's own logs: every poll-loop call to this before pause hit
+// exactly that error.
 typedef ObScanStatus (*fn_obscan_scan_get_realtime_model_mesh)(ObScanScanHandle scan, ObScanTriangleMesh* out_mesh);
 typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, ObScanModeConfig* out_config);
 

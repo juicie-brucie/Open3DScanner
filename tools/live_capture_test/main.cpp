@@ -12,7 +12,21 @@
 //
 // Usage:
 //   live_capture_test [path-to-liborbbec_scan.dylib-or-lib_orbbec_scan.dll]
+//
+// Environment:
+//   OPENSCANNER_EXPOSURE_SWEEP=1  instead of holding one fixed exposure,
+//                                 step obscan_scan_config_combined_
+//                                 exposure_and_laser_current across its
+//                                 full [1, 1000] range (~3s per step),
+//                                 polling obscan_scan_get_raw_cloud at
+//                                 each step and reporting which value(s)
+//                                 actually produced points — for
+//                                 characterizing marker detection on a
+//                                 device/lighting setup we haven't
+//                                 tested before, rather than guessing a
+//                                 single value again.
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdio>
@@ -302,47 +316,100 @@ int RunLiveCapture(const std::string& library_path) {
     Report("obscan_scan_start", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
-    for (int i = 0; i < kPollCount; ++i) {
+    // OPENSCANNER_EXPOSURE_SWEEP=1: for future marker-detection testing
+    // on a device/lighting setup we haven't characterized yet, step
+    // obscan_scan_config_combined_exposure_and_laser_current through a
+    // range instead of holding one fixed value, polling raw_cloud at
+    // each step and summarizing which value(s) actually produced
+    // points. Markers have no dedicated "detected" log line we've
+    // found, so a growing raw_cloud (now that obscan_scan_stop/pause
+    // actually work — see obscan_api.h) is the best proxy we have.
+    const char* sweep_env = std::getenv("OPENSCANNER_EXPOSURE_SWEEP");
+    if (sweep_env != nullptr && std::string(sweep_env) == "1") {
+        // Range is [1, 1000] per OBScanRealTimeConfig.combined_exposure_
+        // and_laser_current (obscan_api.h); ground truth default/last-
+        // used was ~500-540, and marker detection needed "pretty high"
+        // per interactive testing — step across the full range to map
+        // it properly instead of guessing a single value again.
+        const int kSweepValues[] = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+        constexpr int kHoldMs = 3000;
+        constexpr int kHoldPolls = 6;  // ~500ms apart, within kHoldMs.
+        int best_value = -1;
+        uint32_t best_points = 0;
+        for (int sweep_value : kSweepValues) {
+            status = lib.obscan_scan_config_combined_exposure_and_laser_current(scan, sweep_value);
+            std::printf("[worker] exposure_sweep: set combined_exposure_and_laser_current=%d -> %s\n", sweep_value,
+                        StatusName(status));
+            std::fflush(stdout);
+            uint32_t max_points_this_step = 0;
+            for (int poll = 0; poll < kHoldPolls; ++poll) {
 #if defined(__APPLE__)
-        CFRunLoopRunInMode(kCFRunLoopDefaultMode, kPollIntervalMs / 1000.0, false);
+                CFRunLoopRunInMode(kCFRunLoopDefaultMode, (kHoldMs / kHoldPolls) / 1000.0, false);
 #else
-        std::this_thread::sleep_for(std::chrono::milliseconds(kPollIntervalMs));
+                std::this_thread::sleep_for(std::chrono::milliseconds(kHoldMs / kHoldPolls));
 #endif
-        // Setting this once wasn't enough — the native log showed
-        // exposure_time decaying from our requested 900 down to a
-        // steady 500 over ~15s (auto-exposure, IrAutoMode, overriding
-        // it back to its own target). No dedicated auto/manual toggle
-        // call exists in the ABI, so re-assert every poll instead.
-        lib.obscan_scan_config_combined_exposure_and_laser_current(scan, 900);
-
-        ObScanPointClouds cloud = {};
-        status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
-        std::printf("[worker] poll %2d/%d: obscan_scan_get_raw_cloud -> %s, num_points=%u\n", i + 1, kPollCount,
-                     StatusName(status), cloud.num_points);
-        if (status == OB_SCAN_SUCCESS && cloud.num_points > 0 && cloud.points != nullptr) {
-            const ObScanPoint& p = cloud.points[0];
-            std::printf("[worker]   points[0] = (%.4f, %.4f, %.4f)\n", p.x, p.y, p.z);
+                ObScanPointClouds cloud = {};
+                status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
+                std::printf("[worker] exposure_sweep: value=%d poll=%d/%d obscan_scan_get_raw_cloud -> %s, "
+                            "num_points=%u\n",
+                            sweep_value, poll + 1, kHoldPolls, StatusName(status), cloud.num_points);
+                std::fflush(stdout);
+                if (status == OB_SCAN_SUCCESS) {
+                    max_points_this_step = std::max(max_points_this_step, cloud.num_points);
+                }
+            }
+            if (max_points_this_step > best_points) {
+                best_points = max_points_this_step;
+                best_value = sweep_value;
+            }
         }
-
-        // The native log shows the per-frame laser-detection pipeline
-        // genuinely finding points (hundreds of nonzero "lasere
-        // total_points_num" lines), but obscan_scan_get_raw_cloud stays
-        // at 0 throughout — testing whether that's a getter mismatch:
-        // this one is explicitly named for the *live, during-scan*
-        // model, which raw_cloud may not be.
-        ObScanTriangleMesh mesh = {};
-        ObScanStatus mesh_status = lib.obscan_scan_get_realtime_model_mesh(scan, &mesh);
-        std::printf(
-            "[worker] poll %2d/%d: obscan_scan_get_realtime_model_mesh -> %s (%d), num_vertices=%u, num_triangles=%u\n",
-            i + 1, kPollCount, StatusName(mesh_status), static_cast<int>(mesh_status), mesh.num_vertices,
-            mesh.num_triangles);
+        std::printf("[worker] exposure_sweep: best combined_exposure_and_laser_current=%d (%u points seen)\n",
+                    best_value, best_points);
         std::fflush(stdout);
+    } else {
+        for (int i = 0; i < kPollCount; ++i) {
+#if defined(__APPLE__)
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, kPollIntervalMs / 1000.0, false);
+#else
+            std::this_thread::sleep_for(std::chrono::milliseconds(kPollIntervalMs));
+#endif
+            // Setting this once wasn't enough — the native log showed
+            // exposure_time decaying from our requested 900 down to a
+            // steady 500 over ~15s (auto-exposure, IrAutoMode,
+            // overriding it back to its own target). No dedicated
+            // auto/manual toggle call exists in the ABI, so re-assert
+            // every poll instead.
+            lib.obscan_scan_config_combined_exposure_and_laser_current(scan, 900);
+
+            ObScanPointClouds cloud = {};
+            status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
+            std::printf("[worker] poll %2d/%d: obscan_scan_get_raw_cloud -> %s, num_points=%u\n", i + 1, kPollCount,
+                        StatusName(status), cloud.num_points);
+            if (status == OB_SCAN_SUCCESS && cloud.num_points > 0 && cloud.points != nullptr) {
+                const ObScanPoint& p = cloud.points[0];
+                std::printf("[worker]   points[0] = (%.4f, %.4f, %.4f)\n", p.x, p.y, p.z);
+            }
+
+            std::fflush(stdout);
+        }
     }
 
     // OBScanTarget.PauseScan() takes no parameters — see obscan_api.h.
     // Our earlier is_stop_stream bool was invented, not real ABI.
     status = lib.obscan_scan_pause(scan);
     Report("obscan_scan_pause", status);
+
+    // obscan_scan_get_realtime_model_mesh is only valid while paused —
+    // see obscan_api.h. Calling it during the active poll loop above
+    // reliably hit OB_SCAN_ERROR_MULTI_CALLED ("get model mesh must
+    // first pause scan !"); read it here instead, now that it's legal.
+    {
+        ObScanTriangleMesh mesh = {};
+        ObScanStatus mesh_status = lib.obscan_scan_get_realtime_model_mesh(scan, &mesh);
+        std::printf("[worker] obscan_scan_get_realtime_model_mesh -> %s (%d), num_vertices=%u, num_triangles=%u\n",
+                    StatusName(mesh_status), static_cast<int>(mesh_status), mesh.num_vertices, mesh.num_triangles);
+        std::fflush(stdout);
+    }
 
     // The real app's own captured call log had a ~5s gap between pause
     // and stop (20:35:44 -> 20:35:49); tried adding the same gap here as
@@ -358,13 +425,12 @@ int RunLiveCapture(const std::string& library_path) {
 #endif
     }
 
-    // OBScanTarget.StopScan(bool isBlock, Action<OBScanStatus>
-    // statusCallback) — no progress callback, isBlock comes first. The
-    // old 4-arg call (with a bogus progress callback) is the likely
-    // cause of the reliable OB_SCAN_ERROR_INVALID_SCAN seen before this
-    // fix. NULL still isn't tolerated for the status callback (crashes,
-    // same as obscan_scan_preview).
-    status = lib.obscan_scan_stop(scan, /*is_block=*/true, &OnPreviewStatus);
+    // CORRECTED (again): real shape is (scan, progress_cb, status_cb,
+    // is_block) — see obscan_api.h for the full story of how the 2-arg
+    // version that was briefly here got caught as a regression (it
+    // returned SUCCESS but did nothing real, leaving both destroys
+    // refused with MULTI_CALLED). NULL callbacks are rejected.
+    status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/true);
     Report("obscan_scan_stop", status);
 
     auto session_destroy_start = std::chrono::steady_clock::now();
@@ -378,12 +444,18 @@ int RunLiveCapture(const std::string& library_path) {
     // Known to crash inside the vendor SDK (see README.md "Known issues").
     // That's exactly why this whole function runs in an isolated worker.
     // Timed explicitly: a prior run burned 300%+ CPU for 3.5+ minutes
-    // here without returning, after obscan_scan_stop had failed with
-    // OB_SCAN_ERROR_INVALID_SCAN — unknown whether that's legitimate
-    // (if expensive) cleanup or a real hang/loop. The pause->stop settle
-    // delay above is meant to get stop to succeed first, which should
-    // leave context_destroy with a cleanly-stopped scan to tear down
-    // instead of one still partway through an interrupted stop.
+    // here without returning, building Creality's SuperPoint ncnn+
+    // Vulkan network it never uses — the vulkan_disable_interpose fix is
+    // meant to make that fail fast instead.
+    //
+    // CAVEAT this timing alone can't resolve: every "confirmed working,
+    // 0ms" run so far used the now-known-broken 2-arg obscan_scan_stop,
+    // which never actually stopped anything — session_destroy then hit
+    // OB_SCAN_ERROR_MULTI_CALLED and refused immediately, before
+    // context_destroy could ever reach the SuperPoint/Vulkan path at
+    // all. A 0ms destroy in those runs proves nothing about whether the
+    // Vulkan fix works; it needs re-validating now that stop() actually
+    // stops the scan and destroy has real work to do.
     auto context_destroy_start = std::chrono::steady_clock::now();
     status = lib.obscan_context_destroy(&context);
     auto context_destroy_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -440,15 +512,17 @@ int main(int argc, char** argv) {
     std::printf("[launcher] Running live capture session in a worker process...\n");
     int worker_exit_code = -1;
     std::string crash_reason;
-    // The happy-path budget here is roughly: device-connect wait (<=6s) +
-    // frame-ready wait (<=20s) + 15 polls (~4.5s) + pause->stop settle
-    // (5s) + session_destroy (sub-second) + context_destroy (normally
-    // sub-second, or a fast crash). 90s leaves real margin over that ~40s
-    // total while staying far short of the 15+ minutes a stuck
-    // context_destroy has been confirmed to run unbounded on this
-    // hardware (see worker_process.h and README.md "Known issues") — past
-    // 90s we treat it the same as a crash rather than keep waiting.
-    constexpr int kWorkerTimeoutSeconds = 90;
+    // Budget: device-connect wait (<=6s) + frame-ready wait (<=20s) +
+    // kPollCount polls (~30s) + pause->stop settle (5s) + a now-real
+    // session_destroy/context_destroy. 90s wasn't enough once
+    // obscan_scan_stop actually stopped something for real (it was only
+    // ever "fast" before because a broken stop() left both destroys
+    // refused with MULTI_CALLED, never reaching real teardown work) —
+    // bumped with real margin while staying far short of the 15+ minutes
+    // a stuck context_destroy has been confirmed to run unbounded on
+    // this hardware (see worker_process.h and README.md "Known issues").
+    // Past this we treat it the same as a crash rather than keep waiting.
+    constexpr int kWorkerTimeoutSeconds = 180;
     bool worker_ok = openscanner::RunSelfAsWorker({kWorkerFlag, library_path}, &worker_exit_code, &crash_reason,
                                                    kWorkerTimeoutSeconds);
 
