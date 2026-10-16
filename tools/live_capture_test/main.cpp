@@ -25,6 +25,15 @@
 //                                 device/lighting setup we haven't
 //                                 tested before, rather than guessing a
 //                                 single value again.
+//   OPENSCANNER_PROBE_DEVICE_INFO=1  call obscan_device_management_get_
+//                                 device_info once into an oversized
+//                                 buffer and dump what it wrote, to recover
+//                                 ObScanDeviceInfo's real layout (see
+//                                 ProbeDeviceInfo).
+//
+// Exit codes: 0 success, 1 an SDK call failed, 2 no device found,
+// 3 device disconnected mid-capture (the launcher also returns 2 when the
+// worker crashes or times out).
 
 #include <algorithm>
 #include <atomic>
@@ -32,7 +41,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <cstdint>
+#include <cstring>
 #include <thread>
+
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
@@ -61,16 +76,34 @@ constexpr int kDeviceWaitIntervalMs = 200;
 // communicated back via these globals; that's fine here because this
 // process only ever runs one live-capture session.
 std::atomic<bool> g_got_connect_message{false};
+// Set by a DISCONNECT that arrives after a CONNECT, i.e. a real unplug. The
+// SDK also sends a DISCONNECT right at listener registration to report the
+// initial "no device" state; that one doesn't count. See obscan_api.h.
+std::atomic<bool> g_device_unplugged{false};
+
+constexpr int kExitDeviceUnplugged = 3;
+
+const char* DeviceMessageName(int32_t msg_id) {
+    switch (msg_id) {
+        case OB_SCAN_MESSAGE_ID_DEVICE_CONNECT:
+            return "DEVICE_CONNECT";
+        case OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT:
+            return "DEVICE_DISCONNECT";
+        default:
+            return "unknown";
+    }
+}
 
 void OnDeviceMessage(ObScanDeviceMessage msg) {
-    std::printf("[worker] device message: msg_id=%d data=%p\n", msg.msg_id, msg.data);
+    std::printf("[worker] device message: %s (msg_id=%d) data=%p\n", DeviceMessageName(msg.msg_id), msg.msg_id,
+                msg.data);
     std::fflush(stdout);
-    // msg_id=0 with a non-NULL data pointer is the confirmed real
-    // connect-event shape. The first callback on every run so far has
-    // fired immediately with msg_id=308412672/data=NULL — treated as a
-    // non-actionable registration ack, not a connect event.
-    if (msg.msg_id == 0 && msg.data != nullptr) {
+    if (msg.msg_id == OB_SCAN_MESSAGE_ID_DEVICE_CONNECT && msg.data != nullptr) {
         g_got_connect_message = true;
+    } else if (msg.msg_id == OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT && g_got_connect_message) {
+        g_device_unplugged = true;
+        std::printf("[worker] device was disconnected — stopping the capture\n");
+        std::fflush(stdout);
     }
 }
 
@@ -119,7 +152,13 @@ void OnDataMessage(ObScanDataMessage msg) {
 }
 
 void OnProcessMessage(ObScanProcessMessage msg) {
-    std::printf("[worker] process message: msg_id=%d data=%p\n", msg.msg_id, msg.data);
+    if (msg.msg_id == OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR) {
+        std::printf("[worker] process message: PASTED_MARKERS_TOO_REGULAR (msg_id=%d) — the SDK warns the "
+                    "markers are laid out too regularly to track well; space them less evenly\n",
+                    msg.msg_id);
+    } else {
+        std::printf("[worker] process message: unknown (msg_id=%d) data=%p\n", msg.msg_id, msg.data);
+    }
     std::fflush(stdout);
 }
 
@@ -188,6 +227,85 @@ void ReleaseDevice(const openscanner::ObscanLibrary& lib, CaptureHandles& h) {
         Report("obscan_context_destroy", status);
         h.context = nullptr;
     }
+}
+
+// OPENSCANNER_PROBE_DEVICE_INFO=1: recover ObScanDeviceInfo's real layout.
+// Our struct (obscan_api.h) is unconfirmed, and a call through it was the
+// leading suspect for a reproducible segfault; the real app calls the same
+// function without trouble (logs/creality_scan_comparison2_20261016/).
+// So don't trust the struct at all: hand the SDK an oversized buffer
+// pre-filled with a marker byte (so a bigger real struct can't overflow
+// the stack), report how far it wrote, and dump each 8-byte slot. A slot is
+// only read as a string after a readability check that can't crash.
+constexpr unsigned char kProbeFill = 0xA5;
+constexpr size_t kProbeBytes = 512;
+
+#if !defined(_WIN32)
+// write() to a pipe fails with EFAULT on unreadable memory instead of
+// faulting, so this tests one byte at a time without risking a crash.
+bool ReadByteSafely(int pipe_fds[2], const unsigned char* p, unsigned char* out) {
+    if (write(pipe_fds[1], p, 1) != 1) return false;
+    return read(pipe_fds[0], out, 1) == 1;
+}
+
+std::string ProbeCString(int pipe_fds[2], uint64_t addr) {
+    if (addr < 0x10000) return std::string();
+    std::string out;
+    const auto* p = reinterpret_cast<const unsigned char*>(static_cast<uintptr_t>(addr));
+    for (size_t i = 0; i < 64; ++i) {
+        unsigned char c = 0;
+        if (!ReadByteSafely(pipe_fds, p + i, &c)) return out.empty() ? std::string() : out + "...(unreadable)";
+        if (c == 0) return out;
+        if (c < 0x20 || c > 0x7e) return std::string();  // Not text; don't guess.
+        out.push_back(static_cast<char>(c));
+    }
+    return out + "...";
+}
+#endif
+
+void ProbeDeviceInfo(const openscanner::ObscanLibrary& lib, ObScanDeviceManagementHandle device_mgmt) {
+    alignas(16) unsigned char buf[kProbeBytes];
+    std::memset(buf, kProbeFill, sizeof(buf));
+    std::printf("[worker] device_info probe: calling obscan_device_management_get_device_info(idx=0) into a "
+                "%zu-byte buffer (our struct is %zu bytes)\n",
+                sizeof(buf), sizeof(ObScanDeviceInfo));
+    std::fflush(stdout);  // Survive a crash inside the call.
+    ObScanStatus status =
+        lib.obscan_device_management_get_device_info(device_mgmt, 0, reinterpret_cast<ObScanDeviceInfo*>(buf));
+    Report("device_info probe: obscan_device_management_get_device_info", status);
+    if (status != OB_SCAN_SUCCESS) return;
+
+    size_t written = 0;
+    for (size_t i = 0; i < sizeof(buf); ++i) {
+        if (buf[i] != kProbeFill) written = i + 1;
+    }
+    std::printf("[worker] device_info probe: highest byte written = %zu (0x%zx)%s\n", written, written,
+                written > sizeof(ObScanDeviceInfo) ? " — LARGER than our struct" : "");
+
+#if !defined(_WIN32)
+    int pipe_fds[2] = {-1, -1};
+    const bool can_probe = pipe(pipe_fds) == 0;
+#endif
+    const size_t slots = (written + 7) / 8;
+    for (size_t slot = 0; slot < slots; ++slot) {
+        uint64_t v = 0;
+        std::memcpy(&v, buf + slot * 8, sizeof(v));
+        std::string text;
+#if !defined(_WIN32)
+        if (can_probe) text = ProbeCString(pipe_fds, v);
+#endif
+        std::printf("[worker] device_info probe:   +0x%02zx  0x%016llx  lo32=%-11d hi32=%-11d %s%s%s\n", slot * 8,
+                    static_cast<unsigned long long>(v), static_cast<int32_t>(v & 0xffffffffu),
+                    static_cast<int32_t>(v >> 32), text.empty() ? "" : "-> \"", text.c_str(),
+                    text.empty() ? "" : "\"");
+    }
+#if !defined(_WIN32)
+    if (can_probe) {
+        close(pipe_fds[0]);
+        close(pipe_fds[1]);
+    }
+#endif
+    std::fflush(stdout);
 }
 
 int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& library_path, CaptureHandles& h);
@@ -274,6 +392,13 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
         std::printf("[worker] No device detected — stopping here (nothing to scan).\n");
         std::fflush(stdout);
         return 2;
+    }
+
+    const char* probe_env = std::getenv("OPENSCANNER_PROBE_DEVICE_INFO");
+    if (probe_env != nullptr && std::string(probe_env) == "1") {
+        // Same point the real app calls it: on the main thread, right after
+        // the device has connected.
+        ProbeDeviceInfo(lib, device_mgmt);
     }
 
     ObScanSessionConfig session_config = {};
@@ -377,7 +502,7 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
     // uncaught "mutex lock failed" exception. Wait for several stable
     // FRAME_READY data messages instead, up to 20s.
     constexpr int kWantStableFrames = 10;
-    for (int i = 0; i < 100 && g_frame_ready_count.load() < kWantStableFrames; ++i) {
+    for (int i = 0; i < 100 && g_frame_ready_count.load() < kWantStableFrames && !g_device_unplugged; ++i) {
 #if defined(__APPLE__)
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.2, false);
 #else
@@ -386,6 +511,8 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
     }
     std::printf("[worker] frame_ready_count=%d\n", g_frame_ready_count.load());
     std::fflush(stdout);
+
+    if (g_device_unplugged) return kExitDeviceUnplugged;
 
     status = lib.obscan_scan_start(h.scan);
     Report("obscan_scan_start", status);
@@ -413,6 +540,7 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
         int best_value = -1;
         uint32_t best_points = 0;
         for (int sweep_value : kSweepValues) {
+            if (g_device_unplugged) break;
             status = lib.obscan_scan_config_combined_exposure_and_laser_current(h.scan, sweep_value);
             std::printf("[worker] exposure_sweep: set combined_exposure_and_laser_current=%d -> %s\n", sweep_value,
                         StatusName(status));
@@ -443,7 +571,7 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
                     best_value, best_points);
         std::fflush(stdout);
     } else {
-        for (int i = 0; i < kPollCount; ++i) {
+        for (int i = 0; i < kPollCount && !g_device_unplugged; ++i) {
 #if defined(__APPLE__)
             CFRunLoopRunInMode(kCFRunLoopDefaultMode, kPollIntervalMs / 1000.0, false);
 #else
@@ -469,6 +597,10 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
             std::fflush(stdout);
         }
     }
+
+    // On an unplug, skip the mesh read; ReleaseDevice still runs stop and
+    // destroy, which is what lets the SDK drop its handles to the device.
+    if (g_device_unplugged) return kExitDeviceUnplugged;
 
     // OBScanTarget.PauseScan() takes no parameters — see obscan_api.h.
     // Our earlier is_stop_stream bool was invented, not real ABI.

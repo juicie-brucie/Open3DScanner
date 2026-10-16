@@ -88,6 +88,10 @@ int RunSdkSession(const std::string& library_path) {
         // layout is unconfirmed. Off by default so smoke_test reaches
         // obscan_context_destroy; set OPENSCANNER_TRY_DEVICE_INFO=1 to probe
         // it deliberately (the worker isolation keeps a crash contained).
+        // Note this tool never registers a device-message listener, so on
+        // real hardware device_num stays 0 and this loop never runs; use
+        // live_capture_test with OPENSCANNER_PROBE_DEVICE_INFO=1 to recover
+        // the struct's real layout.
         const char* try_info_env = std::getenv("OPENSCANNER_TRY_DEVICE_INFO");
         const bool try_device_info = try_info_env != nullptr && std::string(try_info_env) == "1";
         if (device_num > 0 && !try_device_info) {

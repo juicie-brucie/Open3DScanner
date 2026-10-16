@@ -280,11 +280,17 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // physically connected, the SDK delivers a message to onMessage (confirmed:
 // msg_id=0 with a non-NULL data pointer corresponds to a real connect
 // event, and obscan_device_management_get_device_num() called synchronously
-// inside that callback correctly returns count=1). A spurious-looking first
-// callback (msg_id=308412672, data=NULL) fires immediately upon
-// registration on every run so far — likely a registration acknowledgment,
-// meaning unspecific/unconfirmed; treat unknown msg_id values as
-// non-actionable rather than assuming they're new connect/disconnect types.
+// inside that callback correctly returns count=1).
+//
+// Message IDs, confirmed against the vendor's own native log, which writes
+// "send device msg id : <NAME>" at the moment each one is delivered:
+// 308412672 is OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT, and 0 is
+// OB_SCAN_MESSAGE_ID_DEVICE_CONNECT. The SDK sends a DISCONNECT
+// synchronously inside add_device_msg_listener() to report the initial
+// "no device yet" state (this is the data=NULL callback earlier code took
+// for a registration acknowledgment), then a CONNECT from its watcher
+// thread once the device is opened. A DISCONNECT after a CONNECT is a real
+// unplug.
 //
 // Known hazard: in standalone testing, the real connect-event callback is
 // reproducibly followed by a crash inside the vendor SDK shortly after
@@ -294,10 +300,16 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // that registers this listener inside a disposable worker process (see
 // worker_process.h), not in a process that cannot afford to crash.
 // ---------------------------------------------------------------------------
+// OBScan.SDK.OBScanDeviceMessageID — only the two values confirmed so far.
+typedef enum ObScanDeviceMessageID {
+    OB_SCAN_MESSAGE_ID_DEVICE_CONNECT = 0,
+    OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT = 308412672,
+} ObScanDeviceMessageID;
+
 typedef struct ObScanDeviceMessage {
-    int32_t msg_id;  // 0x00 — OBScanDeviceMessageID; only 0 (device connect) confirmed so far.
+    int32_t msg_id;  // 0x00 — ObScanDeviceMessageID.
     int32_t _pad;    // 0x04 — alignment padding to 8-byte boundary for `data`.
-    void* data;      // 0x08 — NULL on the spurious registration callback; non-NULL on a real connect event.
+    void* data;      // 0x08 — NULL on the initial DISCONNECT; non-NULL on a real connect event.
 } ObScanDeviceMessage;
 
 typedef void (*ObScanDeviceMessageDelegate)(ObScanDeviceMessage msg);
@@ -333,8 +345,18 @@ typedef struct ObScanDataMessageListener {
     ObScanDataMessageDelegate onMessage;  // 0x00
 } ObScanDataMessageListener;
 
+// OBScan.SDK.OBScanProcessMessageID — only the value confirmed so far: the
+// vendor's native log writes "send process msg id :
+// OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR" at the same point our
+// process listener receives 341967109 (the only process message in those
+// runs). The real CrealityScan app receives it on the same physical setup;
+// it's a warning about the marker layout, not a failure.
+typedef enum ObScanProcessMessageID {
+    OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR = 341967109,
+} ObScanProcessMessageID;
+
 typedef struct ObScanProcessMessage {
-    int32_t msg_id;  // 0x00 — ObScanProcessMessageID (FRAME_BUFFER_FULL, MAX_FRAMES_REACHED, DETECT_FACE, SCANNING_FAILED, ...).
+    int32_t msg_id;  // 0x00 — ObScanProcessMessageID; the managed enum also names FRAME_BUFFER_FULL, MAX_FRAMES_REACHED, DETECT_FACE, SCANNING_FAILED, ... (values unconfirmed).
     int32_t _pad;    // 0x04
     void* data;      // 0x08
 } ObScanProcessMessage;
