@@ -75,6 +75,7 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
 
 #else  // POSIX
 
+#include <cerrno>
 #include <climits>
 #include <csignal>
 #include <cstdlib>
@@ -163,8 +164,17 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
     const int kMaxPolls = (timeout_seconds * 1000) / kPollIntervalMs;
     for (int poll_count = 0; poll_count < kMaxPolls; ++poll_count) {
         pid_t wait_ret = waitpid(pid, &status, WNOHANG);
+        if (wait_ret < 0 && errno == EINTR) {
+            continue;  // Interrupted by a signal, not a failure; poll again.
+        }
         if (wait_ret < 0) {
-            if (out_reason != nullptr) *out_reason = std::string("waitpid failed: ") + strerror(errno);
+            // Don't leave the worker running unsupervised with nobody left
+            // to enforce the timeout.
+            std::string err = strerror(errno);
+            kill(pid, SIGKILL);
+            while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
+            }
+            if (out_reason != nullptr) *out_reason = "waitpid failed: " + err;
             return false;
         }
         if (wait_ret == pid) {
@@ -176,7 +186,9 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
 
     if (!exited) {
         kill(pid, SIGKILL);
-        waitpid(pid, &status, 0);  // Reap it — SIGKILL is asynchronous.
+        // Reap it — SIGKILL is asynchronous.
+        while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
+        }
         if (out_reason != nullptr) {
             *out_reason = "child timed out after " + std::to_string(timeout_seconds) + "s and was force-killed";
         }
