@@ -41,10 +41,13 @@ struct CapturedPointCloud {
 // Converts a live/preview reconstructed mesh (obscan_scan_get_realtime_model_mesh)
 // into mesh::MeshBuffers, ready for mesh/'s boolean/decimate tools. Copies
 // all data immediately; does not retain the source struct's pointers.
+// Throws std::invalid_argument if a non-zero count comes with a null buffer,
+// or a triangle indexes past num_vertices.
 mesh::MeshBuffers from_obscan_mesh(const ObScanTriangleMesh& captured);
 
 // Converts a raw point cloud (obscan_scan_get_raw_cloud) into a plain,
 // owned position buffer. Copies all data immediately.
+// Throws std::invalid_argument if num_points > 0 but points is null.
 CapturedPointCloud from_obscan_point_cloud(const ObScanPointClouds& captured);
 
 }  // namespace openscanner
