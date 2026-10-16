@@ -145,16 +145,18 @@ later, has a complete MoltenVK extension listing.
 
 The real cause, found by a parallel session working the same bug: the
 original `vulkan_disable_interpose.c` only interposed
-`vkCreateInstance`/`vkCreateDevice` directly, which relies on dyld
-having bound the calling code's references to those symbols at the
-interposing dylib's own load time. But `texture_mode::shutdown_network()`'s
-SuperPoint network runs on ncnn, which resolves Vulkan entry points
-*indirectly* via `dlsym()` + `vkGetInstanceProcAddr()` — a lookup path
-classic `__interpose` never touches, so the original interposer never
-actually fired against it. The fix also interposes `dlsym()` and
-`vkGetInstanceProcAddr()`/`vk_icdGetInstanceProcAddr()` themselves, so
-any route to `vkCreateInstance`/`vkCreateDevice` is caught regardless
-of how ncnn finds it.
+`vkCreateInstance`/`vkCreateDevice` directly, which only catches calling
+code whose references to those exact symbols dyld binds.
+`texture_mode::shutdown_network()`'s SuperPoint network runs on ncnn,
+which doesn't call `vkCreateInstance` that way: it fetches it at runtime
+through `vkGetInstanceProcAddr()`, so the original interposer never
+fired against it. The fix also interposes `vkGetInstanceProcAddr()` and
+`dlsym()`, and catches `vk_icdGetInstanceProcAddr()` lookups through the
+`dlsym()` hook. In the confirming runs the route that actually fired was
+the interposed `vkGetInstanceProcAddr()`
+(`intercepted vkGetInstanceProcAddr lookup of a create function`); the
+`dlsym()` hook never logged an interception, so it's a safety net for
+other lookup routes rather than the part that fixed this one.
 
 Hardware-confirmed twice, back-to-back, with no power cycle between
 runs: `obscan_context_destroy()` returning `OB_SCAN_SUCCESS` in

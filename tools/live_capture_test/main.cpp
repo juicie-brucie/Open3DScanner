@@ -123,6 +123,75 @@ void OnProcessMessage(ObScanProcessMessage msg) {
     std::fflush(stdout);
 }
 
+// The vendor SDK keeps the listener pointers it's given and calls them from
+// its own threads, which can still be running after RunCaptureSteps returns
+// (and during process exit). Static storage keeps them valid for the whole
+// process lifetime instead of pointing into a dead stack frame.
+ObScanDataMessageListener g_data_listener = {&OnDataMessage};
+ObScanProcessMessageListener g_process_listener = {&OnProcessMessage};
+ObScanDeviceMessageListener g_device_listener = {&OnDeviceMessage};
+
+// What the run has acquired so far, so ReleaseDevice can undo exactly that
+// much no matter which step it stopped at.
+struct CaptureHandles {
+    ObScanContextHandle context = nullptr;
+    ObScanSessionHandle session = nullptr;
+    ObScanScanHandle scan = nullptr;
+    bool previewed = false;
+    bool started = false;
+    bool paused = false;
+    bool stopped = false;
+};
+
+// Runs on every exit path, success or failure. Previously an early
+// `return 1` after obscan_scan_preview succeeded (e.g. a failed
+// obscan_scan_start) exited with the laser still streaming and nothing
+// destroyed, leaving the device for the vendor SDK's threads to abandon at
+// process exit — the same "stale device state, needs a power cycle"
+// pattern described in README.md "Known issues".
+void ReleaseDevice(const openscanner::ObscanLibrary& lib, CaptureHandles& h) {
+    ObScanStatus status;
+    if (h.started && !h.paused) {
+        status = lib.obscan_scan_pause(h.scan);
+        Report("cleanup: obscan_scan_pause", status);
+        h.paused = status == OB_SCAN_SUCCESS;
+    }
+    if (h.previewed && !h.stopped) {
+        status = lib.obscan_scan_stop(h.scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/true);
+        Report("cleanup: obscan_scan_stop", status);
+        h.stopped = true;
+    }
+    if (h.session != nullptr) {
+        auto session_destroy_start = std::chrono::steady_clock::now();
+        status = lib.obscan_session_destroy(&h.session);
+        auto session_destroy_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - session_destroy_start)
+                                       .count();
+        std::printf("[worker] obscan_session_destroy took %lldms\n", static_cast<long long>(session_destroy_ms));
+        Report("obscan_session_destroy", status);
+        h.session = nullptr;
+    }
+    if (h.context != nullptr) {
+        // Known to crash or hang inside the vendor SDK (see README.md
+        // "Known issues"); that's why this whole function runs in an
+        // isolated worker with a timeout. In the hardware runs under
+        // logs/stop_abi_fix_validation/, the hang happens only after the
+        // vendor's own "Context destroyed" device release, right after
+        // MoltenVK logs "Created VkDevice" — the path
+        // vulkan_disable_interpose.c is meant to block.
+        auto context_destroy_start = std::chrono::steady_clock::now();
+        status = lib.obscan_context_destroy(&h.context);
+        auto context_destroy_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - context_destroy_start)
+                                       .count();
+        std::printf("[worker] obscan_context_destroy took %lldms\n", static_cast<long long>(context_destroy_ms));
+        Report("obscan_context_destroy", status);
+        h.context = nullptr;
+    }
+}
+
+int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& library_path, CaptureHandles& h);
+
 int RunLiveCapture(const std::string& library_path) {
     std::printf("[worker] Loading OBScan SDK from: %s\n", library_path.c_str());
     std::fflush(stdout);
@@ -130,6 +199,14 @@ int RunLiveCapture(const std::string& library_path) {
     openscanner::ObscanLibrary lib(library_path);
     std::printf("[worker] Resolved all symbols OK.\n");
     std::fflush(stdout);
+
+    CaptureHandles handles;
+    int rc = RunCaptureSteps(lib, library_path, handles);
+    ReleaseDevice(lib, handles);
+    return rc;
+}
+
+int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& library_path, CaptureHandles& h) {
 
     // Leaving this empty crashes the vendor SDK (uncaught std::invalid_
     // argument, "... the file is not exists !") the moment it needs its
@@ -147,28 +224,26 @@ int RunLiveCapture(const std::string& library_path) {
     context_config.output_computer_performance_fps_dir = "/tmp/openscanner_live_fps_log";
     context_config.output_windows_gpu_info_dir = "";
 
-    ObScanContextHandle context = nullptr;
-    ObScanStatus status = lib.obscan_context_create(&context, &context_config);
+    ObScanStatus status = lib.obscan_context_create(&h.context, &context_config);
     Report("obscan_context_create", status);
-    if (status != OB_SCAN_SUCCESS) return 1;
+    if (status != OB_SCAN_SUCCESS) {
+        h.context = nullptr;  // Don't let cleanup destroy a handle that was never created.
+        return 1;
+    }
 
     ObScanDeviceManagementHandle device_mgmt = nullptr;
-    status = lib.obscan_context_get_device_management(context, &device_mgmt);
+    status = lib.obscan_context_get_device_management(h.context, &device_mgmt);
     Report("obscan_context_get_device_management", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
     // The real app always registers these two before touching the device
     // or session; without them obscan_scan_preview() later fails with
     // OB_SCAN_ERROR_LISTENER_NOT_FOUND.
-    ObScanDataMessageListener data_listener = {};
-    data_listener.onMessage = &OnDataMessage;
-    status = lib.obscan_context_add_data_msg_listener(context, &data_listener);
+    status = lib.obscan_context_add_data_msg_listener(h.context, &g_data_listener);
     Report("obscan_context_add_data_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
-    ObScanProcessMessageListener process_listener = {};
-    process_listener.onMessage = &OnProcessMessage;
-    status = lib.obscan_context_add_process_msg_listener(context, &process_listener);
+    status = lib.obscan_context_add_process_msg_listener(h.context, &g_process_listener);
     Report("obscan_context_add_process_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
@@ -178,9 +253,7 @@ int RunLiveCapture(const std::string& library_path) {
     // at 0 forever no matter how much the run loop gets pumped, which is
     // why earlier runs of this tool never saw an already-connected
     // device. See README.md "Known issues".
-    ObScanDeviceMessageListener listener = {};
-    listener.onMessage = &OnDeviceMessage;
-    status = lib.obscan_device_management_add_device_msg_listener(device_mgmt, &listener);
+    status = lib.obscan_device_management_add_device_msg_listener(device_mgmt, &g_device_listener);
     Report("obscan_device_management_add_device_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
@@ -208,10 +281,12 @@ int RunLiveCapture(const std::string& library_path) {
     session_config.name = "openscanner_live_capture_test";
     session_config.is_import_mesh_file = false;
 
-    ObScanSessionHandle session = nullptr;
-    status = lib.obscan_context_create_session(context, &session_config, &session);
+    status = lib.obscan_context_create_session(h.context, &session_config, &h.session);
     Report("obscan_context_create_session", status);
-    if (status != OB_SCAN_SUCCESS) return 1;
+    if (status != OB_SCAN_SUCCESS) {
+        h.session = nullptr;
+        return 1;
+    }
 
     // Ground truth, not another bisection guess: this device's own
     // scanParamConfig.dat (a real CrealityScan project's saved
@@ -267,8 +342,7 @@ int RunLiveCapture(const std::string& library_path) {
     // physical USB reconnect before debugging config fields further.
     scan_config.name = "openscanner_live_scan";
 
-    ObScanScanHandle scan = nullptr;
-    status = lib.obscan_session_create_scan(session, &scan_config, &scan);
+    status = lib.obscan_session_create_scan(h.session, &scan_config, &h.scan);
     Report("obscan_session_create_scan", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
@@ -281,9 +355,10 @@ int RunLiveCapture(const std::string& library_path) {
     // obscan_scan_preview takes BOTH a progress and a status callback —
     // passing only one (or NULL) misaligned the real signature; see
     // obscan_api.h for how we found this.
-    status = lib.obscan_scan_preview(scan, &OnPreviewProgress, &OnPreviewStatus);
+    status = lib.obscan_scan_preview(h.scan, &OnPreviewProgress, &OnPreviewStatus);
     Report("obscan_scan_preview", status);
     if (status != OB_SCAN_SUCCESS) return 1;
+    h.previewed = true;
 
     // Confirmed against the real CrealityScan app: with this device's
     // default/auto exposure (~500 on a 1-1000 scale), physical markers
@@ -291,7 +366,7 @@ int RunLiveCapture(const std::string& library_path) {
     // only found them after the user turned exposure up well above
     // default. Set it high before waiting for frames, so every frame
     // used for marker detection is already bright enough.
-    status = lib.obscan_scan_config_combined_exposure_and_laser_current(scan, 900);
+    status = lib.obscan_scan_config_combined_exposure_and_laser_current(h.scan, 900);
     Report("obscan_scan_config_combined_exposure_and_laser_current", status);
 
     // A fixed 2s wait wasn't enough — obscan_scan_start still failed with
@@ -312,9 +387,10 @@ int RunLiveCapture(const std::string& library_path) {
     std::printf("[worker] frame_ready_count=%d\n", g_frame_ready_count.load());
     std::fflush(stdout);
 
-    status = lib.obscan_scan_start(scan);
+    status = lib.obscan_scan_start(h.scan);
     Report("obscan_scan_start", status);
     if (status != OB_SCAN_SUCCESS) return 1;
+    h.started = true;
 
     // OPENSCANNER_EXPOSURE_SWEEP=1: for future marker-detection testing
     // on a device/lighting setup we haven't characterized yet, step
@@ -337,7 +413,7 @@ int RunLiveCapture(const std::string& library_path) {
         int best_value = -1;
         uint32_t best_points = 0;
         for (int sweep_value : kSweepValues) {
-            status = lib.obscan_scan_config_combined_exposure_and_laser_current(scan, sweep_value);
+            status = lib.obscan_scan_config_combined_exposure_and_laser_current(h.scan, sweep_value);
             std::printf("[worker] exposure_sweep: set combined_exposure_and_laser_current=%d -> %s\n", sweep_value,
                         StatusName(status));
             std::fflush(stdout);
@@ -349,7 +425,7 @@ int RunLiveCapture(const std::string& library_path) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(kHoldMs / kHoldPolls));
 #endif
                 ObScanPointClouds cloud = {};
-                status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
+                status = lib.obscan_scan_get_raw_cloud(h.scan, &cloud);
                 std::printf("[worker] exposure_sweep: value=%d poll=%d/%d obscan_scan_get_raw_cloud -> %s, "
                             "num_points=%u\n",
                             sweep_value, poll + 1, kHoldPolls, StatusName(status), cloud.num_points);
@@ -379,10 +455,10 @@ int RunLiveCapture(const std::string& library_path) {
             // overriding it back to its own target). No dedicated
             // auto/manual toggle call exists in the ABI, so re-assert
             // every poll instead.
-            lib.obscan_scan_config_combined_exposure_and_laser_current(scan, 900);
+            lib.obscan_scan_config_combined_exposure_and_laser_current(h.scan, 900);
 
             ObScanPointClouds cloud = {};
-            status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
+            status = lib.obscan_scan_get_raw_cloud(h.scan, &cloud);
             std::printf("[worker] poll %2d/%d: obscan_scan_get_raw_cloud -> %s, num_points=%u\n", i + 1, kPollCount,
                         StatusName(status), cloud.num_points);
             if (status == OB_SCAN_SUCCESS && cloud.num_points > 0 && cloud.points != nullptr) {
@@ -396,8 +472,9 @@ int RunLiveCapture(const std::string& library_path) {
 
     // OBScanTarget.PauseScan() takes no parameters — see obscan_api.h.
     // Our earlier is_stop_stream bool was invented, not real ABI.
-    status = lib.obscan_scan_pause(scan);
+    status = lib.obscan_scan_pause(h.scan);
     Report("obscan_scan_pause", status);
+    h.paused = status == OB_SCAN_SUCCESS;
 
     // obscan_scan_get_realtime_model_mesh is only valid while paused —
     // see obscan_api.h. Calling it during the active poll loop above
@@ -405,7 +482,7 @@ int RunLiveCapture(const std::string& library_path) {
     // first pause scan !"); read it here instead, now that it's legal.
     {
         ObScanTriangleMesh mesh = {};
-        ObScanStatus mesh_status = lib.obscan_scan_get_realtime_model_mesh(scan, &mesh);
+        ObScanStatus mesh_status = lib.obscan_scan_get_realtime_model_mesh(h.scan, &mesh);
         std::printf("[worker] obscan_scan_get_realtime_model_mesh -> %s (%d), num_vertices=%u, num_triangles=%u\n",
                     StatusName(mesh_status), static_cast<int>(mesh_status), mesh.num_vertices, mesh.num_triangles);
         std::fflush(stdout);
@@ -430,40 +507,12 @@ int RunLiveCapture(const std::string& library_path) {
     // version that was briefly here got caught as a regression (it
     // returned SUCCESS but did nothing real, leaving both destroys
     // refused with MULTI_CALLED). NULL callbacks are rejected.
-    status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/true);
+    status = lib.obscan_scan_stop(h.scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/true);
     Report("obscan_scan_stop", status);
+    h.stopped = true;
 
-    auto session_destroy_start = std::chrono::steady_clock::now();
-    status = lib.obscan_session_destroy(&session);
-    auto session_destroy_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                   std::chrono::steady_clock::now() - session_destroy_start)
-                                   .count();
-    std::printf("[worker] obscan_session_destroy took %lldms\n", static_cast<long long>(session_destroy_ms));
-    Report("obscan_session_destroy", status);
-
-    // Known to crash inside the vendor SDK (see README.md "Known issues").
-    // That's exactly why this whole function runs in an isolated worker.
-    // Timed explicitly: a prior run burned 300%+ CPU for 3.5+ minutes
-    // here without returning, building Creality's SuperPoint ncnn+
-    // Vulkan network it never uses — the vulkan_disable_interpose fix is
-    // meant to make that fail fast instead.
-    //
-    // CAVEAT this timing alone can't resolve: every "confirmed working,
-    // 0ms" run so far used the now-known-broken 2-arg obscan_scan_stop,
-    // which never actually stopped anything — session_destroy then hit
-    // OB_SCAN_ERROR_MULTI_CALLED and refused immediately, before
-    // context_destroy could ever reach the SuperPoint/Vulkan path at
-    // all. A 0ms destroy in those runs proves nothing about whether the
-    // Vulkan fix works; it needs re-validating now that stop() actually
-    // stops the scan and destroy has real work to do.
-    auto context_destroy_start = std::chrono::steady_clock::now();
-    status = lib.obscan_context_destroy(&context);
-    auto context_destroy_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                   std::chrono::steady_clock::now() - context_destroy_start)
-                                   .count();
-    std::printf("[worker] obscan_context_destroy took %lldms\n", static_cast<long long>(context_destroy_ms));
-    Report("obscan_context_destroy", status);
-
+    // obscan_session_destroy / obscan_context_destroy happen in
+    // ReleaseDevice, which runs on every exit path, not just this one.
     return 0;
 }
 

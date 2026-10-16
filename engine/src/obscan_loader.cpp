@@ -18,9 +18,6 @@ namespace {
 void* OpenLibrary(const std::string& path) {
     return reinterpret_cast<void*>(LoadLibraryA(path.c_str()));
 }
-void CloseLibrary(void* handle) {
-    FreeLibrary(reinterpret_cast<HMODULE>(handle));
-}
 void* ResolveSymbol(void* handle, const char* name) {
     return reinterpret_cast<void*>(GetProcAddress(reinterpret_cast<HMODULE>(handle), name));
 }
@@ -30,9 +27,6 @@ std::string LastErrorMessage() {
 #else
 void* OpenLibrary(const std::string& path) {
     return dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
-}
-void CloseLibrary(void* handle) {
-    dlclose(handle);
 }
 void* ResolveSymbol(void* handle, const char* name) {
     return dlsym(handle, name);
@@ -63,8 +57,8 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
     auto resolve = [this](const char* name) -> void* {
         void* sym = ResolveSymbol(handle_, name);
         if (sym == nullptr) {
-            CloseLibrary(handle_);
-            handle_ = nullptr;
+            // Not dlclose()'d here either: loading it already ran the
+            // vendor's static initializers, which may have started threads.
             throw ObscanLoadError(std::string("OBScan SDK library is missing expected symbol '") + name +
                                    "' (SDK version mismatch?)");
         }
@@ -113,11 +107,14 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
             resolve("obscan_scan_config_combined_exposure_and_laser_current"));
 }
 
-ObscanLibrary::~ObscanLibrary() {
-    if (handle_ != nullptr) {
-        CloseLibrary(handle_);
-    }
-}
+// Deliberately never unloads the vendor library. It starts its own
+// background threads (IOKit device watcher, RPC clients, GVCP network
+// discovery) and keeps the listener pointers it's given; some of those
+// outlive obscan_context_destroy() and all of them are still running if a
+// run bails out before teardown. Unloading the image under them means
+// executing unmapped code — a crash at exit on top of whatever went wrong.
+// The process is about to exit anyway; the OS reclaims the mapping then.
+ObscanLibrary::~ObscanLibrary() = default;
 
 std::string ObscanLibrary::FindDefaultLibraryPath() {
 #if defined(_WIN32)

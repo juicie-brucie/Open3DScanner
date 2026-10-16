@@ -20,6 +20,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <stdexcept>
 #include <vector>
 
 namespace {
@@ -143,11 +144,69 @@ bool CheckPointCloudPath() {
 
 }  // namespace
 
+bool CheckRejectsMalformedVendorData() {
+    using openscanner::from_obscan_mesh;
+    using openscanner::from_obscan_point_cloud;
+
+    std::vector<ObScanPoint> verts = {
+        ObScanPoint{0, 0, 0, 1}, ObScanPoint{1, 0, 0, 1}, ObScanPoint{0, 1, 0, 1}};
+    std::vector<ObScanTriangle> bad_tris = {ObScanTriangle{0, 1, 3}};  // 3 is out of range.
+
+    ObScanTriangleMesh out_of_range{};
+    out_of_range.num_vertices = static_cast<uint32_t>(verts.size());
+    out_of_range.vertices = verts.data();
+    out_of_range.num_triangles = static_cast<uint32_t>(bad_tris.size());
+    out_of_range.triangles = bad_tris.data();
+
+    ObScanTriangleMesh null_vertices{};
+    null_vertices.num_vertices = 3;
+    null_vertices.vertices = nullptr;
+
+    ObScanPointClouds null_points{};
+    null_points.num_points = 4;
+    null_points.points = nullptr;
+
+    struct Case {
+        const char* name;
+        bool threw;
+    } cases[3] = {{"out-of-range triangle index", false},
+                  {"null vertices with num_vertices > 0", false},
+                  {"null points with num_points > 0", false}};
+    try {
+        from_obscan_mesh(out_of_range);
+    } catch (const std::invalid_argument&) {
+        cases[0].threw = true;
+    }
+    try {
+        from_obscan_mesh(null_vertices);
+    } catch (const std::invalid_argument&) {
+        cases[1].threw = true;
+    }
+    try {
+        from_obscan_point_cloud(null_points);
+    } catch (const std::invalid_argument&) {
+        cases[2].threw = true;
+    }
+
+    bool ok = true;
+    for (const Case& c : cases) {
+        if (!c.threw) {
+            std::fprintf(stderr, "FAIL: bridge accepted malformed vendor data: %s\n", c.name);
+            ok = false;
+        }
+    }
+    if (ok) {
+        std::printf("validation OK: bridge rejects malformed vendor meshes/clouds\n");
+    }
+    return ok;
+}
+
 int main() {
     const bool mesh_ok = CheckMeshPath();
     const bool cloud_ok = CheckPointCloudPath();
+    const bool validation_ok = CheckRejectsMalformedVendorData();
 
-    if (!mesh_ok || !cloud_ok) {
+    if (!mesh_ok || !cloud_ok || !validation_ok) {
         std::fprintf(stderr, "FAIL: capture pipeline smoke test failed\n");
         return EXIT_FAILURE;
     }

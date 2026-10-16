@@ -21,6 +21,7 @@
 //   smoke_test [path-to-liborbbec_scan.dylib-or-lib_orbbec_scan.dll]
 
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -80,7 +81,21 @@ int RunSdkSession(const std::string& library_path) {
         std::printf("[worker] obscan_device_management_get_device_num() -> %s, count=%d\n", StatusName(status),
                     device_num);
 
-        for (int32_t i = 0; i < device_num; ++i) {
+        // obscan_device_management_get_device_info has never been seen to
+        // succeed on hardware (no log in logs/ shows it), and the same call
+        // was the leading suspect for the reproducible segfault in
+        // logs/branch_claude-clever-albattani-cebx0e/. Its ObScanDeviceInfo
+        // layout is unconfirmed. Off by default so smoke_test reaches
+        // obscan_context_destroy; set OPENSCANNER_TRY_DEVICE_INFO=1 to probe
+        // it deliberately (the worker isolation keeps a crash contained).
+        const char* try_info_env = std::getenv("OPENSCANNER_TRY_DEVICE_INFO");
+        const bool try_device_info = try_info_env != nullptr && std::string(try_info_env) == "1";
+        if (device_num > 0 && !try_device_info) {
+            std::printf("[worker] skipping obscan_device_management_get_device_info "
+                        "(set OPENSCANNER_TRY_DEVICE_INFO=1 to call it)\n");
+        }
+        for (int32_t i = 0; try_device_info && i < device_num; ++i) {
+            std::fflush(stdout);  // Survive a crash inside the next call.
             ObScanDeviceInfo info = {};
             status = lib.obscan_device_management_get_device_info(device_mgmt, i, &info);
             if (status == OB_SCAN_SUCCESS) {

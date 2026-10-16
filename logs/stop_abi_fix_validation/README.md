@@ -50,3 +50,29 @@ unrelated to Vulkan/ncnn. Needs its own investigation; the earlier
 it was never actually validated end-to-end (prior "fast" runs were
 fast only because the broken `stop()` caused `MULTI_CALLED` to refuse
 before `context_destroy` ever reached real work).
+
+## Correction: this hang *is* the Vulkan path
+
+The "neither log contains a single `VK_KHR`/`VK_EXT`/`using metallib`
+line" check above looked only at the vendor's native logs, which never
+contain those lines in any run; MoltenVK and ncnn print to stdout. Our own
+stdout logs for these same two runs (`live_capture_test_run1_90s_timeout.log`,
+`live_capture_test_run2_180s_timeout.log`) show, in both:
+
+1. the vendor's `Context.cpp:89 Context destroyed` (device fully released),
+2. `[mvk-info] Created VkInstance ...`,
+3. `[mvk-info] Created VkDevice to run on GPU Apple M1 ...`,
+4. nothing further until the worker timeout kills it.
+
+So `obscan_context_destroy()` does reach the SuperPoint/ncnn/Vulkan path,
+and `vulkan_disable_interpose` (loaded via `DYLD_INSERT_LIBRARIES` in both
+runs) did not stop instance or device creation. The likely reason: ncnn
+gets the Vulkan loader via `dlsym` and fetches entry points through
+`vkGetInstanceProcAddr`, neither of which dyld's `__interpose` rewrites.
+The interposer now also covers `dlsym` and `vkGetInstanceProcAddr`, and
+reports every interception on stderr with a `[vulkan_disable_interpose]`
+prefix, so the next hardware run shows directly whether it fired.
+
+Also worth noting from the same ordering: the device release finishes
+*before* the hang, so the timeout's force-kill in these runs happened
+after the scanner had already been released.
