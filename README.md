@@ -325,6 +325,76 @@ only, no TLS, no fragmentation, no auth; it listens on all interfaces so
 it can also be reached from another machine on the LAN, but it still
 exists to feed our own page, not as a general-purpose/public server.
 
+### Scan controls
+
+The UI's Start/Pause/Finish buttons, auto/manual exposure toggle, and
+scanner FOV switch are driven by a small text-frame control protocol on
+the same WebSocket connection as the binary point-cloud frames above —
+see `tools/scan_server/main.cpp`'s `HandleControlMessage`/
+`BuildStatusJson` for the exact (hand-parsed, no JSON library, matching
+this file's existing SHA-1/Base64-from-scratch style) shapes. Client ->
+server:
+
+```json
+{"cmd": "start"}
+{"cmd": "pause"}
+{"cmd": "finish"}
+{"cmd": "set_exposure", "auto": true}
+{"cmd": "set_exposure", "auto": false, "value": 650}
+{"cmd": "set_fov", "value": "wide"}
+```
+
+Server -> client (broadcast on every state change, and once a second
+regardless so a freshly-opened tab converges to the current state
+without needing an explicit "client just connected" hook):
+
+```json
+{"type": "status", "mode": "synthetic", "state": "scanning",
+ "autoExposure": false, "exposure": 650, "exposureMin": 1,
+ "exposureMax": 1000, "fov": "wide", "fovControllable": true}
+```
+
+The UI is purely reactive to these status messages rather than
+tracking its own optimistic state, which matters for where this maps
+onto real hardware constraints instead of something the UI could just
+fake:
+
+- **FOV is a real two-position switch on the scanner, not a
+  continuous zoom.** `ObScanFov` (`obscan_api.h`) only has
+  `OB_SCAN_FOV_NORMAL`/`OB_SCAN_FOV_WIDE`, set once in
+  `ObScanModeConfig` at scan creation — there is no SDK call to change
+  it mid-scan. In synthetic mode the control is always live (and maps
+  onto the viewer's own camera angle, 45°/75°, as a visual stand-in
+  with no hardware behind it). In `--live` mode the server reports
+  `fovControllable: false` once scanning has started; the command is
+  still accepted but has no effect on that session.
+- **Exposure/brightness maps directly onto
+  `obscan_scan_config_combined_exposure_and_laser_current`** (range
+  [1, 1000]) in live mode, re-asserted every ~100ms tick while in
+  manual mode to hold it against the device's own ~15s auto-exposure
+  decay (see "Known issues" — there's no dedicated auto/manual switch
+  in the ABI, so "auto" here means not re-asserting a value and
+  letting that decay happen instead). In synthetic mode there's no
+  real sensor; the value instead scales rendered point brightness in
+  the shader, purely so the control has a visible effect in the demo.
+- **Pause calls an already-proven function**
+  (`obscan_scan_pause`, used at end-of-session since before this
+  feature existed). **Resuming a paused live scan by calling
+  `obscan_scan_start` again is new as of this feature and has not
+  been exercised against real hardware before** — this SDK has a
+  documented history of needing a physical power cycle after a call
+  sequence it doesn't like (see "Known issues"). Test it deliberately
+  before relying on it.
+- **Finish reuses the exact Ctrl+C teardown path** (sets the same
+  `g_stop_requested` flag), so it carries the same already-verified
+  pause -> get_realtime_model_mesh -> stop -> session_destroy ->
+  context_destroy sequence — no new risk there.
+
+Synthetic mode starts in the `scanning` state immediately on launch,
+same as before this feature (so a client-less `scan_server` still
+streams a rotating sphere with no UI attached); Start/Pause/Finish let
+a connected UI drive it through every state from there.
+
 The camera auto-fits to each incoming frame's data (centroid + ~2-sigma
 RMS spread, with the near/far clip planes scaled to match) rather than
 using a fixed distance — real scan data is mm-scale with an arbitrary

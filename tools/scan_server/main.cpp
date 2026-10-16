@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <csignal>
@@ -108,6 +109,150 @@ void AppendF32(std::vector<uint8_t>* buf, float v) {
     AppendU32(buf, bits);
 }
 
+// --- Control channel (UI -> server) and status channel (server -> UI) -----
+// Text frames over the same WebSocket, independent of the binary
+// point-cloud frames above. Hand-parsed rather than pulling in a JSON
+// library, matching the rest of this file's "implement the small fixed
+// shape we actually need" style (see ws_broadcast_server.cpp's SHA-1/
+// Base64 for the same reasoning). Only flat {"key": value, ...} objects
+// with string/number/bool leaves are supported — nothing here ever nests.
+
+// Finds "key": <value> in `json` and returns the raw, unparsed value text
+// (quotes kept on if it was a string). false if the key isn't present.
+bool FindJsonValue(const std::string& json, const std::string& key, std::string* out_value) {
+    std::string needle = "\"" + key + "\"";
+    size_t pos = json.find(needle);
+    if (pos == std::string::npos) return false;
+    pos += needle.size();
+    pos = json.find(':', pos);
+    if (pos == std::string::npos) return false;
+    ++pos;
+    while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos]))) ++pos;
+    size_t end = pos;
+    if (end < json.size() && json[end] == '"') {
+        end = json.find('"', end + 1);
+        if (end == std::string::npos) return false;
+        *out_value = json.substr(pos + 1, end - pos - 1);
+        return true;
+    }
+    while (end < json.size() && json[end] != ',' && json[end] != '}') ++end;
+    *out_value = json.substr(pos, end - pos);
+    // Trim trailing whitespace left over from the scan above.
+    while (!out_value->empty() && std::isspace(static_cast<unsigned char>(out_value->back()))) {
+        out_value->pop_back();
+    }
+    return true;
+}
+
+bool FindJsonBool(const std::string& json, const std::string& key, bool* out_value) {
+    std::string raw;
+    if (!FindJsonValue(json, key, &raw)) return false;
+    if (raw == "true") {
+        *out_value = true;
+        return true;
+    }
+    if (raw == "false") {
+        *out_value = false;
+        return true;
+    }
+    return false;
+}
+
+bool FindJsonInt(const std::string& json, const std::string& key, int* out_value) {
+    std::string raw;
+    if (!FindJsonValue(json, key, &raw)) return false;
+    if (raw.empty()) return false;
+    *out_value = std::atoi(raw.c_str());
+    return true;
+}
+
+// Combined exposure/laser-current range per obscan_api.h
+// (fn_obscan_scan_config_combined_exposure_and_laser_current); reused as
+// the UI's manual exposure/brightness slider range for both modes so one
+// value means the same thing everywhere.
+constexpr int kExposureMin = 1;
+constexpr int kExposureMax = 1000;
+constexpr int kDefaultExposure = 900;  // Matches the value this file already drove live scans with.
+
+// Shared between the WS reader thread(s) (writer, via HandleControlMessage)
+// and whichever thread owns the scan loop (reader, via its tick) — hence
+// all-atomic, no locking. Mirrors the synthetic/live scan lifecycle: a
+// scan is idle, scanning, or paused; exposure is either auto or a held
+// manual value; FOV is a two-position switch on the real scanner (no
+// continuous zoom exists in the hardware API — see obscan_api.h's
+// ObScanFov) applied at scan creation, so for live mode this field is
+// informational only once scanning has started (see RunLiveServer).
+struct ControlState {
+    std::atomic<bool> scanning{false};
+    std::atomic<bool> paused{false};
+    std::atomic<bool> finish_requested{false};
+    std::atomic<bool> auto_exposure{true};
+    std::atomic<int> exposure_value{kDefaultExposure};
+    std::atomic<bool> fov_wide{false};
+};
+
+// Applies one control command to `state`. Safe to call from any thread;
+// callers that also need the command to affect real hardware (RunLiveServer)
+// check the same atomics from their own loop rather than acting here, so
+// nothing in this function ever touches the vendor SDK directly.
+void HandleControlMessage(const std::string& json, ControlState* state) {
+    std::string cmd;
+    if (!FindJsonValue(json, "cmd", &cmd)) return;
+    if (cmd == "start") {
+        state->scanning = true;
+        state->paused = false;
+    } else if (cmd == "pause") {
+        state->paused = true;
+    } else if (cmd == "finish") {
+        state->scanning = false;
+        state->paused = false;
+        state->finish_requested = true;
+    } else if (cmd == "set_exposure") {
+        bool is_auto = false;
+        if (FindJsonBool(json, "auto", &is_auto) && is_auto) {
+            state->auto_exposure = true;
+        } else {
+            int value = kDefaultExposure;
+            if (FindJsonInt(json, "value", &value)) {
+                value = std::max(kExposureMin, std::min(kExposureMax, value));
+                state->exposure_value = value;
+            }
+            state->auto_exposure = false;
+        }
+    } else if (cmd == "set_fov") {
+        std::string value;
+        if (FindJsonValue(json, "value", &value)) {
+            state->fov_wide = (value == "wide");
+        }
+    }
+}
+
+// mode is "synthetic" or "live"; fov_controllable is false once a live
+// scan has actually started, since the real SDK has no call to change FOV
+// mid-scan (see ControlState's comment above) — the UI uses it to decide
+// whether to let the operator touch that control at all.
+std::string BuildStatusJson(const char* mode, const ControlState& state, bool fov_controllable) {
+    const char* scan_state = !state.scanning.load() ? "idle" : (state.paused.load() ? "paused" : "scanning");
+    std::string json = "{\"type\":\"status\",\"mode\":\"";
+    json += mode;
+    json += "\",\"state\":\"";
+    json += scan_state;
+    json += "\",\"autoExposure\":";
+    json += state.auto_exposure.load() ? "true" : "false";
+    json += ",\"exposure\":";
+    json += std::to_string(state.exposure_value.load());
+    json += ",\"exposureMin\":";
+    json += std::to_string(kExposureMin);
+    json += ",\"exposureMax\":";
+    json += std::to_string(kExposureMax);
+    json += ",\"fov\":\"";
+    json += state.fov_wide.load() ? "wide" : "normal";
+    json += "\",\"fovControllable\":";
+    json += fov_controllable ? "true" : "false";
+    json += "}";
+    return json;
+}
+
 // Wire format shared with ui/app.js: u32 frame_id, f64 capture_timestamp_ms,
 // u32 point_count, then point_count * (f32 x, f32 y, f32 z).
 std::vector<uint8_t> BuildFrame(uint32_t frame_id, double capture_timestamp_ms, const float* xyz,
@@ -127,6 +272,17 @@ std::vector<uint8_t> BuildFrame(uint32_t frame_id, double capture_timestamp_ms, 
 
 void RunSyntheticServer(uint16_t port) {
     openscanner::WsBroadcastServer server;
+    ControlState control;
+    control.scanning = true;  // Streams immediately, as before, if no UI ever sends a command.
+
+    server.SetTextMessageHandler([&control, &server](const std::string& msg) {
+        HandleControlMessage(msg, &control);
+        // FOV always "controllable" here — the synthetic sphere has no
+        // hardware FOV constraint, it's purely a render-side parameter
+        // ui/app.js reads back out of this same status message.
+        server.BroadcastText(BuildStatusJson("synthetic", control, /*fov_controllable=*/true));
+    });
+
     if (!server.Start(port)) {
         std::fprintf(stderr, "Failed to start WebSocket server on port %u (port in use?)\n", port);
         std::exit(1);
@@ -137,19 +293,36 @@ void RunSyntheticServer(uint16_t port) {
     std::vector<Vec3> base_points = MakeSpherePoints(kPointGridSize);
     uint32_t frame_id = 0;
     double angle = 0.0;
+    double last_status_broadcast_ms = 0.0;
 
     while (true) {
         auto tick_start = std::chrono::steady_clock::now();
 
-        std::vector<Vec3> frame_points = base_points;
-        RotateY(&frame_points, angle);
-        angle += 0.02;
+        if (control.finish_requested.exchange(false)) {
+            // "Finish" resets the demo back to a fresh idle sphere, ready
+            // for the next "Start" — there's no real session to tear down
+            // in synthetic mode.
+            frame_id = 0;
+            angle = 0.0;
+        }
 
-        std::vector<uint8_t> buf =
-            BuildFrame(frame_id++, NowMs(), reinterpret_cast<const float*>(frame_points.data()),
-                       static_cast<uint32_t>(frame_points.size()));
-        if (server.ConnectedClientCount() > 0) {
-            server.BroadcastBinary(buf.data(), buf.size());
+        double now_ms = NowMs();
+        if (now_ms - last_status_broadcast_ms >= 1000.0) {
+            server.BroadcastText(BuildStatusJson("synthetic", control, /*fov_controllable=*/true));
+            last_status_broadcast_ms = now_ms;
+        }
+
+        if (control.scanning.load() && !control.paused.load()) {
+            std::vector<Vec3> frame_points = base_points;
+            RotateY(&frame_points, angle);
+            angle += 0.02;
+
+            std::vector<uint8_t> buf =
+                BuildFrame(frame_id++, now_ms, reinterpret_cast<const float*>(frame_points.data()),
+                           static_cast<uint32_t>(frame_points.size()));
+            if (server.ConnectedClientCount() > 0) {
+                server.BroadcastBinary(buf.data(), buf.size());
+            }
         }
 
         auto elapsed = std::chrono::steady_clock::now() - tick_start;
@@ -361,7 +534,18 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     Report("obscan_scan_start", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
+    ControlState control;
+    control.scanning = true;  // obscan_scan_start above has already run.
+    control.auto_exposure = false;  // Matches the unconditional 900 re-assert this loop already did.
+    control.exposure_value = kDefaultExposure;
+    control.fov_wide = (scan_config.mode_config.scan_fov == OB_SCAN_FOV_WIDE);
+
     openscanner::WsBroadcastServer server;
+    server.SetTextMessageHandler([&control, &server](const std::string& msg) {
+        HandleControlMessage(msg, &control);
+        if (control.finish_requested.load()) g_stop_requested = 1;
+        server.BroadcastText(BuildStatusJson("live", control, /*fov_controllable=*/false));
+    });
     if (!server.Start(port)) {
         std::fprintf(stderr, "[worker] Failed to start WebSocket server on port %u (port in use?)\n", port);
         // Still try to tear the scan down cleanly below rather than leaving
@@ -378,9 +562,20 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     uint32_t frame_id = 0;
     const int total_ticks = (g_live_session_seconds * 1000) / kLiveTickIntervalMs;
     uint32_t max_points_seen = 0;
+    bool hardware_paused = false;
+    // Separate from hardware_paused: records what we last *attempted*
+    // (regardless of outcome), so a failed resume on fragile hardware is
+    // tried exactly once per click, not retried every 100ms tick until it
+    // succeeds — a hammering retry loop is its own risk on an SDK with a
+    // documented history of needing a power cycle after the wrong call
+    // sequence. Pausing again (or clicking Start again) is still a fresh,
+    // deliberate single attempt.
+    bool last_requested_paused = false;
     for (int tick = 0; tick < total_ticks; ++tick) {
         if (g_stop_requested) {
-            std::printf("[worker] Stop requested (Ctrl+C) — ending the live loop and tearing down cleanly.\n");
+            std::printf(
+                "[worker] Stop requested (Ctrl+C or UI \"finish\") — ending the live loop and tearing down "
+                "cleanly.\n");
             std::fflush(stdout);
             break;
         }
@@ -389,42 +584,69 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
 #else
         std::this_thread::sleep_for(std::chrono::milliseconds(kLiveTickIntervalMs));
 #endif
-        // No dedicated auto/manual exposure toggle exists in the ABI; the
-        // device's own auto-exposure decays a one-time value back toward
-        // its own target within ~15s (see obscan_api.h), so re-assert
-        // every tick to hold it.
-        lib.obscan_scan_config_combined_exposure_and_laser_current(scan, 900);
+
+        // Pause/resume only on a state transition, never repeated every
+        // tick. obscan_scan_pause is already proven (this file already
+        // called it once, at end-of-session, before this change). Resuming
+        // via obscan_scan_start on an already-started scan has not been
+        // exercised anywhere in this codebase before now — see the PR this
+        // landed in for the risk accepted by wiring it up.
+        bool want_paused = control.paused.load();
+        if (want_paused != last_requested_paused) {
+            last_requested_paused = want_paused;
+            ObScanStatus toggle_status = want_paused ? lib.obscan_scan_pause(scan) : lib.obscan_scan_start(scan);
+            Report(want_paused ? "obscan_scan_pause (control)" : "obscan_scan_start (resume, control)",
+                   toggle_status);
+            if (toggle_status == OB_SCAN_SUCCESS) hardware_paused = want_paused;
+        }
 
         ObScanPointClouds cloud = {};
-        status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
-        if (status == OB_SCAN_SUCCESS) {
-            max_points_seen = std::max(max_points_seen, cloud.num_points);
-            if (cloud.num_points > 0 && cloud.points != nullptr) {
-                std::vector<float> xyz(static_cast<size_t>(cloud.num_points) * 3);
-                for (uint32_t i = 0; i < cloud.num_points; ++i) {
-                    xyz[i * 3 + 0] = cloud.points[i].x;
-                    xyz[i * 3 + 1] = cloud.points[i].y;
-                    xyz[i * 3 + 2] = cloud.points[i].z;
+        if (!hardware_paused) {
+            // No dedicated auto/manual exposure toggle exists in the ABI; the
+            // device's own auto-exposure decays a one-time value back toward
+            // its own target within ~15s (see obscan_api.h). Hold a manual
+            // value by re-asserting every tick; in auto mode, skip the call
+            // and let that decay happen.
+            if (!control.auto_exposure.load()) {
+                lib.obscan_scan_config_combined_exposure_and_laser_current(scan, control.exposure_value.load());
+            }
+
+            status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
+            if (status == OB_SCAN_SUCCESS) {
+                max_points_seen = std::max(max_points_seen, cloud.num_points);
+                if (cloud.num_points > 0 && cloud.points != nullptr) {
+                    std::vector<float> xyz(static_cast<size_t>(cloud.num_points) * 3);
+                    for (uint32_t i = 0; i < cloud.num_points; ++i) {
+                        xyz[i * 3 + 0] = cloud.points[i].x;
+                        xyz[i * 3 + 1] = cloud.points[i].y;
+                        xyz[i * 3 + 2] = cloud.points[i].z;
+                    }
+                    std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), cloud.num_points);
+                    server.BroadcastBinary(buf.data(), buf.size());
+                } else {
+                    // Broadcast an empty frame too, so the UI's data-fps/HUD
+                    // reflects a real, live connection rather than going idle.
+                    std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
+                    server.BroadcastBinary(buf.data(), buf.size());
                 }
-                std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), cloud.num_points);
-                server.BroadcastBinary(buf.data(), buf.size());
-            } else {
-                // Broadcast an empty frame too, so the UI's data-fps/HUD
-                // reflects a real, live connection rather than going idle.
-                std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
-                server.BroadcastBinary(buf.data(), buf.size());
             }
         }
 
+        if (tick % 10 == 0) {  // ~every 1s
+            server.BroadcastText(BuildStatusJson("live", control, /*fov_controllable=*/false));
+        }
         if (tick % 50 == 0) {  // ~every 5s
-            std::printf("[worker] tick %d/%d: raw_cloud num_points=%u (max seen so far: %u), clients=%zu\n", tick,
-                        total_ticks, cloud.num_points, max_points_seen, server.ConnectedClientCount());
+            std::printf("[worker] tick %d/%d: raw_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
+                        tick, total_ticks, cloud.num_points, max_points_seen, server.ConnectedClientCount(),
+                        hardware_paused ? 1 : 0);
             std::fflush(stdout);
         }
     }
 
-    status = lib.obscan_scan_pause(scan);
-    Report("obscan_scan_pause", status);
+    if (!hardware_paused) {
+        status = lib.obscan_scan_pause(scan);
+        Report("obscan_scan_pause", status);
+    }
 
     {
         ObScanTriangleMesh mesh = {};

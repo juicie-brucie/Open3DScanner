@@ -161,6 +161,57 @@ bool FindHeaderValue(const std::string& request, const std::string& header_name,
     return true;
 }
 
+bool RecvExact(socket_t sock, uint8_t* out, size_t len) {
+    size_t got = 0;
+    while (got < len) {
+#if defined(_WIN32)
+        int n = recv(sock, reinterpret_cast<char*>(out + got), static_cast<int>(len - got), 0);
+#else
+        ssize_t n = recv(sock, out + got, len - got, 0);
+#endif
+        if (n <= 0) return false;
+        got += static_cast<size_t>(n);
+    }
+    return true;
+}
+
+// Decodes exactly one incoming WebSocket frame. Rejects (returns false)
+// anything this server doesn't need to handle: fragmented frames
+// (fin=0) and payloads over 64KiB — real control commands are a few
+// dozen bytes of JSON, so there's nothing legitimate on either side of
+// those limits, only a misbehaving or hostile client.
+bool ReadFrame(socket_t client, uint8_t* opcode, std::vector<uint8_t>* payload) {
+    uint8_t head[2];
+    if (!RecvExact(client, head, sizeof(head))) return false;
+    bool fin = (head[0] & 0x80) != 0;
+    *opcode = head[0] & 0x0F;
+    bool masked = (head[1] & 0x80) != 0;
+    uint64_t len = head[1] & 0x7F;
+    if (len == 126) {
+        uint8_t ext[2];
+        if (!RecvExact(client, ext, sizeof(ext))) return false;
+        len = (static_cast<uint64_t>(ext[0]) << 8) | ext[1];
+    } else if (len == 127) {
+        uint8_t ext[8];
+        if (!RecvExact(client, ext, sizeof(ext))) return false;
+        len = 0;
+        for (int i = 0; i < 8; ++i) len = (len << 8) | ext[i];
+    }
+    uint8_t mask_key[4] = {0, 0, 0, 0};
+    if (masked) {
+        if (!RecvExact(client, mask_key, sizeof(mask_key))) return false;
+    }
+    if (!fin || len > 65536) return false;
+    payload->resize(static_cast<size_t>(len));
+    if (len > 0 && !RecvExact(client, payload->data(), static_cast<size_t>(len))) return false;
+    if (masked) {
+        for (size_t i = 0; i < payload->size(); ++i) {
+            (*payload)[i] ^= mask_key[i % 4];
+        }
+    }
+    return true;
+}
+
 void SendAll(socket_t sock, const uint8_t* data, size_t len) {
     size_t sent = 0;
     while (sent < len) {
@@ -208,6 +259,9 @@ struct WsBroadcastServer::Impl {
     std::vector<socket_t> clients;
     std::vector<std::thread> reader_threads;
 
+    std::mutex handler_mutex;
+    WsBroadcastServer::TextMessageHandler text_handler;
+
     void AcceptLoop() {
         while (running.load()) {
             sockaddr_in client_addr = {};
@@ -228,7 +282,7 @@ struct WsBroadcastServer::Impl {
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
                 clients.push_back(client);
-                reader_threads.emplace_back([this, client]() { WatchForDisconnect(client); });
+                reader_threads.emplace_back([this, client]() { ClientReadLoop(client); });
             }
         }
     }
@@ -256,18 +310,38 @@ struct WsBroadcastServer::Impl {
         return true;
     }
 
-    // We don't need anything a client sends us; this thread exists purely
-    // to detect when a client goes away (recv returns 0/error) so we can
-    // prune it from the broadcast list instead of accumulating dead sockets.
-    void WatchForDisconnect(socket_t client) {
-        char scratch[256];
+    // Reads frames from `client` until it disconnects or sends something
+    // this server doesn't support (see ReadFrame), then prunes it from
+    // the broadcast list. Text frames (control commands) are handed to
+    // the registered handler; pings get an immediate pong; everything
+    // else (binary, pong, close) is just ignored/used as a disconnect
+    // signal.
+    void ClientReadLoop(socket_t client) {
+        uint8_t opcode = 0;
+        std::vector<uint8_t> payload;
         while (running.load()) {
-#if defined(_WIN32)
-            int n = recv(client, scratch, sizeof(scratch), 0);
-#else
-            ssize_t n = recv(client, scratch, sizeof(scratch), 0);
-#endif
-            if (n <= 0) break;
+            if (!ReadFrame(client, &opcode, &payload)) break;
+            if (opcode == 0x8 /* close */) {
+                // Echo the close frame back before dropping the socket —
+                // without this, well-behaved clients see an abnormal
+                // closure instead of a clean one.
+                SendFrame(client, 0x8, payload.data(), payload.size());
+                break;
+            }
+            if (opcode == 0x9 /* ping */) {
+                SendFrame(client, 0xA /* pong */, payload.data(), payload.size());
+                continue;
+            }
+            if (opcode == 0x1 /* text */) {
+                WsBroadcastServer::TextMessageHandler handler_copy;
+                {
+                    std::lock_guard<std::mutex> lock(handler_mutex);
+                    handler_copy = text_handler;
+                }
+                if (handler_copy) {
+                    handler_copy(std::string(payload.begin(), payload.end()));
+                }
+            }
         }
         std::lock_guard<std::mutex> lock(clients_mutex);
         clients.erase(std::remove(clients.begin(), clients.end(), client), clients.end());
@@ -278,6 +352,11 @@ struct WsBroadcastServer::Impl {
 WsBroadcastServer::WsBroadcastServer() : impl_(std::make_unique<Impl>()) {}
 
 WsBroadcastServer::~WsBroadcastServer() { Stop(); }
+
+void WsBroadcastServer::SetTextMessageHandler(TextMessageHandler handler) {
+    std::lock_guard<std::mutex> lock(impl_->handler_mutex);
+    impl_->text_handler = std::move(handler);
+}
 
 bool WsBroadcastServer::Start(uint16_t port) {
 #if defined(_WIN32)
@@ -347,6 +426,13 @@ void WsBroadcastServer::BroadcastBinary(const uint8_t* data, size_t size) {
     std::lock_guard<std::mutex> lock(impl_->clients_mutex);
     for (socket_t client : impl_->clients) {
         SendFrame(client, 0x2 /* binary */, data, size);
+    }
+}
+
+void WsBroadcastServer::BroadcastText(const std::string& text) {
+    std::lock_guard<std::mutex> lock(impl_->clients_mutex);
+    for (socket_t client : impl_->clients) {
+        SendFrame(client, 0x1 /* text */, reinterpret_cast<const uint8_t*>(text.data()), text.size());
     }
 }
 
