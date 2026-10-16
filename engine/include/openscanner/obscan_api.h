@@ -267,6 +267,85 @@ typedef void (*ObScanProgressCallback)(float progress);
 typedef void (*ObScanStatusCallback)(ObScanStatus status);
 
 // ---------------------------------------------------------------------------
+// OBScan.SDK.OBScanDeviceMessage / OBScanDeviceMessageDelegate /
+// OBScanDeviceMessageListener (IL2CPP TypeDefIndex 12707-12709).
+//
+// This is the actual trigger for device detection: obscan_context_create()
+// and obscan_context_get_device_management() do NOT start the vendor SDK's
+// IOKit device-watcher thread by themselves (confirmed by Frida-tracing
+// IOServiceAddMatchingNotification/CFRunLoopAddSource against our own
+// process: zero registrations happen without a listener). The watcher
+// thread is only started as a side effect of registering a real listener
+// via obscan_device_management_add_device_msg_listener(). Once a device is
+// physically connected, the SDK delivers a message to onMessage (confirmed:
+// msg_id=0 with a non-NULL data pointer corresponds to a real connect
+// event, and obscan_device_management_get_device_num() called synchronously
+// inside that callback correctly returns count=1). A spurious-looking first
+// callback (msg_id=308412672, data=NULL) fires immediately upon
+// registration on every run so far — likely a registration acknowledgment,
+// meaning unspecific/unconfirmed; treat unknown msg_id values as
+// non-actionable rather than assuming they're new connect/disconnect types.
+//
+// Known hazard: in standalone testing, the real connect-event callback is
+// reproducibly followed by a crash inside the vendor SDK shortly after
+// returning from onMessage. This is the same class of fragility as the
+// obscan_context_destroy() crash elsewhere in this SDK (vendor code that
+// assumes a full Unity/Cocoa runtime context) — callers must run any code
+// that registers this listener inside a disposable worker process (see
+// worker_process.h), not in a process that cannot afford to crash.
+// ---------------------------------------------------------------------------
+typedef struct ObScanDeviceMessage {
+    int32_t msg_id;  // 0x00 — OBScanDeviceMessageID; only 0 (device connect) confirmed so far.
+    int32_t _pad;    // 0x04 — alignment padding to 8-byte boundary for `data`.
+    void* data;      // 0x08 — NULL on the spurious registration callback; non-NULL on a real connect event.
+} ObScanDeviceMessage;
+
+typedef void (*ObScanDeviceMessageDelegate)(ObScanDeviceMessage msg);
+
+typedef struct ObScanDeviceMessageListener {
+    ObScanDeviceMessageDelegate onMessage;  // 0x00
+} ObScanDeviceMessageListener;
+
+// OBScan.SDK.OBScanDataMessage* / OBScanProcessMessage* — same shape as the
+// device-message family above. obscan_scan_preview() returns
+// OB_SCAN_ERROR_LISTENER_NOT_FOUND unless a data-message listener (and,
+// per the real app's own call log, a process-message listener too) is
+// registered on the context before the scan is created: preview delivers
+// new RGB/depth/IR frames and FRAME_READY through this listener rather
+// than letting the caller poll for them.
+// OBScan.SDK.OBScanDataMessageID.
+typedef enum ObScanDataMessageID {
+    OB_SCAN_MESSAGE_ID_NEW_RGB_IMAGE = 0,
+    OB_SCAN_MESSAGE_ID_NEW_DEPTH_IMAGE = 325189888,
+    OB_SCAN_MESSAGE_ID_NEW_IR_IMAGE = 325189889,
+    OB_SCAN_MESSAGE_ID_FRAME_READY = 325189890,
+} ObScanDataMessageID;
+
+typedef struct ObScanDataMessage {
+    int32_t msg_id;  // 0x00 — ObScanDataMessageID.
+    int32_t _pad;    // 0x04
+    void* data;      // 0x08
+} ObScanDataMessage;
+
+typedef void (*ObScanDataMessageDelegate)(ObScanDataMessage msg);
+
+typedef struct ObScanDataMessageListener {
+    ObScanDataMessageDelegate onMessage;  // 0x00
+} ObScanDataMessageListener;
+
+typedef struct ObScanProcessMessage {
+    int32_t msg_id;  // 0x00 — ObScanProcessMessageID (FRAME_BUFFER_FULL, MAX_FRAMES_REACHED, DETECT_FACE, SCANNING_FAILED, ...).
+    int32_t _pad;    // 0x04
+    void* data;      // 0x08
+} ObScanProcessMessage;
+
+typedef void (*ObScanProcessMessageDelegate)(ObScanProcessMessage msg);
+
+typedef struct ObScanProcessMessageListener {
+    ObScanProcessMessageDelegate onMessage;  // 0x00
+} ObScanProcessMessageListener;
+
+// ---------------------------------------------------------------------------
 // Function pointer types for the subset of the obscan_* C ABI needed by the
 // v1 smoke test (bootstrap + device enumeration). Resolved at runtime via
 // ObscanLibrary (see obscan_loader.h) — this project never links the vendor
@@ -276,10 +355,25 @@ typedef ObScanStatus (*fn_obscan_version)(const char** out_version);
 typedef ObScanStatus (*fn_obscan_context_create)(ObScanContextHandle* out_context, ObScanContextConfig* config);
 typedef ObScanStatus (*fn_obscan_context_destroy)(ObScanContextHandle* context);
 typedef ObScanStatus (*fn_obscan_context_get_device_management)(ObScanContextHandle context, ObScanDeviceManagementHandle* out_device_handle);
+
+// Registering these on the context is required before obscan_scan_preview()
+// will succeed — without them it returns OB_SCAN_ERROR_LISTENER_NOT_FOUND,
+// confirmed by diffing our own call sequence against the real app's own
+// obscan_* call log. Preview delivers frames/process events through these
+// listeners rather than a polling API.
+typedef ObScanStatus (*fn_obscan_context_add_data_msg_listener)(ObScanContextHandle context, ObScanDataMessageListener* listener);
+typedef ObScanStatus (*fn_obscan_context_add_process_msg_listener)(ObScanContextHandle context, ObScanProcessMessageListener* listener);
+
 typedef ObScanStatus (*fn_obscan_device_management_get_device_num)(ObScanDeviceManagementHandle device_handle, int32_t* out_device_num);
 typedef ObScanStatus (*fn_obscan_device_management_get_device_info)(ObScanDeviceManagementHandle device_handle, int32_t idx, ObScanDeviceInfo* out_device_info);
 typedef ObScanStatus (*fn_obscan_device_management_get_active_idx)(ObScanDeviceManagementHandle device_handle, int32_t* out_active_idx);
 typedef ObScanStatus (*fn_obscan_device_management_select_active_device)(ObScanDeviceManagementHandle device_handle, int32_t active_idx);
+
+// The actual trigger for device detection — see the ObScanDeviceMessage*
+// block above. `listener` must stay alive for as long as the SDK might
+// still invoke it; this project always owns one for the lifetime of the
+// context that registered it.
+typedef ObScanStatus (*fn_obscan_device_management_add_device_msg_listener)(ObScanDeviceManagementHandle device_handle, ObScanDeviceMessageListener* listener);
 
 // Session / scan lifecycle — the live-capture path this project actually
 // cares about: context -> session -> scan -> start -> poll raw cloud ->
@@ -292,6 +386,28 @@ typedef ObScanStatus (*fn_obscan_device_management_select_active_device)(ObScanD
 typedef ObScanStatus (*fn_obscan_context_create_session)(ObScanContextHandle context, ObScanSessionConfig* config, ObScanSessionHandle* out_session);
 typedef ObScanStatus (*fn_obscan_session_destroy)(ObScanSessionHandle* session);
 typedef ObScanStatus (*fn_obscan_session_create_scan)(ObScanSessionHandle session, ObScanConfig* config, ObScanScanHandle* out_scan);
+// The real CrealityScan app always calls this before obscan_scan_start —
+// confirmed by capturing its own obscan_* call log during a live scan
+// (see live_capture_test.cpp for the full story). obscan_scan_start on a
+// scan that was never previewed fails with OB_SCAN_ERROR_INVALID_ARGUMENT
+// and the native log reason "cannot called start !": the laser/camera
+// must already be actively streaming (a live preview) before the scan
+// can transition into the recording state.
+//
+// IL2CPP's managed wrapper only exposes `Preview(Action<OBScanStatus>
+// statusCallback)`, which looks like a single-callback signature — but
+// OBScanTarget (the class that wraps this native call) separately defines
+// static trampolines for BOTH a ProgressCallbackDelegate and a
+// StatusCallbackDelegate ([MonoPInvokeCallback(typeof(...))]), the same
+// pairing obscan_scan_stop() uses. Passing only one callback pointer here
+// silently misaligns the real two-callback native signature: the garbage
+// "status" values we saw (e.g. 10281832) were actually stale integer-
+// register contents from calling our function as if it were the
+// *progress* callback (a float, passed in an FP register under AAPCS64,
+// read back as a bogus int), and passing NULL crashed when the SDK tried
+// to invoke the still-missing second (real status) callback.
+typedef ObScanStatus (*fn_obscan_scan_preview)(ObScanScanHandle scan, ObScanProgressCallback progress_callback,
+                                                ObScanStatusCallback status_callback);
 typedef ObScanStatus (*fn_obscan_scan_start)(ObScanScanHandle scan);
 typedef ObScanStatus (*fn_obscan_scan_pause)(ObScanScanHandle scan, bool is_stop_stream);
 typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, ObScanProgressCallback progress_callback, ObScanStatusCallback status_callback, bool is_block);
