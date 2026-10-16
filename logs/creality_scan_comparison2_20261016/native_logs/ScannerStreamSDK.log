@@ -1,0 +1,1136 @@
+[10/16 03:15:02.799416][info][13492650][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/16 03:15:02.799478][info][13492650][GVCPClient.cpp:325] bind 0.0.0.0:64844
+[10/16 03:15:02.799523][info][13492650][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/16 03:15:02.799552][info][13492650][GVCPClient.cpp:325] bind 0.0.0.0:61142
+[10/16 03:15:02.799585][info][13492650][GVCPClient.cpp:239] local mac address: 10:b9:c4:79:fb:78,local ip address:0.0.0.0, interfaceName:en0
+[10/16 03:15:02.799652][info][13492650][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/16 03:15:02.799693][info][13492650][GVCPClient.cpp:325] bind 0.0.0.0:49463
+[10/16 03:15:02.799711][info][13492650][GVCPClient.cpp:239] local mac address: 26:7d:88:46:38:5d,local ip address:0.0.0.0, interfaceName:en1
+[10/16 03:15:02.799903][error][13492652][GVCPClient.cpp:355] sendto failed with error:49
+[10/16 03:15:02.800240][info][13492652][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/16 03:15:02.800260][info][13492652][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/16 03:15:03.808413][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/16 03:15:03.808467][info][13492650][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/16 03:15:04.812141][debug][13492650][NetDeviceEnumerator.cpp:65] Current net source port list:
+[10/16 03:15:04.812283][debug][13492650][NetDeviceEnumerator.cpp:68]  - mac:30:30:34:30:35:30, ip:127.0.0.1, port:10010
+[10/16 03:15:04.812315][debug][13492650][NetDeviceEnumerator.cpp:296] Net device list changed!
+[10/16 03:15:04.812321][debug][13492650][NetDeviceEnumerator.cpp:298] 1 net device(s) found:
+[10/16 03:15:04.812357][debug][13492650][NetDeviceEnumerator.cpp:301]   - Name: CR-Scan Raptor Pro, PID: 0x0C03, SN/ID: CR0886100SN, MAC:30:30:34:30:35:30, IP:127.0.0.1
+[10/16 03:15:04.812364][debug][13492650][NetDeviceEnumerator.cpp:313] Current net device list: (1)
+[10/16 03:15:04.812396][debug][13492650][NetDeviceEnumerator.cpp:316]   - Name: CR-Scan Raptor Pro, PID: 0x0C03, SN/ID: CR0886100SN, MAC:30:30:34:30:35:30, IP:127.0.0.1
+[10/16 03:15:04.812402][info][13492650][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/16 03:15:04.812436][info][13492650][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/16 03:15:04.812461][info][13492650][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/16 03:15:04.812528][debug][13492650][DeviceManager.cpp:115] DeviceManager  createDevice...
+[10/16 03:15:04.812556][debug][13492650][UsbDeviceEnumerator.cpp:338] UsbDeviceEnumerator createDevice...
+[10/16 03:15:04.812572][debug][13492650][NetDeviceEnumerator.cpp:325] NetDeviceEnumerator createDevice...
+[10/16 03:15:04.912810][info][13492650][Ethernet.cpp:244] rpc client connection state:1
+[10/16 03:15:04.913241][info][13492650][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/16 03:15:04.913263][info][13492650][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/16 03:15:04.913333][info][13492650][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/16 03:15:04.913522][debug][13492650][LicenseManager.cpp:244] load license file success!
+[10/16 03:15:04.913574][debug][13492650][ScannerAbstractDevice.cpp:97] Create command start!
+[10/16 03:15:05.015596][info][13492650][RPCClientPort.cpp:20] create client port cost:102ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/16 03:15:05.015720][debug][13492650][VendorCommand.cpp:198] VendorCommand constructor 701b25dd68
+[10/16 03:15:05.016379][debug][13492650][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[10/16 03:15:05.116673][info][13492650][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/16 03:15:05.116725][debug][13492650][ScannerAbstractDevice.cpp:227] Create command done!
+[10/16 03:15:05.116741][info][13492650][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 03:15:05.117380][debug][13492650][PropertyAccessor.cpp:79] get struct data success! propertyId: 1043
+[10/16 03:15:05.117391][debug][13492650][ScannerAbstractDevice.cpp:398] init sensor map start!
+[10/16 03:15:05.117402][debug][13492650][ScannerAbstractDevice.cpp:449] init sensor map done!
+[10/16 03:15:05.117409][debug][13492650][PioneerDevice.cpp:590] Init depth process param start!
+[10/16 03:15:05.118648][debug][13492650][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4027, async: false
+[10/16 03:15:05.119784][debug][13492650][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4026, async: false
+[10/16 03:15:05.119793][debug][13492650][PioneerDevice.cpp:663] Get depth calibration params success! num=1
+[10/16 03:15:05.119806][debug][13492650][PioneerDevice.cpp:667]  - {baseline: -131.18, depthMode: 1, focalPix: 2101.08, unit: 1, z0: 0, dispOffset: 450, invalidDisp: 0}
+[10/16 03:15:05.121020][debug][13492650][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4024, async: false
+[10/16 03:15:05.121038][debug][13492650][PioneerDevice.cpp:717] d2cProfileList_(cmd:OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST:4024) size: 5
+[10/16 03:15:05.121593][debug][13492650][PropertyAccessor.cpp:79] get struct data success! propertyId: 4037
+[10/16 03:15:05.122045][debug][13492650][HostProtocol.cpp:461] get property value success! propertyId=85, cur={intValue: 0, floatValue: 0}, max={intValue: 0, floatValue: 0}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 0, floatValue: 0}
+[10/16 03:15:05.122060][debug][13492650][PropertyAccessor.cpp:28] get property value success! propertyId: 85, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:05.123936][debug][13492650][PropertyAccessor.cpp:64] get raw data! propertyId: 4036, async: false
+[10/16 03:15:05.123977][debug][13492650][PioneerDevice.cpp:808] hwD2DEnable_: false, depthValueScale_: 0.2
+[10/16 03:15:05.123983][debug][13492650][PioneerDevice.cpp:809] Init depth process param done!
+[10/16 03:15:05.124452][debug][13492650][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[10/16 03:15:05.124605][debug][13492650][ScannerAbstractDevice.cpp:284] Create command done!
+[10/16 03:15:05.125072][debug][13492650][HostProtocol.cpp:461] get property value success! propertyId=89, cur={intValue: 0, floatValue: 0}, max={intValue: 0, floatValue: 0}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 0, floatValue: 0}
+[10/16 03:15:05.125091][debug][13492650][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/16 03:15:05.125097][debug][13492650][PropertyAccessor.cpp:28] get property value success! propertyId: 89, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:05.125101][debug][13492650][ScannerAbstractDevice.cpp:294] heartbeat: 0
+[10/16 03:15:05.125108][debug][13492650][HostProtocol.cpp:425] Set property value, propertyId=89, value={intValue: 0, floatValue: 0}
+[10/16 03:15:05.125536][debug][13492650][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/16 03:15:05.125549][debug][13492650][PropertyAccessor.cpp:17] set property value success! propertyId: 89, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:05.125562][info][13492650][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:15:05.125577][debug][13492650][NetDeviceEnumerator.cpp:407] Device 30:30:34:30:35:30 added to created devices list for connection monitoring
+[10/16 03:15:05.125585][info][13492650][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/16 03:15:05.329882][debug][13492650][HostProtocol.cpp:461] get property value success! propertyId=181, cur={intValue: 1792014971, floatValue: 1.25715e+26}, max={intValue: -1, floatValue: nan}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:05.329927][debug][13492650][PropertyAccessor.cpp:28] get property value success! propertyId: 181, value: {intValue: 1792014971, floatValue: 1.25715e+26}
+[10/16 03:15:05.329956][info][13492650][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:15:05.329974][info][13492650][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/16 03:15:05.329984][info][13492650][RPCClientPort.cpp:241] No stream need to stop
+[10/16 03:15:05.329990][info][13492650][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/16 03:15:05.330096][debug][13492650][VendorCommand.cpp:206] destructor 701b25dd68
+[10/16 03:15:05.330106][debug][13492650][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/16 03:15:05.330111][debug][13492650][HostProtocol.cpp:140] ~HostProtocol()
+[10/16 03:15:05.330125][debug][13492756][HostProtocol.cpp:168] emitTranDataFutureSignalThread_ finish
+[10/16 03:15:05.330150][info][13492650][RPCClientPort.cpp:241] No stream need to stop
+[10/16 03:15:05.330171][info][13492650][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/16 03:15:05.330244][debug][13492650][DeviceManager.cpp:115] DeviceManager  createDevice...
+[10/16 03:15:05.330283][debug][13492650][UsbDeviceEnumerator.cpp:338] UsbDeviceEnumerator createDevice...
+[10/16 03:15:05.330302][debug][13492650][NetDeviceEnumerator.cpp:325] NetDeviceEnumerator createDevice...
+[10/16 03:15:05.433180][info][13492650][Ethernet.cpp:244] rpc client connection state:1
+[10/16 03:15:05.433640][info][13492650][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/16 03:15:05.433659][info][13492650][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/16 03:15:05.433669][info][13492650][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/16 03:15:05.433730][debug][13492650][ScannerAbstractDevice.cpp:97] Create command start!
+[10/16 03:15:05.537031][info][13492650][RPCClientPort.cpp:20] create client port cost:104ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/16 03:15:05.537123][debug][13492650][VendorCommand.cpp:198] VendorCommand constructor 701b25dd08
+[10/16 03:15:05.537921][debug][13492650][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[10/16 03:15:05.640237][info][13492650][RPCClientPort.cpp:20] create client port cost:103ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/16 03:15:05.640373][debug][13492650][ScannerAbstractDevice.cpp:227] Create command done!
+[10/16 03:15:05.640389][info][13492650][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 03:15:05.641599][debug][13492650][PropertyAccessor.cpp:79] get struct data success! propertyId: 1043
+[10/16 03:15:05.641767][debug][13492650][ScannerAbstractDevice.cpp:398] init sensor map start!
+[10/16 03:15:05.641784][debug][13492650][ScannerAbstractDevice.cpp:449] init sensor map done!
+[10/16 03:15:05.641789][debug][13492650][PioneerDevice.cpp:590] Init depth process param start!
+[10/16 03:15:05.643578][debug][13492650][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4027, async: false
+[10/16 03:15:05.645179][debug][13492650][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4026, async: false
+[10/16 03:15:05.645198][debug][13492650][PioneerDevice.cpp:663] Get depth calibration params success! num=1
+[10/16 03:15:05.645211][debug][13492650][PioneerDevice.cpp:667]  - {baseline: -131.18, depthMode: 1, focalPix: 2101.08, unit: 1, z0: 0, dispOffset: 450, invalidDisp: 0}
+[10/16 03:15:05.646435][debug][13492650][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4024, async: false
+[10/16 03:15:05.646446][debug][13492650][PioneerDevice.cpp:717] d2cProfileList_(cmd:OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST:4024) size: 5
+[10/16 03:15:05.646853][debug][13492650][PropertyAccessor.cpp:79] get struct data success! propertyId: 4037
+[10/16 03:15:05.647253][debug][13492650][HostProtocol.cpp:461] get property value success! propertyId=85, cur={intValue: 0, floatValue: 0}, max={intValue: 0, floatValue: 0}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 0, floatValue: 0}
+[10/16 03:15:05.647278][debug][13492650][PropertyAccessor.cpp:28] get property value success! propertyId: 85, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:05.648982][debug][13492650][PropertyAccessor.cpp:64] get raw data! propertyId: 4036, async: false
+[10/16 03:15:05.648993][debug][13492650][PioneerDevice.cpp:808] hwD2DEnable_: false, depthValueScale_: 0.2
+[10/16 03:15:05.648998][debug][13492650][PioneerDevice.cpp:809] Init depth process param done!
+[10/16 03:15:05.649421][debug][13492650][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[10/16 03:15:05.649531][debug][13492650][ScannerAbstractDevice.cpp:284] Create command done!
+[10/16 03:15:05.649940][debug][13492650][HostProtocol.cpp:461] get property value success! propertyId=89, cur={intValue: 0, floatValue: 0}, max={intValue: 0, floatValue: 0}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 0, floatValue: 0}
+[10/16 03:15:05.649952][debug][13492650][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/16 03:15:05.649957][debug][13492650][PropertyAccessor.cpp:28] get property value success! propertyId: 89, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:05.649961][debug][13492650][ScannerAbstractDevice.cpp:294] heartbeat: 0
+[10/16 03:15:05.649967][debug][13492650][HostProtocol.cpp:425] Set property value, propertyId=89, value={intValue: 0, floatValue: 0}
+[10/16 03:15:05.650384][debug][13492650][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/16 03:15:05.650406][debug][13492650][PropertyAccessor.cpp:17] set property value success! propertyId: 89, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:05.650418][info][13492650][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:15:05.650432][debug][13492650][NetDeviceEnumerator.cpp:407] Device 30:30:34:30:35:30 added to created devices list for connection monitoring
+[10/16 03:15:05.650439][info][13492650][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/16 03:15:05.651216][debug][13492650][HostProtocol.cpp:461] get property value success! propertyId=181, cur={intValue: 1792014971, floatValue: 1.25715e+26}, max={intValue: -1, floatValue: nan}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:05.651234][debug][13492650][PropertyAccessor.cpp:28] get property value success! propertyId: 181, value: {intValue: 1792014971, floatValue: 1.25715e+26}
+[10/16 03:15:05.651615][debug][13492650][HostProtocol.cpp:461] get property value success! propertyId=186, cur={intValue: 0, floatValue: 0}, max={intValue: 1, floatValue: 1.4013e-45}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:05.651627][debug][13492650][PropertyAccessor.cpp:28] get property value success! propertyId: 186, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:05.651648][debug][13492650][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:05.659415][debug][13492650][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:05.659484][debug][13492650][PropertyAccessor.cpp:123] readFlash success! propertyId: 4057, offset: 8192, dataLen: 8192, async: false
+[10/16 03:15:05.659541][debug][13492650][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:05.675220][debug][13492650][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:05.675370][debug][13492650][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:05.683133][debug][13492650][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:05.683194][debug][13492650][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:05.694050][debug][13492650][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:05.694189][debug][13492650][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:05.703568][debug][13492650][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:05.703877][debug][13492650][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:05.711224][debug][13492650][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:05.711261][debug][13492650][PropertyAccessor.cpp:123] readFlash success! propertyId: 4058, offset: 8192, dataLen: 8192, async: false
+[10/16 03:15:05.711297][debug][13492650][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:05.718446][debug][13492650][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:05.718842][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:15:05.719262][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:15:05.803763][info][13492659][GVCPClient.cpp:421] 0, 3, 248, 1 [**5 logs in 3003ms, last: 03:15:03.808994**]
+[10/16 03:15:05.803842][info][13492660][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**5 logs in 3003ms, last: 03:15:03.808996**]
+[10/16 03:15:06.726968][error][13492854][GVCPClient.cpp:355] sendto failed with error:49 [**2 logs in 3927ms**]
+[10/16 03:15:07.728869][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**2 logs in 3920ms**]
+[10/16 03:15:12.731876][info][13492857][GVCPClient.cpp:421] 0, 3, 248, 1 [**9 logs in 6928ms, last: 03:15:10.743123**]
+[10/16 03:15:12.731876][info][13492858][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**9 logs in 6928ms, last: 03:15:10.743124**]
+[10/16 03:15:12.745436][error][13492919][GVCPClient.cpp:355] sendto failed with error:49 [**3 logs in 6018ms**]
+[10/16 03:15:13.750828][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**3 logs in 6021ms**]
+[10/16 03:15:15.804411][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:15:15.804930][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:15:24.745898][info][13492922][GVCPClient.cpp:421] 0, 3, 248, 1 [**18 logs in 12014ms, last: 03:15:22.774843**]
+[10/16 03:15:24.750887][info][13492923][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**18 logs in 12019ms, last: 03:15:22.774846**]
+[10/16 03:15:24.778823][error][13493016][GVCPClient.cpp:355] sendto failed with error:49 [**6 logs in 12033ms**]
+[10/16 03:15:25.782513][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**6 logs in 12031ms**]
+[10/16 03:15:25.948074][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:15:25.948603][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:15:26.954859][debug][13492638][FrameProcessor.cpp:76] FrameProcessor init with 1 blocks! @4482843704
+[10/16 03:15:26.954884][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.954896][debug][13492638][FrameProcessor.cpp:84]  - block: IMUFrameTransformer, status: enable
+[10/16 03:15:26.954903][debug][13492638][AccelSensor.cpp:10] AccelSensor initting!
+[10/16 03:15:26.954908][info][13492638][AccelSensor.cpp:22] AccelSensor created
+[10/16 03:15:26.954921][info][13492638][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/16 03:15:26.954937][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=2020, value={intValue: 0, floatValue: 0}
+[10/16 03:15:26.955926][debug][13492638][FrameProcessor.cpp:76] FrameProcessor init with 1 blocks! @4482838712
+[10/16 03:15:26.955949][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.955954][debug][13492638][FrameProcessor.cpp:84]  - block: IMUFrameTransformer, status: enable
+[10/16 03:15:26.955960][debug][13492638][GyroSensor.cpp:11] GyroSensor init ...
+[10/16 03:15:26.955964][info][13492638][GyroSensor.cpp:23] GyroSensor created!
+[10/16 03:15:26.955970][info][13492638][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/16 03:15:26.955978][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=2019, value={intValue: 0, floatValue: 0}
+[10/16 03:15:26.956982][debug][13492638][ScannerAbstractDevice.cpp:1008] getDepthAlgModeChecksumList fixedPropertyId: 4034
+[10/16 03:15:26.957979][debug][13492638][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4034, async: false
+[10/16 03:15:26.958016][info][13492638][ScannerAbstractDevice.cpp:808] switchDepthWorkMode done! same mode. currentDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}, targetDepthMode:{name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:15:26.958029][info][13492638][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 03:15:26.958324][info][13492638][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 03:15:26.958655][debug][13492638][PropertyAccessor.cpp:86] set struct data success! propertyId: 1043
+[10/16 03:15:26.958665][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=85, value={intValue: 0, floatValue: 0}
+[10/16 03:15:26.958946][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 85, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:26.958958][debug][13492638][FrameProcessor.cpp:76] FrameProcessor init with 10 blocks! @4482853528
+[10/16 03:15:26.958966][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.958970][debug][13492638][FrameProcessor.cpp:84]  - block: FrameUnpacker, status: enable
+[10/16 03:15:26.958975][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.958979][debug][13492638][FrameProcessor.cpp:84]  - block: DepthMaskRectifyFilter, status: disable
+[10/16 03:15:26.958984][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.958988][debug][13492638][FrameProcessor.cpp:84]  - block: PixelValueOffset, status: disable
+[10/16 03:15:26.958993][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.958996][debug][13492638][FrameProcessor.cpp:84]  - block: Disparity2DepthConverter, status: enable
+[10/16 03:15:26.959001][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.959005][debug][13492638][FrameProcessor.cpp:84]  - block: PixelValueCutOff, status: disable
+[10/16 03:15:26.959009][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.959012][debug][13492638][FrameProcessor.cpp:84]  - block: FrameSoftFilter, status: disable
+[10/16 03:15:26.959016][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.959019][debug][13492638][FrameProcessor.cpp:84]  - block: FrameFlip, status: disable
+[10/16 03:15:26.959024][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.959028][debug][13492638][FrameProcessor.cpp:84]  - block: FrameRotate, status: disable
+[10/16 03:15:26.959033][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.959037][debug][13492638][FrameProcessor.cpp:84]  - block: D2CFilter, status: disable
+[10/16 03:15:26.959042][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:26.959046][debug][13492638][FrameProcessor.cpp:84]  - block: PostProcessFilter, status: disable
+[10/16 03:15:26.959121][debug][13492638][VideoSensor.cpp:224] VideoSensor construct!
+[10/16 03:15:26.959130][debug][13492638][VideoSensor.cpp:249] sensorType:OB_SENSOR_DEPTH,startStreamFailedRetry:0,maxStartStreamDelayMs:5000,streamInterruptedRestart:0,maxFrameIntervalMs:2000
+[10/16 03:15:26.959136][debug][13492638][VideoSensor.cpp:259] VideoSensor created, @OB_SENSOR_DEPTH
+[10/16 03:15:26.959143][error][13492638][PioneerDevice.cpp:371] deRectifyMaskParams is nullptr
+[10/16 03:15:26.959480][debug][13492638][PropertyAccessor.cpp:79] get struct data success! propertyId: 1045
+[10/16 03:15:26.959492][info][13492638][PioneerDevice.cpp:384] Depth sensor has been created!
+[10/16 03:15:26.959504][debug][13492638][FrameProcessor.cpp:198] setPropertyValue id=3004, value={intValue: 0, floatValue: 0}
+[10/16 03:15:26.959512][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 3004, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:26.959523][info][13492638][PioneerDevice.cpp:1254] switchDepthWorkMode done! oldDepthMode: {name: , checksum(hex): 00000074000000000000007400000000, optionCode: NORMAL}, newDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:15:26.959542][debug][13492638][Pipeline.cpp:27] Pipeline init ...
+[10/16 03:15:26.959550][debug][13492638][Pipeline.cpp:162] loadFrameQueueSizeConfig() config queue size: 10
+[10/16 03:15:26.959557][info][13492638][Pipeline.cpp:42] Pipeline created with device: {name: Creality Raptor Pro, sn: CR0886100SN}, @0x10B32F018
+[10/16 03:15:27.062366][info][13492638][RPCClientPort.cpp:20] create client port cost:103ms,port name:Creality Raptor Pro RGB Camera,client port:10012
+[10/16 03:15:27.062415][debug][13492638][FrameProcessor.cpp:76] FrameProcessor init with 3 blocks! @4482817976
+[10/16 03:15:27.062430][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.062437][debug][13492638][FrameProcessor.cpp:84]  - block: FormatConverter, status: disable
+[10/16 03:15:27.062443][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.062449][debug][13492638][FrameProcessor.cpp:84]  - block: FrameFlip, status: disable
+[10/16 03:15:27.062454][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.062458][debug][13492638][FrameProcessor.cpp:84]  - block: FrameRotate, status: disable
+[10/16 03:15:27.062464][debug][13492638][VideoSensor.cpp:224] VideoSensor construct!
+[10/16 03:15:27.062470][debug][13492638][VideoSensor.cpp:249] sensorType:OB_SENSOR_COLOR,startStreamFailedRetry:0,maxStartStreamDelayMs:5000,streamInterruptedRestart:0,maxFrameIntervalMs:2000
+[10/16 03:15:27.062474][debug][13492638][VideoSensor.cpp:259] VideoSensor created, @OB_SENSOR_COLOR
+[10/16 03:15:27.062479][info][13492638][PioneerDevice.cpp:431] Color sensor has been created!
+[10/16 03:15:27.064542][debug][13492638][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4035, async: false
+[10/16 03:15:27.064569][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1920,height:1200,format:OB_FORMAT_Y8,fps:50
+[10/16 03:15:27.064580][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1520,height:1200,format:OB_FORMAT_Y8,fps:60
+[10/16 03:15:27.064588][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1320,height:1040,format:OB_FORMAT_Y8,fps:60
+[10/16 03:15:27.064594][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1920,height:1200,format:OB_FORMAT_Y8,fps:50
+[10/16 03:15:27.064601][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1920,height:1200,format:OB_FORMAT_MJPG,fps:50
+[10/16 03:15:27.064607][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1520,height:1200,format:OB_FORMAT_Y8,fps:60
+[10/16 03:15:27.064627][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1520,height:1200,format:OB_FORMAT_MJPG,fps:60
+[10/16 03:15:27.064634][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1320,height:1040,format:OB_FORMAT_Y8,fps:60
+[10/16 03:15:27.064639][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1320,height:1040,format:OB_FORMAT_MJPG,fps:60
+[10/16 03:15:27.064645][info][13492638][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_COLOR,width:1280,height:800,format:OB_FORMAT_MJPG,fps:30
+[10/16 03:15:27.064664][debug][13492638][Gemini2ProfileRestrictor.cpp:71] uvcProfileList size: 23, output profile size: 6
+[10/16 03:15:27.064672][debug][13492638][VideoSensor.cpp:364] Query stream profile! restrict profile list success. size = 23, valid size = 12
+[10/16 03:15:27.064680][debug][13492638][VideoSensor.cpp:381] Query stream profile! size= 24, SensorType=OB_SENSOR_COLOR
+[10/16 03:15:27.064685][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 10}
+[10/16 03:15:27.064689][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 800, fps: 30}
+[10/16 03:15:27.064692][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 800, fps: 25}
+[10/16 03:15:27.064695][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 800, fps: 20}
+[10/16 03:15:27.064699][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 800, fps: 15}
+[10/16 03:15:27.064702][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 800, fps: 10}
+[10/16 03:15:27.064705][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 800, fps: 5}
+[10/16 03:15:27.064708][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 30}
+[10/16 03:15:27.064711][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 25}
+[10/16 03:15:27.064715][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 20}
+[10/16 03:15:27.064718][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 15}
+[10/16 03:15:27.064721][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 5}
+[10/16 03:15:27.064724][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 30}
+[10/16 03:15:27.064727][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 25}
+[10/16 03:15:27.064730][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 20}
+[10/16 03:15:27.064734][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 15}
+[10/16 03:15:27.064737][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 10}
+[10/16 03:15:27.064740][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_RGB888, width: 1280, height: 800, fps: 5}
+[10/16 03:15:27.064743][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_BGRA, width: 1280, height: 800, fps: 30}
+[10/16 03:15:27.064747][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_BGRA, width: 1280, height: 800, fps: 25}
+[10/16 03:15:27.064750][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_BGRA, width: 1280, height: 800, fps: 20}
+[10/16 03:15:27.064759][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_BGRA, width: 1280, height: 800, fps: 15}
+[10/16 03:15:27.064763][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_BGRA, width: 1280, height: 800, fps: 10}
+[10/16 03:15:27.064766][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_BGRA, width: 1280, height: 800, fps: 5}
+[10/16 03:15:27.064781][warning][13492638][ObException.cpp:5] No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_DEPTH
+[10/16 03:15:27.064853][warning][13492638][ObException.cpp:5] No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_IR
+[10/16 03:15:27.170006][info][13492638][RPCClientPort.cpp:20] create client port cost:106ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/16 03:15:27.170242][debug][13492638][FrameProcessor.cpp:76] FrameProcessor init with 4 blocks! @481496077512
+[10/16 03:15:27.170258][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.170263][debug][13492638][FrameProcessor.cpp:84]  - block: PixelValueOffset, status: disable
+[10/16 03:15:27.170269][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.170273][debug][13492638][FrameProcessor.cpp:84]  - block: FrameMirror, status: enable
+[10/16 03:15:27.170278][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.170281][debug][13492638][FrameProcessor.cpp:84]  - block: FrameFlip, status: disable
+[10/16 03:15:27.170286][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.170289][debug][13492638][FrameProcessor.cpp:84]  - block: FrameRotate, status: disable
+[10/16 03:15:27.170293][debug][13492638][VideoSensor.cpp:224] VideoSensor construct!
+[10/16 03:15:27.170299][debug][13492638][VideoSensor.cpp:249] sensorType:OB_SENSOR_IR_LEFT,startStreamFailedRetry:0,maxStartStreamDelayMs:5000,streamInterruptedRestart:0,maxFrameIntervalMs:2000
+[10/16 03:15:27.170303][debug][13492638][VideoSensor.cpp:259] VideoSensor created, @OB_SENSOR_IR_LEFT
+[10/16 03:15:27.170308][info][13492638][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[10/16 03:15:27.170508][debug][13492638][Gemini2ProfileRestrictor.cpp:71] uvcProfileList size: 54, output profile size: 23
+[10/16 03:15:27.170520][debug][13492638][VideoSensor.cpp:364] Query stream profile! restrict profile list success. size = 54, valid size = 23
+[10/16 03:15:27.170526][debug][13492638][VideoSensor.cpp:381] Query stream profile! size= 23, SensorType=OB_SENSOR_IR_LEFT
+[10/16 03:15:27.170532][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 50}
+[10/16 03:15:27.170536][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 60}
+[10/16 03:15:27.170539][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 50}
+[10/16 03:15:27.170543][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 40}
+[10/16 03:15:27.170546][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 30}
+[10/16 03:15:27.170550][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 20}
+[10/16 03:15:27.170554][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 40}
+[10/16 03:15:27.170557][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 30}
+[10/16 03:15:27.170560][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 25}
+[10/16 03:15:27.170573][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 20}
+[10/16 03:15:27.170577][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 15}
+[10/16 03:15:27.170581][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 10}
+[10/16 03:15:27.170584][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 5}
+[10/16 03:15:27.170588][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1520, height: 1200, fps: 60}
+[10/16 03:15:27.170591][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1520, height: 1200, fps: 50}
+[10/16 03:15:27.170594][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1520, height: 1200, fps: 40}
+[10/16 03:15:27.170597][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1520, height: 1200, fps: 30}
+[10/16 03:15:27.170601][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1520, height: 1200, fps: 20}
+[10/16 03:15:27.170604][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1920, height: 1200, fps: 50}
+[10/16 03:15:27.170607][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1920, height: 1200, fps: 40}
+[10/16 03:15:27.170611][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1920, height: 1200, fps: 30}
+[10/16 03:15:27.170614][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1920, height: 1200, fps: 20}
+[10/16 03:15:27.170617][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_MJPG, width: 1920, height: 1200, fps: 15}
+[10/16 03:15:27.170790][debug][13492638][FrameProcessor.cpp:76] FrameProcessor init with 4 blocks! @481496103288
+[10/16 03:15:27.170807][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.170814][debug][13492638][FrameProcessor.cpp:84]  - block: PixelValueOffset, status: disable
+[10/16 03:15:27.170821][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.170827][debug][13492638][FrameProcessor.cpp:84]  - block: FrameMirror, status: enable
+[10/16 03:15:27.170833][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.170837][debug][13492638][FrameProcessor.cpp:84]  - block: FrameFlip, status: disable
+[10/16 03:15:27.170842][debug][13492638][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[10/16 03:15:27.170845][debug][13492638][FrameProcessor.cpp:84]  - block: FrameRotate, status: disable
+[10/16 03:15:27.170851][debug][13492638][VideoSensor.cpp:224] VideoSensor construct!
+[10/16 03:15:27.170855][debug][13492638][VideoSensor.cpp:249] sensorType:OB_SENSOR_IR_RIGHT,startStreamFailedRetry:0,maxStartStreamDelayMs:5000,streamInterruptedRestart:0,maxFrameIntervalMs:2000
+[10/16 03:15:27.170858][debug][13492638][VideoSensor.cpp:259] VideoSensor created, @OB_SENSOR_IR_RIGHT
+[10/16 03:15:27.170862][info][13492638][PioneerDevice.cpp:584] OB_SENSOR_IR_RIGHT sensor has been created!
+[10/16 03:15:27.171113][debug][13492638][Gemini2ProfileRestrictor.cpp:71] uvcProfileList size: 89, output profile size: 13
+[10/16 03:15:27.171126][debug][13492638][VideoSensor.cpp:364] Query stream profile! restrict profile list success. size = 89, valid size = 13
+[10/16 03:15:27.171130][debug][13492638][VideoSensor.cpp:381] Query stream profile! size= 13, SensorType=OB_SENSOR_IR_RIGHT
+[10/16 03:15:27.171134][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 50}
+[10/16 03:15:27.171142][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 60}
+[10/16 03:15:27.171145][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 50}
+[10/16 03:15:27.171148][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 40}
+[10/16 03:15:27.171152][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 30}
+[10/16 03:15:27.171155][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1520, height: 1200, fps: 20}
+[10/16 03:15:27.171158][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 40}
+[10/16 03:15:27.171161][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 30}
+[10/16 03:15:27.171164][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 25}
+[10/16 03:15:27.171168][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 20}
+[10/16 03:15:27.171171][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 15}
+[10/16 03:15:27.171175][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 10}
+[10/16 03:15:27.171178][debug][13492638][VideoSensor.cpp:383]  - {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 5}
+[10/16 03:15:27.172595][debug][13492638][HostProtocol.cpp:461] get property value success! propertyId=2024, cur={intValue: 2, floatValue: 2.8026e-45}, max={intValue: 4, floatValue: 5.60519e-45}, min={intValue: 1, floatValue: 1.4013e-45},def={intValue: 1, floatValue: 1.4013e-45},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.173013][debug][13492638][HostProtocol.cpp:461] get property value success! propertyId=2022, cur={intValue: 8, floatValue: 1.12104e-44}, max={intValue: 15, floatValue: 2.10195e-44}, min={intValue: 1, floatValue: 1.4013e-45},def={intValue: 5, floatValue: 7.00649e-45},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.173024][debug][13492638][AccelSensor.cpp:125] The first one in the list is the default profile
+[10/16 03:15:27.173058][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=85, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.173458][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 85, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.173474][debug][13492638][FrameProcessor.cpp:198] setPropertyValue id=3004, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.173481][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 3004, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.173487][debug][13492638][FrameProcessor.cpp:198] setPropertyValue id=24, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.173492][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 24, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.173994][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 2003, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.174010][debug][13492638][FrameProcessor.cpp:198] setPropertyValue id=18, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.174018][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 18, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.174023][debug][13492638][FrameProcessor.cpp:198] setPropertyValue id=112, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.174030][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 112, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.174044][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=81, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.176474][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 81, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.176883][debug][13492638][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1235568768, floatValue: 1.354e+06}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.176895][debug][13492638][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:27.176901][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.178305][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.178920][debug][13492638][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1235568768, floatValue: 1.354e+06}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.178931][debug][13492638][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:27.178938][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.180343][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.180355][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=160, value={intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:15:27.180735][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:15:27.180745][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=161, value={intValue: 50, floatValue: 7.00649e-44}
+[10/16 03:15:27.181062][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 161, value: {intValue: 50, floatValue: 7.00649e-44}
+[10/16 03:15:27.181076][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=164, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.181545][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 164, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.181558][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=183, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.181990][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 183, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.182010][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=192, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.187106][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 192, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.187125][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=157, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.187583][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 157, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.187596][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=158, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.187979][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 158, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.187998][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 2403, floatValue: 3.36732e-42}
+[10/16 03:15:27.197180][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 2403, floatValue: 3.36732e-42}
+[10/16 03:15:27.197692][debug][13492638][HostProtocol.cpp:461] get property value success! propertyId=187, cur={intValue: 1, floatValue: 1.4013e-45}, max={intValue: 2, floatValue: 2.8026e-45}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.197711][debug][13492638][PropertyAccessor.cpp:28] get property value success! propertyId: 187, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.198048][debug][13492638][Pipeline.cpp:171] Pipeline start() start!
+[10/16 03:15:27.198071][debug][13492638][FrameProcessingBlockManager.cpp:75]  FrameProcessingBlockManager started, 0 blocks contained!
+[10/16 03:15:27.198075][info][13492638][Pipeline.cpp:236] Try to start streams!
+[10/16 03:15:27.198091][debug][13492638][VideoSensor.cpp:529] VideoSensor::start, @OB_SENSOR_IR_LEFT
+[10/16 03:15:27.198098][debug][13492638][FrameMemoryPool.cpp:31] FrameMemoryPool created!
+[10/16 03:15:27.198107][debug][13492638][FrameBufferManager.hpp:65] FrameBufferManager created! frame type:N11libobsensor11IRLeftFrameE, obj addr:0x10b335b10, frame obj total size:2.198MB
+[10/16 03:15:27.198111][debug][13492638][FrameMemoryPool.cpp:59] IRFrame bufferManager created!
+[10/16 03:15:27.198120][debug][13492638][FrameProcessor.cpp:131] Frame processor active blocks chain update: input ->FrameMirror -> output
+[10/16 03:15:27.198124][debug][13492638][FrameProcessor.cpp:143] FrameProcessor started, 4 blocks contained!
+[10/16 03:15:27.198128][info][13492638][VideoSensor.cpp:617] start OB_SENSOR_IR_LEFT stream with profile: {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 50}
+[10/16 03:15:27.198135][info][13492638][RPCClientPort.cpp:192] start OB_STREAM_IR_LEFT stream call
+[10/16 03:15:27.234757][info][13492638][RPCClientPort.cpp:237] start OB_STREAM_IR_LEFT stream done
+[10/16 03:15:27.234809][debug][13492638][VideoSensor.cpp:672] Stream state changed to STREAM_STATE_STARTING. @OB_SENSOR_IR_LEFT
+[10/16 03:15:27.234815][debug][13492638][VideoSensor.cpp:674] Stream starting! @OB_SENSOR_IR_LEFT
+[10/16 03:15:27.234821][debug][13492638][Pipeline.cpp:247] Sensor stream started, sensorType=OB_SENSOR_IR_LEFT
+[10/16 03:15:27.234831][debug][13492638][VideoSensor.cpp:529] VideoSensor::start, @OB_SENSOR_IR_RIGHT
+[10/16 03:15:27.234850][debug][13492638][FrameBufferManager.hpp:65] FrameBufferManager created! frame type:N11libobsensor12IRRightFrameE, obj addr:0x701b67c5e0, frame obj total size:2.198MB
+[10/16 03:15:27.234856][debug][13492638][FrameMemoryPool.cpp:63] IRFrame bufferManager created!
+[10/16 03:15:27.234866][debug][13492638][FrameProcessor.cpp:131] Frame processor active blocks chain update: input ->FrameMirror -> output
+[10/16 03:15:27.234870][debug][13492638][FrameProcessor.cpp:143] FrameProcessor started, 4 blocks contained!
+[10/16 03:15:27.234876][info][13492638][VideoSensor.cpp:617] start OB_SENSOR_IR_RIGHT stream with profile: {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 50}
+[10/16 03:15:27.234885][info][13492638][RPCClientPort.cpp:192] start OB_STREAM_IR_RIGHT stream call
+[10/16 03:15:27.252220][info][13492638][RPCClientPort.cpp:237] start OB_STREAM_IR_RIGHT stream done
+[10/16 03:15:27.252254][debug][13492638][FrameProcessor.cpp:131] Frame processor active blocks chain update: input ->FrameMirror -> output
+[10/16 03:15:27.252262][debug][13492638][VideoSensor.cpp:672] Stream state changed to STREAM_STATE_STARTING. @OB_SENSOR_IR_RIGHT
+[10/16 03:15:27.252266][debug][13492638][VideoSensor.cpp:674] Stream starting! @OB_SENSOR_IR_RIGHT
+[10/16 03:15:27.252279][debug][13492638][Pipeline.cpp:247] Sensor stream started, sensorType=OB_SENSOR_IR_RIGHT
+[10/16 03:15:27.252283][info][13492638][Pipeline.cpp:249] Start streams done!
+[10/16 03:15:27.252290][info][13492638][Pipeline.cpp:232] Pipeline start done!
+[10/16 03:15:27.252309][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=2022, value={intValue: 8, floatValue: 1.12104e-44}
+[10/16 03:15:27.252987][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=2024, value={intValue: 2, floatValue: 2.8026e-45}
+[10/16 03:15:27.253405][debug][13492638][FrameProcessor.cpp:131] Frame processor active blocks chain update: input ->IMUFrameTransformer -> output
+[10/16 03:15:27.253416][debug][13492638][FrameProcessor.cpp:143] FrameProcessor started, 1 blocks contained!
+[10/16 03:15:27.253422][debug][13492638][FrameBufferManager.hpp:65] FrameBufferManager created! frame type:N11libobsensor10AccelFrameE, obj addr:0x701b66ec60, frame obj total size:0.000MB
+[10/16 03:15:27.253426][debug][13492638][FrameMemoryPool.cpp:79] AccelFrame bufferManager created!
+[10/16 03:15:27.253444][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=2020, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.254138][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=3, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.255579][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 3, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.255592][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=152, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.256989][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 152, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.257000][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=153, value={intValue: 0, floatValue: 0}
+[10/16 03:15:27.258501][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 153, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.258512][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=151, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.258986][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 151, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.259377][debug][13492638][PropertyAccessor.cpp:71] get cmd version success! propertyId: 4026, version: 1
+[10/16 03:15:27.260825][debug][13492638][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4026, async: false
+[10/16 03:15:27.261184][debug][13492638][PropertyAccessor.cpp:71] get cmd version success! propertyId: 4024, version: 0
+[10/16 03:15:27.262625][debug][13492638][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4024, async: false
+[10/16 03:15:27.262637][debug][13492638][InternalMultiDataType.cpp:88] createDataDeserializer from Generate failed. return an uint8_t data deserializer. propertyId: 4024, cmdVersion:0 
+[10/16 03:15:27.262705][debug][13492638][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:27.265472][debug][13493055][FrameBufferManager.cpp:35] New frame buffer allocated=0.000MB, total usage: allocated=0.000MB, max limit=2048.000MB
+[10/16 03:15:27.265516][debug][13493055][FrameBufferManager.cpp:35] New frame buffer allocated=0.000MB, total usage: allocated=0.000MB, max limit=2048.000MB
+[10/16 03:15:27.265570][debug][13493056][FrameProcessingBlock.cpp:59] FrameProcessingBlock@N11libobsensor19IMUFrameTransformerE process thread started!
+[10/16 03:15:27.269196][debug][13492638][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:27.269216][debug][13492638][HostProtocol.cpp:29] onStart readFlash
+[10/16 03:15:27.275986][debug][13492638][HostProtocol.cpp:53] onFinish readFlash
+[10/16 03:15:27.296218][debug][13492638][HostProtocol.cpp:461] get property value success! propertyId=2026, cur={intValue: 2403, floatValue: 3.36732e-42}, max={intValue: 3000, floatValue: 4.2039e-42}, min={intValue: 100, floatValue: 1.4013e-43},def={intValue: 3000, floatValue: 4.2039e-42},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.296283][debug][13492638][PropertyAccessor.cpp:34] get property value range success! propertyId: 2026, range: {max: {intValue: 3000, floatValue: 4.2039e-42}, min: {intValue: 100, floatValue: 1.4013e-43}, step: {intValue: 1, floatValue: 1.4013e-45}, def: {intValue: 3000, floatValue: 4.2039e-42}}
+[10/16 03:15:27.302207][debug][13492638][PropertyAccessor.cpp:34] get property value range success! propertyId: 2027, range: {max: {intValue: 15000, floatValue: 2.10195e-41}, min: {intValue: 1000, floatValue: 1.4013e-42}, step: {intValue: 100, floatValue: 1.4013e-43}, def: {intValue: 1000, floatValue: 1.4013e-42}}
+[10/16 03:15:27.303666][debug][13492638][HostProtocol.cpp:461] get property value success! propertyId=2026, cur={intValue: 2403, floatValue: 3.36732e-42}, max={intValue: 3000, floatValue: 4.2039e-42}, min={intValue: 100, floatValue: 1.4013e-43},def={intValue: 3000, floatValue: 4.2039e-42},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.303678][debug][13492638][PropertyAccessor.cpp:34] get property value range success! propertyId: 2026, range: {max: {intValue: 3000, floatValue: 4.2039e-42}, min: {intValue: 100, floatValue: 1.4013e-43}, step: {intValue: 1, floatValue: 1.4013e-45}, def: {intValue: 3000, floatValue: 4.2039e-42}}
+[10/16 03:15:27.309705][debug][13492638][PropertyAccessor.cpp:34] get property value range success! propertyId: 2027, range: {max: {intValue: 15000, floatValue: 2.10195e-41}, min: {intValue: 1000, floatValue: 1.4013e-42}, step: {intValue: 100, floatValue: 1.4013e-43}, def: {intValue: 1000, floatValue: 1.4013e-42}}
+[10/16 03:15:27.309729][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=151, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.310365][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 151, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.318087][debug][13492638][HostProtocol.cpp:425] Set property value, propertyId=235, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.318611][debug][13492638][PropertyAccessor.cpp:17] set property value success! propertyId: 235, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.327545][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:15:27.327927][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2025, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.328258][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=2026, cur={intValue: 2403, floatValue: 3.36732e-42}, max={intValue: 3000, floatValue: 4.2039e-42}, min={intValue: 100, floatValue: 1.4013e-43},def={intValue: 3000, floatValue: 4.2039e-42},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.328269][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 2026, range: {max: {intValue: 3000, floatValue: 4.2039e-42}, min: {intValue: 100, floatValue: 1.4013e-43}, step: {intValue: 1, floatValue: 1.4013e-45}, def: {intValue: 3000, floatValue: 4.2039e-42}}
+[10/16 03:15:27.334207][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 2027, range: {max: {intValue: 15000, floatValue: 2.10195e-41}, min: {intValue: 1000, floatValue: 1.4013e-42}, step: {intValue: 100, floatValue: 1.4013e-43}, def: {intValue: 1000, floatValue: 1.4013e-42}}
+[10/16 03:15:27.334944][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=2026, cur={intValue: 2403, floatValue: 3.36732e-42}, max={intValue: 3000, floatValue: 4.2039e-42}, min={intValue: 100, floatValue: 1.4013e-43},def={intValue: 3000, floatValue: 4.2039e-42},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.334956][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2026, value: {intValue: 2403, floatValue: 3.36732e-42}
+[10/16 03:15:27.336336][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:15:27.337032][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=5, cur={intValue: 1236736768, floatValue: 1.5e+06}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1188229120, floatValue: 27000},def={intValue: 1209170944, floatValue: 150000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.337044][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 5, value: {intValue: 1236736768, floatValue: 1.5e+06}
+[10/16 03:15:27.337603][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.337617][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 154, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.338294][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.338304][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 155, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.339119][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=240, cur={intValue: 1229148160, floatValue: 800000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1223959552, floatValue: 500000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.339131][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 240, value: {intValue: 1229148160, floatValue: 800000}
+[10/16 03:15:27.339795][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=160, cur={intValue: 100, floatValue: 1.4013e-43}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.339807][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:15:27.340461][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=160, cur={intValue: 100, floatValue: 1.4013e-43}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.340471][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:15:27.341214][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=161, cur={intValue: 50, floatValue: 7.00649e-44}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.341224][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 161, value: {intValue: 50, floatValue: 7.00649e-44}
+[10/16 03:15:27.341810][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.341821][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:27.341835][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.343438][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.344053][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.344063][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:27.344069][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.345704][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.346450][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=2026, cur={intValue: 2403, floatValue: 3.36732e-42}, max={intValue: 3000, floatValue: 4.2039e-42}, min={intValue: 100, floatValue: 1.4013e-43},def={intValue: 3000, floatValue: 4.2039e-42},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.346460][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2026, value: {intValue: 2403, floatValue: 3.36732e-42}
+[10/16 03:15:27.346697][debug][13493052][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=2.198MB, max limit=2048.000MB
+[10/16 03:15:27.346718][warning][13493052][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=36828, expected=2304000 @OB_SENSOR_IR_LEFT
+[10/16 03:15:27.347891][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:15:27.348464][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=5, cur={intValue: 1236736768, floatValue: 1.5e+06}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1188229120, floatValue: 27000},def={intValue: 1209170944, floatValue: 150000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.348474][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 5, value: {intValue: 1236736768, floatValue: 1.5e+06}
+[10/16 03:15:27.349399][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.349409][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 154, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.349954][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.349964][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 155, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:15:27.350347][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=240, cur={intValue: 1229148160, floatValue: 800000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1223959552, floatValue: 500000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:27.350360][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 240, value: {intValue: 1229148160, floatValue: 800000}
+[10/16 03:15:27.350810][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=160, cur={intValue: 100, floatValue: 1.4013e-43}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.350819][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:15:27.351205][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=160, cur={intValue: 100, floatValue: 1.4013e-43}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.351214][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:15:27.351555][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=161, cur={intValue: 50, floatValue: 7.00649e-44}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.351565][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 161, value: {intValue: 50, floatValue: 7.00649e-44}
+[10/16 03:15:27.351572][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 3000, floatValue: 4.2039e-42}
+[10/16 03:15:27.360905][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 3000, floatValue: 4.2039e-42}
+[10/16 03:15:27.369043][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:15:27.370988][debug][13493052][VideoSensor.cpp:462] Stream state changed to STREAM_STATE_STREAMING. @OB_SENSOR_IR_LEFT
+[10/16 03:15:27.371018][debug][13493052][FrameTimestampConverter.cpp:98] updateBaseTimeStamp:
+[10/16 03:15:27.371027][debug][13493052][FrameTimestampConverter.cpp:99] 	srcTimestamp=3796003501, prevSrcTsp_=0, tspDecrease=false
+[10/16 03:15:27.371034][debug][13493052][FrameTimestampConverter.cpp:100] 	srcTspDiffMs=3796003, hostTspDiffMs=1792134927371, tspDiffAbnormal=true
+[10/16 03:15:27.371371][debug][13493052][VendorCommand.cpp:426] get TimeStamp: tsp=3796045740, rtt=0
+[10/16 03:15:27.371475][debug][13493052][FrameProcessingBlock.cpp:59] FrameProcessingBlock@N11libobsensor11FrameMirrorE process thread started!
+[10/16 03:15:27.371702][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=4.396MB, max limit=2048.000MB
+[10/16 03:15:27.372197][debug][13493070][FrameBufferManager.hpp:65] FrameBufferManager created! frame type:N11libobsensor8FrameSetE, obj addr:0x10b32aa10, frame obj total size:0.000MB
+[10/16 03:15:27.372212][debug][13493070][FrameMemoryPool.cpp:87] Frameset bufferManager created!
+[10/16 03:15:27.372222][debug][13493070][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT
+[10/16 03:15:27.373326][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=6.593MB, max limit=2048.000MB
+[10/16 03:15:27.374272][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:15:27.374836][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2025, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:27.388107][debug][13493054][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=8.791MB, max limit=2048.000MB
+[10/16 03:15:27.388130][debug][13493054][VideoSensor.cpp:462] Stream state changed to STREAM_STATE_STREAMING. @OB_SENSOR_IR_RIGHT
+[10/16 03:15:27.388140][debug][13493054][FrameTimestampConverter.cpp:98] updateBaseTimeStamp:
+[10/16 03:15:27.388148][debug][13493054][FrameTimestampConverter.cpp:99] 	srcTimestamp=3796023506, prevSrcTsp_=0, tspDecrease=false
+[10/16 03:15:27.388154][debug][13493054][FrameTimestampConverter.cpp:100] 	srcTspDiffMs=3796023, hostTspDiffMs=1792134927388, tspDiffAbnormal=true
+[10/16 03:15:27.388574][debug][13493054][VendorCommand.cpp:426] get TimeStamp: tsp=3796062890, rtt=0
+[10/16 03:15:27.388697][debug][13493054][FrameProcessingBlock.cpp:59] FrameProcessingBlock@N11libobsensor11FrameMirrorE process thread started!
+[10/16 03:15:27.388888][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=10.989MB, max limit=2048.000MB
+[10/16 03:15:27.389424][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=0.000MB, total usage: allocated=10.989MB, max limit=2048.000MB
+[10/16 03:15:27.389458][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=0.000MB, total usage: allocated=10.989MB, max limit=2048.000MB
+[10/16 03:15:27.389495][debug][13493072][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT
+[10/16 03:15:27.416225][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=13.187MB, max limit=2048.000MB
+[10/16 03:15:27.418960][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=15.385MB, max limit=2048.000MB
+[10/16 03:15:27.430377][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=17.582MB, max limit=2048.000MB
+[10/16 03:15:27.472180][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=19.780MB, max limit=2048.000MB
+[10/16 03:15:27.472927][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=21.978MB, max limit=2048.000MB
+[10/16 03:15:27.485403][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=24.175MB, max limit=2048.000MB
+[10/16 03:15:27.486319][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=26.373MB, max limit=2048.000MB
+[10/16 03:15:27.521998][warning][13493054][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=380556, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/16 03:15:27.569881][debug][13492999][HostProtocol.cpp:425] Set property value, propertyId=164, value={intValue: 5, floatValue: 7.00649e-45}
+[10/16 03:15:27.570152][debug][13492999][PropertyAccessor.cpp:17] set property value success! propertyId: 164, value: {intValue: 5, floatValue: 7.00649e-45}
+[10/16 03:15:27.682961][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=152, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.685258][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 152, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.685313][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=153, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.686889][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 153, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:15:27.775077][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=28.571MB, max limit=2048.000MB
+[10/16 03:15:27.775857][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=30.768MB, max limit=2048.000MB
+[10/16 03:15:27.839385][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 2620, floatValue: 3.6714e-42}
+[10/16 03:15:27.850159][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 2620, floatValue: 3.6714e-42}
+[10/16 03:15:27.864796][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=32.966MB, max limit=2048.000MB
+[10/16 03:15:27.866540][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=35.164MB, max limit=2048.000MB
+[10/16 03:15:27.894560][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=37.361MB, max limit=2048.000MB
+[10/16 03:15:27.919063][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=39.559MB, max limit=2048.000MB
+[10/16 03:15:28.060103][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=41.757MB, max limit=2048.000MB
+[10/16 03:15:28.061397][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=43.955MB, max limit=2048.000MB
+[10/16 03:15:28.080395][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:28.080613][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:28.080649][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1221079552, floatValue: 410000}
+[10/16 03:15:28.084858][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1221079552, floatValue: 410000}
+[10/16 03:15:28.110882][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:28.110965][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:28.111033][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1221079552, floatValue: 410000}
+[10/16 03:15:28.112757][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1221079552, floatValue: 410000}
+[10/16 03:15:28.235088][debug][13492999][HostProtocol.cpp:425] Set property value, propertyId=164, value={intValue: 4, floatValue: 5.60519e-45}
+[10/16 03:15:28.236916][debug][13492999][PropertyAccessor.cpp:17] set property value success! propertyId: 164, value: {intValue: 4, floatValue: 5.60519e-45}
+[10/16 03:15:28.282607][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 2240, floatValue: 3.13891e-42}
+[10/16 03:15:28.294933][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 2240, floatValue: 3.13891e-42}
+[10/16 03:15:28.386352][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=46.152MB, max limit=2048.000MB
+[10/16 03:15:28.388133][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=48.350MB, max limit=2048.000MB
+[10/16 03:15:28.501779][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1221079552, floatValue: 410000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:28.501839][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:28.501869][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1218967552, floatValue: 344000}
+[10/16 03:15:28.505243][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1218967552, floatValue: 344000}
+[10/16 03:15:28.530851][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1221079552, floatValue: 410000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:28.530901][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:28.530915][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1218967552, floatValue: 344000}
+[10/16 03:15:28.536194][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1218967552, floatValue: 344000}
+[10/16 03:15:28.732445][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 2150, floatValue: 3.01279e-42}
+[10/16 03:15:28.743693][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 2150, floatValue: 3.01279e-42}
+[10/16 03:15:28.824951][debug][13492999][HostProtocol.cpp:425] Set property value, propertyId=164, value={intValue: 3, floatValue: 4.2039e-45}
+[10/16 03:15:28.831565][debug][13492999][PropertyAccessor.cpp:17] set property value success! propertyId: 164, value: {intValue: 3, floatValue: 4.2039e-45}
+[10/16 03:15:28.899181][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=50.548MB, max limit=2048.000MB
+[10/16 03:15:28.900118][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=52.745MB, max limit=2048.000MB
+[10/16 03:15:28.972865][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1218967552, floatValue: 344000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:28.972956][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:28.973054][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1216855552, floatValue: 278000}
+[10/16 03:15:28.976114][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1216855552, floatValue: 278000}
+[10/16 03:15:29.000767][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1218967552, floatValue: 344000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:29.000805][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:29.000837][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1216855552, floatValue: 278000}
+[10/16 03:15:29.002922][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1216855552, floatValue: 278000}
+[10/16 03:15:29.179406][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 2060, floatValue: 2.88667e-42}
+[10/16 03:15:29.195704][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 2060, floatValue: 2.88667e-42}
+[10/16 03:15:29.418031][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1216855552, floatValue: 278000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:29.418080][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:29.418094][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1213138944, floatValue: 212000}
+[10/16 03:15:29.420616][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1213138944, floatValue: 212000}
+[10/16 03:15:29.446942][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1216855552, floatValue: 278000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:29.447033][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:29.447059][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1213138944, floatValue: 212000}
+[10/16 03:15:29.450370][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1213138944, floatValue: 212000}
+[10/16 03:15:29.621839][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 1970, floatValue: 2.76056e-42}
+[10/16 03:15:29.636766][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 1970, floatValue: 2.76056e-42}
+[10/16 03:15:30.270161][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1213138944, floatValue: 212000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:30.270232][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:30.270248][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1216855552, floatValue: 278000}
+[10/16 03:15:30.275600][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1216855552, floatValue: 278000}
+[10/16 03:15:30.291979][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1213138944, floatValue: 212000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:30.292060][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:30.292084][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1216855552, floatValue: 278000}
+[10/16 03:15:30.295141][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1216855552, floatValue: 278000}
+[10/16 03:15:30.375872][debug][13493071][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT [**146 logs in 3003ms, last: 03:15:30.369762**]
+[10/16 03:15:30.399081][debug][13493072][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**146 logs in 3009ms**]
+[10/16 03:15:30.523567][warning][13493079][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_RIGHT [**5 logs in 3001ms, last: 03:15:30.273625**]
+[10/16 03:15:30.524129][warning][13493078][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=380556, expected=2304000 @OB_SENSOR_IR_LEFT [**6 logs in 3177ms, last: 03:15:30.268423**]
+[10/16 03:15:30.706493][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1216855552, floatValue: 278000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:30.706581][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:30.706722][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1218967552, floatValue: 344000}
+[10/16 03:15:30.711489][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1218967552, floatValue: 344000}
+[10/16 03:15:30.736050][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1216855552, floatValue: 278000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:15:30.736078][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:15:30.736092][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1218967552, floatValue: 344000}
+[10/16 03:15:30.738573][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1218967552, floatValue: 344000}
+[10/16 03:15:31.317740][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 1880, floatValue: 2.63444e-42}
+[10/16 03:15:31.329860][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 1880, floatValue: 2.63444e-42}
+[10/16 03:15:31.735183][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 1790, floatValue: 2.50832e-42}
+[10/16 03:15:31.747668][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 1790, floatValue: 2.50832e-42}
+[10/16 03:15:32.274212][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.638855fps
+[10/16 03:15:32.354293][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.519169fps,bitRate=915.578308Mbps
+[10/16 03:15:32.390432][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.590084fps
+[10/16 03:15:32.414379][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.527153fps,bitRate=919.392334Mbps
+[10/16 03:15:33.078486][debug][13492667][PropertyAccessor.cpp:17] set property value success! propertyId: 2003, value: {intValue: 0, floatValue: 0}
+[10/16 03:15:33.237609][warning][13493059][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[10/16 03:15:33.817710][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 1700, floatValue: 2.38221e-42}
+[10/16 03:15:33.830664][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 1700, floatValue: 2.38221e-42}
+[10/16 03:15:36.011677][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:15:36.012381][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:15:36.387132][debug][13493070][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT [**288 logs in 6011ms**]
+[10/16 03:15:36.403294][debug][13493095][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**287 logs in 6004ms, last: 03:15:36.387419**]
+[10/16 03:15:37.278972][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=199.440445fps
+[10/16 03:15:37.367693][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.867744fps,bitRate=904.634644Mbps
+[10/16 03:15:37.397093][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.333733fps
+[10/16 03:15:37.417141][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.369781fps,bitRate=902.758667Mbps
+[10/16 03:15:37.614193][warning][13493054][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2242620, expected=2304000 @OB_SENSOR_IR_RIGHT [**16 logs in 7090ms**]
+[10/16 03:15:37.615483][warning][13493052][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2242620, expected=2304000 @OB_SENSOR_IR_LEFT [**18 logs in 7091ms**]
+[10/16 03:15:37.791770][warning][13493129][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**1 logs in 4554ms, last: 03:15:34.791103**]
+[10/16 03:15:42.284233][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.559326fps
+[10/16 03:15:42.387827][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.000000fps,bitRate=921.502197Mbps
+[10/16 03:15:42.417995][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.800797fps
+[10/16 03:15:42.435093][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.019928fps,bitRate=921.869446Mbps
+[10/16 03:15:46.200051][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:15:46.200829][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:15:47.289096][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.998993fps
+[10/16 03:15:47.402553][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.850449fps,bitRate=917.276855Mbps
+[10/16 03:15:47.436941][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.611477fps
+[10/16 03:15:47.460019][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.950249fps,bitRate=919.119507Mbps
+[10/16 03:15:48.399405][debug][13493070][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT [**597 logs in 12012ms**]
+[10/16 03:15:48.404443][debug][13493072][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**597 logs in 12001ms**]
+[10/16 03:15:48.783176][info][13493019][GVCPClient.cpp:421] 0, 3, 248, 1 [**36 logs in 24037ms, last: 03:15:46.841593**]
+[10/16 03:15:48.783176][info][13493020][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**36 logs in 24032ms, last: 03:15:46.841595**]
+[10/16 03:15:48.847665][error][13493284][GVCPClient.cpp:355] sendto failed with error:49 [**12 logs in 24068ms**]
+[10/16 03:15:49.849533][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**12 logs in 24067ms**]
+[10/16 03:15:50.133687][warning][13493054][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_RIGHT [**3 logs in 12519ms**]
+[10/16 03:15:50.136491][warning][13493052][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_LEFT [**3 logs in 12521ms**]
+[10/16 03:15:52.299502][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.399185fps
+[10/16 03:15:52.420056][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.019928fps,bitRate=915.000000Mbps
+[10/16 03:15:52.437524][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.190163fps
+[10/16 03:15:52.468117][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.920128fps,bitRate=912.838989Mbps
+[10/16 03:15:52.897351][warning][13493059][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[10/16 03:15:53.509327][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=54.943MB, max limit=2048.000MB
+[10/16 03:15:53.520556][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=57.141MB, max limit=2048.000MB
+[10/16 03:15:53.564572][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=59.338MB, max limit=2048.000MB
+[10/16 03:15:53.610813][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=61.536MB, max limit=2048.000MB
+[10/16 03:15:53.622799][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=63.734MB, max limit=2048.000MB
+[10/16 03:15:53.675940][debug][13493070][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=65.931MB, max limit=2048.000MB
+[10/16 03:15:56.002736][warning][13493393][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**2 logs in 3105ms, last: 03:15:53.125117**]
+[10/16 03:15:56.383285][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:15:56.383940][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:15:57.302796][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=198.281036fps
+[10/16 03:15:57.440212][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.796814fps,bitRate=904.742554Mbps
+[10/16 03:15:57.441298][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=45.363708fps
+[10/16 03:15:57.476667][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=51.118214fps,bitRate=907.472961Mbps
+[10/16 03:16:02.303614][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.359924fps
+[10/16 03:16:02.466365][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.940311fps,bitRate=918.838928Mbps
+[10/16 03:16:02.470345][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.313980fps
+[10/16 03:16:02.493237][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.029896fps,bitRate=920.487183Mbps
+[10/16 03:16:05.176410][warning][13493059][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[10/16 03:16:06.580512][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:16:06.581124][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:16:07.316316][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=192.698975fps
+[10/16 03:16:07.477812][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.888046fps,bitRate=892.973633Mbps
+[10/16 03:16:07.480490][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=46.307384fps
+[10/16 03:16:07.502471][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.708725fps,bitRate=889.532776Mbps
+[10/16 03:16:08.278780][warning][13493576][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**2 logs in 3102ms, last: 03:16:05.378551**]
+[10/16 03:16:12.336460][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=197.609558fps
+[10/16 03:16:12.409848][debug][13493281][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT [**1130 logs in 24010ms, last: 03:16:12.239750**]
+[10/16 03:16:12.413189][debug][13493282][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**1130 logs in 24008ms, last: 03:16:12.241052**]
+[10/16 03:16:12.480968][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.969421fps,bitRate=880.947998Mbps
+[10/16 03:16:12.489927][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=45.118786fps
+[10/16 03:16:12.513817][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=51.686287fps,bitRate=886.539062Mbps
+[10/16 03:16:13.366471][debug][13493055][FrameBufferManager.cpp:35] New frame buffer allocated=0.000MB, total usage: allocated=65.932MB, max limit=2048.000MB
+[10/16 03:16:14.162143][warning][13493308][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1321920, expected=2304000 @OB_SENSOR_IR_RIGHT [**112 logs in 24028ms, last: 03:16:14.117050**]
+[10/16 03:16:14.168787][warning][13493309][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1321920, expected=2304000 @OB_SENSOR_IR_LEFT [**111 logs in 24032ms, last: 03:16:14.116987**]
+[10/16 03:16:14.323593][warning][13493606][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**4 logs in 6044ms, last: 03:16:12.698781**]
+[10/16 03:16:16.768166][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:16:16.777206][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:16:17.343037][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=191.332138fps
+[10/16 03:16:17.487143][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=51.527863fps,bitRate=854.928528Mbps
+[10/16 03:16:17.502063][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=41.093159fps
+[10/16 03:16:17.538309][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.746269fps,bitRate=838.275879Mbps
+[10/16 03:16:22.350062][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=193.329346fps
+[10/16 03:16:22.514954][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.129303fps,bitRate=856.033752Mbps
+[10/16 03:16:22.515836][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=39.497307fps
+[10/16 03:16:22.540462][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.379848fps,bitRate=857.471619Mbps
+[10/16 03:16:26.823664][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:16:26.824203][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:16:27.353788][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.679596fps
+[10/16 03:16:27.527257][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.870338fps,bitRate=907.977417Mbps
+[10/16 03:16:27.528258][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.872929fps
+[10/16 03:16:27.543669][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.970020fps,bitRate=909.916382Mbps
+[10/16 03:16:29.043162][warning][13493969][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**6 logs in 14719ms, last: 03:16:25.477608**]
+[10/16 03:16:32.363708][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=194.011963fps
+[10/16 03:16:32.547928][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.398407fps,bitRate=890.525269Mbps
+[10/16 03:16:32.550403][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.129818fps,bitRate=886.985168Mbps
+[10/16 03:16:32.551409][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=45.988457fps
+[10/16 03:16:36.848599][info][13493287][GVCPClient.cpp:421] 0, 3, 248, 1 [**72 logs in 48065ms, last: 03:16:34.989896**]
+[10/16 03:16:36.851424][info][13493288][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**72 logs in 48068ms, last: 03:16:34.989898**]
+[10/16 03:16:36.995404][error][13494267][GVCPClient.cpp:355] sendto failed with error:49 [**24 logs in 48147ms**]
+[10/16 03:16:37.023037][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:16:37.023799][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:16:37.373977][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=198.003983fps
+[10/16 03:16:37.564675][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.827187fps,bitRate=900.533081Mbps
+[10/16 03:16:37.566628][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.637962fps,bitRate=900.419006Mbps
+[10/16 03:16:37.567392][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.448170fps
+[10/16 03:16:37.998163][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**24 logs in 48148ms**]
+[10/16 03:16:42.384217][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.758331fps
+[10/16 03:16:42.566149][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.980011fps,bitRate=921.231567Mbps
+[10/16 03:16:42.575575][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.109802fps,bitRate=923.623962Mbps
+[10/16 03:16:42.596027][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.910522fps
+[10/16 03:16:47.175521][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:16:47.193226][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:16:47.387962][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=198.680801fps
+[10/16 03:16:47.591503][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.149254fps,bitRate=910.721741Mbps
+[10/16 03:16:47.594082][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.009960fps,bitRate=905.770447Mbps
+[10/16 03:16:47.597163][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.590282fps
+[10/16 03:16:52.397269][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.399185fps
+[10/16 03:16:52.609320][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.249252fps,bitRate=922.029297Mbps
+[10/16 03:16:52.616480][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.348259fps,bitRate=920.096680Mbps
+[10/16 03:16:52.619422][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.581841fps
+[10/16 03:16:55.906582][warning][13494212][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**3 logs in 26863ms, last: 03:16:43.063772**]
+[10/16 03:16:57.375714][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:16:57.385612][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:16:57.403892][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.559326fps
+[10/16 03:16:57.618340][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.109802fps,bitRate=911.819885Mbps
+[10/16 03:16:57.626324][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.299400fps,bitRate=915.316833Mbps
+[10/16 03:16:57.627479][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.722046fps
+[10/16 03:17:00.412169][debug][13493070][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT [**2240 logs in 48002ms**]
+[10/16 03:17:00.434396][debug][13493072][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**2243 logs in 48021ms**]
+[10/16 03:17:02.176956][warning][13493821][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_RIGHT [**146 logs in 48014ms, last: 03:16:58.617233**]
+[10/16 03:17:02.192014][warning][13493822][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1444680, expected=2304000 @OB_SENSOR_IR_LEFT [**151 logs in 48023ms, last: 03:16:58.621134**]
+[10/16 03:17:02.407746][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.639481fps
+[10/16 03:17:02.623467][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.349648fps,bitRate=923.086609Mbps
+[10/16 03:17:02.647401][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.388371fps,bitRate=920.145081Mbps
+[10/16 03:17:02.649631][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.382717fps
+[10/16 03:17:07.425862][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.478271fps
+[10/16 03:17:07.517114][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:17:07.517594][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:17:07.633170][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.099796fps,bitRate=919.564392Mbps
+[10/16 03:17:07.662657][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.049850fps,bitRate=918.608459Mbps
+[10/16 03:17:07.665217][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.641151fps
+[10/16 03:17:12.429215][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=201.039154fps
+[10/16 03:17:12.664271][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.089443fps,bitRate=914.002136Mbps
+[10/16 03:17:12.664373][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.379848fps,bitRate=918.973694Mbps
+[10/16 03:17:12.666560][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.590282fps
+[10/16 03:17:17.433799][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.639481fps
+[10/16 03:17:17.678917][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:17:17.683677][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=51.205418fps,bitRate=916.500488Mbps
+[10/16 03:17:17.685901][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.786697fps,bitRate=916.135437Mbps
+[10/16 03:17:17.687331][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.600082fps
+[10/16 03:17:17.690984][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:17:19.630261][debug][13493072][FrameBufferManager.cpp:35] New frame buffer allocated=2.198MB, total usage: allocated=68.129MB, max limit=2048.000MB
+[10/16 03:17:22.444270][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=196.767105fps
+[10/16 03:17:22.698561][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=51.246262fps,bitRate=889.135376Mbps
+[10/16 03:17:22.699150][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=51.854809fps,bitRate=892.270264Mbps
+[10/16 03:17:22.700606][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=44.484341fps
+[10/16 03:17:24.767621][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=3, value={intValue: 0, floatValue: 0}
+[10/16 03:17:24.770510][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 3, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:24.770557][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=152, value={intValue: 0, floatValue: 0}
+[10/16 03:17:24.773165][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 152, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:24.773247][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=153, value={intValue: 0, floatValue: 0}
+[10/16 03:17:24.774764][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 153, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:24.774815][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=158, value={intValue: 0, floatValue: 0}
+[10/16 03:17:24.775548][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 158, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:24.775566][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=157, value={intValue: 0, floatValue: 0}
+[10/16 03:17:24.779699][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 157, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:24.779779][debug][13492999][HostProtocol.cpp:425] Set property value, propertyId=183, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:24.780279][debug][13492999][PropertyAccessor.cpp:17] set property value success! propertyId: 183, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.028896][debug][13492662][HostProtocol.cpp:425] Set property value, propertyId=152, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.030593][debug][13492662][PropertyAccessor.cpp:17] set property value success! propertyId: 152, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.030613][debug][13492662][HostProtocol.cpp:425] Set property value, propertyId=153, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.032083][debug][13492662][PropertyAccessor.cpp:17] set property value success! propertyId: 153, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.032099][debug][13492662][HostProtocol.cpp:425] Set property value, propertyId=158, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.032498][debug][13492662][PropertyAccessor.cpp:17] set property value success! propertyId: 158, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.032514][debug][13492662][HostProtocol.cpp:425] Set property value, propertyId=157, value={intValue: 0, floatValue: 0}
+[10/16 03:17:26.032922][debug][13492662][PropertyAccessor.cpp:17] set property value success! propertyId: 157, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:26.055022][debug][13492662][PropertyAccessor.cpp:17] set property value success! propertyId: 2003, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:26.072333][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:17:26.076032][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2025, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:26.076108][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=3, value={intValue: 0, floatValue: 0}
+[10/16 03:17:26.078048][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 3, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:26.078103][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=152, value={intValue: 0, floatValue: 0}
+[10/16 03:17:26.079895][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 152, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:26.079933][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=153, value={intValue: 0, floatValue: 0}
+[10/16 03:17:26.081422][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 153, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:26.081784][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1218967552, floatValue: 344000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.081800][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:17:26.082212][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=2026, cur={intValue: 1700, floatValue: 2.38221e-42}, max={intValue: 3000, floatValue: 4.2039e-42}, min={intValue: 100, floatValue: 1.4013e-43},def={intValue: 3000, floatValue: 4.2039e-42},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.082225][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2026, value: {intValue: 1700, floatValue: 2.38221e-42}
+[10/16 03:17:26.086402][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:17:26.087918][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=5, cur={intValue: 1236736768, floatValue: 1.5e+06}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1188229120, floatValue: 27000},def={intValue: 1209170944, floatValue: 150000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.087936][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 5, value: {intValue: 1236736768, floatValue: 1.5e+06}
+[10/16 03:17:26.088530][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=240, cur={intValue: 1229148160, floatValue: 800000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1223959552, floatValue: 500000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.088545][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 240, value: {intValue: 1229148160, floatValue: 800000}
+[10/16 03:17:26.089092][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=160, cur={intValue: 100, floatValue: 1.4013e-43}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.089111][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:17:26.089667][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=160, cur={intValue: 100, floatValue: 1.4013e-43}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.089712][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:17:26.090159][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=161, cur={intValue: 50, floatValue: 7.00649e-44}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.090178][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 161, value: {intValue: 50, floatValue: 7.00649e-44}
+[10/16 03:17:26.090657][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1218967552, floatValue: 344000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.090668][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:17:26.090677][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1229084160, floatValue: 796000}
+[10/16 03:17:26.092093][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1229084160, floatValue: 796000}
+[10/16 03:17:26.092544][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1218967552, floatValue: 344000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.092555][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:17:26.092562][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1229084160, floatValue: 796000}
+[10/16 03:17:26.094041][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1229084160, floatValue: 796000}
+[10/16 03:17:26.095593][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:17:26.096037][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2025, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:26.097497][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1229084160, floatValue: 796000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.097557][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:17:26.097577][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1223959552, floatValue: 500000}
+[10/16 03:17:26.099081][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:17:26.099462][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1229084160, floatValue: 796000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.099473][debug][13492431][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:17:26.099480][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1223959552, floatValue: 500000}
+[10/16 03:17:26.100818][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:17:26.101091][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=2026, cur={intValue: 1700, floatValue: 2.38221e-42}, max={intValue: 3000, floatValue: 4.2039e-42}, min={intValue: 100, floatValue: 1.4013e-43},def={intValue: 3000, floatValue: 4.2039e-42},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.101104][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2026, value: {intValue: 1700, floatValue: 2.38221e-42}
+[10/16 03:17:26.104422][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:17:26.107194][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=5, cur={intValue: 1236736768, floatValue: 1.5e+06}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1188229120, floatValue: 27000},def={intValue: 1209170944, floatValue: 150000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.107252][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 5, value: {intValue: 1236736768, floatValue: 1.5e+06}
+[10/16 03:17:26.108093][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.108118][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 154, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:17:26.108614][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.108652][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 155, value: {intValue: 1223959552, floatValue: 500000}
+[10/16 03:17:26.109094][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=240, cur={intValue: 1229148160, floatValue: 800000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1223959552, floatValue: 500000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:26.109107][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 240, value: {intValue: 1229148160, floatValue: 800000}
+[10/16 03:17:26.109504][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=160, cur={intValue: 100, floatValue: 1.4013e-43}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.109520][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:17:26.109932][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=160, cur={intValue: 100, floatValue: 1.4013e-43}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.109944][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 160, value: {intValue: 100, floatValue: 1.4013e-43}
+[10/16 03:17:26.110357][debug][13492431][HostProtocol.cpp:461] get property value success! propertyId=161, cur={intValue: 50, floatValue: 7.00649e-44}, max={intValue: 100, floatValue: 1.4013e-43}, min={intValue: 0, floatValue: 0},def={intValue: 50, floatValue: 7.00649e-44},step={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.110368][debug][13492431][PropertyAccessor.cpp:28] get property value success! propertyId: 161, value: {intValue: 50, floatValue: 7.00649e-44}
+[10/16 03:17:26.110386][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 3000, floatValue: 4.2039e-42}
+[10/16 03:17:26.119619][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 3000, floatValue: 4.2039e-42}
+[10/16 03:17:26.128412][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 2027, value: {intValue: 1000, floatValue: 1.4013e-42}
+[10/16 03:17:26.128450][debug][13492999][HostProtocol.cpp:425] Set property value, propertyId=183, value={intValue: 0, floatValue: 0}
+[10/16 03:17:26.129054][debug][13492999][PropertyAccessor.cpp:17] set property value success! propertyId: 183, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:26.236672][debug][13492999][HostProtocol.cpp:425] Set property value, propertyId=164, value={intValue: 5, floatValue: 7.00649e-45}
+[10/16 03:17:26.241609][debug][13492999][PropertyAccessor.cpp:17] set property value success! propertyId: 164, value: {intValue: 5, floatValue: 7.00649e-45}
+[10/16 03:17:26.348798][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=152, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.351114][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 152, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.351217][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=153, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.354662][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 153, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:26.658551][debug][13492999][HostProtocol.cpp:425] Set property value, propertyId=164, value={intValue: 3, floatValue: 4.2039e-45}
+[10/16 03:17:26.662546][debug][13492999][PropertyAccessor.cpp:17] set property value success! propertyId: 164, value: {intValue: 3, floatValue: 4.2039e-45}
+[10/16 03:17:26.915081][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 1340, floatValue: 1.87774e-42}
+[10/16 03:17:26.929137][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 1340, floatValue: 1.87774e-42}
+[10/16 03:17:27.179156][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=154, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:27.179369][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 154, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:17:27.179459][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=154, value={intValue: 1216855552, floatValue: 278000}
+[10/16 03:17:27.187226][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 154, value: {intValue: 1216855552, floatValue: 278000}
+[10/16 03:17:27.222181][debug][13492645][HostProtocol.cpp:461] get property value success! propertyId=155, cur={intValue: 1223959552, floatValue: 500000}, max={intValue: 1236736768, floatValue: 1.5e+06}, min={intValue: 1203982336, floatValue: 100000},def={intValue: 1229148160, floatValue: 800000},step={intValue: 1169915904, floatValue: 6000}
+[10/16 03:17:27.222223][debug][13492645][PropertyAccessor.cpp:34] get property value range success! propertyId: 155, range: {max: {intValue: 1236736768, floatValue: 1.5e+06}, min: {intValue: 1203982336, floatValue: 100000}, step: {intValue: 1169915904, floatValue: 6000}, def: {intValue: 1229148160, floatValue: 800000}}
+[10/16 03:17:27.222242][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=155, value={intValue: 1216855552, floatValue: 278000}
+[10/16 03:17:27.257442][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 155, value: {intValue: 1216855552, floatValue: 278000}
+[10/16 03:17:27.451224][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=197.723190fps
+[10/16 03:17:27.457142][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 1250, floatValue: 1.75162e-42}
+[10/16 03:17:27.484330][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 1250, floatValue: 1.75162e-42}
+[10/16 03:17:27.716741][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.827187fps,bitRate=898.861938Mbps
+[10/16 03:17:27.717163][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.806934fps,bitRate=898.503784Mbps
+[10/16 03:17:27.719037][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=45.626617fps
+[10/16 03:17:27.748772][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:17:27.797361][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:17:27.944256][debug][13492645][HostProtocol.cpp:425] Set property value, propertyId=2026, value={intValue: 1330, floatValue: 1.86373e-42}
+[10/16 03:17:27.981758][debug][13492645][PropertyAccessor.cpp:17] set property value success! propertyId: 2026, value: {intValue: 1330, floatValue: 1.86373e-42}
+[10/16 03:17:28.331003][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=3, value={intValue: 0, floatValue: 0}
+[10/16 03:17:28.332525][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 3, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:28.332541][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=152, value={intValue: 0, floatValue: 0}
+[10/16 03:17:28.334023][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 152, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:28.334035][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=153, value={intValue: 0, floatValue: 0}
+[10/16 03:17:28.335753][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 153, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:28.335774][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=158, value={intValue: 0, floatValue: 0}
+[10/16 03:17:28.336187][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 158, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:28.336200][debug][13492431][HostProtocol.cpp:425] Set property value, propertyId=157, value={intValue: 0, floatValue: 0}
+[10/16 03:17:28.336652][debug][13492431][PropertyAccessor.cpp:17] set property value success! propertyId: 157, value: {intValue: 0, floatValue: 0}
+[10/16 03:17:28.362264][debug][13492999][HostProtocol.cpp:425] Set property value, propertyId=183, value={intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:28.363328][debug][13492999][PropertyAccessor.cpp:17] set property value success! propertyId: 183, value: {intValue: 1, floatValue: 1.4013e-45}
+[10/16 03:17:32.457978][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=196.164597fps
+[10/16 03:17:32.737633][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.587532fps,bitRate=911.656311Mbps
+[10/16 03:17:32.737686][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.597610fps,bitRate=911.837952Mbps
+[10/16 03:17:32.738554][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.619045fps
+[10/16 03:17:36.999251][info][13494270][GVCPClient.cpp:421] 0, 3, 248, 1 [**90 logs in 60150ms, last: 03:17:35.159199**]
+[10/16 03:17:37.000821][info][13494271][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**90 logs in 60149ms, last: 03:17:35.159202**]
+[10/16 03:17:37.168261][error][13495057][GVCPClient.cpp:355] sendto failed with error:49 [**30 logs in 60172ms**]
+[10/16 03:17:37.461001][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.679596fps
+[10/16 03:17:37.754082][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.029896fps,bitRate=915.475952Mbps
+[10/16 03:17:37.756728][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.009960fps,bitRate=915.111145Mbps
+[10/16 03:17:37.758286][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.003983fps
+[10/16 03:17:37.764937][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:17:37.765287][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:17:38.169526][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**30 logs in 60171ms**]
+[10/16 03:17:42.467090][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=188.536057fps
+[10/16 03:17:42.774727][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.003983fps,bitRate=856.730225Mbps
+[10/16 03:17:42.774799][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.222797fps,bitRate=856.210510Mbps
+[10/16 03:17:42.775532][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=44.050228fps
+[10/16 03:17:44.946390][warning][13493059][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**7 logs in 49039ms**]
+[10/16 03:17:47.473802][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=198.961243fps
+[10/16 03:17:47.608403][debug][13493055][FrameBufferManager.cpp:35] New frame buffer allocated=0.000MB, total usage: allocated=68.129MB, max limit=2048.000MB
+[10/16 03:17:47.788158][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.458717fps,bitRate=890.977539Mbps
+[10/16 03:17:47.789828][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=45.472675fps
+[10/16 03:17:47.792768][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=51.414906fps,bitRate=891.566162Mbps
+[10/16 03:17:47.967887][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:17:47.976607][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:17:52.476251][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=199.480316fps
+[10/16 03:17:52.791762][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.580971fps
+[10/16 03:17:52.795040][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.969421fps,bitRate=905.552307Mbps
+[10/16 03:17:52.802976][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=51.256481fps,bitRate=907.241699Mbps
+[10/16 03:17:57.485832][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.838501fps
+[10/16 03:17:57.792911][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.990002fps
+[10/16 03:17:57.802782][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.930099fps,bitRate=920.311523Mbps
+[10/16 03:17:57.820615][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.019928fps,bitRate=921.967285Mbps
+[10/16 03:17:57.946237][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:17:57.947181][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:18:00.433908][debug][13493070][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT [**2848 logs in 60021ms**]
+[10/16 03:18:00.435793][debug][13493072][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**2849 logs in 60001ms**]
+[10/16 03:18:02.178284][warning][13493054][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2181240, expected=2304000 @OB_SENSOR_IR_RIGHT [**182 logs in 60001ms**]
+[10/16 03:18:02.204384][warning][13493052][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1522224, expected=2304000 @OB_SENSOR_IR_LEFT [**182 logs in 60012ms**]
+[10/16 03:18:02.492683][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.519272fps
+[10/16 03:18:02.806708][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.159870fps,bitRate=914.104797Mbps
+[10/16 03:18:02.807372][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.853439fps
+[10/16 03:18:02.831673][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.890240fps,bitRate=912.729858Mbps
+[10/16 03:18:07.498784][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.958847fps
+[10/16 03:18:07.807768][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.990002fps,bitRate=916.486633Mbps
+[10/16 03:18:07.810841][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.370380fps
+[10/16 03:18:07.835184][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.960030fps,bitRate=915.839050Mbps
+[10/16 03:18:07.966629][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:18:07.967884][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:18:12.503466][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=180.219772fps
+[10/16 03:18:12.642233][warning][13493052][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=3908268, expected=2304000 @OB_SENSOR_IR_LEFT
+[10/16 03:18:12.808668][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.190163fps,bitRate=801.672791Mbps
+[10/16 03:18:12.812177][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=38.584568fps
+[10/16 03:18:12.837293][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.580170fps,bitRate=801.603455Mbps
+[10/16 03:18:17.516143][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=199.880310fps
+[10/16 03:18:17.820153][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.478851fps,bitRate=915.964417Mbps
+[10/16 03:18:17.830170][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.425667fps
+[10/16 03:18:17.843726][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.539352fps,bitRate=917.062256Mbps
+[10/16 03:18:18.046204][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:18:18.047223][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:18:22.517808][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=196.360733fps
+[10/16 03:18:22.832087][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.279327fps,bitRate=880.508728Mbps
+[10/16 03:18:22.833954][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=44.773140fps
+[10/16 03:18:22.848730][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.149849fps,bitRate=880.189941Mbps
+[10/16 03:18:23.855577][warning][13493054][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2377656, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/16 03:18:27.519358][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=185.925629fps
+[10/16 03:18:27.854672][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.382717fps,bitRate=786.617126Mbps
+[10/16 03:18:27.855191][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.530659fps,bitRate=777.289856Mbps
+[10/16 03:18:28.098012][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=33.048435fps
+[10/16 03:18:28.104914][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:18:28.105504][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:18:32.524813][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=184.215775fps
+[10/16 03:18:32.859784][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.950050fps,bitRate=844.802429Mbps
+[10/16 03:18:32.865101][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.900196fps,bitRate=849.500549Mbps
+[10/16 03:18:33.127249][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=45.535892fps
+[10/16 03:18:37.171426][info][13495061][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**90 logs in 60170ms, last: 03:18:35.386355**]
+[10/16 03:18:37.171668][info][13495060][GVCPClient.cpp:421] 0, 3, 248, 1 [**90 logs in 60172ms, last: 03:18:35.386353**]
+[10/16 03:18:37.389160][error][13496865][GVCPClient.cpp:355] sendto failed with error:49 [**30 logs in 60220ms**]
+[10/16 03:18:37.527116][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=201.079361fps
+[10/16 03:18:37.868959][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.908367fps,bitRate=917.552185Mbps
+[10/16 03:18:37.893976][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.914879fps,bitRate=917.750793Mbps
+[10/16 03:18:38.252928][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:18:38.305878][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:18:38.352574][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=44.019138fps
+[10/16 03:18:38.392248][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**30 logs in 60222ms**]
+[10/16 03:18:42.539780][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=180.367111fps
+[10/16 03:18:42.871955][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=48.570858fps,bitRate=826.496216Mbps
+[10/16 03:18:42.901017][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.720448fps,bitRate=828.848755Mbps
+[10/16 03:18:43.356842][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=46.962429fps
+[10/16 03:18:47.545143][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.958847fps
+[10/16 03:18:47.889434][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.820644fps,bitRate=918.294128Mbps
+[10/16 03:18:47.921522][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.000000fps,bitRate=921.599976Mbps
+[10/16 03:18:47.991568][warning][13495627][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**22 logs in 63045ms, last: 03:18:39.966935**]
+[10/16 03:18:48.267691][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:18:48.268163][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:18:48.370895][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.860390fps
+[10/16 03:18:49.700829][warning][13493052][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=3445668, expected=2304000 @OB_SENSOR_IR_LEFT
+[10/16 03:18:49.701163][warning][13493054][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=3445668, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/16 03:18:52.553157][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=196.485626fps
+[10/16 03:18:52.903925][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.062626fps,bitRate=898.067017Mbps
+[10/16 03:18:52.949019][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=48.926014fps,bitRate=895.566406Mbps
+[10/16 03:18:53.375674][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.952045fps
+[10/16 03:18:57.559587][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=188.573715fps
+[10/16 03:18:57.912907][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.510883fps,bitRate=855.676941Mbps
+[10/16 03:18:57.964498][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.252243fps,bitRate=854.653198Mbps
+[10/16 03:18:58.368699][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:18:58.369678][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:18:58.385759][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=44.510975fps
+[10/16 03:19:00.440445][debug][13495744][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT [**2703 logs in 60006ms, last: 03:19:00.431871**]
+[10/16 03:19:00.445215][debug][13493072][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**2702 logs in 60009ms**]
+[10/16 03:19:02.208284][warning][13495816][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1534500, expected=2304000 @OB_SENSOR_IR_RIGHT [**280 logs in 60029ms, last: 03:18:58.647851**]
+[10/16 03:19:02.225973][warning][13495817][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1555164, expected=2304000 @OB_SENSOR_IR_LEFT [**285 logs in 60021ms, last: 03:18:58.631689**]
+[10/16 03:19:02.562784][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=198.680801fps
+[10/16 03:19:02.919483][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.930099fps,bitRate=906.201782Mbps
+[10/16 03:19:02.981435][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.029896fps,bitRate=907.971497Mbps
+[10/16 03:19:03.386292][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.790241fps
+[10/16 03:19:07.573744][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.359207fps
+[10/16 03:19:07.938498][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.009960fps,bitRate=916.989624Mbps
+[10/16 03:19:08.000557][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.009960fps,bitRate=916.989624Mbps
+[10/16 03:19:08.388887][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:19:08.389378][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:19:08.399523][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.471375fps
+[10/16 03:19:12.574839][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.759857fps
+[10/16 03:19:12.957864][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.009960fps,bitRate=921.783630Mbps
+[10/16 03:19:13.005363][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.950050fps,bitRate=920.679321Mbps
+[10/16 03:19:13.412411][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.870338fps
+[10/16 03:19:17.578836][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.639481fps
+[10/16 03:19:17.960737][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.970020fps,bitRate=921.047424Mbps
+[10/16 03:19:18.010424][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.950050fps,bitRate=920.679321Mbps
+[10/16 03:19:18.413958][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=50.189964fps
+[10/16 03:19:18.533090][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:19:18.533636][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:19:22.588585][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.798401fps
+[10/16 03:19:22.974528][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.059834fps,bitRate=922.702820Mbps
+[10/16 03:19:23.030021][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.000000fps,bitRate=921.599976Mbps
+[10/16 03:19:23.421450][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.920128fps
+[10/16 03:19:27.617077][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=199.244385fps
+[10/16 03:19:27.976403][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.780090fps,bitRate=898.218872Mbps
+[10/16 03:19:28.034648][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.960030fps,bitRate=897.840149Mbps
+[10/16 03:19:28.429488][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.723644fps
+[10/16 03:19:28.560707][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:19:28.561265][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:19:32.625345][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.479233fps
+[10/16 03:19:32.977922][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.790043fps,bitRate=906.914856Mbps
+[10/16 03:19:33.048990][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.660950fps,bitRate=907.671692Mbps
+[10/16 03:19:33.432984][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.570858fps
+[10/16 03:19:37.389521][info][13496869][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**90 logs in 60218ms, last: 03:19:35.604687**]
+[10/16 03:19:37.391939][info][13496868][GVCPClient.cpp:421] 0, 3, 248, 1 [**90 logs in 60220ms, last: 03:19:35.604685**]
+[10/16 03:19:37.608228][error][13499021][GVCPClient.cpp:355] sendto failed with error:49 [**30 logs in 60219ms**]
+[10/16 03:19:37.626046][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.759857fps
+[10/16 03:19:37.984188][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.930099fps,bitRate=920.311523Mbps
+[10/16 03:19:38.075157][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.930378fps,bitRate=920.316650Mbps
+[10/16 03:19:38.435946][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.970020fps
+[10/16 03:19:38.612355][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**30 logs in 60220ms**]
+[10/16 03:19:38.617963][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:19:38.618701][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:19:42.633142][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=194.927109fps
+[10/16 03:19:43.003686][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.212990fps,bitRate=893.050659Mbps
+[10/16 03:19:43.076714][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.390121fps,bitRate=892.585693Mbps
+[10/16 03:19:43.437292][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.780888fps
+[10/16 03:19:47.635539][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.719711fps
+[10/16 03:19:48.022045][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.009960fps,bitRate=921.783630Mbps
+[10/16 03:19:48.078418][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.980011fps,bitRate=921.231567Mbps
+[10/16 03:19:48.449510][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=50.079807fps
+[10/16 03:19:48.708984][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:19:48.709669][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:19:49.647489][warning][13497452][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**4 logs in 61655ms, last: 03:19:39.733176**]
+[10/16 03:19:51.073481][warning][13493054][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2356992, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/16 03:19:51.073553][warning][13493052][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2344716, expected=2304000 @OB_SENSOR_IR_LEFT
+[10/16 03:19:52.636865][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=199.560089fps
+[10/16 03:19:53.027031][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.750248fps,bitRate=910.102173Mbps
+[10/16 03:19:53.086063][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.920128fps,bitRate=913.237488Mbps
+[10/16 03:19:53.462708][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.072411fps
+[10/16 03:19:57.640631][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.639481fps
+[10/16 03:19:58.044576][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.029896fps,bitRate=918.510071Mbps
+[10/16 03:19:58.110414][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.960190fps,bitRate=917.230347Mbps
+[10/16 03:19:58.476618][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.860390fps
+[10/16 03:19:58.804843][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:19:58.805638][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:20:00.447664][debug][13498035][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**2958 logs in 60002ms, last: 03:20:00.445562**]
+[10/16 03:20:00.451226][debug][13493070][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_LEFT [**2958 logs in 60010ms**]
+[10/16 03:20:02.291869][warning][13498083][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=773388, expected=2304000 @OB_SENSOR_IR_LEFT [**35 logs in 60065ms, last: 03:19:57.478438**]
+[10/16 03:20:02.293530][warning][13498082][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=773388, expected=2304000 @OB_SENSOR_IR_RIGHT [**34 logs in 60085ms, last: 03:19:57.470814**]
+[10/16 03:20:02.641776][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.759857fps
+[10/16 03:20:03.046476][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.980011fps,bitRate=921.231567Mbps
+[10/16 03:20:03.130513][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.000000fps,bitRate=921.599976Mbps
+[10/16 03:20:03.482153][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.940071fps
+[10/16 03:20:06.372765][warning][13493054][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2745936, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/16 03:20:06.377645][warning][13493052][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2725272, expected=2304000 @OB_SENSOR_IR_LEFT
+[10/16 03:20:07.650951][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=180.475143fps
+[10/16 03:20:08.061615][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=46.660023fps,bitRate=816.756470Mbps
+[10/16 03:20:08.138175][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=46.525558fps,bitRate=820.362793Mbps
+[10/16 03:20:08.489598][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=41.342121fps
+[10/16 03:20:08.979663][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:20:08.980083][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:20:12.655585][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.998993fps
+[10/16 03:20:13.094746][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.069542fps,bitRate=912.097351Mbps
+[10/16 03:20:13.143673][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.149849fps,bitRate=913.386108Mbps
+[10/16 03:20:13.508385][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.810719fps
+[10/16 03:20:17.659304][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.639481fps
+[10/16 03:20:18.119771][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.348259fps,bitRate=914.937012Mbps
+[10/16 03:20:18.159920][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.239235fps,bitRate=912.976257Mbps
+[10/16 03:20:18.521653][debug][13493070][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.875523fps
+[10/16 03:20:18.982821][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:20:18.983476][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:20:22.662069][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=196.282242fps
+[10/16 03:20:23.128067][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.111599fps,bitRate=896.656067Mbps
+[10/16 03:20:23.176371][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.232609fps,bitRate=898.900085Mbps
+[10/16 03:20:23.531634][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=47.904190fps
+[10/16 03:20:27.673529][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.359207fps
+[10/16 03:20:28.131339][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.770142fps,bitRate=914.542786Mbps
+[10/16 03:20:28.177684][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.590084fps,bitRate=911.222839Mbps
+[10/16 03:20:28.549509][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.222797fps
+[10/16 03:20:29.073157][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:20:29.073681][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:20:32.675684][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.719711fps
+[10/16 03:20:33.150351][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.810719fps,bitRate=918.111145Mbps
+[10/16 03:20:33.193724][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.840511fps,bitRate=918.660339Mbps
+[10/16 03:20:33.575340][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.940311fps
+[10/16 03:20:37.612654][info][13499024][GVCPClient.cpp:421] 0, 3, 248, 1 [**90 logs in 60220ms, last: 03:20:35.762514**]
+[10/16 03:20:37.612671][info][13499025][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**90 logs in 60223ms, last: 03:20:35.762516**]
+[10/16 03:20:37.680962][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.199799fps
+[10/16 03:20:37.766455][error][13500610][GVCPClient.cpp:355] sendto failed with error:49 [**30 logs in 60158ms**]
+[10/16 03:20:38.160214][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.099796fps,bitRate=912.676758Mbps
+[10/16 03:20:38.217743][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.960190fps,bitRate=910.133484Mbps
+[10/16 03:20:38.578920][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.970619fps
+[10/16 03:20:38.771069][info][13492650][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**30 logs in 60158ms**]
+[10/16 03:20:39.275611][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:20:39.276212][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
+[10/16 03:20:42.690697][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.798401fps
+[10/16 03:20:43.167358][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=50.129818fps,bitRate=918.742493Mbps
+[10/16 03:20:43.220300][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=50.169899fps,bitRate=921.080444Mbps
+[10/16 03:20:43.581648][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=49.970020fps
+[10/16 03:20:47.695653][debug][13493055][AccelSensor.cpp:213] Accel Sensor Streaming... frameRate=200.599396fps
+[10/16 03:20:48.174537][debug][13493054][VideoSensor.cpp:414] OB_SENSOR_IR_RIGHT Streaming... frameRate=49.730377fps,bitRate=916.630310Mbps
+[10/16 03:20:48.229874][debug][13493052][VideoSensor.cpp:414] OB_SENSOR_IR_LEFT Streaming... frameRate=49.311241fps,bitRate=908.904846Mbps
+[10/16 03:20:48.589595][debug][13493072][Pipeline.cpp:271] Pipeline streaming... frameset output rate=48.722046fps
+[10/16 03:20:49.336211][debug][13492651][PropertyAccessor.cpp:71] get cmd version success! propertyId: 1056, version: 0
+[10/16 03:20:49.336752][debug][13492651][PropertyAccessor.cpp:79] get struct data success! propertyId: 1056
