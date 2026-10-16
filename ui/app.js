@@ -8,7 +8,8 @@
 
   const params = new URLSearchParams(window.location.search);
   const port = params.get("port") || "8787";
-  const wsUrl = "ws://127.0.0.1:" + port + "/";
+  const host = params.get("host") || window.location.hostname || "127.0.0.1";
+  const wsUrl = "ws://" + host + ":" + port + "/";
 
   const hud = document.getElementById("hud");
   const canvas = document.getElementById("gl");

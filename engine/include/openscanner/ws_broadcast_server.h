@@ -8,12 +8,13 @@
 namespace openscanner {
 
 // A minimal, dependency-free WebSocket server for one purpose: broadcast
-// binary frames (point-cloud data) to whichever local UI clients are
-// connected, as fast and simply as possible. Deliberately not a general
-// WebSocket implementation — no TLS, no fragmentation, no client->server
-// message handling beyond the opening handshake and close/ping frames.
-// That scope is intentional: this is a localhost-only data channel for our
-// own single-page UI, not a public-facing server.
+// binary frames (point-cloud data) to whichever UI clients are connected,
+// as fast and simply as possible. Deliberately not a general WebSocket
+// implementation — no TLS, no fragmentation, no client->server message
+// handling beyond the opening handshake and close/ping frames. It listens
+// on all interfaces (not just loopback) so the UI can be reached from
+// another machine on the LAN; there is still no auth, so don't run it on
+// an untrusted network.
 class WsBroadcastServer {
 public:
     WsBroadcastServer();
@@ -22,9 +23,9 @@ public:
     WsBroadcastServer(const WsBroadcastServer&) = delete;
     WsBroadcastServer& operator=(const WsBroadcastServer&) = delete;
 
-    // Starts listening on 127.0.0.1:port and accepting client connections
-    // on a background thread. Returns false if the socket couldn't be
-    // bound (port already in use, etc.).
+    // Starts listening on 0.0.0.0:port (all interfaces) and accepting
+    // client connections on a background thread. Returns false if the
+    // socket couldn't be bound (port already in use, etc.).
     bool Start(uint16_t port);
 
     // Stops accepting new connections, closes all client sockets, and

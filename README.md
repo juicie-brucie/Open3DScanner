@@ -219,8 +219,9 @@ Wire format per frame (binary WebSocket message): `uint32 frame_id`,
 `uint32 point_count`, then `point_count * 3` little-endian `float32` (x, y,
 z). The transport is a from-scratch, dependency-free WebSocket server
 (`engine/include/openscanner/ws_broadcast_server.h`) — binary broadcast
-only, no TLS, no fragmentation support; it exists for a localhost data feed
-to our own page, not as a general-purpose server.
+only, no TLS, no fragmentation, no auth; it listens on all interfaces so
+it can also be reached from another machine on the LAN, but it still
+exists to feed our own page, not as a general-purpose/public server.
 
 Rendering is WebGL2 (not WebGPU): broader support today, including Safari,
 which matters for a macOS-targeted app, and it's more than fast enough for
@@ -243,6 +244,13 @@ Then open `http://127.0.0.1:8788/index.html` in a browser. (Opening
 `ui/index.html` directly as a `file://` URL does not reliably run its
 script in every environment — serve it over HTTP instead.) Pass
 `?port=1234` in the URL if the server isn't on the default 8787.
+
+To reach it from another machine on the LAN, use the host's address
+instead of `127.0.0.1` for both the page and the WebSocket, e.g.
+`http://172.22.20.69:8788/index.html` — the page picks up its own
+hostname automatically and connects its WebSocket back to the same
+host. Pass `?host=172.22.20.69` explicitly if that inference is ever
+wrong (e.g. reverse-proxied setups).
 
 Verified end-to-end on macOS: WebSocket connects, the point cloud renders
 and animates, and the HUD reports ~1–3ms latency and 60fps render / ~27fps

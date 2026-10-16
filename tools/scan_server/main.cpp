@@ -87,10 +87,10 @@ int main(int argc, char** argv) {
 
     openscanner::WsBroadcastServer server;
     if (!server.Start(port)) {
-        std::fprintf(stderr, "Failed to start WebSocket server on 127.0.0.1:%u (port in use?)\n", port);
+        std::fprintf(stderr, "Failed to start WebSocket server on port %u (port in use?)\n", port);
         return 1;
     }
-    std::printf("Streaming synthetic point-cloud frames on ws://127.0.0.1:%u\n", port);
+    std::printf("Streaming synthetic point-cloud frames on ws://0.0.0.0:%u\n", port);
     std::printf("Open ui/index.html in a browser to view it.\n");
 
     std::vector<Vec3> base_points = MakeSpherePoints(kPointGridSize);

@@ -293,7 +293,7 @@ bool WsBroadcastServer::Start(uint16_t port) {
 
     sockaddr_in addr = {};
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(port);
 
     if (bind(impl_->listen_socket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0) {
