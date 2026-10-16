@@ -74,6 +74,15 @@ marker *detections* while still starving the bundle adjuster of frames it's will
 count as valid — matching the "doesn't work at all" experience even when markers are
 technically being seen.
 
+Caveat, added after the vendor scan logs for that session were counted (see
+[pipeline-quality-assessment.md §1.2](pipeline-quality-assessment.md)): the pose count
+can also be low because laser extraction upstream was starved. In the "Points 90"
+session the first scan attempt produced zero laser points on all 1,916 frames before
+the user deleted and restarted it, and the restarted attempt averaged 2,090 points per
+nonzero frame against 7,580 in the session that finished cleanly. The bundle adjuster
+there was fed two to five times less per frame, so marker layout is not the only
+explanation for the low valid-pose count.
+
 ## 3. Per-point/voxel quality — weighted fusion, thresholded at extraction
 
 `GPP::FuseMap` is a voxel hash-grid fusion map (classic TSDF-style accumulation, not

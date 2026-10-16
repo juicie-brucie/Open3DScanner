@@ -271,6 +271,11 @@ resulting landmark/pose data becomes a `mkscan::TrackedFrame` object (PnP solve 
 
 ## What this means for OpenScanner
 
+A stage-by-stage copy/redesign/reimplement verdict on everything mapped here, backed by
+counts from the vendor's own per-frame scan logs, is in
+[pipeline-quality-assessment.md](pipeline-quality-assessment.md). Two implications
+from the architecture alone:
+
 The real architecture is **not** a single tight loop — it's a producer/consumer
 pipeline with a genuine thread-pool hand-off between "frame arrived" and "frame
 processed," and a second hand-off from "frame processed" into bundle adjustment. Two
