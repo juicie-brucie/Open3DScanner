@@ -115,10 +115,10 @@ would be in the per-frame laser processing code (`OrbbecScanLaser::
 consumer_process_datas`, found via `nm` in the plane-removal doc's research but not
 disassembled), not in `FuseMap` itself.
 
-## 4. Registration/overlap quality — a separate scoring context, not yet fully traced
+## 4. Registration/overlap quality — fully decomposed
 
 `free_scan::PointCloudRegistrationQualityContext` is a distinct quality-scoring
-structure with its own pipeline:
+structure, built/consumed by its own small pipeline:
 
 ```
 quality_params_init(SpeckleTotalParams const&, PointCloudRegistrationQualityContext&)
@@ -130,25 +130,139 @@ compute_cloud_overlap_fast(PointCloudRegistrationQualityContext&, SpeckleTotalPa
 compute_cloud_overlap_fastKDtree(..., slam::LKDtree const*)
 ```
 
-`compute_cloud_overlap_fast` computing *overlap* between a new frame's cloud and the
-existing fused data is exactly the kind of signal a real "where does the scan still need
-coverage" feature would be built on — low overlap with anything already captured means
-genuinely new territory; high overlap means redundant data. Notably this family's
-public-facing helper functions have **hash-like, non-descriptive names**
-(`free_scan::e0a345aa`, `b91078bd`, `ce17482b`, `be7dbca4` — all taking
-`PointCloudRegistrationQualityContext`), unlike almost everything else in this library,
-which keeps full readable C++ names throughout. That's a real signal in itself: this is
-the one area of the pipeline Creality appears to have deliberately obscured, which lines
-up with it being core, differentiating IP — and makes it the most expensive part of this
-to fully reverse-engineer (would need actual decompilation of 4+ stripped-name
-functions, not just signature recovery from an unmangled name). Not attempted yet.
+Four of this family's helper functions have **hash-like, non-descriptive names**
+(`free_scan::e0a345aa`, `b91078bd`, `ce17482b`, `be7dbca4`), unlike almost everything
+else in this library, which keeps full readable C++ names throughout — the one area of
+the pipeline Creality appears to have deliberately obscured, consistent with it being
+core, differentiating IP. Despite the obscured names, full manual decompilation (no
+Ghidra — its full-binary auto-analysis consistently exceeds this environment's tool
+timeout regardless of how narrow the request is, confirmed by asking it to analyze a
+single function and still hitting the same 330s wall; it re-runs whole-binary analysis
+on every call with no caching between calls) was tractable, since the actual algorithms
+turned out to be plain scalar/SIMD math and standard library calls, not control-flow
+obfuscation.
+
+### `ce17482b` — builds the context from an ICP result (188 bytes, fully decoded)
+
+```c
+void ce17482b(const IcpPointCloudContext& ctx, const IcpPointCloudResult& result,
+              const SpeckleTotalParams& params, PointCloudRegistrationQualityContext& out) {
+    // Copies 4 pose/transform-sized (24-byte) records verbatim from ctx into out.
+    memcpy(&out, &ctx.field_0xb0, 0x60);  // four 24-byte records, field-for-field
+    // Copies 7 doubles from result straight across...
+    for (int i = 0; i < 7; i++) out.field[0x60 + i*8] = result.field[i*8];
+    // ...but the 8th is validated first.
+    double last = result.field_0x38;
+    if (isfinite(last) && last <= (double)params.field_0xf4) {
+        out.field_0x60_plus_0x38 = last;      // accepted — proceed to score it for real
+        b91078bd(out, params);                 // tail call
+    } else {
+        out.rms_distance = 1.0;                // degenerate/"no overlap possible" sentinel
+        out.overlap_ratio = 0.0;
+        out.inlier_count = 0;
+    }
+}
+```
+
+The 8th `IcpPointCloudResult` field (likely a final ICP residual/error) gates whether
+registration-quality scoring runs at all for this frame — if the ICP itself reported a
+result that's non-finite or worse than `params.field_0xf4` (a configured max-error
+threshold), the frame gets a hardcoded "failed" quality record instead of ever reaching
+the real scoring function below. `be7dbca4` (240 bytes, same shape, operating on a
+`PointCloudRelocationContext`/`RelocationResult` pair instead) is the same pattern
+applied after a *relocation* event (tracking lost and recovered) rather than ordinary
+ICP — not independently decoded, but confidently the same structure by symmetry.
+
+### `b91078bd` — the actual overlap/RMS-distance computation (2.1KB, decoded to algorithm level)
+
+This is the function that fills in the three output fields (`out+0x98`, `out+0xa0`,
+`out+0xa8`) that everything else in this family reads or gates on:
+
+```c
+void b91078bd(PointCloudRegistrationQualityContext& ctx, const SpeckleTotalParams& params) {
+    if (ctx.ref_cloud_count == 0 || ctx.new_cloud_count == 0) {
+        ctx.rms_distance = SENTINEL;  // a fixed literal-pool constant; "no data" case
+        return;
+    }
+
+    // 1. Axis-aligned bounding box of the REFERENCE (already-fused) cloud.
+    Vector3 lo = +inf, hi = -inf;
+    for each point in reference_cloud: lo = min(lo, point); hi = max(hi, point);
+    lo -= 0.1; hi += 0.1;  // pad by a fixed 0.1-unit tolerance margin
+
+    // 2. Cull the NEW frame's cloud down to points inside that padded box —
+    //    cheap spatial pre-filter before the expensive nearest-neighbor work.
+    OBPointCloud culled;
+    for each point in new_cloud: if (point inside [lo, hi]) culled.push_back(point);
+
+    // 3. Build a KD-tree over just the culled subset.
+    OBKdtreeSearch tree; tree.build(culled);
+
+    // 4. For every point in the REFERENCE cloud, find its nearest neighbor in the
+    //    culled new-frame cloud and classify it by two separate squared-distance
+    //    thresholds (both read from SpeckleTotalParams, i.e. independently tunable):
+    std::vector<double> matched_distances;
+    int inlier_count = 0;
+    for each point in reference_cloud {
+        double sq_dist = tree.find_knn(point, k=1);
+        if (sq_dist < loose_threshold_sq)  matched_distances.push_back(sq_dist);
+        if (sq_dist < tight_threshold_sq)  inlier_count++;
+    }
+
+    // 5. Robust RMS: only the closest `percentile_fraction` of matches (a
+    //    SpeckleTotalParams field) count, via std::nth_element partial sort —
+    //    this throws out the worst matches instead of averaging over everything,
+    //    so genuinely-new geometry (which has no good match yet, by definition)
+    //    doesn't drag the registration-quality estimate down.
+    size_t k = (size_t)(matched_distances.size() * percentile_fraction);
+    std::nth_element(matched_distances.begin(), matched_distances.begin()+k, matched_distances.end());
+    double mean_sq = average(matched_distances.begin(), matched_distances.begin()+k);
+
+    ctx.rms_distance  = sqrt(mean_sq);                                    // out+0x98
+    ctx.overlap_ratio = (double)inlier_count
+                        / (double)min(ctx.new_cloud_count, ctx.ref_cloud_count); // out+0xa0
+    ctx.inlier_count  = inlier_count;                                     // out+0xa8
+}
+```
+
+This retroactively corrects the read on `e0a345aa` (60 bytes, decoded first, before
+`out+0x98`/`out+0xa0`'s real meaning was known): it isn't a spatial range-overlap test —
+it's a **two-sided quality gate** over these exact two output fields:
+
+```c
+bool e0a345aa(const PointCloudRegistrationQualityContext& ctx, double min_overlap, double max_rms) {
+    return isfinite(ctx.rms_distance) && isfinite(ctx.overlap_ratio)
+        && ctx.rms_distance <= max_rms && ctx.overlap_ratio >= min_overlap;
+}
+```
+i.e. "is this frame's registration good enough to trust" — RMS distance below a ceiling
+*and* overlap ratio above a floor, both caller-supplied. This is almost certainly the
+actual accept/reject check sitting downstream of `b91078bd`'s scoring (not yet traced to
+its call site — would need the caller of `e0a345aa` itself, not yet located).
+
+### `compute_cloud_overlap_fast` — a *separate*, grid-based algorithm, not a wrapper
+
+Initially assumed (wrongly) to just be a thin dispatcher into `b91078bd` given the
+shared context type. It is not: its prologue operates on completely different context
+fields (`ctx+0x128`, a count; `ctx+0xd0`, two packed `int32`s multiplied together —
+`smull x22, w9, w8` — i.e. a **grid width × height**; `ctx+0xf8`/`ctx+0x110`, two more
+buffer pointers) and its main loop is manually unrolled ×8 for SIMD, the signature of a
+dense per-cell loop over a 2D grid rather than a sparse KD-tree point search. This reads
+as a second, independent overlap estimator working over a rasterized grid/height-map
+representation instead of raw 3D points — plausibly a cheaper, real-time-friendly
+approximation used for live UI feedback (a coverage percentage/heatmap), while
+`b91078bd`'s point-based KD-tree version is the more precise one used to gate whether a
+frame's registration is trustworthy enough to fuse at all. Not decoded further — this is
+a genuinely separate ~3KB function and a distinct follow-up task from the point-based
+algorithm above.
 
 Also found but not traced: the literal string `"Maximum effective coverage area:
 %.2f%%"` — a percentage coverage metric gets computed and logged somewhere in this
-library; the function that produces it hasn't been located yet (the string's cross-refs
-weren't checked — would need either Ghidra's xref graph, once its timeout issue is
-worked around for this binary, or a manual scan of call sites near known coverage/overlap
-functions).
+library, plausibly downstream of `compute_cloud_overlap_fast`'s grid-based result given
+both are naturally area/grid-shaped; the producing function hasn't been located (would
+need the string's cross-refs, which neither `nm`/`strings` nor the broken-for-this-binary
+Ghidra path can give directly — a manual scan of call sites near the grid-based function
+above is the next step).
 
 ## 5. What this means for OpenScanner's own pipeline
 
@@ -162,10 +276,15 @@ replaceable:
    overhauling. The real app's marker-mode answer (bundle-adjustment pose validity
    count) is reasonable in concept but opaque to the user — it fails as "insufficient
    data" with no indication of *where* coverage is weak or *why* a frame's pose didn't
-   count. A spatial overlap/coverage map (built from something like §4's overlap
-   computation, scored per-region rather than only as a single running total) would be a
-   real improvement and matches what the user is after: showing *where* the scan needs
-   more data, not just refusing to finish with no explanation.
+   count. §4's per-reference-point nearest-neighbor scan is the right primitive for a
+   real fix: it already computes, per point in the accumulated cloud, whether *any*
+   recent frame matched it closely — the same computation, just inverted (flag reference
+   points with **no** close match across recent frames, instead of only producing one
+   aggregate ratio) directly yields a spatial "under-covered" point set, paintable back
+   onto the live point cloud as a literal heatmap. That's a materially better answer than
+   a single pass/fail gate with no spatial information, and it's the same KD-tree query
+   already being run — no new expensive computation required, just keeping the per-point
+   result instead of discarding it after the aggregate ratio is computed.
 3. **Per-point/voxel confidence** (§3) — weighted TSDF-style fusion with a
    credibility-threshold extraction is a sound, standard approach already; the open
    question is calibration (`credible_ratio`, the per-point weight itself), not the
@@ -173,5 +292,7 @@ replaceable:
 
 Not yet done: tracing the actual per-point weight computation (§3's open question),
 confirming the "Points" HUD counter = bundle-adjustment valid-pose-count hypothesis
-(§2) against the Unity/IL2CPP side, and any disassembly of the obscured
-`PointCloudRegistrationQualityContext` helper functions (§4).
+(§2) against the Unity/IL2CPP side, decoding `compute_cloud_overlap_fast`'s grid-based
+algorithm (§4, a separate ~3KB function from the now-fully-decoded point-based one),
+and locating `e0a345aa`'s call site to confirm it's really the accept/reject gate
+downstream of `b91078bd`'s scoring.
