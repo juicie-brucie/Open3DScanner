@@ -360,6 +360,12 @@ FAKE_EXPORT ObScanStatus obscan_scan_get_realtime_model_mesh(ObScanScanHandle sc
     return OB_SCAN_SUCCESS;
 }
 
+FAKE_EXPORT ObScanStatus obscan_scan_config_combined_exposure_and_laser_current(ObScanScanHandle scan_handle,
+                                                                               int32_t value) {
+    if (scan_handle == nullptr || value < 1 || value > 1000) return OB_SCAN_ERROR_INVALID_ARGUMENT;
+    return OB_SCAN_SUCCESS;
+}
+
 FAKE_EXPORT ObScanStatus obscan_scan_get_mode_config(ObScanScanHandle scan_handle, ObScanModeConfig* out_config) {
     if (scan_handle == nullptr || out_config == nullptr) return OB_SCAN_ERROR_INVALID_ARGUMENT;
     *out_config = {};

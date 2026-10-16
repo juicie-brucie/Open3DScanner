@@ -138,8 +138,12 @@ instead of hanging; listeners have static lifetime; the library is never
 unloaded and the worker leaves via `_Exit`; the launcher sends SIGTERM
 (clean stop) before SIGKILL on timeout and lets Ctrl-C reach the worker's
 cleanup instead of killing it; a lock file prevents two runs driving the
-scanner at once. Verified only against `tools/fake_obscan` so far — needs
-a hardware run to confirm.
+scanner at once. First hardware run (logs/branch_claude-clever-albattani-
+cebx0e/) segfaulted on both attempts right after device connect, in a
+`obscan_device_management_get_device_info` call that was only there to
+print device details — an unverified binding, never called before, with
+no vendor log line for the call. Removed; teardown changes still need
+their first real run.
 
 **The Vulkan interposer is not yet shown to do anything.** The three
 `live_capture_vulkan_fix_run*.log` runs that were taken as confirmation

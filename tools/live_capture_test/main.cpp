@@ -83,6 +83,7 @@ constexpr int kPauseSettleMs = 2000;
 constexpr int kStopWaitMs = 20000;
 constexpr int kDestroyAttempts = 5;
 constexpr int kDefaultScanSeconds = 30;
+constexpr int32_t kExposure = 900;  // combined exposure/laser current, 1-1000
 
 int ScanSeconds() {
     const char* s = std::getenv("OPENSCANNER_SCAN_SECONDS");
@@ -357,13 +358,13 @@ private:
             return kExitNoDevice;
         }
 
-        ObScanDeviceInfo info = {};
-        if (lib_.obscan_device_management_get_device_info(device_mgmt_, 0, &info) == OB_SCAN_SUCCESS) {
-            Say("device 0: %s pid=0x%04x sn=%s fw=%s link=%s", info.camera_name ? info.camera_name : "?",
-                info.camera_pid, info.camera_serial_number ? info.camera_serial_number : "?",
-                info.camera_firmware_version ? info.camera_firmware_version : "?",
-                info.camera_connection_type ? info.camera_connection_type : "?");
-        }
+        // No obscan_device_management_get_device_info here: called at this
+        // point it segfaulted on the real Raptor Pro on both runs of the
+        // first hardware test (logs/branch_claude-clever-albattani-
+        // cebx0e/), with no vendor log line for the call at all — the
+        // binding (ObScanDeviceInfo layout or signature) has never been
+        // verified. The vendor's own scan log already records name, serial
+        // and firmware at connect.
         disconnects_at_connect_ = g_device_disconnects.load();
 
         ObScanSessionConfig session_config = {};
@@ -427,6 +428,13 @@ private:
             return kExitCallFailed;
         }
 
+        // Confirmed against the real CrealityScan app: at this device's
+        // default/auto exposure (~500 on a 1-1000 scale) physical markers
+        // for fuse_mode=Marker went undetected; the real app only found
+        // them once exposure was turned up well above default.
+        Report("obscan_scan_config_combined_exposure_and_laser_current",
+               lib_.obscan_scan_config_combined_exposure_and_laser_current(scan_, kExposure));
+
         WaitFor(kPreviewStatusWaitMs, [] { return g_preview_status.load() != kNoStatus; });
         Say("preview status callback: %s (%d), progress %.2f", StatusName(g_preview_status.load()),
             g_preview_status.load(), g_preview_progress.load());
@@ -473,6 +481,10 @@ private:
         const int polls = scan_seconds * 1000 / kPollIntervalMs;
         for (int i = 0; i < polls && !g_stop_requested; ++i) {
             Pump(kPollIntervalMs);
+            // The device's auto-exposure decays a one-time value back to
+            // ~500 within ~15s and the ABI has no auto/manual toggle, so
+            // re-assert it every poll (holds it at ~1500-1680 in the log).
+            lib_.obscan_scan_config_combined_exposure_and_laser_current(scan_, kExposure);
             if (Disconnected()) {
                 Say("Device disconnected mid-scan.");
                 return kExitDisconnected;
