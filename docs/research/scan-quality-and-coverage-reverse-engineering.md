@@ -236,9 +236,33 @@ bool e0a345aa(const PointCloudRegistrationQualityContext& ctx, double min_overla
 }
 ```
 i.e. "is this frame's registration good enough to trust" — RMS distance below a ceiling
-*and* overlap ratio above a floor, both caller-supplied. This is almost certainly the
-actual accept/reject check sitting downstream of `b91078bd`'s scoring (not yet traced to
-its call site — would need the caller of `e0a345aa` itself, not yet located).
+*and* overlap ratio above a floor, both caller-supplied.
+
+**Confirmed, not just inferred: this is the universal per-frame acceptance gate across
+every scan mode.** All 10 call sites of `e0a345aa` in the library were located (`nm`'s
+sorted symbol table + a binary search for each call address's enclosing function):
+
+| Caller | Mode |
+|---|---|
+| `texture_mode::de543b20(FastPerspectiveICPContext&, ...)` | texture/photogrammetry ICP alignment |
+| `GeometryScanningContext::scanning_following()` | geometry mode, normal tracking |
+| `GeometryScanningContext::scanning_relocation()` | geometry mode, tracking recovery |
+| `RGBDScanningContext::scanning_relocation()` | RGBD mode, tracking recovery |
+| `free_scan::align_non_kf_geom(...)` (via a `std::__bind` lambda) | geometry mode, non-keyframe alignment |
+| `free_scan::align_non_kf_marker(...)` (ditto) | **marker mode** — what this project's own tooling uses |
+| `free_scan::align_non_kf_rgbd(...)` (×2 call sites, two lambdas) | RGBD mode, non-keyframe alignment |
+| `free_scan::align_non_kf_rgbd_amao(...)` | RGBD-AMAO mode, non-keyframe alignment |
+| `free_scan::align_non_kf_rgbd_amao_bundle_io(...)` | RGBD-AMAO + bundle-adjustment I/O variant |
+
+Every major tracking mode (geometry, marker, RGBD, RGBD-AMAO) and both of the two
+scanning states that matter (`scanning_following` — normal operation —  and
+`scanning_relocation` — recovering after tracking loss) route through this exact same
+gate, built on this exact same RMS-distance/overlap-ratio scoring. This is not a
+peripheral quality check; it is *the* registration-quality gate for the whole live
+pipeline, reused identically regardless of which algorithm (marker tracking, RGBD,
+geometry-only ICP) produced the candidate pose. A frame that fails this gate — RMS
+distance too high, or overlap ratio too low, relative to caller-supplied thresholds —
+does not get folded into the running reconstruction, in any mode.
 
 ### `compute_cloud_overlap_fast` — same outputs, rasterize-and-z-buffer instead of raw KD-tree
 
@@ -370,7 +394,7 @@ replaceable:
 
 Not yet done: tracing the actual per-point weight computation (§3's open question),
 confirming the "Points" HUD counter = bundle-adjustment valid-pose-count hypothesis
-(§2) against the Unity/IL2CPP side, locating `e0a345aa`'s call site to confirm it's
-really the accept/reject gate downstream of the scoring functions, finding the consumer
-of §4's CGAL Delaunay triangulation output, and decoding `compute_cloud_overlap_fastKDtree`
+(§2) against the Unity/IL2CPP side, finding the consumer of §4's CGAL Delaunay
+triangulation output, and decoding `compute_cloud_overlap_fastKDtree` (presumably a
+third scoring variant taking an externally-built `slam::LKDtree*`).
 (presumably a third variant taking an externally-built `slam::LKDtree*`).
