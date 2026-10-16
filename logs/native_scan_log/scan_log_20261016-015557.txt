@@ -1,0 +1,35 @@
+[2026-10-16 01:55:57.501407][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-16 01:55:57.501830][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-16 01:55:57.501855][INFO ][0x1fd68bf80][::0] dependent files dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+[2026-10-16 01:55:57.501868][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-16 01:55:57.501878][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-16 01:55:57.501888][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 01:55:57.501899][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 01:55:57.501909][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 01:55:57.501918][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-16 01:55:57.501928][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-16 01:55:57.506895][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-16 01:55:57.506914][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-16 01:55:57.506993][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-16 01:55:57.507016][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-16 01:55:57.507028][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-16 01:55:57.507037][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-16 01:55:57.507046][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-16 01:55:57.507055][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-16 01:55:57.507063][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-16 01:55:57.507071][INFO ][0x1fd68bf80][::0] obscan_context_add_data_msg_listener
+[2026-10-16 01:55:57.507081][INFO ][0x1fd68bf80][::0] add OBScanMessageListener success !
+[2026-10-16 01:55:57.507091][INFO ][0x1fd68bf80][::0] obscan_context_add_process_msg_listener
+[2026-10-16 01:55:57.507101][INFO ][0x1fd68bf80][::0] add OBScanProcessMessageListener success !
+[2026-10-16 01:55:57.507109][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-16 01:55:57.507117][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-16 01:55:57.507125][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-16 01:55:57.507133][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-16 01:55:57.507141][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-16 01:55:57.507148][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-16 01:55:57.507156][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-16 01:55:57.507164][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-16 01:55:57.507171][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-16 01:55:57.507178][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-16 01:55:57.507186][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-16 01:55:57.507197][INFO ][0x1fd68bf80][::0] update callback begin

@@ -1,0 +1,20 @@
+[2026-10-15 15:56:41.345964][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 15:56:41.346231][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-15 15:56:41.346246][INFO ][0x1fd68bf80][::0] dependent files dir: 
+[2026-10-15 15:56:41.346255][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-15 15:56:41.346263][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-15 15:56:41.346364][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 15:56:41.346382][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 15:56:41.346392][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 15:56:41.346415][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-15 15:56:41.346424][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-15 15:56:41.350150][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-15 15:56:41.350247][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-15 15:56:41.350272][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-15 15:56:41.350281][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-15 15:56:41.350288][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-15 15:56:41.350296][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-15 15:56:41.350303][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-15 15:56:41.350310][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-15 15:56:41.350317][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-15 15:56:41.350323][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num

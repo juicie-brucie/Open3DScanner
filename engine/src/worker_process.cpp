@@ -135,6 +135,11 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
 
     if (pid == 0) {
         // Child: re-exec as a fresh process image running the same binary.
+        // Callers who need DYLD_INSERT_LIBRARIES (macOS) set it via plain
+        // setenv() before calling this — it's inherited across fork()
+        // automatically, no special handling needed here. (See
+        // live_capture_test/main.cpp and vulkan_disable_interpose.c for
+        // why this project needs that.)
         std::vector<char*> argv;
         argv.push_back(const_cast<char*>(self_path.c_str()));
         for (const auto& arg : extra_args) {

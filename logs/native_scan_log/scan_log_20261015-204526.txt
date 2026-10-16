@@ -1,0 +1,620 @@
+[2026-10-15 20:45:26.201643][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:45:26.201889][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-15 20:45:26.201902][INFO ][0x1fd68bf80][::0] dependent files dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+[2026-10-15 20:45:26.201911][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-15 20:45:26.201918][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-15 20:45:26.201924][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:45:26.201931][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:45:26.201939][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:45:26.201945][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-15 20:45:26.201951][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-15 20:45:26.205499][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-15 20:45:26.205520][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-15 20:45:26.205596][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-15 20:45:26.205611][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-15 20:45:26.205619][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-15 20:45:26.205627][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-15 20:45:26.205634][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-15 20:45:26.205641][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-15 20:45:26.205647][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-15 20:45:26.205653][INFO ][0x1fd68bf80][::0] obscan_context_add_data_msg_listener
+[2026-10-15 20:45:26.205660][INFO ][0x1fd68bf80][::0] add OBScanMessageListener success !
+[2026-10-15 20:45:26.205666][INFO ][0x1fd68bf80][::0] obscan_context_add_process_msg_listener
+[2026-10-15 20:45:26.205672][INFO ][0x1fd68bf80][::0] add OBScanProcessMessageListener success !
+[2026-10-15 20:45:26.205678][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-15 20:45:26.205684][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-15 20:45:26.205690][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-15 20:45:26.205696][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-15 20:45:26.205702][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-15 20:45:26.205708][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-15 20:45:26.205714][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-15 20:45:26.205719][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-15 20:45:26.205725][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-15 20:45:26.205731][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-15 20:45:26.205736][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-15 20:45:26.205742][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:45:26.205748][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:45:26.205754][INFO ][0x1fd68bf80][::0] send device msg begin
+[2026-10-15 20:45:26.205759][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT
+[2026-10-15 20:45:26.205765][INFO ][0x1fd68bf80][::0] send device msg end
+[2026-10-15 20:45:26.205772][ERROR][0x1fd68bf80][::0] connect to device failed!
+[2026-10-15 20:45:26.205777][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-15 20:45:28.339810][INFO ][0x16d92f000][::0] removedList count: 0, addedList count:1
+[2026-10-15 20:45:28.855002][INFO ][0x16d92f000][::0] firmware version:1.5.7,get device calibration timestamp:1792014971
+[2026-10-15 20:45:28.855140][INFO ][0x16d92f000][::0] add device info to list sn:CR0886100SN
+[2026-10-15 20:45:28.855154][INFO ][0x16d92f000][::0] current device info list:
+[2026-10-15 20:45:28.855163][INFO ][0x16d92f000][::0] device sn:CR0886100SN
+[2026-10-15 20:45:29.166350][INFO ][0x16d92f000][::0] get device calibration timestamp:1792014971
+[2026-10-15 20:45:29.166382][ERROR][0x16d92f000][::0] property is not permission to operate.
+[2026-10-15 20:45:29.166390][INFO ][0x16d92f000][::0] usb device is registered successfully 
+[2026-10-15 20:45:29.166397][INFO ][0x16d92f000][::0] set select device serial number:CR0886100SN
+[2026-10-15 20:45:29.166403][INFO ][0x16d92f000][::0] device connected state call back begin
+[2026-10-15 20:45:29.166410][INFO ][0x16d92f000][::0] #########camera state###############
+[2026-10-15 20:45:29.166416][INFO ][0x16d92f000][::0] #########usb connected##############
+[2026-10-15 20:45:29.166421][INFO ][0x16d92f000][::0] [1;31mupdate_camera_status 0, cur_device: true[0m
+[2026-10-15 20:45:29.166427][INFO ][0x16d92f000][::0] calib update callback begin
+[2026-10-15 20:45:29.166432][INFO ][0x16d92f000][::0] calib update callback end
+[2026-10-15 20:45:29.166437][INFO ][0x16d92f000][::0] camera name: Creality Raptor Pro
+[2026-10-15 20:45:29.166443][INFO ][0x16d92f000][::0] camera serial number: CR0886100SN
+[2026-10-15 20:45:29.166448][INFO ][0x16d92f000][::0] camera connection type: USB3.0
+[2026-10-15 20:45:29.166454][INFO ][0x16d92f000][::0] camera firmware version: 1.5.7
+[2026-10-15 20:45:29.166459][INFO ][0x16d92f000][::0] wifi device firmware version: Unknown
+[2026-10-15 20:45:29.166464][INFO ][0x16d92f000][::0] get active device serial number:CR0886100SN
+[2026-10-15 20:45:29.166603][INFO ][0x16d92f000][::0] the device calib status: false
+[2026-10-15 20:45:29.166613][INFO ][0x16d92f000][::0] check device pccupancy status begin
+[2026-10-15 20:45:29.186623][INFO ][0x16d92f000][::0] get origin calibration param done,origin params size:1
+[2026-10-15 20:45:29.225435][INFO ][0x16d92f000][::0] is support rescan: true
+[2026-10-15 20:45:29.225463][INFO ][0x16d92f000][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_CONNECT
+[2026-10-15 20:45:29.225471][INFO ][0x16d92f000][::0] device connected state call back done
+[2026-10-15 20:45:29.225477][INFO ][0x16d92f000][::0] Init device return:1.
+[2026-10-15 20:45:29.255527][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 20:45:29.255571][INFO ][0x1fd68bf80][::0] obscan_context_create_session
+[2026-10-15 20:45:29.255579][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:45:29.255585][INFO ][0x1fd68bf80][::0] [OBScanSession] Thread spawned successfully.
+[2026-10-15 20:45:29.255591][INFO ][0x1fd68bf80][::0] create dir before: /tmp/openscanner_live_session
+[2026-10-15 20:45:29.255597][INFO ][0x1fd68bf80][::0] create dir after: /tmp/openscanner_live_session
+[2026-10-15 20:45:29.258092][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:45:29.260245][INFO ][0x1fd68bf80][::0] session init state : OB_SCAN_SUCCESS
+[2026-10-15 20:45:29.260258][INFO ][0x1fd68bf80][::0] create session success !
+[2026-10-15 20:45:29.260264][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:45:29.260270][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:45:29.260276][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:45:29.260282][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:45:29.260288][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:45:29.260293][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:45:29.260299][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKER
+[2026-10-15 20:45:29.260304][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:45:29.260309][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:45:29.260315][INFO ][0x1fd68bf80][::0] voxel_size: 0.050000
+[2026-10-15 20:45:29.260320][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:45:29.260326][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:45:29.260331][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:45:29.260337][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:45:29.260346][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:45:29.260351][INFO ][0x1fd68bf80][::0] check supported end !
+[2026-10-15 20:45:29.260357][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:45:29.260362][INFO ][0x1fd68bf80][::0] free mem: 8.610324
+[2026-10-15 20:45:29.261218][WARN ][0x1fd68bf80][::0] the connection remains unchanged(1/1)
+[2026-10-15 20:45:29.261230][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:45:29.261565][INFO ][0x1fd68bf80][::0] save init project data success !
+[2026-10-15 20:45:29.261574][INFO ][0x1fd68bf80][::0] create scan init state : OB_SCAN_SUCCESS
+[2026-10-15 20:45:29.262757][INFO ][0x1fd68bf80][::0] create scan success !
+[2026-10-15 20:45:29.262779][INFO ][0x1fd68bf80][::0] obscan_scan_preview
+[2026-10-15 20:45:29.262854][INFO ][0x16d29f000][::0] preview progress 0.050000
+[2026-10-15 20:45:29.262863][INFO ][0x16d29f000][::0] preview progress 0.150000
+[2026-10-15 20:45:29.262869][INFO ][0x16d29f000][::0] preview progress 0.200000
+[2026-10-15 20:45:29.262875][WARN ][0x16d29f000][::0] the connection remains unchanged(1/1)
+[2026-10-15 20:45:29.262882][INFO ][0x16d29f000][::0] preview progress 0.300000
+[2026-10-15 20:45:29.262888][INFO ][0x16d29f000][::0] preview progress 0.350000
+[2026-10-15 20:45:29.262893][INFO ][0x16d29f000][::0] preview progress 0.430000
+[2026-10-15 20:45:29.262898][WARN ][0x16d29f000][::0] [1;33mcannot find file /tmp/openscanner_live_fps_log/fps.obconfig[0m
+[2026-10-15 20:45:29.262905][INFO ][0x16d29f000][::0] the ir fps is 0
+[2026-10-15 20:45:29.262911][INFO ][0x16d29f000][::0] custom profile type:1,width:0,height:0,fps:0
+[2026-10-15 20:45:29.262916][INFO ][0x16d29f000][::0] custom profile type:2,width:1280,height:800,fps:0
+[2026-10-15 20:45:29.262923][INFO ][0x16d29f000][::0] custom profile type:3,width:0,height:0,fps:0
+[2026-10-15 20:45:29.262928][INFO ][0x16d29f000][::0] custom profile type:6,width:1920,height:1200,fps:0
+[2026-10-15 20:45:29.262934][INFO ][0x16d29f000][::0] custom profile type:7,width:1920,height:1200,fps:0
+[2026-10-15 20:45:29.262940][INFO ][0x16d29f000][::0] preview progress 0.520000
+[2026-10-15 20:45:29.262946][INFO ][0x16d29f000][::0] preview progress 0.640000
+[2026-10-15 20:45:29.262951][INFO ][0x16d29f000][::0] internal open begin
+[2026-10-15 20:45:29.262956][INFO ][0x16d29f000][::0] device open begin
+[2026-10-15 20:45:29.262962][INFO ][0x16d29f000][::0] check device pccupancy status begin
+[2026-10-15 20:45:29.262968][INFO ][0x16d29f000][::0] current device is idle.
+[2026-10-15 20:45:29.262973][ERROR][0x16d29f000][::0] property is not permission to operate.
+[2026-10-15 20:45:29.262979][ERROR][0x16d29f000][::0] property is not permission to operate.
+[2026-10-15 20:45:29.262985][ERROR][0x16d29f000][::0] property is not permission to operate.
+[2026-10-15 20:45:29.262990][ERROR][0x16d29f000][::0] property is not permission to operate.
+[2026-10-15 20:45:29.268485][INFO ][0x16d29f000][::0] currentDepthMode: Laser Lines Scan
+[2026-10-15 20:45:29.268511][INFO ][0x16d29f000][::0] config scan mode done.
+[2026-10-15 20:45:29.370612][ERROR][0x16d29f000][::0] function: getStreamProfileList
+args: sensorType
+message: No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_DEPTH
+type: 3
+[2026-10-15 20:45:29.370676][ERROR][0x16d29f000][::0] function: getStreamProfileList
+args: sensorType
+message: No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_IR
+type: 3
+[2026-10-15 20:45:29.476983][INFO ][0x16d29f000][::0] origin sensor type:1 profile:0,0,255,0
+[2026-10-15 20:45:29.477007][INFO ][0x16d29f000][::0] origin sensor type:2 profile:0,0,255,0
+[2026-10-15 20:45:29.477015][INFO ][0x16d29f000][::0] origin sensor type:3 profile:0,0,255,0
+[2026-10-15 20:45:29.477021][INFO ][0x16d29f000][::0] origin sensor type:6 profile:1920,1200,9,30
+[2026-10-15 20:45:29.477027][INFO ][0x16d29f000][::0] origin sensor type:7 profile:1920,1200,9,30
+[2026-10-15 20:45:29.477033][INFO ][0x16d29f000][::0] correct stream profile fps begin
+[2026-10-15 20:45:29.477047][INFO ][0x16d29f000][::0] correct stream profile fps done
+[2026-10-15 20:45:29.477053][INFO ][0x16d29f000][::0] make stream profile tuple
+[2026-10-15 20:45:29.477059][INFO ][0x16d29f000][::0] Color:0,0,255,0
+[2026-10-15 20:45:29.477064][INFO ][0x16d29f000][::0] Depth:0,0,255,0
+[2026-10-15 20:45:29.477070][INFO ][0x16d29f000][::0] IR:0,0,255,0
+[2026-10-15 20:45:29.477074][INFO ][0x16d29f000][::0] Left IR:1920,1200,9,30
+[2026-10-15 20:45:29.477079][INFO ][0x16d29f000][::0] Right IR:1920,1200,9,30
+[2026-10-15 20:45:29.478735][INFO ][0x16d29f000][::0] config streamer done.
+[2026-10-15 20:45:29.478748][INFO ][0x16d29f000][::0] config property check device necessary param valid status:1
+[2026-10-15 20:45:29.480721][INFO ][0x16d29f000][::0] change laser1 to default current:50000.000000
+[2026-10-15 20:45:29.491514][INFO ][0x16d29f000][::0] config property control fill light,blue light enable:1,white light enable:0
+[2026-10-15 20:45:29.502029][INFO ][0x16d29f000][::0] get usb de emphasis value:1,current platform should set:1
+[2026-10-15 20:45:29.502048][INFO ][0x16d29f000][::0] config property done.
+[2026-10-15 20:45:29.502733][INFO ][0x16d29f000][::0] pipeline start done
+[2026-10-15 20:45:29.518789][INFO ][0x16d29f000][::0] accel start done
+[2026-10-15 20:45:29.518832][INFO ][0x16d29f000][::0] start stream done.
+[2026-10-15 20:45:29.538878][INFO ][0x16d29f000][::0] config property ex done.
+[2026-10-15 20:45:29.548460][INFO ][0x16d29f000][::0] baseline:-131.179703,focalPix:2101.082275,unit:1.000000,dispOffset:450.000000
+[2026-10-15 20:45:29.548485][INFO ][0x16d29f000][::0] device params:baseline:131.179703,focalPix:2101.082275,unit:1.000000,dispOffset:450.000000
+[2026-10-15 20:45:29.560897][INFO ][0x16d29f000][::0] LineLaserParamList count:4
+[2026-10-15 20:45:29.560927][INFO ][0x16d29f000][::0] current ll l:2094.688232,2094.904053,949.637085,591.125854,1920,1200
+[2026-10-15 20:45:29.560936][INFO ][0x16d29f000][::0] current ll r:2101.841797,2101.797363,933.504822,602.757019,1920,1200
+[2026-10-15 20:45:29.560943][INFO ][0x16d29f000][::0] current ll lr: 0.938738, 0.0058285, 0.344584, -0.00516863, 0.999983, -0.00283358, -0.344594, 0.000878962, 0.938751, r: -129.159, 0.349512, 22.9325, 
+[2026-10-15 20:45:29.560953][INFO ][0x16d29f000][::0] current ll lb: 0.999984, -0.0013221, 0.00542643, 0.00131309, 0.999998, 0.00166324, -0.00542862, -0.00165609, 0.999984, r: -32.8919, -0.144527, -6.32114, 
+[2026-10-15 20:45:29.573246][INFO ][0x16d29f000][::0] get calibration temperature success,irLeftTemp:35.559101,irRightTemp:34.182999,txTemp:33.599998
+[2026-10-15 20:45:29.573278][INFO ][0x16d29f000][::0] tempCompensate init fx_l_calib:2094.688232
+[2026-10-15 20:45:29.573293][INFO ][0x16d29f000][::0] tempCompensate init fy_l_calib:2094.904053
+[2026-10-15 20:45:29.573300][INFO ][0x16d29f000][::0] tempCompensate init cx_l_calib:949.637085
+[2026-10-15 20:45:29.573306][INFO ][0x16d29f000][::0] tempCompensate init cy_l_calib:591.125854
+[2026-10-15 20:45:29.573312][INFO ][0x16d29f000][::0] tempCompensate init fx_r_calib:2101.841797
+[2026-10-15 20:45:29.573318][INFO ][0x16d29f000][::0] tempCompensate init fy_r_calib:2101.797363
+[2026-10-15 20:45:29.573324][INFO ][0x16d29f000][::0] tempCompensate init cx_r_calib:933.504822
+[2026-10-15 20:45:29.573329][INFO ][0x16d29f000][::0] tempCompensate init cy_r_calib:602.757019
+[2026-10-15 20:45:29.573334][INFO ][0x16d29f000][::0] tempCompensate init tx_calib:-129.159225
+[2026-10-15 20:45:29.573340][INFO ][0x16d29f000][::0] tempCompensate init ty_calib:0.349512
+[2026-10-15 20:45:29.573345][INFO ][0x16d29f000][::0] tempCompensate init tz_calib:22.932499
+[2026-10-15 20:45:29.573350][INFO ][0x16d29f000][::0] tempCompensate init temperature_calib_ir_l:35.559101
+[2026-10-15 20:45:29.573355][INFO ][0x16d29f000][::0] tempCompensate init temperature_calib_ir_r:34.182999
+[2026-10-15 20:45:29.573361][INFO ][0x16d29f000][::0] tempCompensate init temperature_calib_tx:33.599998
+[2026-10-15 20:45:29.573366][INFO ][0x16d29f000][::0] tempCompensate init ir_l_fx_comp_coeff:-0.030000
+[2026-10-15 20:45:29.573383][INFO ][0x16d29f000][::0] tempCompensate init ir_l_fy_comp_coeff:-0.030000
+[2026-10-15 20:45:29.573389][INFO ][0x16d29f000][::0] tempCompensate init ir_l_cx_comp_coeff:0.000000
+[2026-10-15 20:45:29.573395][INFO ][0x16d29f000][::0] tempCompensate init ir_l_cy_comp_coeff:0.000000
+[2026-10-15 20:45:29.573400][INFO ][0x16d29f000][::0] tempCompensate init ir_r_fx_comp_coeff:-0.030000
+[2026-10-15 20:45:29.573405][INFO ][0x16d29f000][::0] tempCompensate init ir_r_fy_comp_coeff:-0.030000
+[2026-10-15 20:45:29.573410][INFO ][0x16d29f000][::0] tempCompensate init ir_r_cx_comp_coeff:0.000000
+[2026-10-15 20:45:29.573416][INFO ][0x16d29f000][::0] tempCompensate init ir_r_cy_comp_coeff:0.000000
+[2026-10-15 20:45:29.573421][INFO ][0x16d29f000][::0] tempCompensate init tx_comp_coeff:0.002000
+[2026-10-15 20:45:29.573437][INFO ][0x16d29f000][::0] tempCompensate init ty_comp_coeff:0.000000
+[2026-10-15 20:45:29.573451][INFO ][0x16d29f000][::0] tempCompensate init tz_comp_coeff:0.000000
+[2026-10-15 20:45:29.573458][INFO ][0x16d29f000][::0] tempCompensate init fx_l_calib:2094.106689
+[2026-10-15 20:45:29.573464][INFO ][0x16d29f000][::0] tempCompensate init fy_l_calib:2094.449951
+[2026-10-15 20:45:29.573470][INFO ][0x16d29f000][::0] tempCompensate init cx_l_calib:949.265686
+[2026-10-15 20:45:29.573476][INFO ][0x16d29f000][::0] tempCompensate init cy_l_calib:591.603394
+[2026-10-15 20:45:29.573482][INFO ][0x16d29f000][::0] tempCompensate init fx_r_calib:2101.002441
+[2026-10-15 20:45:29.573488][INFO ][0x16d29f000][::0] tempCompensate init fy_r_calib:2101.082275
+[2026-10-15 20:45:29.573494][INFO ][0x16d29f000][::0] tempCompensate init cx_r_calib:934.084290
+[2026-10-15 20:45:29.573501][INFO ][0x16d29f000][::0] tempCompensate init cy_r_calib:602.957642
+[2026-10-15 20:45:29.573506][INFO ][0x16d29f000][::0] tempCompensate init tx_calib:-129.167023
+[2026-10-15 20:45:29.573511][INFO ][0x16d29f000][::0] tempCompensate init ty_calib:0.349238
+[2026-10-15 20:45:29.573516][INFO ][0x16d29f000][::0] tempCompensate init tz_calib:22.888269
+[2026-10-15 20:45:29.573522][INFO ][0x16d29f000][::0] tempCompensate init temperature_calib_ir_l:35.559101
+[2026-10-15 20:45:29.573527][INFO ][0x16d29f000][::0] tempCompensate init temperature_calib_ir_r:34.182999
+[2026-10-15 20:45:29.573532][INFO ][0x16d29f000][::0] tempCompensate init temperature_calib_tx:33.599998
+[2026-10-15 20:45:29.573538][INFO ][0x16d29f000][::0] tempCompensate init ir_l_fx_comp_coeff:-0.030000
+[2026-10-15 20:45:29.573543][INFO ][0x16d29f000][::0] tempCompensate init ir_l_fy_comp_coeff:-0.030000
+[2026-10-15 20:45:29.573549][INFO ][0x16d29f000][::0] tempCompensate init ir_l_cx_comp_coeff:0.000000
+[2026-10-15 20:45:29.573554][INFO ][0x16d29f000][::0] tempCompensate init ir_l_cy_comp_coeff:0.000000
+[2026-10-15 20:45:29.573559][INFO ][0x16d29f000][::0] tempCompensate init ir_r_fx_comp_coeff:-0.030000
+[2026-10-15 20:45:29.573564][INFO ][0x16d29f000][::0] tempCompensate init ir_r_fy_comp_coeff:-0.030000
+[2026-10-15 20:45:29.573577][INFO ][0x16d29f000][::0] tempCompensate init ir_r_cx_comp_coeff:0.000000
+[2026-10-15 20:45:29.573587][INFO ][0x16d29f000][::0] tempCompensate init ir_r_cy_comp_coeff:0.000000
+[2026-10-15 20:45:29.573593][INFO ][0x16d29f000][::0] tempCompensate init tx_comp_coeff:0.002000
+[2026-10-15 20:45:29.573598][INFO ][0x16d29f000][::0] tempCompensate init ty_comp_coeff:0.000000
+[2026-10-15 20:45:29.573604][INFO ][0x16d29f000][::0] tempCompensate init tz_comp_coeff:0.000000
+[2026-10-15 20:45:29.573609][INFO ][0x16d29f000][::0] Get lineLaser Param success!
+[2026-10-15 20:45:29.573614][INFO ][0x16d29f000][::0] config device param done.
+[2026-10-15 20:45:29.573619][INFO ][0x16d29f000][::0] use k3: false
+[2026-10-15 20:45:29.573624][INFO ][0x16d29f000][::0] cam model: poly
+[2026-10-15 20:45:29.573629][INFO ][0x16d29f000][::0] cam model: poly
+[2026-10-15 20:45:29.573634][INFO ][0x16d29f000][::0] LineLaserDetectImpl
+
+[2026-10-15 20:45:29.573640][INFO ][0x16d29f000][::0] dgg ver: 4.0.15
+[2026-10-15 20:45:29.573655][INFO ][0x16d29f000][::0] [1;32mraptor pro[0m
+[2026-10-15 20:45:29.573661][INFO ][0x16d29f000][::0] dgg use poly
+[2026-10-15 20:45:29.573670][INFO ][0x16d29f000][::0] dgg use poly
+[2026-10-15 20:45:29.573675][INFO ][0x16d29f000][::0] [1;32mcometx ultra[0m
+[2026-10-15 20:45:29.640123][INFO ][0x16d29f000][::0] DGG INIT IS COMPLETE
+
+[2026-10-15 20:45:29.646411][INFO ][0x16d29f000][::0] initBLAE begin.
+[2026-10-15 20:45:29.646432][INFO ][0x16d29f000][::0] blae init begin
+[2026-10-15 20:45:29.648180][INFO ][0x16d29f000][::0] blae init width 1920 height 1200
+[2026-10-15 20:45:29.648212][INFO ][0x16d29f000][::0] blae init done
+[2026-10-15 20:45:29.648221][INFO ][0x16d29f000][::0] updateBLAEParams
+[2026-10-15 20:45:29.648238][INFO ][0x16d29f000][::0] initBLAE done.
+[2026-10-15 20:45:29.648263][INFO ][0x16d29f000][::0] config algorithm param done.
+[2026-10-15 20:45:29.648333][INFO ][0x16d29f000][::0] change AE type
+[2026-10-15 20:45:29.648352][INFO ][0x16e6db000][::0] valid (double ir)
+[2026-10-15 20:45:29.648361][INFO ][0x16e6db000][::0] output light type:2
+[2026-10-15 20:45:29.648367][INFO ][0x16e6db000][::0] l p b
+[2026-10-15 20:45:29.648572][INFO ][0x16d5e7000][::0] dgg device: 104
+
+[2026-10-15 20:45:29.657803][INFO ][0x16d29f000][::0] setLineLaserEnable
+[2026-10-15 20:45:29.658857][INFO ][0x16d29f000][::0] post process done.
+[2026-10-15 20:45:29.658923][INFO ][0x16d29f000][::0] device open done
+[2026-10-15 20:45:29.659021][INFO ][0x16d29f000][::0] preview progress 0.760000
+[2026-10-15 20:45:29.661321][INFO ][0x16d29f000][::0] preview progress 0.766000
+[2026-10-15 20:45:29.661414][INFO ][0x16d29f000][::0] preview progress 0.820000
+[2026-10-15 20:45:29.661620][INFO ][0x16d29f000][::0] preview progress 0.850000
+[2026-10-15 20:45:29.661715][ERROR][0x16e997000][::0] ERROR: OrbbecFusion::getPointCloudWithDownsampling total is zero
+[2026-10-15 20:45:29.661896][INFO ][0x16d29f000][::0] preview progress 0.880000
+[2026-10-15 20:45:29.661912][INFO ][0x16d29f000][::0] preview progress 0.940000
+[2026-10-15 20:45:29.661920][INFO ][0x16d29f000][::0] preview progress 1.000000
+[2026-10-15 20:45:29.661927][INFO ][0x16d29f000][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:45:29.665159][INFO ][0x16d29f000][::0] change to preview success !
+[2026-10-15 20:45:29.665255][INFO ][0x16df33000][::0] [1;33mframe 0[0m
+[2026-10-15 20:45:29.666997][INFO ][0x16d29f000][::0] -----------lasere total_points_num: 0 out_frame_idx: 0 detect_idx: 0 l_image_type:0
+
+[2026-10-15 20:45:29.668295][INFO ][0x16e6db000][::0] l p d
+[2026-10-15 20:45:29.668320][INFO ][0x16e6db000][::0] processBLAEFrame start
+[2026-10-15 20:45:29.668329][INFO ][0x16e6db000][::0] deviceFrameSet->laser->light_type 2
+[2026-10-15 20:45:29.668339][INFO ][0x16e6db000][::0] blae run begin
+[2026-10-15 20:45:29.668359][INFO ][0x16e6db000][::0] blae run finish!
+[2026-10-15 20:45:29.668366][INFO ][0x16d673000][::0] change ae type
+[2026-10-15 20:45:29.668373][INFO ][0x16e6db000][::0] valid (double ir)
+[2026-10-15 20:45:29.668380][INFO ][0x16e6db000][::0] output light type:2
+[2026-10-15 20:45:29.668422][INFO ][0x16e6db000][::0] l p b
+[2026-10-15 20:45:29.668588][INFO ][0x16d29f000][::0] dgg device: 104
+
+[2026-10-15 20:45:29.673846][INFO ][0x16d5e7000][::0] -----------lasere total_points_num: 0 out_frame_idx: 1 detect_idx: 1 l_image_type:0
+
+[2026-10-15 20:45:29.674870][INFO ][0x16e6db000][::0] l p d
+[2026-10-15 20:45:29.674962][INFO ][0x16e6db000][::0] processBLAEFrame start
+[2026-10-15 20:45:29.674985][INFO ][0x16e6db000][::0] deviceFrameSet->laser->light_type 2
+[2026-10-15 20:45:29.674995][INFO ][0x16e6db000][::0] blae run begin
+[2026-10-15 20:45:29.675769][INFO ][0x16df33000][::0] [1;33mframe 0[0m
+[2026-10-15 20:45:29.677997][INFO ][0x16e6db000][::0] blae run finish!
+[2026-10-15 20:45:29.678137][INFO ][0x16e6db000][::0] valid (double ir)
+[2026-10-15 20:45:29.678159][INFO ][0x16e6db000][::0] output light type:2
+[2026-10-15 20:45:29.678178][INFO ][0x16e6db000][::0] l p b
+[2026-10-15 20:45:29.678195][INFO ][0x16d5e7000][::0] dgg device: 104
+
+[2026-10-15 20:45:29.678293][INFO ][0x16d29f000][::0] -----------lasere total_points_num: 0 out_frame_idx: 2 detect_idx: 2 l_image_type:0
+
+[2026-10-15 20:45:29.682009][INFO ][0x16df33000][::0] [1;33mframe 0[0m
+[2026-10-15 20:45:32.681843][INFO ][0x16e767000][::0] Stream interrupt trying to restart
+[2026-10-15 20:45:35.911761][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:45:39.142640][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:45:42.377347][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:45:45.382902][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:45:45.382985][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:45:45.383019][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:45:48.389541][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:45:51.611858][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:45:54.837432][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:45:57.838220][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:45:57.838301][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:45:57.838330][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:46:00.842798][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:04.083038][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:07.325921][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:10.326805][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:10.326994][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:46:10.327022][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:46:13.327033][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:16.567189][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:19.788850][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:22.789436][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:22.789486][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:46:22.789495][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:46:25.791000][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:29.025969][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:32.309372][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:35.309890][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:35.309982][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:46:35.310004][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:46:38.312718][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:41.540617][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:44.774008][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:47.774733][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:47.774784][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:46:47.774806][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:46:50.778338][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:53.996079][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:46:57.260652][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:00.265869][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:00.265937][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:47:00.265949][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:47:03.267462][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:06.488092][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:09.734268][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:12.738655][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:12.738743][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:47:12.738774][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:47:15.740683][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:18.961033][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:22.179454][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:25.186213][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:25.186264][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:47:25.186288][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:47:28.192005][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:31.434142][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:34.663446][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:37.665450][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:37.665486][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:47:37.665498][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:47:40.668110][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:43.896732][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:47.127902][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:50.134961][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:50.135109][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:47:50.135136][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:47:53.141520][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:56.365881][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:47:59.598018][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:02.599250][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:02.599309][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:48:02.599321][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:48:05.600611][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:08.827510][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:12.054011][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:15.057695][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:15.057766][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:48:15.057796][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:48:18.060490][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:21.290974][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:24.512179][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:27.514779][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:27.514971][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:48:27.515008][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:48:30.517841][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:33.741886][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:36.969182][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:39.973057][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:39.973236][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:48:39.973329][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:48:42.974827][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:46.208151][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:49.439335][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:52.442897][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:52.442984][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:48:52.443010][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:48:55.445537][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:48:58.670925][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:49:01.906526][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:49:04.907316][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:49:04.907375][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:49:04.907387][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:49:07.913719][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:49:11.146999][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:49:14.377216][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:49:17.380703][ERROR][0x16d9bb000][::0] function: getStructuredDataExt
+args: propertyId"getStructuredDataExt failed."
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:49:17.380775][ERROR][0x16d9bb000][::0] get property 0x420 failed.
+[2026-10-15 20:49:17.380799][INFO ][0x16d9bb000][::0] unsupport get device temperature
+[2026-10-15 20:49:20.382168][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4
+[2026-10-15 20:49:23.602538][ERROR][0x16d9bb000][::0] function: getCurrentStreamingSensorBitRate
+args: nullptr
+message: Resource busy! You can try again later!
+type: 4

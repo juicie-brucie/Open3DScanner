@@ -1,0 +1,53 @@
+[2026-10-15 16:11:50.157248][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 16:11:50.158280][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-15 16:11:50.158292][INFO ][0x1fd68bf80][::0] dependent files dir: 
+[2026-10-15 16:11:50.158300][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-15 16:11:50.158307][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-15 16:11:50.158380][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 16:11:50.158390][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 16:11:50.158397][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 16:11:50.158403][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-15 16:11:50.158410][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-15 16:11:50.162992][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-15 16:11:50.163040][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-15 16:11:50.163367][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-15 16:11:50.163383][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-15 16:11:50.163391][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-15 16:11:50.163399][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-15 16:11:50.163408][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-15 16:11:50.163418][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-15 16:11:50.163430][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-15 16:11:50.163437][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:50.364499][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:50.569609][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:50.770908][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:50.972755][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:51.176063][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:51.379953][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:51.580848][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:51.782984][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:51.987617][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:52.177633][INFO ][0x16b643000][::0] removedList count: 0, addedList count:1
+[2026-10-15 16:11:52.177656][ERROR][0x16b643000][::0] device callback is nullptr.
+[2026-10-15 16:11:52.177664][INFO ][0x16b643000][::0] Init device return:0.
+[2026-10-15 16:11:52.177670][ERROR][0x16b643000][::0] device callback is nullptr.
+[2026-10-15 16:11:52.192727][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:52.396615][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:52.601683][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:52.804282][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:53.007657][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:53.212221][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:53.414244][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:53.616557][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:53.820968][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:54.021294][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:54.226203][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:54.429914][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:54.629994][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:54.830590][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:55.032709][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:55.237688][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:55.442723][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:55.646421][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:55.846837][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 16:11:56.047618][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num

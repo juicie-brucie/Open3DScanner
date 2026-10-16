@@ -1,0 +1,255 @@
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[1;33mSDK version 3.5.3.260921[0m
+[worker] Resolved all symbols OK.
+[worker] input_algo_dependent_files_dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_scan_log
+[10/16 01:28:42.768800][info][13323220][Context.cpp:67] Context created with config: default config!
+[10/16 01:28:42.768824][info][13323220][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner/build
+[10/16 01:28:42.772191][info][13323220][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/16 01:28:42.772223][info][13323220][DeviceManager.cpp:15] Current found device(s): (0)
+[10/16 01:28:42.772233][info][13323220][Context.cpp:82] EnumerateNetDevice:true
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[worker] device message: msg_id=308412672 data=0x0
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/16 01:28:42.772496][info][13323234][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/16 01:28:42.772536][info][13323234][GVCPClient.cpp:325] bind 0.0.0.0:59501
+[10/16 01:28:42.772583][info][13323234][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/16 01:28:42.772613][info][13323234][GVCPClient.cpp:325] bind 0.0.0.0:62446
+[10/16 01:28:42.772631][info][13323234][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/16 01:28:42.772647][info][13323234][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/16 01:28:42.772674][info][13323234][GVCPClient.cpp:325] bind 0.0.0.0:51774
+[10/16 01:28:42.772690][info][13323234][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/16 01:28:42.772706][info][13323234][GVCPClient.cpp:325] bind 169.254.166.145:0
+[10/16 01:28:42.772733][info][13323234][GVCPClient.cpp:325] bind 0.0.0.0:63657
+[10/16 01:28:42.772749][info][13323234][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en9
+[10/16 01:28:42.772878][error][13323237][GVCPClient.cpp:355] sendto failed with error:49
+[10/16 01:28:42.773075][info][13323237][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/16 01:28:42.773097][info][13323237][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/16 01:28:43.778895][info][13323234][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/16 01:28:43.778985][info][13323234][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/16 01:28:44.781371][info][13323234][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/16 01:28:44.781390][info][13323234][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/16 01:28:44.781398][info][13323234][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/16 01:28:44.885012][info][13323234][Ethernet.cpp:244] rpc client connection state:1
+[10/16 01:28:44.885264][info][13323234][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/16 01:28:44.885284][info][13323234][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/16 01:28:44.885294][info][13323234][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/16 01:28:44.990086][info][13323234][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/16 01:28:45.092652][info][13323234][RPCClientPort.cpp:20] create client port cost:102ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/16 01:28:45.092750][info][13323234][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 01:28:45.101440][info][13323234][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 01:28:45.101461][info][13323234][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/16 01:28:45.302313][info][13323234][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 01:28:45.302334][info][13323234][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/16 01:28:45.302345][info][13323234][RPCClientPort.cpp:241] No stream need to stop
+[10/16 01:28:45.302353][info][13323234][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/16 01:28:45.302471][info][13323234][RPCClientPort.cpp:241] No stream need to stop
+[10/16 01:28:45.302499][info][13323234][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/16 01:28:45.403936][info][13323234][Ethernet.cpp:244] rpc client connection state:1
+[10/16 01:28:45.404152][info][13323234][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/16 01:28:45.404166][info][13323234][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/16 01:28:45.404174][info][13323234][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/16 01:28:45.505023][info][13323234][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/16 01:28:45.610857][info][13323234][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/16 01:28:45.610919][info][13323234][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 01:28:45.619546][info][13323234][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 01:28:45.619567][info][13323234][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[worker] device message: msg_id=0 data=0x1010a9fe7
+[10/16 01:28:45.775784][info][13323246][GVCPClient.cpp:421] 0, 3, 248, 1 [**7 logs in 3002ms, last: 01:28:43.779403**]
+[10/16 01:28:45.780288][info][13323247][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**7 logs in 3007ms, last: 01:28:43.779404**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=1
+[worker] obscan_context_create_session                 -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_create_scan                    -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_preview                           -> OB_SCAN_SUCCESS (0)
+[worker] preview progress callback: 0.050
+[worker] preview progress callback: 0.150
+[worker] preview progress callback: 0.200
+[worker] preview progress callback: 0.300
+[worker] preview progress callback: 0.350
+[worker] preview progress callback: 0.430
+[worker] preview progress callback: 0.520
+[worker] preview progress callback: 0.640
+[10/16 01:28:45.817718][info][13323222][AccelSensor.cpp:22] AccelSensor created
+[10/16 01:28:45.817726][info][13323222][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/16 01:28:45.818563][info][13323222][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/16 01:28:45.818604][info][13323222][GyroSensor.cpp:23] GyroSensor created!
+[10/16 01:28:45.818611][info][13323222][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/16 01:28:45.819260][info][13323222][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/16 01:28:45.820278][info][13323222][ScannerAbstractDevice.cpp:808] switchDepthWorkMode done! same mode. currentDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}, targetDepthMode:{name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 01:28:45.820296][info][13323222][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 01:28:45.820532][info][13323222][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 01:28:45.821391][error][13323222][PioneerDevice.cpp:371] deRectifyMaskParams is nullptr
+[10/16 01:28:45.821652][info][13323222][PioneerDevice.cpp:384] Depth sensor has been created!
+[10/16 01:28:45.821683][info][13323222][PioneerDevice.cpp:1254] switchDepthWorkMode done! oldDepthMode: {name: , checksum(hex): 00000000000000000000000000000000, optionCode: NORMAL}, newDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 01:28:45.821723][info][13323222][Pipeline.cpp:42] Pipeline created with device: {name: Creality Raptor Pro, sn: CR0886100SN}, @0x7CB1548018
+[10/16 01:28:45.921864][info][13323222][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro RGB Camera,client port:10012
+[10/16 01:28:45.921984][info][13323222][PioneerDevice.cpp:431] Color sensor has been created!
+[10/16 01:28:45.923274][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1920,height:1200,format:OB_FORMAT_Y8,fps:50
+[10/16 01:28:45.923284][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1520,height:1200,format:OB_FORMAT_Y8,fps:60
+[10/16 01:28:45.923292][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1320,height:1040,format:OB_FORMAT_Y8,fps:60
+[10/16 01:28:45.923300][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1920,height:1200,format:OB_FORMAT_Y8,fps:50
+[10/16 01:28:45.923307][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1920,height:1200,format:OB_FORMAT_MJPG,fps:50
+[10/16 01:28:45.923313][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1520,height:1200,format:OB_FORMAT_Y8,fps:60
+[10/16 01:28:45.923319][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1520,height:1200,format:OB_FORMAT_MJPG,fps:60
+[10/16 01:28:45.923326][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1320,height:1040,format:OB_FORMAT_Y8,fps:60
+[10/16 01:28:45.923332][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1320,height:1040,format:OB_FORMAT_MJPG,fps:60
+[10/16 01:28:45.923338][info][13323222][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_COLOR,width:1280,height:800,format:OB_FORMAT_MJPG,fps:30
+[10/16 01:28:45.923479][warning][13323222][ObException.cpp:5] No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_DEPTH
+[10/16 01:28:45.923543][warning][13323222][ObException.cpp:5] No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_IR
+[10/16 01:28:46.023723][info][13323222][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/16 01:28:46.024000][info][13323222][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[10/16 01:28:46.024787][info][13323222][PioneerDevice.cpp:584] OB_SENSOR_IR_RIGHT sensor has been created!
+[10/16 01:28:46.079635][info][13323222][Pipeline.cpp:236] Try to start streams!
+[10/16 01:28:46.079754][info][13323222][VideoSensor.cpp:617] start OB_SENSOR_IR_LEFT stream with profile: {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 30}
+[10/16 01:28:46.079762][info][13323222][RPCClientPort.cpp:192] start OB_STREAM_IR_LEFT stream call
+[10/16 01:28:46.079902][info][13323222][RPCClientPort.cpp:237] start OB_STREAM_IR_LEFT stream done
+[10/16 01:28:46.080021][info][13323222][VideoSensor.cpp:617] start OB_SENSOR_IR_RIGHT stream with profile: {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 30}
+[10/16 01:28:46.080033][info][13323222][RPCClientPort.cpp:192] start OB_STREAM_IR_RIGHT stream call
+[10/16 01:28:46.080139][info][13323222][RPCClientPort.cpp:237] start OB_STREAM_IR_RIGHT stream done
+[10/16 01:28:46.080187][info][13323222][Pipeline.cpp:249] Start streams done!
+[10/16 01:28:46.080198][info][13323222][Pipeline.cpp:232] Pipeline start done!
+[10/16 01:28:46.098988][warning][13323301][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1448568, expected=2304000 @OB_SENSOR_IR_LEFT
+[10/16 01:28:46.107250][warning][13323302][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1448568, expected=2304000 @OB_SENSOR_IR_RIGHT
+using metallib
+use_poly: 1
+[worker] preview progress callback: 0.760
+[worker] preview progress callback: 0.766
+[worker] preview progress callback: 0.820
+[worker] preview progress callback: 0.850
+[worker] preview progress callback: 0.880
+[worker] preview progress callback: 0.940
+[worker] preview progress callback: 1.000
+[worker] preview status callback: OB_SCAN_SUCCESS (0)
+[worker] data message: msg_id=325189889 data=0x7cb1388600
+[worker] data message: msg_id=325189888 data=0x7cb1388660
+[worker] data message: msg_id=325189890 data=0x7cb1334600
+[worker] data message: msg_id=325189889 data=0x7cb13886c0
+[worker] data message: msg_id=325189888 data=0x7cb1388720
+[worker] data message: msg_id=325189890 data=0x7cb1334660
+[worker] data message: msg_id=325189889 data=0x7cb1388780
+[worker] data message: msg_id=325189888 data=0x7cb13887e0
+[worker] data message: msg_id=325189890 data=0x7cb13358c0
+[worker] data message: msg_id=325189889 data=0x7cb1388840
+[worker] data message: msg_id=325189888 data=0x7cb13888a0
+[worker] data message: msg_id=325189890 data=0x7cb1335920
+[worker] data message: msg_id=325189889 data=0x7cb1388900
+[worker] data message: msg_id=325189888 data=0x7cb1388960
+[worker] data message: msg_id=325189890 data=0x7cb1335980
+[worker] data message: msg_id=325189889 data=0x7cb13889c0
+[worker] data message: msg_id=325189888 data=0x7cb1388a20
+[worker] data message: msg_id=325189890 data=0x7cb13359e0
+[worker] data message: msg_id=325189889 data=0x7cb1388a80
+[worker] data message: msg_id=325189888 data=0x7cb1388ae0
+[worker] data message: msg_id=325189890 data=0x7cb1335a40
+[worker] data message: msg_id=325189889 data=0x7cb1388b40
+[worker] data message: msg_id=325189888 data=0x7cb1388ba0
+[worker] data message: msg_id=325189890 data=0x7cb1335aa0
+[worker] data message: msg_id=325189889 data=0x7cb1388c00
+[worker] data message: msg_id=325189888 data=0x7cb1388c60
+[worker] data message: msg_id=325189890 data=0x7cb1335b00
+[worker] data message: msg_id=325189889 data=0x7cb1388cc0
+[worker] data message: msg_id=325189888 data=0x7cb1388d20
+[worker] data message: msg_id=325189890 data=0x7cb1335b60
+[worker] frame_ready_count=10
+[worker] obscan_scan_start                             -> OB_SCAN_SUCCESS (0)
+[10/16 01:28:46.682843][error][13323329][GVCPClient.cpp:355] sendto failed with error:49 [**2 logs in 3909ms**]
+[worker] poll  1/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll  2/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:28:47.687565][info][13323234][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**2 logs in 3908ms**]
+[worker] poll  3/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll  4/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll  5/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:28:49.102396][warning][13323310][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=12272, expected=2304000 @OB_SENSOR_IR_LEFT [**2 logs in 3003ms, last: 01:28:46.099215**]
+[10/16 01:28:49.147945][warning][13323318][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1559052, expected=2304000 @OB_SENSOR_IR_RIGHT [**1 logs in 3040ms, last: 01:28:46.146809**]
+[worker] poll  6/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll  7/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll  8/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll  9/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 10/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 11/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 12/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:28:52.683150][info][13323336][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**12 logs in 6902ms, last: 01:28:50.698729**]
+[10/16 01:28:52.683376][info][13323335][GVCPClient.cpp:421] 0, 3, 248, 1 [**12 logs in 6907ms, last: 01:28:50.698727**]
+[10/16 01:28:52.704756][error][13323385][GVCPClient.cpp:355] sendto failed with error:49 [**3 logs in 6021ms**]
+[worker] poll 13/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 14/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:28:53.707563][info][13323234][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**3 logs in 6019ms**]
+[worker] poll 15/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 16/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 17/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 18/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 19/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:28:56.048987][warning][13323320][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[10/16 01:28:56.159611][warning][13323301][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_LEFT
+[10/16 01:28:56.162575][warning][13323302][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/16 01:28:56.203472][warning][13323302][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2377656, expected=2304000 @OB_SENSOR_IR_RIGHT
+[worker] poll 20/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 21/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 22/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 23/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 24/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 25/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:28:59.150018][warning][13323476][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**2 logs in 3101ms, last: 01:28:56.263184**]
+[10/16 01:28:59.199664][warning][13323482][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_LEFT [**3 logs in 3040ms, last: 01:28:56.236447**]
+[10/16 01:28:59.244703][warning][13323487][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1031184, expected=2304000 @OB_SENSOR_IR_RIGHT [**2 logs in 3082ms, last: 01:28:56.241950**]
+[worker] poll 26/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 27/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 28/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 29/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 30/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 31/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 32/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 33/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 34/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 35/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:29:04.410768][warning][13323302][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2333052, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/16 01:29:04.411076][warning][13323301][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2333052, expected=2304000 @OB_SENSOR_IR_LEFT
+[worker] poll 36/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:29:04.707697][info][13323391][GVCPClient.cpp:421] 0, 3, 248, 1 [**24 logs in 12024ms, last: 01:29:02.727827**]
+[10/16 01:29:04.707870][info][13323392][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**24 logs in 12024ms, last: 01:29:02.727829**]
+[10/16 01:29:04.733792][error][13323641][GVCPClient.cpp:355] sendto failed with error:49 [**6 logs in 12029ms**]
+[worker] poll 37/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 38/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:29:05.738714][info][13323234][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**6 logs in 12031ms**]
+[worker] poll 39/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 40/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 41/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 42/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 43/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 44/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 45/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 46/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 47/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 01:29:10.354135][warning][13323636][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**2 logs in 11204ms, last: 01:29:05.103119**]
+[10/16 01:29:10.408002][warning][13323637][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2221956, expected=2304000 @OB_SENSOR_IR_RIGHT [**4 logs in 11163ms, last: 01:29:05.138018**]
+[10/16 01:29:10.408260][warning][13323638][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2221956, expected=2304000 @OB_SENSOR_IR_LEFT [**4 logs in 11208ms, last: 01:29:05.138055**]
+[worker] poll 48/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 49/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 50/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 51/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 52/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 53/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 54/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 55/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 56/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 57/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 58/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 59/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] poll 60/60: obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] obscan_scan_pause                             -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_stop                              -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_destroy took 0ms
+[worker] obscan_session_destroy                        -> OB_SCAN_ERROR_(see obscan_api.h) (845283600)
+[worker] obscan_context_destroy took 0ms
+[worker] obscan_context_destroy                        -> OB_SCAN_ERROR_(see obscan_api.h) (845283600)
+libc++abi: terminating due to uncaught exception of type std::__1::system_error: mutex lock failed: Invalid argument
+[launcher] Running live capture session in a worker process...
+[launcher] Worker crashed or timed out inside the vendor SDK (child killed by signal Abort trap: 6). Launcher is unaffected.

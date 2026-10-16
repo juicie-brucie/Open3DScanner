@@ -1,0 +1,648 @@
+[2026-10-15 20:55:18.241860][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:55:18.242112][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-15 20:55:18.242126][INFO ][0x1fd68bf80][::0] dependent files dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+[2026-10-15 20:55:18.242135][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-15 20:55:18.242210][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-15 20:55:18.242220][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:55:18.242228][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:55:18.242234][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:55:18.242241][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-15 20:55:18.242247][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-15 20:55:18.245576][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-15 20:55:18.245603][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-15 20:55:18.245612][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-15 20:55:18.245620][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-15 20:55:18.245627][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-15 20:55:18.245634][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-15 20:55:18.245640][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-15 20:55:18.245646][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-15 20:55:18.245652][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-15 20:55:18.245658][INFO ][0x1fd68bf80][::0] obscan_context_add_data_msg_listener
+[2026-10-15 20:55:18.245664][INFO ][0x1fd68bf80][::0] add OBScanMessageListener success !
+[2026-10-15 20:55:18.245670][INFO ][0x1fd68bf80][::0] obscan_context_add_process_msg_listener
+[2026-10-15 20:55:18.245676][INFO ][0x1fd68bf80][::0] add OBScanProcessMessageListener success !
+[2026-10-15 20:55:18.245682][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-15 20:55:18.245688][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-15 20:55:18.245694][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-15 20:55:18.245700][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-15 20:55:18.245706][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-15 20:55:18.245713][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-15 20:55:18.245718][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-15 20:55:18.245724][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-15 20:55:18.245730][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-15 20:55:18.245735][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-15 20:55:18.245741][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-15 20:55:18.245747][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:55:18.245753][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:55:18.245759][INFO ][0x1fd68bf80][::0] send device msg begin
+[2026-10-15 20:55:18.245765][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT
+[2026-10-15 20:55:18.245771][INFO ][0x1fd68bf80][::0] send device msg end
+[2026-10-15 20:55:18.245776][ERROR][0x1fd68bf80][::0] connect to device failed!
+[2026-10-15 20:55:18.245782][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-15 20:55:20.257712][INFO ][0x16bd4b000][::0] removedList count: 0, addedList count:1
+[2026-10-15 20:55:20.777416][INFO ][0x16bd4b000][::0] firmware version:1.5.7,get device calibration timestamp:1792014971
+[2026-10-15 20:55:20.777448][INFO ][0x16bd4b000][::0] add device info to list sn:CR0886100SN
+[2026-10-15 20:55:20.777456][INFO ][0x16bd4b000][::0] current device info list:
+[2026-10-15 20:55:20.777463][INFO ][0x16bd4b000][::0] device sn:CR0886100SN
+[2026-10-15 20:55:21.087789][INFO ][0x16bd4b000][::0] get device calibration timestamp:1792014971
+[2026-10-15 20:55:21.087818][ERROR][0x16bd4b000][::0] property is not permission to operate.
+[2026-10-15 20:55:21.087825][INFO ][0x16bd4b000][::0] usb device is registered successfully 
+[2026-10-15 20:55:21.087832][INFO ][0x16bd4b000][::0] set select device serial number:CR0886100SN
+[2026-10-15 20:55:21.087839][INFO ][0x16bd4b000][::0] device connected state call back begin
+[2026-10-15 20:55:21.087846][INFO ][0x16bd4b000][::0] #########camera state###############
+[2026-10-15 20:55:21.087853][INFO ][0x16bd4b000][::0] #########usb connected##############
+[2026-10-15 20:55:21.087859][INFO ][0x16bd4b000][::0] [1;31mupdate_camera_status 0, cur_device: true[0m
+[2026-10-15 20:55:21.087870][INFO ][0x16bd4b000][::0] calib update callback begin
+[2026-10-15 20:55:21.087876][INFO ][0x16bd4b000][::0] calib update callback end
+[2026-10-15 20:55:21.087881][INFO ][0x16bd4b000][::0] camera name: Creality Raptor Pro
+[2026-10-15 20:55:21.087886][INFO ][0x16bd4b000][::0] camera serial number: CR0886100SN
+[2026-10-15 20:55:21.087891][INFO ][0x16bd4b000][::0] camera connection type: USB3.0
+[2026-10-15 20:55:21.087896][INFO ][0x16bd4b000][::0] camera firmware version: 1.5.7
+[2026-10-15 20:55:21.087901][INFO ][0x16bd4b000][::0] wifi device firmware version: Unknown
+[2026-10-15 20:55:21.087906][INFO ][0x16bd4b000][::0] get active device serial number:CR0886100SN
+[2026-10-15 20:55:21.088134][INFO ][0x16bd4b000][::0] the device calib status: false
+[2026-10-15 20:55:21.088148][INFO ][0x16bd4b000][::0] check device pccupancy status begin
+[2026-10-15 20:55:21.107042][INFO ][0x16bd4b000][::0] get origin calibration param done,origin params size:1
+[2026-10-15 20:55:21.145517][INFO ][0x16bd4b000][::0] is support rescan: true
+[2026-10-15 20:55:21.145541][INFO ][0x16bd4b000][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_CONNECT
+[2026-10-15 20:55:21.145549][INFO ][0x16bd4b000][::0] device connected state call back done
+[2026-10-15 20:55:21.145556][INFO ][0x16bd4b000][::0] Init device return:1.
+[2026-10-15 20:55:21.287101][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 20:55:21.287139][INFO ][0x1fd68bf80][::0] obscan_context_create_session
+[2026-10-15 20:55:21.287147][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:55:21.287154][INFO ][0x1fd68bf80][::0] [OBScanSession] Thread spawned successfully.
+[2026-10-15 20:55:21.287160][INFO ][0x1fd68bf80][::0] create dir before: /tmp/openscanner_live_session
+[2026-10-15 20:55:21.287166][INFO ][0x1fd68bf80][::0] create dir after: /tmp/openscanner_live_session
+[2026-10-15 20:55:21.289337][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:55:21.291474][INFO ][0x1fd68bf80][::0] session init state : OB_SCAN_SUCCESS
+[2026-10-15 20:55:21.291488][INFO ][0x1fd68bf80][::0] create session success !
+[2026-10-15 20:55:21.291495][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:55:21.291501][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:55:21.291506][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:55:21.291512][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:55:21.291518][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:55:21.291523][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:55:21.291529][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:55:21.291536][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:55:21.291541][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:55:21.291547][INFO ][0x1fd68bf80][::0] voxel_size: 0.050000
+[2026-10-15 20:55:21.291552][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:55:21.291558][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:55:21.291563][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:55:21.291569][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:55:21.291578][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:55:21.291583][INFO ][0x1fd68bf80][::0] check supported end !
+[2026-10-15 20:55:21.291589][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:55:21.291662][INFO ][0x1fd68bf80][::0] free mem: 11.045672
+[2026-10-15 20:55:21.292394][WARN ][0x1fd68bf80][::0] the connection remains unchanged(1/1)
+[2026-10-15 20:55:21.292404][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:55:21.292816][INFO ][0x1fd68bf80][::0] save init project data success !
+[2026-10-15 20:55:21.292827][INFO ][0x1fd68bf80][::0] create scan init state : OB_SCAN_SUCCESS
+[2026-10-15 20:55:21.293898][INFO ][0x1fd68bf80][::0] create scan success !
+[2026-10-15 20:55:21.293977][INFO ][0x1fd68bf80][::0] obscan_scan_preview
+[2026-10-15 20:55:21.293986][INFO ][0x16b6bb000][::0] preview progress 0.050000
+[2026-10-15 20:55:21.293993][INFO ][0x16b6bb000][::0] preview progress 0.150000
+[2026-10-15 20:55:21.293999][INFO ][0x16b6bb000][::0] preview progress 0.200000
+[2026-10-15 20:55:21.294005][WARN ][0x16b6bb000][::0] the connection remains unchanged(1/1)
+[2026-10-15 20:55:21.294010][INFO ][0x16b6bb000][::0] preview progress 0.300000
+[2026-10-15 20:55:21.294016][INFO ][0x16b6bb000][::0] preview progress 0.350000
+[2026-10-15 20:55:21.294021][INFO ][0x16b6bb000][::0] preview progress 0.430000
+[2026-10-15 20:55:21.294026][WARN ][0x16b6bb000][::0] [1;33mcannot find file /tmp/openscanner_live_fps_log/fps.obconfig[0m
+[2026-10-15 20:55:21.294032][INFO ][0x16b6bb000][::0] the ir fps is 0
+[2026-10-15 20:55:21.294038][INFO ][0x16b6bb000][::0] custom profile type:1,width:0,height:0,fps:0
+[2026-10-15 20:55:21.294043][INFO ][0x16b6bb000][::0] custom profile type:2,width:1280,height:800,fps:0
+[2026-10-15 20:55:21.294049][INFO ][0x16b6bb000][::0] custom profile type:3,width:0,height:0,fps:0
+[2026-10-15 20:55:21.294055][INFO ][0x16b6bb000][::0] custom profile type:6,width:1920,height:1200,fps:0
+[2026-10-15 20:55:21.294061][INFO ][0x16b6bb000][::0] custom profile type:7,width:1920,height:1200,fps:0
+[2026-10-15 20:55:21.294067][INFO ][0x16b6bb000][::0] preview progress 0.520000
+[2026-10-15 20:55:21.294074][INFO ][0x16b6bb000][::0] preview progress 0.640000
+[2026-10-15 20:55:21.294081][INFO ][0x16b6bb000][::0] internal open begin
+[2026-10-15 20:55:21.294086][INFO ][0x16b6bb000][::0] device open begin
+[2026-10-15 20:55:21.294092][INFO ][0x16b6bb000][::0] check device pccupancy status begin
+[2026-10-15 20:55:21.294098][INFO ][0x16b6bb000][::0] current device is idle.
+[2026-10-15 20:55:21.294103][ERROR][0x16b6bb000][::0] property is not permission to operate.
+[2026-10-15 20:55:21.294108][ERROR][0x16b6bb000][::0] property is not permission to operate.
+[2026-10-15 20:55:21.294113][ERROR][0x16b6bb000][::0] property is not permission to operate.
+[2026-10-15 20:55:21.294119][ERROR][0x16b6bb000][::0] property is not permission to operate.
+[2026-10-15 20:55:21.298247][INFO ][0x16b6bb000][::0] currentDepthMode: Laser Lines Scan
+[2026-10-15 20:55:21.298256][INFO ][0x16b6bb000][::0] config scan mode done.
+[2026-10-15 20:55:21.504062][ERROR][0x16b6bb000][::0] function: getStreamProfileList
+args: sensorType
+message: No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_DEPTH
+type: 3
+[2026-10-15 20:55:21.504086][ERROR][0x16b6bb000][::0] function: getStreamProfileList
+args: sensorType
+message: No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_IR
+type: 3
+[2026-10-15 20:55:21.504529][INFO ][0x16b6bb000][::0] origin sensor type:1 profile:0,0,255,0
+[2026-10-15 20:55:21.504542][INFO ][0x16b6bb000][::0] origin sensor type:2 profile:0,0,255,0
+[2026-10-15 20:55:21.504549][INFO ][0x16b6bb000][::0] origin sensor type:3 profile:0,0,255,0
+[2026-10-15 20:55:21.504556][INFO ][0x16b6bb000][::0] origin sensor type:6 profile:1920,1200,9,30
+[2026-10-15 20:55:21.504562][INFO ][0x16b6bb000][::0] origin sensor type:7 profile:1920,1200,9,30
+[2026-10-15 20:55:21.504568][INFO ][0x16b6bb000][::0] correct stream profile fps begin
+[2026-10-15 20:55:21.504580][INFO ][0x16b6bb000][::0] correct stream profile fps done
+[2026-10-15 20:55:21.504586][INFO ][0x16b6bb000][::0] make stream profile tuple
+[2026-10-15 20:55:21.504591][INFO ][0x16b6bb000][::0] Color:1280,800,22,25
+[2026-10-15 20:55:21.504596][INFO ][0x16b6bb000][::0] Depth:0,0,255,0
+[2026-10-15 20:55:21.504606][INFO ][0x16b6bb000][::0] IR:0,0,255,0
+[2026-10-15 20:55:21.504612][INFO ][0x16b6bb000][::0] Left IR:1920,1200,9,50
+[2026-10-15 20:55:21.504617][INFO ][0x16b6bb000][::0] Right IR:1920,1200,9,50
+[2026-10-15 20:55:21.506225][INFO ][0x16b6bb000][::0] config streamer done.
+[2026-10-15 20:55:21.506235][INFO ][0x16b6bb000][::0] config property check device necessary param valid status:1
+[2026-10-15 20:55:21.518036][INFO ][0x16b6bb000][::0] change laser1 to default current:50000.000000
+[2026-10-15 20:55:21.526587][INFO ][0x16b6bb000][::0] config property control fill light,blue light enable:0,white light enable:0
+[2026-10-15 20:55:21.536750][INFO ][0x16b6bb000][::0] get usb de emphasis value:1,current platform should set:1
+[2026-10-15 20:55:21.536762][INFO ][0x16b6bb000][::0] config property done.
+[2026-10-15 20:55:21.541686][INFO ][0x16b6bb000][::0] pipeline start done
+[2026-10-15 20:55:21.559842][INFO ][0x16b6bb000][::0] accel start done
+[2026-10-15 20:55:21.559875][INFO ][0x16b6bb000][::0] start stream done.
+[2026-10-15 20:55:21.567289][INFO ][0x16b6bb000][::0] config property ex done.
+[2026-10-15 20:55:21.571434][INFO ][0x16b6bb000][::0] baseline:-131.179703,focalPix:2101.082275,unit:1.000000,dispOffset:450.000000
+[2026-10-15 20:55:21.571457][INFO ][0x16b6bb000][::0] device params:baseline:131.179703,focalPix:2101.082275,unit:1.000000,dispOffset:450.000000
+[2026-10-15 20:55:21.575539][INFO ][0x16b6bb000][::0] LineLaserParamList count:4
+[2026-10-15 20:55:21.575573][INFO ][0x16b6bb000][::0] current ll l:2094.688232,2094.904053,949.637085,591.125854,1920,1200
+[2026-10-15 20:55:21.575581][INFO ][0x16b6bb000][::0] current ll r:2101.841797,2101.797363,933.504822,602.757019,1920,1200
+[2026-10-15 20:55:21.575588][INFO ][0x16b6bb000][::0] current ll lr: 0.938738, 0.0058285, 0.344584, -0.00516863, 0.999983, -0.00283358, -0.344594, 0.000878962, 0.938751, r: -129.159, 0.349512, 22.9325, 
+[2026-10-15 20:55:21.575596][INFO ][0x16b6bb000][::0] current ll lb: 0.999984, -0.0013221, 0.00542643, 0.00131309, 0.999998, 0.00166324, -0.00542862, -0.00165609, 0.999984, r: -32.8919, -0.144527, -6.32114, 
+[2026-10-15 20:55:21.587047][INFO ][0x16b6bb000][::0] get calibration temperature success,irLeftTemp:35.559101,irRightTemp:34.182999,txTemp:33.599998
+[2026-10-15 20:55:21.587071][INFO ][0x16b6bb000][::0] tempCompensate init fx_l_calib:2094.688232
+[2026-10-15 20:55:21.587078][INFO ][0x16b6bb000][::0] tempCompensate init fy_l_calib:2094.904053
+[2026-10-15 20:55:21.587084][INFO ][0x16b6bb000][::0] tempCompensate init cx_l_calib:949.637085
+[2026-10-15 20:55:21.587090][INFO ][0x16b6bb000][::0] tempCompensate init cy_l_calib:591.125854
+[2026-10-15 20:55:21.587096][INFO ][0x16b6bb000][::0] tempCompensate init fx_r_calib:2101.841797
+[2026-10-15 20:55:21.587102][INFO ][0x16b6bb000][::0] tempCompensate init fy_r_calib:2101.797363
+[2026-10-15 20:55:21.587108][INFO ][0x16b6bb000][::0] tempCompensate init cx_r_calib:933.504822
+[2026-10-15 20:55:21.587114][INFO ][0x16b6bb000][::0] tempCompensate init cy_r_calib:602.757019
+[2026-10-15 20:55:21.587120][INFO ][0x16b6bb000][::0] tempCompensate init tx_calib:-129.159225
+[2026-10-15 20:55:21.587126][INFO ][0x16b6bb000][::0] tempCompensate init ty_calib:0.349512
+[2026-10-15 20:55:21.587131][INFO ][0x16b6bb000][::0] tempCompensate init tz_calib:22.932499
+[2026-10-15 20:55:21.587136][INFO ][0x16b6bb000][::0] tempCompensate init temperature_calib_ir_l:35.559101
+[2026-10-15 20:55:21.587141][INFO ][0x16b6bb000][::0] tempCompensate init temperature_calib_ir_r:34.182999
+[2026-10-15 20:55:21.587147][INFO ][0x16b6bb000][::0] tempCompensate init temperature_calib_tx:33.599998
+[2026-10-15 20:55:21.587152][INFO ][0x16b6bb000][::0] tempCompensate init ir_l_fx_comp_coeff:-0.030000
+[2026-10-15 20:55:21.587172][INFO ][0x16b6bb000][::0] tempCompensate init ir_l_fy_comp_coeff:-0.030000
+[2026-10-15 20:55:21.587178][INFO ][0x16b6bb000][::0] tempCompensate init ir_l_cx_comp_coeff:0.000000
+[2026-10-15 20:55:21.587183][INFO ][0x16b6bb000][::0] tempCompensate init ir_l_cy_comp_coeff:0.000000
+[2026-10-15 20:55:21.587188][INFO ][0x16b6bb000][::0] tempCompensate init ir_r_fx_comp_coeff:-0.030000
+[2026-10-15 20:55:21.587194][INFO ][0x16b6bb000][::0] tempCompensate init ir_r_fy_comp_coeff:-0.030000
+[2026-10-15 20:55:21.587199][INFO ][0x16b6bb000][::0] tempCompensate init ir_r_cx_comp_coeff:0.000000
+[2026-10-15 20:55:21.587205][INFO ][0x16b6bb000][::0] tempCompensate init ir_r_cy_comp_coeff:0.000000
+[2026-10-15 20:55:21.587210][INFO ][0x16b6bb000][::0] tempCompensate init tx_comp_coeff:0.002000
+[2026-10-15 20:55:21.587216][INFO ][0x16b6bb000][::0] tempCompensate init ty_comp_coeff:0.000000
+[2026-10-15 20:55:21.587221][INFO ][0x16b6bb000][::0] tempCompensate init tz_comp_coeff:0.000000
+[2026-10-15 20:55:21.587226][INFO ][0x16b6bb000][::0] tempCompensate init fx_l_calib:2094.106689
+[2026-10-15 20:55:21.587232][INFO ][0x16b6bb000][::0] tempCompensate init fy_l_calib:2094.449951
+[2026-10-15 20:55:21.587237][INFO ][0x16b6bb000][::0] tempCompensate init cx_l_calib:949.265686
+[2026-10-15 20:55:21.587242][INFO ][0x16b6bb000][::0] tempCompensate init cy_l_calib:591.603394
+[2026-10-15 20:55:21.587247][INFO ][0x16b6bb000][::0] tempCompensate init fx_r_calib:2101.002441
+[2026-10-15 20:55:21.587257][INFO ][0x16b6bb000][::0] tempCompensate init fy_r_calib:2101.082275
+[2026-10-15 20:55:21.587262][INFO ][0x16b6bb000][::0] tempCompensate init cx_r_calib:934.084290
+[2026-10-15 20:55:21.587267][INFO ][0x16b6bb000][::0] tempCompensate init cy_r_calib:602.957642
+[2026-10-15 20:55:21.587272][INFO ][0x16b6bb000][::0] tempCompensate init tx_calib:-129.167023
+[2026-10-15 20:55:21.587278][INFO ][0x16b6bb000][::0] tempCompensate init ty_calib:0.349238
+[2026-10-15 20:55:21.587283][INFO ][0x16b6bb000][::0] tempCompensate init tz_calib:22.888269
+[2026-10-15 20:55:21.587288][INFO ][0x16b6bb000][::0] tempCompensate init temperature_calib_ir_l:35.559101
+[2026-10-15 20:55:21.587293][INFO ][0x16b6bb000][::0] tempCompensate init temperature_calib_ir_r:34.182999
+[2026-10-15 20:55:21.587299][INFO ][0x16b6bb000][::0] tempCompensate init temperature_calib_tx:33.599998
+[2026-10-15 20:55:21.587304][INFO ][0x16b6bb000][::0] tempCompensate init ir_l_fx_comp_coeff:-0.030000
+[2026-10-15 20:55:21.587309][INFO ][0x16b6bb000][::0] tempCompensate init ir_l_fy_comp_coeff:-0.030000
+[2026-10-15 20:55:21.587314][INFO ][0x16b6bb000][::0] tempCompensate init ir_l_cx_comp_coeff:0.000000
+[2026-10-15 20:55:21.587320][INFO ][0x16b6bb000][::0] tempCompensate init ir_l_cy_comp_coeff:0.000000
+[2026-10-15 20:55:21.587326][INFO ][0x16b6bb000][::0] tempCompensate init ir_r_fx_comp_coeff:-0.030000
+[2026-10-15 20:55:21.587332][INFO ][0x16b6bb000][::0] tempCompensate init ir_r_fy_comp_coeff:-0.030000
+[2026-10-15 20:55:21.587338][INFO ][0x16b6bb000][::0] tempCompensate init ir_r_cx_comp_coeff:0.000000
+[2026-10-15 20:55:21.587344][INFO ][0x16b6bb000][::0] tempCompensate init ir_r_cy_comp_coeff:0.000000
+[2026-10-15 20:55:21.587349][INFO ][0x16b6bb000][::0] tempCompensate init tx_comp_coeff:0.002000
+[2026-10-15 20:55:21.587354][INFO ][0x16b6bb000][::0] tempCompensate init ty_comp_coeff:0.000000
+[2026-10-15 20:55:21.587360][INFO ][0x16b6bb000][::0] tempCompensate init tz_comp_coeff:0.000000
+[2026-10-15 20:55:21.587365][INFO ][0x16b6bb000][::0] Get lineLaser Param success!
+[2026-10-15 20:55:21.587370][INFO ][0x16b6bb000][::0] config device param done.
+[2026-10-15 20:55:21.587376][INFO ][0x16b6bb000][::0] use k3: false
+[2026-10-15 20:55:21.587685][INFO ][0x16b6bb000][::0] construct: height: 400, width: 640
+
+[2026-10-15 20:55:21.672898][INFO ][0x16b6bb000][::0] dgg ver: 4.0.15
+[2026-10-15 20:55:21.672942][INFO ][0x16b6bb000][::0] init gpu call.
+[2026-10-15 20:55:21.761438][INFO ][0x16b6bb000][::0] init gpu done.
+[2026-10-15 20:55:21.761480][WARN ][0x16b6bb000][::0] [1;33mcannot support line laser segment[0m
+[2026-10-15 20:55:21.761498][INFO ][0x16b6bb000][::0] LineLaserDetectImpl
+
+[2026-10-15 20:55:21.761505][INFO ][0x16b6bb000][::0] dgg ver: 4.0.15
+[2026-10-15 20:55:21.761511][INFO ][0x16b6bb000][::0] [1;32mraptor pro[0m
+[2026-10-15 20:55:21.761517][INFO ][0x16b6bb000][::0] dgg use poly
+[2026-10-15 20:55:21.761523][INFO ][0x16b6bb000][::0] dgg use poly
+[2026-10-15 20:55:21.761528][INFO ][0x16b6bb000][::0] [1;32mcometx ultra[0m
+[2026-10-15 20:55:21.775535][INFO ][0x16b6bb000][::0] DGG INIT IS COMPLETE
+
+[2026-10-15 20:55:21.781792][INFO ][0x16b6bb000][::0] initBLAE begin.
+[2026-10-15 20:55:21.781835][INFO ][0x16b6bb000][::0] blae init begin
+[2026-10-15 20:55:21.782899][INFO ][0x16b6bb000][::0] blae init width 1920 height 1200
+[2026-10-15 20:55:21.782914][INFO ][0x16b6bb000][::0] blae init done
+[2026-10-15 20:55:21.782921][INFO ][0x16b6bb000][::0] updateBLAEParams
+[2026-10-15 20:55:21.782928][INFO ][0x16b6bb000][::0] initBLAE done.
+[2026-10-15 20:55:21.782934][INFO ][0x16b6bb000][::0] config algorithm param done.
+[2026-10-15 20:55:21.782939][INFO ][0x16b6bb000][::0] change AE type
+[2026-10-15 20:55:21.789316][INFO ][0x16b6bb000][::0] setLineLaserEnable
+[2026-10-15 20:55:21.789739][INFO ][0x16b6bb000][::0] post process done.
+[2026-10-15 20:55:21.789758][INFO ][0x16b6bb000][::0] device open done
+[2026-10-15 20:55:21.789769][INFO ][0x16b6bb000][::0] preview progress 0.760000
+[2026-10-15 20:55:21.790208][INFO ][0x16b6bb000][::0] preview progress 0.766000
+[2026-10-15 20:55:21.790218][INFO ][0x16b6bb000][::0] Start Create LTScanning
+[2026-10-15 20:55:21.790224][INFO ][0x16b6bb000][::0] End Create scanning_system_init
+[2026-10-15 20:55:21.790229][INFO ][0x16b6bb000][::0] Start setupBundleIO
+[2026-10-15 20:55:21.790235][INFO ][0x16b6bb000][::0] Start setupTracker
+[2026-10-15 20:55:21.790240][INFO ][0x16b6bb000][::0] Start TT initTextureTracker
+[2026-10-15 20:55:21.790246][INFO ][0x16b6bb000][::0] Start setupAllTaskDataQueue
+[2026-10-15 20:55:21.790251][INFO ][0x16b6bb000][::0] Start setupAllTasks
+[2026-10-15 20:55:21.790256][INFO ][0x16b6bb000][::0] Start TT lcd contructor
+[2026-10-15 20:55:21.790337][INFO ][0x16cc0f000][::0] Start warmUpModel
+[2026-10-15 20:55:21.793194][INFO ][0x16cc0f000][::0] Start get_gpu_count
+[2026-10-15 20:55:21.793247][INFO ][0x16cc0f000][::0] Start load_param_mem
+[2026-10-15 20:55:21.801191][INFO ][0x16b6bb000][::0] Start TT lcd contructor
+[2026-10-15 20:55:21.802140][INFO ][0x16b6bb000][::0] create thread pool with 2 threads
+[2026-10-15 20:55:21.802193][INFO ][0x16b6bb000][::0] End setupTracker
+[2026-10-15 20:55:21.802201][INFO ][0x16b6bb000][::0] End Create LTScanning
+[2026-10-15 20:55:21.802209][INFO ][0x16b6bb000][::0] preview progress 0.820000
+[2026-10-15 20:55:21.802372][INFO ][0x16b6bb000][::0] preview progress 0.850000
+[2026-10-15 20:55:21.802386][ERROR][0x16cecb000][::0] ERROR: OrbbecFusion::getPointCloudWithDownsampling total is zero
+[2026-10-15 20:55:21.802471][INFO ][0x16b6bb000][::0] preview progress 0.880000
+[2026-10-15 20:55:21.802498][INFO ][0x16b6bb000][::0] preview progress 0.940000
+[2026-10-15 20:55:21.802507][INFO ][0x16b6bb000][::0] preview progress 1.000000
+[2026-10-15 20:55:21.802514][INFO ][0x16b6bb000][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:55:21.803849][INFO ][0x16b6bb000][::0] change to preview success !
+[2026-10-15 20:55:21.803861][INFO ][0x16c34f000][::0] Start init_scanning_params
+[2026-10-15 20:55:22.240004][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166039
+[2026-10-15 20:55:22.240053][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166039
+[2026-10-15 20:55:22.240061][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.308002][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166105
+[2026-10-15 20:55:22.308049][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166105
+[2026-10-15 20:55:22.308056][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.364298][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166172
+[2026-10-15 20:55:22.364322][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166172
+[2026-10-15 20:55:22.364341][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.433534][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166239
+[2026-10-15 20:55:22.433582][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166239
+[2026-10-15 20:55:22.433590][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.532771][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166305
+[2026-10-15 20:55:22.532819][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166305
+[2026-10-15 20:55:22.532827][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.605536][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166539
+[2026-10-15 20:55:22.605585][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166539
+[2026-10-15 20:55:22.605593][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.662797][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166605
+[2026-10-15 20:55:22.662847][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166605
+[2026-10-15 20:55:22.662855][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.733938][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166672
+[2026-10-15 20:55:22.733986][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166672
+[2026-10-15 20:55:22.733994][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.799783][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166739
+[2026-10-15 20:55:22.799902][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166739
+[2026-10-15 20:55:22.799934][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.869230][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166805
+[2026-10-15 20:55:22.869328][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166805
+[2026-10-15 20:55:22.869360][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.929875][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166872
+[2026-10-15 20:55:22.929961][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166872
+[2026-10-15 20:55:22.929984][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:22.999159][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19166939
+[2026-10-15 20:55:22.999260][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19166939
+[2026-10-15 20:55:22.999293][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.066563][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167005
+[2026-10-15 20:55:23.066611][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167005
+[2026-10-15 20:55:23.066619][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.131971][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167072
+[2026-10-15 20:55:23.132063][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167072
+[2026-10-15 20:55:23.132084][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.200447][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167139
+[2026-10-15 20:55:23.200494][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167139
+[2026-10-15 20:55:23.200502][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.273207][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167206
+[2026-10-15 20:55:23.273295][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167206
+[2026-10-15 20:55:23.273317][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.345426][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167272
+[2026-10-15 20:55:23.345472][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167272
+[2026-10-15 20:55:23.345481][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.400401][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167339
+[2026-10-15 20:55:23.400486][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167339
+[2026-10-15 20:55:23.400510][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.463806][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167406
+[2026-10-15 20:55:23.463875][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167406
+[2026-10-15 20:55:23.463898][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.533742][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167472
+[2026-10-15 20:55:23.533790][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167472
+[2026-10-15 20:55:23.533798][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.596115][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167539
+[2026-10-15 20:55:23.596200][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167539
+[2026-10-15 20:55:23.596222][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.666839][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167606
+[2026-10-15 20:55:23.666889][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167606
+[2026-10-15 20:55:23.666898][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.735262][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167672
+[2026-10-15 20:55:23.735319][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167672
+[2026-10-15 20:55:23.735328][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.797075][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167739
+[2026-10-15 20:55:23.797174][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167739
+[2026-10-15 20:55:23.797197][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.867784][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167806
+[2026-10-15 20:55:23.867877][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167806
+[2026-10-15 20:55:23.867917][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:23.938454][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167872
+[2026-10-15 20:55:23.938507][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167872
+[2026-10-15 20:55:23.938516][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.011641][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19167939
+[2026-10-15 20:55:24.011691][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19167939
+[2026-10-15 20:55:24.011700][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.081379][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168006
+[2026-10-15 20:55:24.081431][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168006
+[2026-10-15 20:55:24.081440][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.129513][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168072
+[2026-10-15 20:55:24.129578][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168072
+[2026-10-15 20:55:24.129587][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.199860][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168139
+[2026-10-15 20:55:24.199909][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168139
+[2026-10-15 20:55:24.199939][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.270296][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168206
+[2026-10-15 20:55:24.270347][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168206
+[2026-10-15 20:55:24.270355][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.341849][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168272
+[2026-10-15 20:55:24.341942][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168272
+[2026-10-15 20:55:24.341965][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.414143][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168339
+[2026-10-15 20:55:24.414244][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168339
+[2026-10-15 20:55:24.414268][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.467363][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168406
+[2026-10-15 20:55:24.467455][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168406
+[2026-10-15 20:55:24.467477][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.535522][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168472
+[2026-10-15 20:55:24.535589][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168472
+[2026-10-15 20:55:24.535598][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.604824][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168539
+[2026-10-15 20:55:24.604879][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168539
+[2026-10-15 20:55:24.604888][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.672913][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168606
+[2026-10-15 20:55:24.672964][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168606
+[2026-10-15 20:55:24.672973][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.743698][INFO ][0x16ca6b000][::0] got ir left frame,timestamp:19168672
+[2026-10-15 20:55:24.743748][INFO ][0x16ca6b000][::0] got ir right frame,timestamp:19168672
+[2026-10-15 20:55:24.743757][INFO ][0x16ca6b000][::0] color frame is empty
+[2026-10-15 20:55:24.784781][INFO ][0x16caf7000][::0] Stream interrupt trying to restart
+[2026-10-15 20:55:24.795372][INFO ][0x16caf7000][::0] accel sensor capture stop
+[2026-10-15 20:55:24.845095][INFO ][0x16caf7000][::0] pipeline capture stop
+[2026-10-15 20:55:24.868725][INFO ][0x16caf7000][::0] pipeline start done
+[2026-10-15 20:55:24.870804][INFO ][0x16caf7000][::0] accel start done
+[2026-10-15 20:55:25.559974][INFO ][0x16c9df000][::0] valid speckle frameset,but can not found match line laser frameset,drop it
+[2026-10-15 20:55:25.567434][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.605832][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.643068][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.685289][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.726636][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.772581][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.809134][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.855385][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.900696][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.945448][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:25.986641][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.023005][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.069625][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.106334][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.144151][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.190331][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.225474][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.273663][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.322454][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.329774][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.369147][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.407165][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.453803][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.498028][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.543432][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.585313][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.625275][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.667052][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.717989][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.757201][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.768024][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.805321][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.842547][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.890414][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.934500][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:26.973376][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.020023][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.057150][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.104077][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.147814][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.188658][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.229423][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.271183][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.308333][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.356597][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.399639][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.408986][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.446919][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.484994][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.525823][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.572299][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.609838][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.653326][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.696566][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.738177][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.787883][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.824801][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:27.875812][INFO ][0x16caf7000][::0] Stream interrupt trying to restart
+[2026-10-15 20:55:27.878044][INFO ][0x16caf7000][::0] accel sensor capture stop
+[2026-10-15 20:55:27.907510][INFO ][0x16caf7000][::0] pipeline capture stop
+[2026-10-15 20:55:27.932177][INFO ][0x16caf7000][::0] pipeline start done
+[2026-10-15 20:55:27.934119][INFO ][0x16caf7000][::0] accel start done
+[2026-10-15 20:55:28.617032][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.658038][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.701339][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.741632][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.749043][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.787488][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.825839][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.874054][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.913465][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:28.956894][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.000574][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.043302][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.088853][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.124991][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.171129][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.208467][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.256360][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.298885][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.340629][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.348338][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.384875][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.424703][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.472896][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.507921][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.557909][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.596456][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.639869][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.682631][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.724891][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.771950][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.816588][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.857474][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.905700][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.913020][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.947916][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:29.989041][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.028338][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.075927][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.122441][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.158798][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.207746][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.258824][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.291922][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.339152][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.376108][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.418777][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.426868][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.464512][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.507977][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.551616][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.591736][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.637115][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.675768][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.722245][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.767043][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.806478][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.849675][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.890491][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.935814][INFO ][0x16caf7000][::0] Stream interrupt trying to restart
+[2026-10-15 20:55:30.936885][INFO ][0x16c9df000][::0] seeking valid speckle double ir frameset
+[2026-10-15 20:55:30.937673][INFO ][0x16caf7000][::0] accel sensor capture stop
+[2026-10-15 20:55:30.971868][INFO ][0x16caf7000][::0] pipeline capture stop
+[2026-10-15 20:55:30.996335][INFO ][0x16caf7000][::0] pipeline start done
+[2026-10-15 20:55:30.998266][INFO ][0x16caf7000][::0] accel start done
+[2026-10-15 20:55:30.998291][ERROR][0x16caf7000][::0] retry done,current device is not streaming
+[2026-10-15 20:55:31.008899][INFO ][0x16caf7000][::0] accel sensor capture stop
+[2026-10-15 20:55:31.024115][INFO ][0x16caf7000][::0] pipeline capture stop
+[2026-10-15 20:55:31.281955][INFO ][0x16bdd7000][::0] current_temper.ir_l_temp:36.900002
+[2026-10-15 20:55:31.281999][INFO ][0x16bdd7000][::0] current_temper.ir_r_temp:33.799999
+[2026-10-15 20:55:31.282020][INFO ][0x16bdd7000][::0] current_temper.tx_temp:35.349998
+[2026-10-15 20:55:31.282039][INFO ][0x16bdd7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-15 20:55:31.282058][INFO ][0x16bdd7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-15 20:55:31.282076][INFO ][0x16bdd7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-15 20:55:31.282093][INFO ][0x16bdd7000][::0] params_new.fx_l_new:2094.647949
+[2026-10-15 20:55:31.282110][INFO ][0x16bdd7000][::0] params_new.fy_l_new:2094.863770
+[2026-10-15 20:55:31.282127][INFO ][0x16bdd7000][::0] params_new.cx_l_new:949.637085
+[2026-10-15 20:55:31.282144][INFO ][0x16bdd7000][::0] params_new.cy_l_new:591.125854
+[2026-10-15 20:55:31.282161][INFO ][0x16bdd7000][::0] params_new.fx_r_new:2101.853271
+[2026-10-15 20:55:31.282178][INFO ][0x16bdd7000][::0] params_new.fy_r_new:2101.808838
+[2026-10-15 20:55:31.282195][INFO ][0x16bdd7000][::0] params_new.cx_r_new:933.504822
+[2026-10-15 20:55:31.282212][INFO ][0x16bdd7000][::0] params_new.cy_r_new:602.757019
+[2026-10-15 20:55:31.282229][INFO ][0x16bdd7000][::0] params_new.tx_new:-129.162720
+[2026-10-15 20:55:31.282246][INFO ][0x16bdd7000][::0] params_new.ty_new:0.349512
+[2026-10-15 20:55:31.282263][INFO ][0x16bdd7000][::0] params_new.tz_new:22.932499
+[2026-10-15 20:55:31.282280][INFO ][0x16bdd7000][::0] tx_max:-122.701263
+[2026-10-15 20:55:31.282297][INFO ][0x16bdd7000][::0] tx_min:-135.617188
+[2026-10-15 20:55:31.282313][INFO ][0x16bdd7000][::0] current_temper.ir_l_temp:36.900002
+[2026-10-15 20:55:31.282330][INFO ][0x16bdd7000][::0] current_temper.ir_r_temp:33.799999
+[2026-10-15 20:55:31.282348][INFO ][0x16bdd7000][::0] current_temper.tx_temp:35.349998
+[2026-10-15 20:55:31.282365][INFO ][0x16bdd7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-15 20:55:31.282382][INFO ][0x16bdd7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-15 20:55:31.282399][INFO ][0x16bdd7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-15 20:55:31.282416][INFO ][0x16bdd7000][::0] params_new.fx_l_new:2094.066406
+[2026-10-15 20:55:31.282433][INFO ][0x16bdd7000][::0] params_new.fy_l_new:2094.409668
+[2026-10-15 20:55:31.282450][INFO ][0x16bdd7000][::0] params_new.cx_l_new:949.265686
+[2026-10-15 20:55:31.282467][INFO ][0x16bdd7000][::0] params_new.cy_l_new:591.603394
+[2026-10-15 20:55:31.282484][INFO ][0x16bdd7000][::0] params_new.fx_r_new:2101.013916
+[2026-10-15 20:55:31.282501][INFO ][0x16bdd7000][::0] params_new.fy_r_new:2101.093750
+[2026-10-15 20:55:31.282518][INFO ][0x16bdd7000][::0] params_new.cx_r_new:934.084290
+[2026-10-15 20:55:31.282535][INFO ][0x16bdd7000][::0] params_new.cy_r_new:602.957642
+[2026-10-15 20:55:31.282552][INFO ][0x16bdd7000][::0] params_new.tx_new:-129.170517
+[2026-10-15 20:55:31.282590][INFO ][0x16bdd7000][::0] params_new.ty_new:0.349238
+[2026-10-15 20:55:31.282608][INFO ][0x16bdd7000][::0] params_new.tz_new:22.888269
+[2026-10-15 20:55:31.282626][INFO ][0x16bdd7000][::0] tx_max:-122.708672
+[2026-10-15 20:55:31.282642][INFO ][0x16bdd7000][::0] tx_min:-135.625366
+[2026-10-15 20:55:41.327445][INFO ][0x16bdd7000][::0] current_temper.ir_l_temp:36.500000
+[2026-10-15 20:55:41.327500][INFO ][0x16bdd7000][::0] current_temper.ir_r_temp:33.400002
+[2026-10-15 20:55:41.327522][INFO ][0x16bdd7000][::0] current_temper.tx_temp:34.950001
+[2026-10-15 20:55:41.327541][INFO ][0x16bdd7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-15 20:55:41.327558][INFO ][0x16bdd7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-15 20:55:41.327576][INFO ][0x16bdd7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-15 20:55:41.327594][INFO ][0x16bdd7000][::0] params_new.fx_l_new:2094.659912
+[2026-10-15 20:55:41.327612][INFO ][0x16bdd7000][::0] params_new.fy_l_new:2094.875732
+[2026-10-15 20:55:41.327635][INFO ][0x16bdd7000][::0] params_new.cx_l_new:949.637085
+[2026-10-15 20:55:41.328200][INFO ][0x16bdd7000][::0] params_new.cy_l_new:591.125854
+[2026-10-15 20:55:41.328225][INFO ][0x16bdd7000][::0] params_new.fx_r_new:2101.865234
+[2026-10-15 20:55:41.328233][INFO ][0x16bdd7000][::0] params_new.fy_r_new:2101.820801
+[2026-10-15 20:55:41.328241][INFO ][0x16bdd7000][::0] params_new.cx_r_new:933.504822
+[2026-10-15 20:55:41.328247][INFO ][0x16bdd7000][::0] params_new.cy_r_new:602.757019
+[2026-10-15 20:55:41.328253][INFO ][0x16bdd7000][::0] params_new.tx_new:-129.161926
+[2026-10-15 20:55:41.328260][INFO ][0x16bdd7000][::0] params_new.ty_new:0.349512
+[2026-10-15 20:55:41.328266][INFO ][0x16bdd7000][::0] params_new.tz_new:22.932499
+[2026-10-15 20:55:41.328271][INFO ][0x16bdd7000][::0] tx_max:-122.701263
+[2026-10-15 20:55:41.328277][INFO ][0x16bdd7000][::0] tx_min:-135.617188
+[2026-10-15 20:55:41.328282][INFO ][0x16bdd7000][::0] current_temper.ir_l_temp:36.500000
+[2026-10-15 20:55:41.328287][INFO ][0x16bdd7000][::0] current_temper.ir_r_temp:33.400002
+[2026-10-15 20:55:41.328293][INFO ][0x16bdd7000][::0] current_temper.tx_temp:34.950001
+[2026-10-15 20:55:41.328298][INFO ][0x16bdd7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-15 20:55:41.328304][INFO ][0x16bdd7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-15 20:55:41.328309][INFO ][0x16bdd7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-15 20:55:41.328315][INFO ][0x16bdd7000][::0] params_new.fx_l_new:2094.078369
+[2026-10-15 20:55:41.328321][INFO ][0x16bdd7000][::0] params_new.fy_l_new:2094.421631
+[2026-10-15 20:55:41.328327][INFO ][0x16bdd7000][::0] params_new.cx_l_new:949.265686
+[2026-10-15 20:55:41.328333][INFO ][0x16bdd7000][::0] params_new.cy_l_new:591.603394
+[2026-10-15 20:55:41.328338][INFO ][0x16bdd7000][::0] params_new.fx_r_new:2101.025879
+[2026-10-15 20:55:41.328344][INFO ][0x16bdd7000][::0] params_new.fy_r_new:2101.105713
+[2026-10-15 20:55:41.328349][INFO ][0x16bdd7000][::0] params_new.cx_r_new:934.084290
+[2026-10-15 20:55:41.328354][INFO ][0x16bdd7000][::0] params_new.cy_r_new:602.957642
+[2026-10-15 20:55:41.328359][INFO ][0x16bdd7000][::0] params_new.tx_new:-129.169724
+[2026-10-15 20:55:41.328365][INFO ][0x16bdd7000][::0] params_new.ty_new:0.349238
+[2026-10-15 20:55:41.328370][INFO ][0x16bdd7000][::0] params_new.tz_new:22.888269
+[2026-10-15 20:55:41.328375][INFO ][0x16bdd7000][::0] tx_max:-122.708672
+[2026-10-15 20:55:41.328380][INFO ][0x16bdd7000][::0] tx_min:-135.625366
+[2026-10-15 20:55:41.518885][INFO ][0x1fd68bf80][::0] obscan_scan_start
+[2026-10-15 20:55:41.519006][WARN ][0x1fd68bf80][::0] the connection remains unchanged(3/3)
+[2026-10-15 20:55:41.525503][INFO ][0x16c34f000][::0] ss data_prapare_worker
+[2026-10-15 20:55:41.525538][INFO ][0x16c34f000][::0] es data_prapare_worker
+[2026-10-15 20:55:41.525558][INFO ][0x16c34f000][::0] ss pose_estimat_worker
+[2026-10-15 20:55:41.525577][INFO ][0x16c34f000][::0] es pose_estimat_worker
+[2026-10-15 20:55:41.525595][INFO ][0x16c34f000][::0] ss model_fusion_worker
+[2026-10-15 20:55:41.525627][INFO ][0x16c34f000][::0] es model_fusion_worker
+[2026-10-15 20:55:41.525652][INFO ][0x16c34f000][::0] ss release frame
+[2026-10-15 20:55:41.525669][INFO ][0x16c34f000][::0] es release frame
+[2026-10-15 20:55:41.526071][INFO ][0x1fd68bf80][::0] change to start success !
+[2026-10-15 20:55:41.827810][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:42.129200][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:42.433832][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:42.733893][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:43.036769][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:43.340639][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:43.642689][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:43.945696][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:44.250441][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:44.552491][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:44.857551][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:45.161872][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:45.496155][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:45.768526][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:46.068802][INFO ][0x1fd68bf80][::0] obscan_scan_get_raw_clouds
+[2026-10-15 20:55:46.068869][INFO ][0x1fd68bf80][::0] obscan_scan_pause
+[2026-10-15 20:55:46.078867][INFO ][0x16c34f000][::0] [1;33mquit scanning process[0m
+[2026-10-15 20:55:46.078946][INFO ][0x16c34f000][::0] start shutdownTracker
+[2026-10-15 20:55:46.078966][INFO ][0x16c34f000][::0] ss data_prapare_worker
+[2026-10-15 20:55:46.080964][INFO ][0x16c34f000][::0] es data_prapare_worker
+[2026-10-15 20:55:46.080986][INFO ][0x16c34f000][::0] ss pose_estimat_worker
+[2026-10-15 20:55:46.083065][INFO ][0x16c34f000][::0] es pose_estimat_worker
+[2026-10-15 20:55:46.083096][INFO ][0x16c34f000][::0] ss model_fusion_worker
+[2026-10-15 20:55:46.085486][INFO ][0x16c34f000][::0] es model_fusion_worker
+[2026-10-15 20:55:46.085522][INFO ][0x16c34f000][::0] ss release frame
+[2026-10-15 20:55:46.085531][INFO ][0x16c34f000][::0] es release frame
+[2026-10-15 20:55:46.085539][INFO ][0x16c34f000][::0] end shutdownTracker
+[2026-10-15 20:55:46.085547][INFO ][0x16c34f000][::0] destroy thread pool: icp
+[2026-10-15 20:55:46.085556][INFO ][0x1fd68bf80][::0] set ir line laser enable: 0,control fill light:1
+[2026-10-15 20:55:46.089186][ERROR][0x16cecb000][::0] ERROR: OrbbecFusion::getPointCloudWithDownsampling total is zero
+[2026-10-15 20:55:46.091414][INFO ][0x1fd68bf80][::0] set ir line laser control fill light,blue light enable:0,color fill light:0
+[2026-10-15 20:55:46.092166][INFO ][0x1fd68bf80][::0] pause took 23.346000 ms / wait 0.000000 ms
+[2026-10-15 20:55:46.140819][INFO ][0x1fd68bf80][::0] change to pause success !
+[2026-10-15 20:55:46.140874][INFO ][0x1fd68bf80][::0] obscan_scan_stop
+[2026-10-15 20:55:46.140894][ERROR][0x1fd68bf80][::0] cannot begin async task SCAN_STOP: status callback is nullptr
+[2026-10-15 20:55:46.140914][INFO ][0x1fd68bf80][::0] obscan_session_destroy
+[2026-10-15 20:55:46.140933][ERROR][0x1fd68bf80][::0] [1;31mmust first wait other process finshed: destroy session ![0m
+[2026-10-15 20:55:46.140952][INFO ][0x1fd68bf80][::0] obscan_context_destroy
+[2026-10-15 20:55:46.140970][ERROR][0x1fd68bf80][::0] [1;31mmust first wait other process finshed: destroy session ![0m
+[2026-10-15 20:55:46.140988][ERROR][0x1fd68bf80][::0] [1;31mthe session ptr cannot destroy ![0m

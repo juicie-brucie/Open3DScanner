@@ -1,0 +1,1199 @@
+[2026-10-16 01:38:53.173129][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-16 01:38:53.173403][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-16 01:38:53.173419][INFO ][0x1fd68bf80][::0] dependent files dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+[2026-10-16 01:38:53.173432][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-16 01:38:53.173444][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-16 01:38:53.173454][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 01:38:53.173463][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 01:38:53.173470][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 01:38:53.173478][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-16 01:38:53.173487][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-16 01:38:53.178112][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-16 01:38:53.178131][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-16 01:38:53.178142][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-16 01:38:53.178162][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-16 01:38:53.178171][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-16 01:38:53.178180][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-16 01:38:53.178188][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-16 01:38:53.178196][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-16 01:38:53.178205][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-16 01:38:53.178212][INFO ][0x1fd68bf80][::0] obscan_context_add_data_msg_listener
+[2026-10-16 01:38:53.178220][INFO ][0x1fd68bf80][::0] add OBScanMessageListener success !
+[2026-10-16 01:38:53.178227][INFO ][0x1fd68bf80][::0] obscan_context_add_process_msg_listener
+[2026-10-16 01:38:53.178234][INFO ][0x1fd68bf80][::0] add OBScanProcessMessageListener success !
+[2026-10-16 01:38:53.178241][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-16 01:38:53.178248][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-16 01:38:53.178256][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-16 01:38:53.178270][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-16 01:38:53.178277][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-16 01:38:53.178284][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-16 01:38:53.178292][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-16 01:38:53.178300][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-16 01:38:53.178308][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-16 01:38:53.178316][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-16 01:38:53.178322][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-16 01:38:53.178329][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-16 01:38:53.178337][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-16 01:38:53.178344][INFO ][0x1fd68bf80][::0] send device msg begin
+[2026-10-16 01:38:53.178351][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT
+[2026-10-16 01:38:53.178358][INFO ][0x1fd68bf80][::0] send device msg end
+[2026-10-16 01:38:53.178364][ERROR][0x1fd68bf80][::0] connect to device failed!
+[2026-10-16 01:38:53.178371][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-16 01:38:55.192153][INFO ][0x16bb6b000][::0] removedList count: 0, addedList count:1
+[2026-10-16 01:38:55.719405][INFO ][0x16bb6b000][::0] firmware version:1.5.7,get device calibration timestamp:1792014971
+[2026-10-16 01:38:55.719437][INFO ][0x16bb6b000][::0] add device info to list sn:CR0886100SN
+[2026-10-16 01:38:55.719448][INFO ][0x16bb6b000][::0] current device info list:
+[2026-10-16 01:38:55.719456][INFO ][0x16bb6b000][::0] device sn:CR0886100SN
+[2026-10-16 01:38:56.056001][INFO ][0x16bb6b000][::0] get device calibration timestamp:1792014971
+[2026-10-16 01:38:56.056022][ERROR][0x16bb6b000][::0] property is not permission to operate.
+[2026-10-16 01:38:56.056029][INFO ][0x16bb6b000][::0] usb device is registered successfully 
+[2026-10-16 01:38:56.056036][INFO ][0x16bb6b000][::0] set select device serial number:CR0886100SN
+[2026-10-16 01:38:56.056042][INFO ][0x16bb6b000][::0] device connected state call back begin
+[2026-10-16 01:38:56.056048][INFO ][0x16bb6b000][::0] #########camera state###############
+[2026-10-16 01:38:56.056055][INFO ][0x16bb6b000][::0] #########usb connected##############
+[2026-10-16 01:38:56.056061][INFO ][0x16bb6b000][::0] [1;31mupdate_camera_status 0, cur_device: true[0m
+[2026-10-16 01:38:56.056068][INFO ][0x16bb6b000][::0] calib update callback begin
+[2026-10-16 01:38:56.056073][INFO ][0x16bb6b000][::0] calib update callback end
+[2026-10-16 01:38:56.056079][INFO ][0x16bb6b000][::0] camera name: Creality Raptor Pro
+[2026-10-16 01:38:56.056085][INFO ][0x16bb6b000][::0] camera serial number: CR0886100SN
+[2026-10-16 01:38:56.056091][INFO ][0x16bb6b000][::0] camera connection type: USB3.0
+[2026-10-16 01:38:56.056097][INFO ][0x16bb6b000][::0] camera firmware version: 1.5.7
+[2026-10-16 01:38:56.056103][INFO ][0x16bb6b000][::0] wifi device firmware version: Unknown
+[2026-10-16 01:38:56.056109][INFO ][0x16bb6b000][::0] get active device serial number:CR0886100SN
+[2026-10-16 01:38:56.056460][INFO ][0x16bb6b000][::0] the device calib status: false
+[2026-10-16 01:38:56.056480][INFO ][0x16bb6b000][::0] check device pccupancy status begin
+[2026-10-16 01:38:56.081465][INFO ][0x16bb6b000][::0] get origin calibration param done,origin params size:1
+[2026-10-16 01:38:56.168397][INFO ][0x16bb6b000][::0] is support rescan: true
+[2026-10-16 01:38:56.168416][INFO ][0x16bb6b000][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_CONNECT
+[2026-10-16 01:38:56.168423][INFO ][0x16bb6b000][::0] device connected state call back done
+[2026-10-16 01:38:56.168429][INFO ][0x16bb6b000][::0] Init device return:1.
+[2026-10-16 01:38:56.215770][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 01:38:56.215795][INFO ][0x1fd68bf80][::0] obscan_context_create_session
+[2026-10-16 01:38:56.215805][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-16 01:38:56.215882][INFO ][0x1fd68bf80][::0] [OBScanSession] Thread spawned successfully.
+[2026-10-16 01:38:56.215902][INFO ][0x1fd68bf80][::0] create dir before: /tmp/openscanner_live_session
+[2026-10-16 01:38:56.215911][INFO ][0x1fd68bf80][::0] create dir after: /tmp/openscanner_live_session
+[2026-10-16 01:38:56.217781][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-16 01:38:56.219952][INFO ][0x1fd68bf80][::0] session init state : OB_SCAN_SUCCESS
+[2026-10-16 01:38:56.219969][INFO ][0x1fd68bf80][::0] create session success !
+[2026-10-16 01:38:56.219977][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-16 01:38:56.219984][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-16 01:38:56.219991][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-16 01:38:56.219998][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-16 01:38:56.220005][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_HIGH
+[2026-10-16 01:38:56.220011][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-16 01:38:56.220018][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKER
+[2026-10-16 01:38:56.220025][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-16 01:38:56.220032][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-16 01:38:56.220039][INFO ][0x1fd68bf80][::0] voxel_size: 0.100000
+[2026-10-16 01:38:56.220045][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_CROSS
+[2026-10-16 01:38:56.220052][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-16 01:38:56.220060][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-16 01:38:56.220066][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.050000
+[2026-10-16 01:38:56.220081][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-16 01:38:56.220089][INFO ][0x1fd68bf80][::0] check supported end !
+[2026-10-16 01:38:56.220096][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-16 01:38:56.220171][INFO ][0x1fd68bf80][::0] free mem: 12.550782
+[2026-10-16 01:38:56.221031][WARN ][0x1fd68bf80][::0] the connection remains unchanged(1/1)
+[2026-10-16 01:38:56.221044][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-16 01:38:56.221447][INFO ][0x1fd68bf80][::0] save init project data success !
+[2026-10-16 01:38:56.221581][INFO ][0x1fd68bf80][::0] create scan init state : OB_SCAN_SUCCESS
+[2026-10-16 01:38:56.222656][INFO ][0x1fd68bf80][::0] create scan success !
+[2026-10-16 01:38:56.222736][INFO ][0x1fd68bf80][::0] obscan_scan_preview
+[2026-10-16 01:38:56.222749][INFO ][0x16b4db000][::0] preview progress 0.050000
+[2026-10-16 01:38:56.222757][INFO ][0x16b4db000][::0] preview progress 0.150000
+[2026-10-16 01:38:56.222764][INFO ][0x16b4db000][::0] preview progress 0.200000
+[2026-10-16 01:38:56.222771][WARN ][0x16b4db000][::0] the connection remains unchanged(1/1)
+[2026-10-16 01:38:56.222778][INFO ][0x16b4db000][::0] preview progress 0.300000
+[2026-10-16 01:38:56.222852][INFO ][0x16b4db000][::0] preview progress 0.350000
+[2026-10-16 01:38:56.222861][INFO ][0x16b4db000][::0] preview progress 0.430000
+[2026-10-16 01:38:56.222868][WARN ][0x16b4db000][::0] [1;33mcannot find file /tmp/openscanner_live_fps_log/fps.obconfig[0m
+[2026-10-16 01:38:56.222874][INFO ][0x16b4db000][::0] the ir fps is 0
+[2026-10-16 01:38:56.222880][INFO ][0x16b4db000][::0] custom profile type:1,width:0,height:0,fps:0
+[2026-10-16 01:38:56.222886][INFO ][0x16b4db000][::0] custom profile type:2,width:1280,height:800,fps:0
+[2026-10-16 01:38:56.222894][INFO ][0x16b4db000][::0] custom profile type:3,width:0,height:0,fps:0
+[2026-10-16 01:38:56.222901][INFO ][0x16b4db000][::0] custom profile type:6,width:1920,height:1200,fps:0
+[2026-10-16 01:38:56.222908][INFO ][0x16b4db000][::0] custom profile type:7,width:1920,height:1200,fps:0
+[2026-10-16 01:38:56.222915][INFO ][0x16b4db000][::0] preview progress 0.520000
+[2026-10-16 01:38:56.222922][INFO ][0x16b4db000][::0] preview progress 0.640000
+[2026-10-16 01:38:56.222928][INFO ][0x16b4db000][::0] internal open begin
+[2026-10-16 01:38:56.222935][INFO ][0x16b4db000][::0] device open begin
+[2026-10-16 01:38:56.222941][INFO ][0x16b4db000][::0] check device pccupancy status begin
+[2026-10-16 01:38:56.222947][INFO ][0x16b4db000][::0] current device is idle.
+[2026-10-16 01:38:56.222953][ERROR][0x16b4db000][::0] property is not permission to operate.
+[2026-10-16 01:38:56.222958][ERROR][0x16b4db000][::0] property is not permission to operate.
+[2026-10-16 01:38:56.222964][ERROR][0x16b4db000][::0] property is not permission to operate.
+[2026-10-16 01:38:56.222971][ERROR][0x16b4db000][::0] property is not permission to operate.
+[2026-10-16 01:38:56.242102][INFO ][0x16b4db000][::0] currentDepthMode: Laser Lines Scan
+[2026-10-16 01:38:56.242125][INFO ][0x16b4db000][::0] config scan mode done.
+[2026-10-16 01:38:56.348933][ERROR][0x16b4db000][::0] function: getStreamProfileList
+args: sensorType
+message: No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_DEPTH
+type: 3
+[2026-10-16 01:38:56.348959][ERROR][0x16b4db000][::0] function: getStreamProfileList
+args: sensorType
+message: No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_IR
+type: 3
+[2026-10-16 01:38:56.451391][INFO ][0x16b4db000][::0] origin sensor type:1 profile:0,0,255,0
+[2026-10-16 01:38:56.451417][INFO ][0x16b4db000][::0] origin sensor type:2 profile:0,0,255,0
+[2026-10-16 01:38:56.451426][INFO ][0x16b4db000][::0] origin sensor type:3 profile:0,0,255,0
+[2026-10-16 01:38:56.451433][INFO ][0x16b4db000][::0] origin sensor type:6 profile:1920,1200,9,30
+[2026-10-16 01:38:56.451440][INFO ][0x16b4db000][::0] origin sensor type:7 profile:1920,1200,9,30
+[2026-10-16 01:38:56.451446][INFO ][0x16b4db000][::0] correct stream profile fps begin
+[2026-10-16 01:38:56.451462][INFO ][0x16b4db000][::0] correct stream profile fps done
+[2026-10-16 01:38:56.451469][INFO ][0x16b4db000][::0] make stream profile tuple
+[2026-10-16 01:38:56.451475][INFO ][0x16b4db000][::0] Color:0,0,255,0
+[2026-10-16 01:38:56.451481][INFO ][0x16b4db000][::0] Depth:0,0,255,0
+[2026-10-16 01:38:56.451487][INFO ][0x16b4db000][::0] IR:0,0,255,0
+[2026-10-16 01:38:56.451492][INFO ][0x16b4db000][::0] Left IR:1920,1200,9,30
+[2026-10-16 01:38:56.451497][INFO ][0x16b4db000][::0] Right IR:1920,1200,9,30
+[2026-10-16 01:38:56.453335][INFO ][0x16b4db000][::0] config streamer done.
+[2026-10-16 01:38:56.453345][INFO ][0x16b4db000][::0] config property check device necessary param valid status:1
+[2026-10-16 01:38:56.455648][INFO ][0x16b4db000][::0] change laser2 to default current:500000.000000
+[2026-10-16 01:38:56.457696][INFO ][0x16b4db000][::0] change laser3 to default current:500000.000000
+[2026-10-16 01:38:56.466837][INFO ][0x16b4db000][::0] config property control fill light,blue light enable:1,white light enable:0
+[2026-10-16 01:38:56.478358][INFO ][0x16b4db000][::0] get usb de emphasis value:1,current platform should set:1
+[2026-10-16 01:38:56.478382][INFO ][0x16b4db000][::0] config property done.
+[2026-10-16 01:38:56.510046][INFO ][0x16b4db000][::0] pipeline start done
+[2026-10-16 01:38:56.512250][INFO ][0x16b4db000][::0] accel start done
+[2026-10-16 01:38:56.512270][INFO ][0x16b4db000][::0] start stream done.
+[2026-10-16 01:38:56.518927][INFO ][0x16b4db000][::0] config property ex done.
+[2026-10-16 01:38:56.520827][INFO ][0x16b4db000][::0] baseline:-131.179703,focalPix:2101.082275,unit:1.000000,dispOffset:450.000000
+[2026-10-16 01:38:56.520887][INFO ][0x16b4db000][::0] device params:baseline:131.179703,focalPix:2101.082275,unit:1.000000,dispOffset:450.000000
+[2026-10-16 01:38:56.522736][INFO ][0x16b4db000][::0] LineLaserParamList count:4
+[2026-10-16 01:38:56.522752][INFO ][0x16b4db000][::0] current ll l:2094.106689,2094.449951,949.265686,591.603394,1920,1200
+[2026-10-16 01:38:56.522760][INFO ][0x16b4db000][::0] current ll r:2101.002441,2101.082275,934.084290,602.957642,1920,1200
+[2026-10-16 01:38:56.522769][INFO ][0x16b4db000][::0] current ll lr: 0.938896, 0.00574982, 0.344154, -0.00513602, 0.999983, -0.00269512, -0.344164, 0.000762852, 0.938909, r: -129.167, 0.349238, 22.8883, 
+[2026-10-16 01:38:56.522776][INFO ][0x16b4db000][::0] current ll lb: 0.999984, -0.00132061, 0.00541027, 0.00130961, 0.999997, 0.00203605, -0.00541295, -0.00202893, 0.999983, r: -32.8837, -0.141997, -6.35595, 
+[2026-10-16 01:38:56.541748][INFO ][0x16b4db000][::0] get calibration temperature success,irLeftTemp:35.559101,irRightTemp:34.182999,txTemp:33.599998
+[2026-10-16 01:38:56.541779][INFO ][0x16b4db000][::0] tempCompensate init fx_l_calib:2094.688232
+[2026-10-16 01:38:56.541788][INFO ][0x16b4db000][::0] tempCompensate init fy_l_calib:2094.904053
+[2026-10-16 01:38:56.541795][INFO ][0x16b4db000][::0] tempCompensate init cx_l_calib:949.637085
+[2026-10-16 01:38:56.541802][INFO ][0x16b4db000][::0] tempCompensate init cy_l_calib:591.125854
+[2026-10-16 01:38:56.541809][INFO ][0x16b4db000][::0] tempCompensate init fx_r_calib:2101.841797
+[2026-10-16 01:38:56.541816][INFO ][0x16b4db000][::0] tempCompensate init fy_r_calib:2101.797363
+[2026-10-16 01:38:56.541822][INFO ][0x16b4db000][::0] tempCompensate init cx_r_calib:933.504822
+[2026-10-16 01:38:56.541828][INFO ][0x16b4db000][::0] tempCompensate init cy_r_calib:602.757019
+[2026-10-16 01:38:56.541835][INFO ][0x16b4db000][::0] tempCompensate init tx_calib:-129.159225
+[2026-10-16 01:38:56.541842][INFO ][0x16b4db000][::0] tempCompensate init ty_calib:0.349512
+[2026-10-16 01:38:56.541848][INFO ][0x16b4db000][::0] tempCompensate init tz_calib:22.932499
+[2026-10-16 01:38:56.541854][INFO ][0x16b4db000][::0] tempCompensate init temperature_calib_ir_l:35.559101
+[2026-10-16 01:38:56.541860][INFO ][0x16b4db000][::0] tempCompensate init temperature_calib_ir_r:34.182999
+[2026-10-16 01:38:56.541866][INFO ][0x16b4db000][::0] tempCompensate init temperature_calib_tx:33.599998
+[2026-10-16 01:38:56.541883][INFO ][0x16b4db000][::0] tempCompensate init ir_l_fx_comp_coeff:-0.030000
+[2026-10-16 01:38:56.541891][INFO ][0x16b4db000][::0] tempCompensate init ir_l_fy_comp_coeff:-0.030000
+[2026-10-16 01:38:56.541897][INFO ][0x16b4db000][::0] tempCompensate init ir_l_cx_comp_coeff:0.000000
+[2026-10-16 01:38:56.541902][INFO ][0x16b4db000][::0] tempCompensate init ir_l_cy_comp_coeff:0.000000
+[2026-10-16 01:38:56.541908][INFO ][0x16b4db000][::0] tempCompensate init ir_r_fx_comp_coeff:-0.030000
+[2026-10-16 01:38:56.541914][INFO ][0x16b4db000][::0] tempCompensate init ir_r_fy_comp_coeff:-0.030000
+[2026-10-16 01:38:56.541919][INFO ][0x16b4db000][::0] tempCompensate init ir_r_cx_comp_coeff:0.000000
+[2026-10-16 01:38:56.541926][INFO ][0x16b4db000][::0] tempCompensate init ir_r_cy_comp_coeff:0.000000
+[2026-10-16 01:38:56.541931][INFO ][0x16b4db000][::0] tempCompensate init tx_comp_coeff:0.002000
+[2026-10-16 01:38:56.541937][INFO ][0x16b4db000][::0] tempCompensate init ty_comp_coeff:0.000000
+[2026-10-16 01:38:56.541943][INFO ][0x16b4db000][::0] tempCompensate init tz_comp_coeff:0.000000
+[2026-10-16 01:38:56.541948][INFO ][0x16b4db000][::0] tempCompensate init fx_l_calib:2094.106689
+[2026-10-16 01:38:56.541954][INFO ][0x16b4db000][::0] tempCompensate init fy_l_calib:2094.449951
+[2026-10-16 01:38:56.541960][INFO ][0x16b4db000][::0] tempCompensate init cx_l_calib:949.265686
+[2026-10-16 01:38:56.541966][INFO ][0x16b4db000][::0] tempCompensate init cy_l_calib:591.603394
+[2026-10-16 01:38:56.541971][INFO ][0x16b4db000][::0] tempCompensate init fx_r_calib:2101.002441
+[2026-10-16 01:38:56.541978][INFO ][0x16b4db000][::0] tempCompensate init fy_r_calib:2101.082275
+[2026-10-16 01:38:56.541984][INFO ][0x16b4db000][::0] tempCompensate init cx_r_calib:934.084290
+[2026-10-16 01:38:56.541990][INFO ][0x16b4db000][::0] tempCompensate init cy_r_calib:602.957642
+[2026-10-16 01:38:56.541996][INFO ][0x16b4db000][::0] tempCompensate init tx_calib:-129.167023
+[2026-10-16 01:38:56.542002][INFO ][0x16b4db000][::0] tempCompensate init ty_calib:0.349238
+[2026-10-16 01:38:56.542008][INFO ][0x16b4db000][::0] tempCompensate init tz_calib:22.888269
+[2026-10-16 01:38:56.542013][INFO ][0x16b4db000][::0] tempCompensate init temperature_calib_ir_l:35.559101
+[2026-10-16 01:38:56.542019][INFO ][0x16b4db000][::0] tempCompensate init temperature_calib_ir_r:34.182999
+[2026-10-16 01:38:56.542025][INFO ][0x16b4db000][::0] tempCompensate init temperature_calib_tx:33.599998
+[2026-10-16 01:38:56.542031][INFO ][0x16b4db000][::0] tempCompensate init ir_l_fx_comp_coeff:-0.030000
+[2026-10-16 01:38:56.542037][INFO ][0x16b4db000][::0] tempCompensate init ir_l_fy_comp_coeff:-0.030000
+[2026-10-16 01:38:56.542042][INFO ][0x16b4db000][::0] tempCompensate init ir_l_cx_comp_coeff:0.000000
+[2026-10-16 01:38:56.542049][INFO ][0x16b4db000][::0] tempCompensate init ir_l_cy_comp_coeff:0.000000
+[2026-10-16 01:38:56.542056][INFO ][0x16b4db000][::0] tempCompensate init ir_r_fx_comp_coeff:-0.030000
+[2026-10-16 01:38:56.542062][INFO ][0x16b4db000][::0] tempCompensate init ir_r_fy_comp_coeff:-0.030000
+[2026-10-16 01:38:56.542068][INFO ][0x16b4db000][::0] tempCompensate init ir_r_cx_comp_coeff:0.000000
+[2026-10-16 01:38:56.542074][INFO ][0x16b4db000][::0] tempCompensate init ir_r_cy_comp_coeff:0.000000
+[2026-10-16 01:38:56.542080][INFO ][0x16b4db000][::0] tempCompensate init tx_comp_coeff:0.002000
+[2026-10-16 01:38:56.542086][INFO ][0x16b4db000][::0] tempCompensate init ty_comp_coeff:0.000000
+[2026-10-16 01:38:56.542091][INFO ][0x16b4db000][::0] tempCompensate init tz_comp_coeff:0.000000
+[2026-10-16 01:38:56.542097][INFO ][0x16b4db000][::0] Get lineLaser Param success!
+[2026-10-16 01:38:56.542102][INFO ][0x16b4db000][::0] config device param done.
+[2026-10-16 01:38:56.542108][INFO ][0x16b4db000][::0] use k3: false
+[2026-10-16 01:38:56.542114][INFO ][0x16b4db000][::0] cam model: poly
+[2026-10-16 01:38:56.542119][INFO ][0x16b4db000][::0] cam model: poly
+[2026-10-16 01:38:56.542124][INFO ][0x16b4db000][::0] LineLaserDetectImpl
+
+[2026-10-16 01:38:56.542131][INFO ][0x16b4db000][::0] dgg ver: 4.0.15
+[2026-10-16 01:38:56.542140][INFO ][0x16b4db000][::0] [1;32mraptor pro[0m
+[2026-10-16 01:38:56.542146][INFO ][0x16b4db000][::0] dgg use poly
+[2026-10-16 01:38:56.542152][INFO ][0x16b4db000][::0] dgg use poly
+[2026-10-16 01:38:56.542158][INFO ][0x16b4db000][::0] [1;32mcometx ultra[0m
+[2026-10-16 01:38:56.605557][INFO ][0x16b4db000][::0] DGG INIT IS COMPLETE
+
+[2026-10-16 01:38:56.615851][INFO ][0x16b4db000][::0] initBLAE begin.
+[2026-10-16 01:38:56.615878][INFO ][0x16b4db000][::0] blae init begin
+[2026-10-16 01:38:56.616849][INFO ][0x16b4db000][::0] blae init width 1920 height 1200
+[2026-10-16 01:38:56.616906][INFO ][0x16b4db000][::0] blae init done
+[2026-10-16 01:38:56.616916][INFO ][0x16b4db000][::0] updateBLAEParams
+[2026-10-16 01:38:56.616924][INFO ][0x16b4db000][::0] initBLAE done.
+[2026-10-16 01:38:56.616960][INFO ][0x16b4db000][::0] config algorithm param done.
+[2026-10-16 01:38:56.616971][INFO ][0x16b4db000][::0] change AE type
+[2026-10-16 01:38:56.624264][INFO ][0x16b4db000][::0] setLineLaserEnable
+[2026-10-16 01:38:56.624764][INFO ][0x16b4db000][::0] post process done.
+[2026-10-16 01:38:56.624776][INFO ][0x16b4db000][::0] device open done
+[2026-10-16 01:38:56.624783][INFO ][0x16b4db000][::0] preview progress 0.760000
+[2026-10-16 01:38:56.625294][INFO ][0x16b4db000][::0] preview progress 0.766000
+[2026-10-16 01:38:56.625307][INFO ][0x16b4db000][::0] preview progress 0.820000
+[2026-10-16 01:38:56.625391][INFO ][0x16b4db000][::0] preview progress 0.850000
+[2026-10-16 01:38:56.625401][ERROR][0x16c6e7000][::0] ERROR: OrbbecFusion::getPointCloudWithDownsampling total is zero
+[2026-10-16 01:38:56.625574][INFO ][0x16b4db000][::0] preview progress 0.880000
+[2026-10-16 01:38:56.625584][INFO ][0x16b4db000][::0] preview progress 0.940000
+[2026-10-16 01:38:56.625590][INFO ][0x16b4db000][::0] preview progress 1.000000
+[2026-10-16 01:38:56.625598][INFO ][0x16b4db000][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-16 01:38:56.626628][INFO ][0x16b4db000][::0] change to preview success !
+[2026-10-16 01:38:56.626684][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.636724][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.647906][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.658724][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.669911][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.680243][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.692745][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.704360][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.715757][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.726932][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.738770][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.749137][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.761601][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.772703][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.785177][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.796636][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.808173][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.820644][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.832448][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.842663][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.852834][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.865326][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.875429][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.887414][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.897582][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.907588][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.917788][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.929477][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.939486][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.951736][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.963796][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.976281][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.986354][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:56.997995][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.008263][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.020611][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.031915][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.041991][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.052071][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.062286][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.074801][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.085390][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.096494][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.107552][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.119139][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.130934][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.142871][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.155441][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.165474][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.175587][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.186121][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.197826][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.210105][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.222048][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.233594][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.244023][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.256521][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.266561][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.279019][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.291428][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.303057][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.314497][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.325848][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.338386][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.349154][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.359851][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.371045][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.382613][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.392695][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.404708][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.415689][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.425742][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.438246][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.450732][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.463253][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.475782][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.488298][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.500776][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.513299][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.525784][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.536936][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.549435][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.559544][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.570010][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.580101][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.592593][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.602590][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.613474][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.624303][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.634466][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.645272][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.655357][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.666019][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.676066][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.686093][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.696836][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.707320][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.719823][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.731322][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.743856][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.756333][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.766414][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.778886][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.791398][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.803896][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.815430][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.825826][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.836840][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.849153][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.859608][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.869654][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.882133][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.892664][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.903924][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.914904][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.925008][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.935615][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.948112][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.958197][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.968797][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.979807][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:57.992340][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.003266][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.014519][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.025342][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.035457][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.045615][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.056445][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.066970][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.077416][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.088498][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.099529][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.109644][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.120689][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.132024][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.144354][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.154429][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.165677][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.177503][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.187576][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.197627][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.207859][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.219318][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.229381][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.239476][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.251515][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.261773][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.272994][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.285089][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.296399][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.306742][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.319247][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.331713][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.342430][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.352463][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.365023][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.377515][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.388015][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.398245][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.408836][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.420781][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.430909][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.442791][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.453424][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.465063][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.475682][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.487605][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.497671][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.508242][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.519309][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.529627][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.541783][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.554282][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.565772][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.576963][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.587099][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.598118][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.608252][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.620793][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.632588][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.645074][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.656960][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.668370][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.680873][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.692240][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.702343][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.712408][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.723511][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.734360][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.745977][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.757218][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.768258][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.778711][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.788779][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.800956][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.811042][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.822249][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.833407][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.843856][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.856369][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.868876][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.881398][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.893906][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.906429][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.917598][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.928196][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.938268][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.949025][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.959075][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.970421][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.982906][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:58.995416][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.007500][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.020039][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.030068][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.042579][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.052675][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.063420][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.075953][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.086362][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.096904][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.108865][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.119474][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.129552][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.141132][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.153608][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.163684][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.173860][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.184768][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.197257][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.208324][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.218979][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.229643][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.240755][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.251185][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.261237][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.271942][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.284464][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.294549][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.307043][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.319537][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.332062][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.343045][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.353683][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.366158][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.378679][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.391162][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.403663][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.416179][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.428713][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.441206][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.453746][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.466218][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.476303][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.488779][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.499441][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.511349][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.523180][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.535301][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.547025][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.559559][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.569582][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.579790][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.592255][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.603366][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.613387][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.620621][INFO ][0x16c5cf000][::0] Stream interrupt trying to restart
+[2026-10-16 01:38:59.625885][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.633534][INFO ][0x16c5cf000][::0] accel sensor capture stop
+[2026-10-16 01:38:59.637841][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.641976][INFO ][0x16c5cf000][::0] pipeline capture stop
+[2026-10-16 01:38:59.648261][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.659349][INFO ][0x16c5cf000][::0] pipeline start done
+[2026-10-16 01:38:59.660599][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.661429][INFO ][0x16c5cf000][::0] accel start done
+[2026-10-16 01:38:59.673080][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.683439][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.695940][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.706442][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.718912][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.731418][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.743913][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.756436][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.768957][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.780939][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.793445][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.804035][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.814458][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.827010][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.837777][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.847816][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.858849][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.871314][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.883825][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.894523][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.907035][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.919588][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.932096][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.942118][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.954624][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.964686][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.974763][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.985623][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:38:59.995845][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.007065][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.017093][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.028371][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.040573][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.053043][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.063109][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.073820][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.086315][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.098808][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.110425][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.121039][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.133581][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.146078][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.156607][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.166887][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.179347][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.191878][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.202131][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.214643][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.227126][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.239672][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.252143][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.264653][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.277145][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.289674][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.302221][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.314700][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.325338][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.336389][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.346583][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.356971][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.369473][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.379715][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.392176][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.402235][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.413045][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.423079][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.434944][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.445965][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.456183][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.466269][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.478745][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.491251][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.502638][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.515141][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.526062][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.536314][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.546839][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.559295][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.571584][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.582393][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.593836][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.606401][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.616737][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.627101][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.639636][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.649709][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.662211][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.672415][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.684909][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.697436][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.707952][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.720461][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.732976][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.745483][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.758010][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.769554][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.781382][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.791478][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.802703][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.813807][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.826327][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.838806][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.851334][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.861431][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.873876][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.886423][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.898937][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.909876][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.922407][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.934892][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.947419][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.959904][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.972092][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.984541][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:00.996115][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.007367][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.019855][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.029977][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.040657][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.053149][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.064236][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.076753][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.086849][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.099326][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.111817][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.124367][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.136820][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.147946][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.158848][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.171359][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.183830][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.193882][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.204587][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.214668][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.224742][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.240831][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.252026][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.262179][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.274651][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.284748][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.295788][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.308251][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.318487][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.332706][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.343853][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.354608][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.364687][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.377209][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.388041][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.399542][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.412063][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.422597][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.433719][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.444431][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.454878][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.464899][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.474949][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.484981][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.495267][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.505967][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.517108][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.527790][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.538208][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.549713][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.561073][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.571562][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.584039][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.596544][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.609062][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.621563][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.632807][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.643735][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.653769][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.664960][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.676271][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.686339][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.697280][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.708401][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.719947][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.730532][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.740588][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.750641][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.760747][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.771106][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.783606][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.794995][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.807475][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.818366][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.830488][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.843001][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.855552][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.865713][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.877984][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.889193][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.900367][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.912901][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.925392][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.937934][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.948363][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.958420][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.970723][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.982849][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:01.995355][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.006572][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.017986][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.030498][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.040924][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.052322][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.063394][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.073415][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.083801][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.096267][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.107134][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.117199][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.129388][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.140616][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.151172][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.163669][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.173862][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.184629][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.197141][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.207221][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.217563][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.228762][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.238805][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.248835][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.260803][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.271360][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.283153][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.294006][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.304100][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.315754][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.327624][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.338463][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.350962][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.363260][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.375741][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.385858][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.398341][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.410876][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.423388][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.435060][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.447528][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.457620][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.470133][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.482602][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.495108][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.507619][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.520153][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.530235][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.541657][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.554186][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.564425][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.574843][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.585006][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.595038][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.605853][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.617801][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.627927][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.640437][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.652900][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.663282][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.663508][INFO ][0x16c5cf000][::0] Stream interrupt trying to restart
+[2026-10-16 01:39:02.675787][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.686979][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.699478][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.706144][INFO ][0x16c5cf000][::0] accel sensor capture stop
+[2026-10-16 01:39:02.712034][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.715377][INFO ][0x16c5cf000][::0] pipeline capture stop
+[2026-10-16 01:39:02.722162][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.733262][INFO ][0x16c5cf000][::0] pipeline start done
+[2026-10-16 01:39:02.733652][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.735461][INFO ][0x16c5cf000][::0] accel start done
+[2026-10-16 01:39:02.745563][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.758099][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.770559][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.783119][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.793487][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.805028][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.817536][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.829616][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.840871][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.851798][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.861864][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.873342][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.885875][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.898320][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.910837][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.920999][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.931381][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.941671][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.951762][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.962658][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.975097][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.987048][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:02.997138][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.009590][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.020719][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.032866][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.043707][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.056168][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.068730][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.078762][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.091225][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.103769][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.116253][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.128731][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.138839][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.148896][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.161379][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.171481][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.182512][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.195023][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.207473][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.220032][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.232536][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.244995][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.257553][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.270035][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.282570][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.292596][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.303866][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.316341][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.326498][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.338967][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.351487][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.364009][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.376522][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.389013][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.401538][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.414023][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.424120][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.436584][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.449076][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.461608][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.474128][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.486655][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.497149][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.509643][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.522123][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.532193][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.543553][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.554577][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.564748][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.575485][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.586722][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.596794][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.608101][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.618170][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.628810][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.640263][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.651783][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.662757][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.673401][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.684755][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.697232][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.709746][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.722242][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.732341][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.744835][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.757366][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.769857][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.782400][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.794876][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.807386][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.819906][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.830262][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.841378][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.853833][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.864382][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.874401][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.886876][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.897963][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.908230][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.920449][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.932979][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.943925][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.954650][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.965166][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.977214][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.987767][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:03.997788][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.007790][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.020269][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.032812][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.045357][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.056660][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.067058][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.077122][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.087213][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.098182][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.108734][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.121216][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.133698][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.143821][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.156285][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.167196][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.178195][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.190708][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.201284][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.212293][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.222438][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.233269][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.243366][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.254142][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.266080][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.276152][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.286591][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.297213][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.307228][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.317629][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.329175][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.339976][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.351347][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.363824][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.373952][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.386402][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.397831][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.410387][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.422880][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.433091][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.443699][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.454210][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.464489][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.476940][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.489464][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.501984][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.512822][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.525289][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.537797][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.548491][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.560376][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.572844][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.582929][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.593070][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.605598][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.618089][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.628211][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.639291][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.651808][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.664310][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.674424][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.684490][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.694902][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.706141][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.717101][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.728742][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.739635][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.750439][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.761694][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.772072][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.782456][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.792467][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.802764][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.813791][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.826292][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.838756][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.851326][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.862997][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.875467][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.887962][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.899091][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.910276][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.920623][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.931482][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.942506][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.953601][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.964210][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.974483][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.984499][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:04.994565][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.007042][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.017985][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.029345][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.040808][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.053271][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.063964][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.074016][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.086298][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.098661][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.110147][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.120248][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.130297][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.140363][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.150409][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.160475][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.171228][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.181718][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.193198][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.205713][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.216624][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.227500][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.237590][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.248497][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.261062][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.271173][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.283655][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.294114][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.304209][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.314246][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.326725][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.337590][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.348398][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.360874][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.372159][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.384711][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.395294][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.405999][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.416069][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.428573][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.438732][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.451276][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.462431][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.474979][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.487519][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.497546][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.510008][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.520318][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.532560][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.543032][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.553124][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.563876][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.574257][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.584306][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.594734][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.605970][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.616948][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.627972][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.640451][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.652929][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.663398][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.675238][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.685477][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.695540][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.706383][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.716404][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.726419][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.735554][INFO ][0x16c5cf000][::0] Stream interrupt trying to restart
+[2026-10-16 01:39:05.737603][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.748772][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.748790][INFO ][0x16c5cf000][::0] accel sensor capture stop
+[2026-10-16 01:39:05.757539][INFO ][0x16c5cf000][::0] pipeline capture stop
+[2026-10-16 01:39:05.761271][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.773787][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.775151][INFO ][0x16c5cf000][::0] pipeline start done
+[2026-10-16 01:39:05.777396][INFO ][0x16c5cf000][::0] accel start done
+[2026-10-16 01:39:05.777409][ERROR][0x16c5cf000][::0] retry done,current device is not streaming
+[2026-10-16 01:39:05.785221][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.789415][INFO ][0x16c5cf000][::0] accel sensor capture stop
+[2026-10-16 01:39:05.797715][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.798086][INFO ][0x16c5cf000][::0] pipeline capture stop
+[2026-10-16 01:39:05.807785][INFO ][0x16c16f000][::0] [1;33mframe 0[0m
+[2026-10-16 01:39:05.807805][ERROR][0x16c16f000][::0] [1;31msend failed msg OB_SCAN_MESSAGE_ID_SCANNING_FAILED[0m
+[2026-10-16 01:39:06.206285][INFO ][0x16bbf7000][::0] current_temper.ir_l_temp:32.200001
+[2026-10-16 01:39:06.206312][INFO ][0x16bbf7000][::0] current_temper.ir_r_temp:30.799999
+[2026-10-16 01:39:06.206321][INFO ][0x16bbf7000][::0] current_temper.tx_temp:31.500000
+[2026-10-16 01:39:06.206330][INFO ][0x16bbf7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-16 01:39:06.206338][INFO ][0x16bbf7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-16 01:39:06.206347][INFO ][0x16bbf7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-16 01:39:06.206355][INFO ][0x16bbf7000][::0] params_new.fx_l_new:2094.789062
+[2026-10-16 01:39:06.206362][INFO ][0x16bbf7000][::0] params_new.fy_l_new:2095.004883
+[2026-10-16 01:39:06.206367][INFO ][0x16bbf7000][::0] params_new.cx_l_new:949.637085
+[2026-10-16 01:39:06.206373][INFO ][0x16bbf7000][::0] params_new.cy_l_new:591.125854
+[2026-10-16 01:39:06.206378][INFO ][0x16bbf7000][::0] params_new.fx_r_new:2101.943359
+[2026-10-16 01:39:06.206383][INFO ][0x16bbf7000][::0] params_new.fy_r_new:2101.898926
+[2026-10-16 01:39:06.206389][INFO ][0x16bbf7000][::0] params_new.cx_r_new:933.504822
+[2026-10-16 01:39:06.206394][INFO ][0x16bbf7000][::0] params_new.cy_r_new:602.757019
+[2026-10-16 01:39:06.206400][INFO ][0x16bbf7000][::0] params_new.tx_new:-129.155029
+[2026-10-16 01:39:06.206405][INFO ][0x16bbf7000][::0] params_new.ty_new:0.349512
+[2026-10-16 01:39:06.206410][INFO ][0x16bbf7000][::0] params_new.tz_new:22.932499
+[2026-10-16 01:39:06.206415][INFO ][0x16bbf7000][::0] tx_max:-122.701263
+[2026-10-16 01:39:06.206420][INFO ][0x16bbf7000][::0] tx_min:-135.617188
+[2026-10-16 01:39:06.206425][INFO ][0x16bbf7000][::0] current_temper.ir_l_temp:32.200001
+[2026-10-16 01:39:06.206430][INFO ][0x16bbf7000][::0] current_temper.ir_r_temp:30.799999
+[2026-10-16 01:39:06.206435][INFO ][0x16bbf7000][::0] current_temper.tx_temp:31.500000
+[2026-10-16 01:39:06.206440][INFO ][0x16bbf7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-16 01:39:06.206445][INFO ][0x16bbf7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-16 01:39:06.206450][INFO ][0x16bbf7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-16 01:39:06.206455][INFO ][0x16bbf7000][::0] params_new.fx_l_new:2094.207520
+[2026-10-16 01:39:06.206460][INFO ][0x16bbf7000][::0] params_new.fy_l_new:2094.550781
+[2026-10-16 01:39:06.206466][INFO ][0x16bbf7000][::0] params_new.cx_l_new:949.265686
+[2026-10-16 01:39:06.206471][INFO ][0x16bbf7000][::0] params_new.cy_l_new:591.603394
+[2026-10-16 01:39:06.206476][INFO ][0x16bbf7000][::0] params_new.fx_r_new:2101.104004
+[2026-10-16 01:39:06.206481][INFO ][0x16bbf7000][::0] params_new.fy_r_new:2101.183838
+[2026-10-16 01:39:06.206486][INFO ][0x16bbf7000][::0] params_new.cx_r_new:934.084290
+[2026-10-16 01:39:06.206491][INFO ][0x16bbf7000][::0] params_new.cy_r_new:602.957642
+[2026-10-16 01:39:06.206497][INFO ][0x16bbf7000][::0] params_new.tx_new:-129.162827
+[2026-10-16 01:39:06.206502][INFO ][0x16bbf7000][::0] params_new.ty_new:0.349238
+[2026-10-16 01:39:06.206507][INFO ][0x16bbf7000][::0] params_new.tz_new:22.888269
+[2026-10-16 01:39:06.206513][INFO ][0x16bbf7000][::0] tx_max:-122.708672
+[2026-10-16 01:39:06.206518][INFO ][0x16bbf7000][::0] tx_min:-135.625366
+[2026-10-16 01:39:16.534135][INFO ][0x1fd68bf80][::0] obscan_scan_start
+[2026-10-16 01:39:16.534168][INFO ][0x1fd68bf80][::0] set ir line laser enable: 1,control fill light:1
+[2026-10-16 01:39:16.538338][INFO ][0x1fd68bf80][::0] set ir line laser control fill light,blue light enable:1,color fill light:0
+[2026-10-16 01:39:16.539217][WARN ][0x1fd68bf80][::0] the connection remains unchanged(3/3)
+[2026-10-16 01:39:36.580334][INFO ][0x16bbf7000][::0] current_temper.ir_l_temp:32.200001
+[2026-10-16 01:39:36.580370][INFO ][0x16bbf7000][::0] current_temper.ir_r_temp:31.000000
+[2026-10-16 01:39:36.580382][INFO ][0x16bbf7000][::0] current_temper.tx_temp:31.600000
+[2026-10-16 01:39:36.580391][INFO ][0x16bbf7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-16 01:39:36.580400][INFO ][0x16bbf7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-16 01:39:36.580409][INFO ][0x16bbf7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-16 01:39:36.580416][INFO ][0x16bbf7000][::0] params_new.fx_l_new:2094.789062
+[2026-10-16 01:39:36.580425][INFO ][0x16bbf7000][::0] params_new.fy_l_new:2095.004883
+[2026-10-16 01:39:36.580433][INFO ][0x16bbf7000][::0] params_new.cx_l_new:949.637085
+[2026-10-16 01:39:36.580440][INFO ][0x16bbf7000][::0] params_new.cy_l_new:591.125854
+[2026-10-16 01:39:36.580446][INFO ][0x16bbf7000][::0] params_new.fx_r_new:2101.937256
+[2026-10-16 01:39:36.580453][INFO ][0x16bbf7000][::0] params_new.fy_r_new:2101.892822
+[2026-10-16 01:39:36.580459][INFO ][0x16bbf7000][::0] params_new.cx_r_new:933.504822
+[2026-10-16 01:39:36.580465][INFO ][0x16bbf7000][::0] params_new.cy_r_new:602.757019
+[2026-10-16 01:39:36.580471][INFO ][0x16bbf7000][::0] params_new.tx_new:-129.155228
+[2026-10-16 01:39:36.580477][INFO ][0x16bbf7000][::0] params_new.ty_new:0.349512
+[2026-10-16 01:39:36.580483][INFO ][0x16bbf7000][::0] params_new.tz_new:22.932499
+[2026-10-16 01:39:36.580490][INFO ][0x16bbf7000][::0] tx_max:-122.701263
+[2026-10-16 01:39:36.580496][INFO ][0x16bbf7000][::0] tx_min:-135.617188
+[2026-10-16 01:39:36.580503][INFO ][0x16bbf7000][::0] current_temper.ir_l_temp:32.200001
+[2026-10-16 01:39:36.580510][INFO ][0x16bbf7000][::0] current_temper.ir_r_temp:31.000000
+[2026-10-16 01:39:36.580516][INFO ][0x16bbf7000][::0] current_temper.tx_temp:31.600000
+[2026-10-16 01:39:36.580522][INFO ][0x16bbf7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-16 01:39:36.580528][INFO ][0x16bbf7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-16 01:39:36.580535][INFO ][0x16bbf7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-16 01:39:36.580541][INFO ][0x16bbf7000][::0] params_new.fx_l_new:2094.207520
+[2026-10-16 01:39:36.580548][INFO ][0x16bbf7000][::0] params_new.fy_l_new:2094.550781
+[2026-10-16 01:39:36.580555][INFO ][0x16bbf7000][::0] params_new.cx_l_new:949.265686
+[2026-10-16 01:39:36.580561][INFO ][0x16bbf7000][::0] params_new.cy_l_new:591.603394
+[2026-10-16 01:39:36.580567][INFO ][0x16bbf7000][::0] params_new.fx_r_new:2101.097900
+[2026-10-16 01:39:36.580573][INFO ][0x16bbf7000][::0] params_new.fy_r_new:2101.177734
+[2026-10-16 01:39:36.580579][INFO ][0x16bbf7000][::0] params_new.cx_r_new:934.084290
+[2026-10-16 01:39:36.580586][INFO ][0x16bbf7000][::0] params_new.cy_r_new:602.957642
+[2026-10-16 01:39:36.580592][INFO ][0x16bbf7000][::0] params_new.tx_new:-129.163025
+[2026-10-16 01:39:36.580598][INFO ][0x16bbf7000][::0] params_new.ty_new:0.349238
+[2026-10-16 01:39:36.580605][INFO ][0x16bbf7000][::0] params_new.tz_new:22.888269
+[2026-10-16 01:39:36.580611][INFO ][0x16bbf7000][::0] tx_max:-122.708672
+[2026-10-16 01:39:36.580618][INFO ][0x16bbf7000][::0] tx_min:-135.625366
+[2026-10-16 01:40:17.044477][INFO ][0x16bbf7000][::0] current_temper.ir_l_temp:32.200001
+[2026-10-16 01:40:17.045302][INFO ][0x16bbf7000][::0] current_temper.ir_r_temp:31.200001
+[2026-10-16 01:40:17.045315][INFO ][0x16bbf7000][::0] current_temper.tx_temp:31.700001
+[2026-10-16 01:40:17.045325][INFO ][0x16bbf7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-16 01:40:17.045333][INFO ][0x16bbf7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-16 01:40:17.045341][INFO ][0x16bbf7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-16 01:40:17.045349][INFO ][0x16bbf7000][::0] params_new.fx_l_new:2094.789062
+[2026-10-16 01:40:17.045356][INFO ][0x16bbf7000][::0] params_new.fy_l_new:2095.004883
+[2026-10-16 01:40:17.045363][INFO ][0x16bbf7000][::0] params_new.cx_l_new:949.637085
+[2026-10-16 01:40:17.045370][INFO ][0x16bbf7000][::0] params_new.cy_l_new:591.125854
+[2026-10-16 01:40:17.045377][INFO ][0x16bbf7000][::0] params_new.fx_r_new:2101.931396
+[2026-10-16 01:40:17.045383][INFO ][0x16bbf7000][::0] params_new.fy_r_new:2101.886963
+[2026-10-16 01:40:17.045389][INFO ][0x16bbf7000][::0] params_new.cx_r_new:933.504822
+[2026-10-16 01:40:17.045395][INFO ][0x16bbf7000][::0] params_new.cy_r_new:602.757019
+[2026-10-16 01:40:17.045401][INFO ][0x16bbf7000][::0] params_new.tx_new:-129.155426
+[2026-10-16 01:40:17.045407][INFO ][0x16bbf7000][::0] params_new.ty_new:0.349512
+[2026-10-16 01:40:17.045413][INFO ][0x16bbf7000][::0] params_new.tz_new:22.932499
+[2026-10-16 01:40:17.045419][INFO ][0x16bbf7000][::0] tx_max:-122.701263
+[2026-10-16 01:40:17.045424][INFO ][0x16bbf7000][::0] tx_min:-135.617188
+[2026-10-16 01:40:17.045430][INFO ][0x16bbf7000][::0] current_temper.ir_l_temp:32.200001
+[2026-10-16 01:40:17.045437][INFO ][0x16bbf7000][::0] current_temper.ir_r_temp:31.200001
+[2026-10-16 01:40:17.045443][INFO ][0x16bbf7000][::0] current_temper.tx_temp:31.700001
+[2026-10-16 01:40:17.045450][INFO ][0x16bbf7000][::0] calib_temper.ir_l_temp:35.559101
+[2026-10-16 01:40:17.045456][INFO ][0x16bbf7000][::0] calib_temper.ir_r_temp:34.182999
+[2026-10-16 01:40:17.045462][INFO ][0x16bbf7000][::0] calib_temper.tx_temp:33.599998
+[2026-10-16 01:40:17.045469][INFO ][0x16bbf7000][::0] params_new.fx_l_new:2094.207520
+[2026-10-16 01:40:17.045475][INFO ][0x16bbf7000][::0] params_new.fy_l_new:2094.550781
+[2026-10-16 01:40:17.045482][INFO ][0x16bbf7000][::0] params_new.cx_l_new:949.265686
+[2026-10-16 01:40:17.045488][INFO ][0x16bbf7000][::0] params_new.cy_l_new:591.603394
+[2026-10-16 01:40:17.045495][INFO ][0x16bbf7000][::0] params_new.fx_r_new:2101.092041
+[2026-10-16 01:40:17.045501][INFO ][0x16bbf7000][::0] params_new.fy_r_new:2101.171875
+[2026-10-16 01:40:17.045507][INFO ][0x16bbf7000][::0] params_new.cx_r_new:934.084290
+[2026-10-16 01:40:17.045513][INFO ][0x16bbf7000][::0] params_new.cy_r_new:602.957642
+[2026-10-16 01:40:17.045520][INFO ][0x16bbf7000][::0] params_new.tx_new:-129.163223
+[2026-10-16 01:40:17.045527][INFO ][0x16bbf7000][::0] params_new.ty_new:0.349238
+[2026-10-16 01:40:17.045533][INFO ][0x16bbf7000][::0] params_new.tz_new:22.888269
+[2026-10-16 01:40:17.045540][INFO ][0x16bbf7000][::0] tx_max:-122.708672
+[2026-10-16 01:40:17.045547][INFO ][0x16bbf7000][::0] tx_min:-135.625366

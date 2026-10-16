@@ -1,0 +1,271 @@
+[2026-10-15 20:44:45.135571][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:44:45.135951][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-15 20:44:45.135968][INFO ][0x1fd68bf80][::0] dependent files dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+[2026-10-15 20:44:45.135977][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-15 20:44:45.135985][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-15 20:44:45.136127][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:44:45.136183][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:44:45.136217][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:44:45.136242][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-15 20:44:45.136252][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-15 20:44:45.143069][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-15 20:44:45.143125][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-15 20:44:45.143372][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-15 20:44:45.143431][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-15 20:44:45.143482][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-15 20:44:45.143516][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-15 20:44:45.143541][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-15 20:44:45.143563][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-15 20:44:45.143583][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-15 20:44:45.143615][INFO ][0x1fd68bf80][::0] obscan_context_add_data_msg_listener
+[2026-10-15 20:44:45.143629][INFO ][0x1fd68bf80][::0] add OBScanMessageListener success !
+[2026-10-15 20:44:45.143637][INFO ][0x1fd68bf80][::0] obscan_context_add_process_msg_listener
+[2026-10-15 20:44:45.143644][INFO ][0x1fd68bf80][::0] add OBScanProcessMessageListener success !
+[2026-10-15 20:44:45.143651][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-15 20:44:45.143658][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-15 20:44:45.143664][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-15 20:44:45.143670][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-15 20:44:45.143677][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-15 20:44:45.143683][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-15 20:44:45.143689][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-15 20:44:45.143695][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-15 20:44:45.143701][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-15 20:44:45.143707][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-15 20:44:45.143713][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-15 20:44:45.143721][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:44:45.143727][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:44:45.143752][INFO ][0x1fd68bf80][::0] send device msg begin
+[2026-10-15 20:44:45.143765][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT
+[2026-10-15 20:44:45.143774][INFO ][0x1fd68bf80][::0] send device msg end
+[2026-10-15 20:44:45.143781][ERROR][0x1fd68bf80][::0] connect to device failed!
+[2026-10-15 20:44:45.143789][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-15 20:44:47.157406][INFO ][0x16ba4f000][::0] removedList count: 0, addedList count:1
+[2026-10-15 20:44:47.668204][INFO ][0x16ba4f000][::0] firmware version:1.5.7,get device calibration timestamp:1792014971
+[2026-10-15 20:44:47.668246][INFO ][0x16ba4f000][::0] add device info to list sn:CR0886100SN
+[2026-10-15 20:44:47.668259][INFO ][0x16ba4f000][::0] current device info list:
+[2026-10-15 20:44:47.668267][INFO ][0x16ba4f000][::0] device sn:CR0886100SN
+[2026-10-15 20:44:47.986769][INFO ][0x16ba4f000][::0] get device calibration timestamp:1792014971
+[2026-10-15 20:44:47.986790][ERROR][0x16ba4f000][::0] property is not permission to operate.
+[2026-10-15 20:44:47.986797][INFO ][0x16ba4f000][::0] usb device is registered successfully 
+[2026-10-15 20:44:47.986804][INFO ][0x16ba4f000][::0] set select device serial number:CR0886100SN
+[2026-10-15 20:44:47.986810][INFO ][0x16ba4f000][::0] device connected state call back begin
+[2026-10-15 20:44:47.986815][INFO ][0x16ba4f000][::0] #########camera state###############
+[2026-10-15 20:44:47.986821][INFO ][0x16ba4f000][::0] #########usb connected##############
+[2026-10-15 20:44:47.986826][INFO ][0x16ba4f000][::0] [1;31mupdate_camera_status 0, cur_device: true[0m
+[2026-10-15 20:44:47.986832][INFO ][0x16ba4f000][::0] calib update callback begin
+[2026-10-15 20:44:47.986850][INFO ][0x16ba4f000][::0] calib update callback end
+[2026-10-15 20:44:47.986864][INFO ][0x16ba4f000][::0] camera name: Creality Raptor Pro
+[2026-10-15 20:44:47.986871][INFO ][0x16ba4f000][::0] camera serial number: CR0886100SN
+[2026-10-15 20:44:47.986877][INFO ][0x16ba4f000][::0] camera connection type: USB3.0
+[2026-10-15 20:44:47.986882][INFO ][0x16ba4f000][::0] camera firmware version: 1.5.7
+[2026-10-15 20:44:47.986888][INFO ][0x16ba4f000][::0] wifi device firmware version: Unknown
+[2026-10-15 20:44:47.986894][INFO ][0x16ba4f000][::0] get active device serial number:CR0886100SN
+[2026-10-15 20:44:47.987131][INFO ][0x16ba4f000][::0] the device calib status: false
+[2026-10-15 20:44:47.987141][INFO ][0x16ba4f000][::0] check device pccupancy status begin
+[2026-10-15 20:44:48.006500][INFO ][0x16ba4f000][::0] get origin calibration param done,origin params size:1
+[2026-10-15 20:44:48.046209][INFO ][0x16ba4f000][::0] is support rescan: true
+[2026-10-15 20:44:48.046236][INFO ][0x16ba4f000][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_CONNECT
+[2026-10-15 20:44:48.046244][INFO ][0x16ba4f000][::0] device connected state call back done
+[2026-10-15 20:44:48.046265][INFO ][0x16ba4f000][::0] Init device return:1.
+[2026-10-15 20:44:48.184114][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 20:44:48.184157][INFO ][0x1fd68bf80][::0] obscan_context_create_session
+[2026-10-15 20:44:48.184165][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:44:48.184244][INFO ][0x1fd68bf80][::0] [OBScanSession] Thread spawned successfully.
+[2026-10-15 20:44:48.184255][INFO ][0x1fd68bf80][::0] create dir before: /tmp/openscanner_live_session
+[2026-10-15 20:44:48.184261][INFO ][0x1fd68bf80][::0] create dir after: /tmp/openscanner_live_session
+[2026-10-15 20:44:48.186463][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:44:48.188638][INFO ][0x1fd68bf80][::0] session init state : OB_SCAN_SUCCESS
+[2026-10-15 20:44:48.188653][INFO ][0x1fd68bf80][::0] create session success !
+[2026-10-15 20:44:48.188660][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:44:48.188666][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:44:48.188681][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:44:48.188694][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:44:48.188701][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:44:48.188706][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:44:48.188713][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKER
+[2026-10-15 20:44:48.188718][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:44:48.188724][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:44:48.188730][INFO ][0x1fd68bf80][::0] voxel_size: 0.050000
+[2026-10-15 20:44:48.188735][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:44:48.188741][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:44:48.188746][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:44:48.188751][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:44:48.188761][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:44:48.188767][INFO ][0x1fd68bf80][::0] check supported end !
+[2026-10-15 20:44:48.188772][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:44:48.188777][INFO ][0x1fd68bf80][::0] free mem: 6.223487
+[2026-10-15 20:44:48.190123][WARN ][0x1fd68bf80][::0] the connection remains unchanged(1/1)
+[2026-10-15 20:44:48.190170][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:44:48.190445][INFO ][0x1fd68bf80][::0] save init project data success !
+[2026-10-15 20:44:48.190509][INFO ][0x1fd68bf80][::0] create scan init state : OB_SCAN_SUCCESS
+[2026-10-15 20:44:48.192126][INFO ][0x1fd68bf80][::0] create scan success !
+[2026-10-15 20:44:48.192211][INFO ][0x1fd68bf80][::0] obscan_scan_preview
+[2026-10-15 20:44:48.192220][INFO ][0x16b44b000][::0] preview progress 0.050000
+[2026-10-15 20:44:48.192226][INFO ][0x16b44b000][::0] preview progress 0.150000
+[2026-10-15 20:44:48.192232][INFO ][0x16b44b000][::0] preview progress 0.200000
+[2026-10-15 20:44:48.192238][WARN ][0x16b44b000][::0] the connection remains unchanged(1/1)
+[2026-10-15 20:44:48.192244][INFO ][0x16b44b000][::0] preview progress 0.300000
+[2026-10-15 20:44:48.192318][INFO ][0x16b44b000][::0] preview progress 0.350000
+[2026-10-15 20:44:48.192328][INFO ][0x16b44b000][::0] preview progress 0.430000
+[2026-10-15 20:44:48.192334][WARN ][0x16b44b000][::0] [1;33mcannot find file /tmp/openscanner_live_fps_log/fps.obconfig[0m
+[2026-10-15 20:44:48.192341][INFO ][0x16b44b000][::0] the ir fps is 0
+[2026-10-15 20:44:48.192346][INFO ][0x16b44b000][::0] custom profile type:1,width:0,height:0,fps:0
+[2026-10-15 20:44:48.192352][INFO ][0x16b44b000][::0] custom profile type:2,width:1280,height:800,fps:0
+[2026-10-15 20:44:48.192358][INFO ][0x16b44b000][::0] custom profile type:3,width:0,height:0,fps:0
+[2026-10-15 20:44:48.192365][INFO ][0x16b44b000][::0] custom profile type:6,width:1920,height:1200,fps:0
+[2026-10-15 20:44:48.192371][INFO ][0x16b44b000][::0] custom profile type:7,width:1920,height:1200,fps:0
+[2026-10-15 20:44:48.192376][INFO ][0x16b44b000][::0] preview progress 0.520000
+[2026-10-15 20:44:48.192382][INFO ][0x16b44b000][::0] preview progress 0.640000
+[2026-10-15 20:44:48.192388][INFO ][0x16b44b000][::0] internal open begin
+[2026-10-15 20:44:48.192393][INFO ][0x16b44b000][::0] device open begin
+[2026-10-15 20:44:48.192398][INFO ][0x16b44b000][::0] check device pccupancy status begin
+[2026-10-15 20:44:48.192404][INFO ][0x16b44b000][::0] current device is idle.
+[2026-10-15 20:44:48.192409][ERROR][0x16b44b000][::0] property is not permission to operate.
+[2026-10-15 20:44:48.192414][ERROR][0x16b44b000][::0] property is not permission to operate.
+[2026-10-15 20:44:48.192419][ERROR][0x16b44b000][::0] property is not permission to operate.
+[2026-10-15 20:44:48.192425][ERROR][0x16b44b000][::0] property is not permission to operate.
+[2026-10-15 20:44:48.196578][INFO ][0x16b44b000][::0] currentDepthMode: Laser Lines Scan
+[2026-10-15 20:44:48.196588][INFO ][0x16b44b000][::0] config scan mode done.
+[2026-10-15 20:44:48.298554][ERROR][0x16b44b000][::0] function: getStreamProfileList
+args: sensorType
+message: No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_DEPTH
+type: 3
+[2026-10-15 20:44:48.298586][ERROR][0x16b44b000][::0] function: getStreamProfileList
+args: sensorType
+message: No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_IR
+type: 3
+[2026-10-15 20:44:48.400235][INFO ][0x16b44b000][::0] origin sensor type:1 profile:0,0,255,0
+[2026-10-15 20:44:48.400256][INFO ][0x16b44b000][::0] origin sensor type:2 profile:0,0,255,0
+[2026-10-15 20:44:48.400262][INFO ][0x16b44b000][::0] origin sensor type:3 profile:0,0,255,0
+[2026-10-15 20:44:48.400268][INFO ][0x16b44b000][::0] origin sensor type:6 profile:1920,1200,9,30
+[2026-10-15 20:44:48.400275][INFO ][0x16b44b000][::0] origin sensor type:7 profile:1920,1200,9,30
+[2026-10-15 20:44:48.400280][INFO ][0x16b44b000][::0] correct stream profile fps begin
+[2026-10-15 20:44:48.400295][INFO ][0x16b44b000][::0] correct stream profile fps done
+[2026-10-15 20:44:48.400301][INFO ][0x16b44b000][::0] make stream profile tuple
+[2026-10-15 20:44:48.400306][INFO ][0x16b44b000][::0] Color:0,0,255,0
+[2026-10-15 20:44:48.400311][INFO ][0x16b44b000][::0] Depth:0,0,255,0
+[2026-10-15 20:44:48.400316][INFO ][0x16b44b000][::0] IR:0,0,255,0
+[2026-10-15 20:44:48.400321][INFO ][0x16b44b000][::0] Left IR:1920,1200,9,30
+[2026-10-15 20:44:48.400327][INFO ][0x16b44b000][::0] Right IR:1920,1200,9,30
+[2026-10-15 20:44:48.401828][INFO ][0x16b44b000][::0] config streamer done.
+[2026-10-15 20:44:48.401844][INFO ][0x16b44b000][::0] config property check device necessary param valid status:1
+[2026-10-15 20:44:48.403915][INFO ][0x16b44b000][::0] change laser1 to default current:50000.000000
+[2026-10-15 20:44:48.414481][INFO ][0x16b44b000][::0] config property control fill light,blue light enable:1,white light enable:0
+[2026-10-15 20:44:48.425575][INFO ][0x16b44b000][::0] get usb de emphasis value:1,current platform should set:1
+[2026-10-15 20:44:48.425599][INFO ][0x16b44b000][::0] config property done.
+[2026-10-15 20:44:48.426291][INFO ][0x16b44b000][::0] pipeline start done
+[2026-10-15 20:44:48.446972][INFO ][0x16b44b000][::0] accel start done
+[2026-10-15 20:44:48.447030][INFO ][0x16b44b000][::0] start stream done.
+[2026-10-15 20:44:48.465891][INFO ][0x16b44b000][::0] config property ex done.
+[2026-10-15 20:44:48.474905][INFO ][0x16b44b000][::0] baseline:-131.179703,focalPix:2101.082275,unit:1.000000,dispOffset:450.000000
+[2026-10-15 20:44:48.474971][INFO ][0x16b44b000][::0] device params:baseline:131.179703,focalPix:2101.082275,unit:1.000000,dispOffset:450.000000
+[2026-10-15 20:44:48.483273][INFO ][0x16b44b000][::0] LineLaserParamList count:4
+[2026-10-15 20:44:48.483295][INFO ][0x16b44b000][::0] current ll l:2094.688232,2094.904053,949.637085,591.125854,1920,1200
+[2026-10-15 20:44:48.483305][INFO ][0x16b44b000][::0] current ll r:2101.841797,2101.797363,933.504822,602.757019,1920,1200
+[2026-10-15 20:44:48.483312][INFO ][0x16b44b000][::0] current ll lr: 0.938738, 0.0058285, 0.344584, -0.00516863, 0.999983, -0.00283358, -0.344594, 0.000878962, 0.938751, r: -129.159, 0.349512, 22.9325, 
+[2026-10-15 20:44:48.483320][INFO ][0x16b44b000][::0] current ll lb: 0.999984, -0.0013221, 0.00542643, 0.00131309, 0.999998, 0.00166324, -0.00542862, -0.00165609, 0.999984, r: -32.8919, -0.144527, -6.32114, 
+[2026-10-15 20:44:48.496308][INFO ][0x16b44b000][::0] get calibration temperature success,irLeftTemp:35.559101,irRightTemp:34.182999,txTemp:33.599998
+[2026-10-15 20:44:48.496330][INFO ][0x16b44b000][::0] tempCompensate init fx_l_calib:2094.688232
+[2026-10-15 20:44:48.496338][INFO ][0x16b44b000][::0] tempCompensate init fy_l_calib:2094.904053
+[2026-10-15 20:44:48.496345][INFO ][0x16b44b000][::0] tempCompensate init cx_l_calib:949.637085
+[2026-10-15 20:44:48.496351][INFO ][0x16b44b000][::0] tempCompensate init cy_l_calib:591.125854
+[2026-10-15 20:44:48.496357][INFO ][0x16b44b000][::0] tempCompensate init fx_r_calib:2101.841797
+[2026-10-15 20:44:48.496362][INFO ][0x16b44b000][::0] tempCompensate init fy_r_calib:2101.797363
+[2026-10-15 20:44:48.496368][INFO ][0x16b44b000][::0] tempCompensate init cx_r_calib:933.504822
+[2026-10-15 20:44:48.496374][INFO ][0x16b44b000][::0] tempCompensate init cy_r_calib:602.757019
+[2026-10-15 20:44:48.496380][INFO ][0x16b44b000][::0] tempCompensate init tx_calib:-129.159225
+[2026-10-15 20:44:48.496386][INFO ][0x16b44b000][::0] tempCompensate init ty_calib:0.349512
+[2026-10-15 20:44:48.496392][INFO ][0x16b44b000][::0] tempCompensate init tz_calib:22.932499
+[2026-10-15 20:44:48.496398][INFO ][0x16b44b000][::0] tempCompensate init temperature_calib_ir_l:35.559101
+[2026-10-15 20:44:48.496404][INFO ][0x16b44b000][::0] tempCompensate init temperature_calib_ir_r:34.182999
+[2026-10-15 20:44:48.496409][INFO ][0x16b44b000][::0] tempCompensate init temperature_calib_tx:33.599998
+[2026-10-15 20:44:48.496415][INFO ][0x16b44b000][::0] tempCompensate init ir_l_fx_comp_coeff:-0.030000
+[2026-10-15 20:44:48.496432][INFO ][0x16b44b000][::0] tempCompensate init ir_l_fy_comp_coeff:-0.030000
+[2026-10-15 20:44:48.496438][INFO ][0x16b44b000][::0] tempCompensate init ir_l_cx_comp_coeff:0.000000
+[2026-10-15 20:44:48.496444][INFO ][0x16b44b000][::0] tempCompensate init ir_l_cy_comp_coeff:0.000000
+[2026-10-15 20:44:48.496449][INFO ][0x16b44b000][::0] tempCompensate init ir_r_fx_comp_coeff:-0.030000
+[2026-10-15 20:44:48.496454][INFO ][0x16b44b000][::0] tempCompensate init ir_r_fy_comp_coeff:-0.030000
+[2026-10-15 20:44:48.496460][INFO ][0x16b44b000][::0] tempCompensate init ir_r_cx_comp_coeff:0.000000
+[2026-10-15 20:44:48.496465][INFO ][0x16b44b000][::0] tempCompensate init ir_r_cy_comp_coeff:0.000000
+[2026-10-15 20:44:48.496470][INFO ][0x16b44b000][::0] tempCompensate init tx_comp_coeff:0.002000
+[2026-10-15 20:44:48.496476][INFO ][0x16b44b000][::0] tempCompensate init ty_comp_coeff:0.000000
+[2026-10-15 20:44:48.496481][INFO ][0x16b44b000][::0] tempCompensate init tz_comp_coeff:0.000000
+[2026-10-15 20:44:48.496486][INFO ][0x16b44b000][::0] tempCompensate init fx_l_calib:2094.106689
+[2026-10-15 20:44:48.496491][INFO ][0x16b44b000][::0] tempCompensate init fy_l_calib:2094.449951
+[2026-10-15 20:44:48.496496][INFO ][0x16b44b000][::0] tempCompensate init cx_l_calib:949.265686
+[2026-10-15 20:44:48.496502][INFO ][0x16b44b000][::0] tempCompensate init cy_l_calib:591.603394
+[2026-10-15 20:44:48.496507][INFO ][0x16b44b000][::0] tempCompensate init fx_r_calib:2101.002441
+[2026-10-15 20:44:48.496512][INFO ][0x16b44b000][::0] tempCompensate init fy_r_calib:2101.082275
+[2026-10-15 20:44:48.496518][INFO ][0x16b44b000][::0] tempCompensate init cx_r_calib:934.084290
+[2026-10-15 20:44:48.496523][INFO ][0x16b44b000][::0] tempCompensate init cy_r_calib:602.957642
+[2026-10-15 20:44:48.496529][INFO ][0x16b44b000][::0] tempCompensate init tx_calib:-129.167023
+[2026-10-15 20:44:48.496534][INFO ][0x16b44b000][::0] tempCompensate init ty_calib:0.349238
+[2026-10-15 20:44:48.496539][INFO ][0x16b44b000][::0] tempCompensate init tz_calib:22.888269
+[2026-10-15 20:44:48.496544][INFO ][0x16b44b000][::0] tempCompensate init temperature_calib_ir_l:35.559101
+[2026-10-15 20:44:48.496550][INFO ][0x16b44b000][::0] tempCompensate init temperature_calib_ir_r:34.182999
+[2026-10-15 20:44:48.496555][INFO ][0x16b44b000][::0] tempCompensate init temperature_calib_tx:33.599998
+[2026-10-15 20:44:48.496560][INFO ][0x16b44b000][::0] tempCompensate init ir_l_fx_comp_coeff:-0.030000
+[2026-10-15 20:44:48.496566][INFO ][0x16b44b000][::0] tempCompensate init ir_l_fy_comp_coeff:-0.030000
+[2026-10-15 20:44:48.496571][INFO ][0x16b44b000][::0] tempCompensate init ir_l_cx_comp_coeff:0.000000
+[2026-10-15 20:44:48.496576][INFO ][0x16b44b000][::0] tempCompensate init ir_l_cy_comp_coeff:0.000000
+[2026-10-15 20:44:48.496581][INFO ][0x16b44b000][::0] tempCompensate init ir_r_fx_comp_coeff:-0.030000
+[2026-10-15 20:44:48.496587][INFO ][0x16b44b000][::0] tempCompensate init ir_r_fy_comp_coeff:-0.030000
+[2026-10-15 20:44:48.496592][INFO ][0x16b44b000][::0] tempCompensate init ir_r_cx_comp_coeff:0.000000
+[2026-10-15 20:44:48.496597][INFO ][0x16b44b000][::0] tempCompensate init ir_r_cy_comp_coeff:0.000000
+[2026-10-15 20:44:48.496603][INFO ][0x16b44b000][::0] tempCompensate init tx_comp_coeff:0.002000
+[2026-10-15 20:44:48.496608][INFO ][0x16b44b000][::0] tempCompensate init ty_comp_coeff:0.000000
+[2026-10-15 20:44:48.496613][INFO ][0x16b44b000][::0] tempCompensate init tz_comp_coeff:0.000000
+[2026-10-15 20:44:48.496618][INFO ][0x16b44b000][::0] Get lineLaser Param success!
+[2026-10-15 20:44:48.496624][INFO ][0x16b44b000][::0] config device param done.
+[2026-10-15 20:44:48.496629][INFO ][0x16b44b000][::0] use k3: false
+[2026-10-15 20:44:48.496633][INFO ][0x16b44b000][::0] cam model: poly
+[2026-10-15 20:44:48.496638][INFO ][0x16b44b000][::0] cam model: poly
+[2026-10-15 20:44:48.496643][INFO ][0x16b44b000][::0] LineLaserDetectImpl
+
+[2026-10-15 20:44:48.496648][INFO ][0x16b44b000][::0] dgg ver: 4.0.15
+[2026-10-15 20:44:48.496653][INFO ][0x16b44b000][::0] [1;32mraptor pro[0m
+[2026-10-15 20:44:48.496658][INFO ][0x16b44b000][::0] dgg use poly
+[2026-10-15 20:44:48.496667][INFO ][0x16b44b000][::0] dgg use poly
+[2026-10-15 20:44:48.496672][INFO ][0x16b44b000][::0] [1;32mcometx ultra[0m
+[2026-10-15 20:44:48.562962][INFO ][0x16b44b000][::0] DGG INIT IS COMPLETE
+
+[2026-10-15 20:44:48.568781][INFO ][0x16b44b000][::0] initBLAE begin.
+[2026-10-15 20:44:48.568796][INFO ][0x16b44b000][::0] blae init begin
+[2026-10-15 20:44:48.569861][INFO ][0x16b44b000][::0] blae init width 1920 height 1200
+[2026-10-15 20:44:48.569877][INFO ][0x16b44b000][::0] blae init done
+[2026-10-15 20:44:48.569885][INFO ][0x16b44b000][::0] updateBLAEParams
+[2026-10-15 20:44:48.569892][INFO ][0x16b44b000][::0] initBLAE done.
+[2026-10-15 20:44:48.569898][INFO ][0x16b44b000][::0] config algorithm param done.
+[2026-10-15 20:44:48.569996][INFO ][0x16c7fb000][::0] valid (double ir)
+[2026-10-15 20:44:48.570074][INFO ][0x16c7fb000][::0] output light type:2
+[2026-10-15 20:44:48.570089][INFO ][0x16c7fb000][::0] l p b
+[2026-10-15 20:44:48.570097][INFO ][0x16b44b000][::0] change AE type
+[2026-10-15 20:44:48.570103][INFO ][0x16b707000][::0] dgg device: 104
+
+[2026-10-15 20:44:48.579099][INFO ][0x16b44b000][::0] setLineLaserEnable
+[2026-10-15 20:44:48.579985][INFO ][0x16b44b000][::0] post process done.
+[2026-10-15 20:44:48.579998][INFO ][0x16b44b000][::0] device open done
+[2026-10-15 20:44:48.580005][INFO ][0x16b44b000][::0] preview progress 0.760000
+[2026-10-15 20:44:48.580960][INFO ][0x16b44b000][::0] preview progress 0.766000
+[2026-10-15 20:44:48.581050][INFO ][0x16b44b000][::0] preview progress 0.820000
+[2026-10-15 20:44:48.581261][INFO ][0x16b44b000][::0] preview progress 0.850000
+[2026-10-15 20:44:48.581352][ERROR][0x16cab7000][::0] ERROR: OrbbecFusion::getPointCloudWithDownsampling total is zero
+[2026-10-15 20:44:48.581521][INFO ][0x16b44b000][::0] preview progress 0.880000
+[2026-10-15 20:44:48.581559][INFO ][0x16b44b000][::0] preview progress 0.940000
+[2026-10-15 20:44:48.581586][INFO ][0x16b44b000][::0] preview progress 1.000000
+[2026-10-15 20:44:48.581624][INFO ][0x16b44b000][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:44:48.584615][INFO ][0x16b44b000][::0] change to preview success !
+[2026-10-15 20:44:48.584677][INFO ][0x16c053000][::0] [1;33mframe 0[0m
+[2026-10-15 20:44:48.585426][INFO ][0x16b44b000][::0] -----------lasere total_points_num: 0 out_frame_idx: 0 detect_idx: 0 l_image_type:0
+
+[2026-10-15 20:44:48.586109][INFO ][0x16c7fb000][::0] l p d
+[2026-10-15 20:44:48.586122][INFO ][0x16c7fb000][::0] processBLAEFrame start
+[2026-10-15 20:44:48.586129][INFO ][0x16c7fb000][::0] deviceFrameSet->laser->light_type 2
+[2026-10-15 20:44:48.586136][INFO ][0x16c7fb000][::0] blae run begin
+[2026-10-15 20:44:48.586142][INFO ][0x16c7fb000][::0] blae run finish!
+[2026-10-15 20:44:48.586148][INFO ][0x16b793000][::0] change ae type
+[2026-10-15 20:44:48.586153][INFO ][0x16c7fb000][::0] valid (double ir)
+[2026-10-15 20:44:48.586159][INFO ][0x16c7fb000][::0] output light type:2
+[2026-10-15 20:44:48.586164][INFO ][0x16c7fb000][::0] l p b
+[2026-10-15 20:44:48.586265][INFO ][0x16b44b000][::0] dgg device: 104
+
