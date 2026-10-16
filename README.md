@@ -38,15 +38,26 @@ header, no vendor code.
 
 `obscan_api.h` now also covers the session/scan lifecycle needed for live
 capture: `obscan_context_create_session` → `obscan_session_create_scan` →
-`obscan_scan_start` → `obscan_scan_get_raw_cloud` (poll for point-cloud
-data) / `obscan_scan_get_realtime_model_mesh` → `obscan_scan_stop` →
-`obscan_session_destroy`, recovered and symbol-verified the same way as
-the bootstrap subset. `tools/live_capture_test` exercises the full
-sequence against a real device, using the same worker-process isolation
-as `smoke_test` since several of these calls are new, unexercised binding
-surface. Not yet verified against live data — see "Known issues" below
-for why (device enumeration currently returns 0 even with a scanner
-connected).
+`obscan_scan_preview` → `obscan_scan_start` → `obscan_scan_get_raw_cloud`
+(poll for point-cloud data) / `obscan_scan_get_realtime_model_mesh` →
+`obscan_scan_stop` → `obscan_session_destroy`, recovered and symbol-
+verified the same way as the bootstrap subset. `tools/live_capture_test`
+exercises the full sequence against a real device, using the same
+worker-process isolation as `smoke_test`.
+
+Verified end-to-end against a physical CR-Scan Raptor Pro: device
+enumeration, session/scan creation, preview, and start all return
+`OB_SCAN_SUCCESS`. Getting there required three things undocumented
+anywhere outside CrealityScan's own behavior (see "Known issues" below
+for the full story): registering a device-message listener (the actual
+trigger for the vendor SDK's device-watcher thread), registering data-
+and process-message listeners before `obscan_scan_preview` (otherwise
+`OB_SCAN_ERROR_LISTENER_NOT_FOUND`), and pointing
+`ObScanContextConfig::input_algo_dependent_files_dir` at CrealityScan's
+own Unity `StreamingAssets` directory (the SDK aborts outright without
+it). Teardown (`obscan_scan_stop` / `obscan_context_destroy`) is still
+flaky, and getting a non-zero point count from `obscan_scan_get_raw_cloud`
+in practice is tracked as follow-up work — see "Known issues".
 
 ## Known issues
 
@@ -82,23 +93,49 @@ The POSIX (macOS) side of `worker_process.cpp` is tested and working. The
 Windows side (`CreateProcessW`-based re-exec) is written to the same
 design but not yet tested on Windows.
 
-**Device enumeration returns 0 devices even with a scanner physically
-connected (a Creality Raptor Pro, confirmed present and recognized by
-macOS via `ioreg -p IOUSB` — this is not a cabling/hardware problem).**
-The real installer's `postinstall` script sets up `/Library/Creality/`
-and a `com.creality.RPCServer` LaunchAgent with a sudoers rule granting it
-passwordless root — neither of which exists on a machine where only the
-`.pkg` payload was extracted (as this project does) rather than actually
-installed. The leading hypothesis is that `liborbbec_scan` talks to that
-separate privileged helper process (hence "RPCServer") for real device
-access, and silently sees nothing without it. Unverified: starting that
-extracted helper directly was blocked by this environment's own safety
-tooling (running an unverified vendor background daemon), so the next
-step is either a real install of CrealityScan on a test machine, or
-running `RPCServer` manually with the user's own authorization. Until
-one of those resolves it, the session/scan bindings below are verified
-only up to "the real exported symbols exist and the code compiles and
-links against them" — not against live capture data.
+**`obscan_scan_start()` can hang indefinitely (not crash) after the USB
+device has been through several hard-killed sessions.** During testing,
+after `kill -9`ing the worker process mid-stream several times in a row
+(necessary when iterating on config — the worker was still inside vendor
+SDK code with the laser active each time), `obscan_scan_preview()` stopped
+producing *any* data messages at all (not even `NEW_RGB_IMAGE`), and the
+subsequent `obscan_scan_start()` call hung forever at low CPU, stuck right
+after the native log line `"set ir line laser control fill light, blue
+light enable:1"`. A full isolation pass — varying `accuracy`, `light_type`,
+and both voxel-size fields one at a time, rebuilding and retesting against
+the physical device each time, including restoring the exact combination
+that had worked minutes earlier — ruled out every `ObScanModeConfig` field
+as the cause. This points at the vendor SDK (or the USB stack's view of the
+device) being left in a bad state by the improper teardown a `SIGKILL`
+causes — it never runs the SDK's own close/release path. Try a physical
+USB reconnect (or OS sleep/wake) before chasing this as a config bug. The
+underlying lesson: prefer letting a hung worker's launcher time out and
+request a clean `obscan_scan_stop`/`obscan_context_destroy` over `kill -9`
+wherever possible; this is also a case `RunSelfAsWorker` doesn't currently
+protect against, since the risk here isn't our process crashing, it's the
+*hardware/vendor-library state* outliving our process after a hard kill.
+
+**~~Device enumeration returns 0 devices even with a scanner physically
+connected~~ — resolved.** The RPCServer/privileged-helper theory below was
+wrong. The real cause: `obscan_context_create()` and
+`obscan_context_get_device_management()` don't start the vendor SDK's
+IOKit device-watcher thread by themselves — confirmed by Frida-tracing
+`IOServiceAddMatchingNotification`/`CFRunLoopAddSource` against our own
+process and seeing zero registrations without a listener. The watcher
+thread only starts as a side effect of registering a real
+`ObScanDeviceMessageListener` via
+`obscan_device_management_add_device_msg_listener()` (see
+`obscan_api.h`'s `ObScanDeviceMessage*` block for the full story,
+including the known post-callback crash hazard this call sites must run
+inside a worker process).
+
+Needed no privileged helper, no real install, nothing beyond what this
+project already does. Superseded the following, kept only as a record
+of a plausible-looking wrong turn: the real installer's `postinstall`
+script sets up `/Library/Creality/` and a `com.creality.RPCServer`
+LaunchAgent with a sudoers rule granting it passwordless root, which
+doesn't exist on a machine where only the `.pkg` payload was extracted
+rather than installed — this looked like the cause, but wasn't.
 
 Scope for v1: OBScan-class (depth-camera) devices only. The separate
 MTP-based device path CrealityScan also supports (used by some scanner
@@ -107,6 +144,35 @@ models) is deferred.
 The app's cloud/account/analytics layer (model upload, device
 registration/verification, telemetry) is intentionally **not** part of this
 project. OpenScanner is local-only.
+
+## Possible future direction: dropping OBScan entirely
+
+The vendor stack actually splits into two layers, and only one of them is
+closed. The low-level camera/USB layer (`libOrbbecSDK.1.7.1.dylib`) is
+Orbbec's own **public, open-source** SDK — the same one published on
+GitHub for their other camera lines, built on `rpclib`/msgpack-RPC, not
+Creality- or CrealityScan-specific code. Only `liborbbec_scan` (OBScan) —
+the scanning-specific depth fusion, laser calibration (`camera_user_calib`,
+a separate OpenCV-based tool bundled in the app), and mesh pipeline built
+*on top of* that open SDK — is the closed, OEM-licensed part this project
+currently binds against.
+
+That means there's a real, scoped alternative to reverse-engineering
+OBScan's ABI if its remaining bugs (see "Known issues") turn out to be
+unfixable from the outside, or if full independence from Creality/Orbbec's
+closed code becomes a goal in its own right: talk to the Raptor Pro
+directly via the public OrbbecSDK for raw stereo IR/depth frames (bypassing
+`obscan_*` entirely), and implement our own laser-line triangulation and
+point-cloud fusion on top — open-source and auditable, instead of a
+black-box reimplementation of Creality's algorithms. This is a materially
+bigger undertaking than the current binding approach (it means owning
+calibration and depth reconstruction, not just device I/O and lifecycle
+management), so it's not the current plan — but it's the right next step
+if OBScan's own bugs prove unfixable, not a full rewrite starting from raw
+USB protocol work.
+
+Not yet verified: whether the public OrbbecSDK's device list actually
+includes the Raptor Pro's PID (`0x0c03`/`3075`) as supported.
 
 ## Building
 
