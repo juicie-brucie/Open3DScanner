@@ -119,22 +119,48 @@ into the worker subprocess via `DYLD_INSERT_LIBRARIES`
 (`tools/live_capture_test/main.cpp`) — never touching Creality's own
 files.
 
-**Status: fix exists, but "confirmed fixed" claimed here earlier was
-premature — correcting that now.** Three consecutive runs did complete
-with `obscan_context_destroy()` returning in ~0ms and no power cycle
+**Status: now genuinely confirmed fixed** (see
+`logs/branch_claude-clever-albattani-cebx0e-v2/`), after two earlier
+false starts recorded here — kept below as a record of both mistakes,
+since the lesson generalizes.
+
+False start #1: three consecutive runs completed with
+`obscan_context_destroy()` returning in ~0ms and no power cycle
 needed, but a separate bug (below) meant `obscan_scan_stop()` was
 silently a no-op in all three: `obscan_session_destroy()` then hit
 `OB_SCAN_ERROR_MULTI_CALLED` and refused immediately, *before*
 `obscan_context_destroy()` could ever reach the SuperPoint/Vulkan path
 at all. A 0ms destroy in those runs proved nothing about the Vulkan
-interposer. With `obscan_scan_stop()` actually fixed (confirmed: real
-mesh data back, real device release, `rpc client destroyed` for all
-four client ports — see below), `obscan_context_destroy()` now runs
-long enough to exceed the 90s worker timeout in `live_capture_test`,
-which force-killed it cleanly (no hang requiring manual recovery, so
-that part of the fix still holds) — but whether the Vulkan interposer
-itself is actually helping once `obscan_context_destroy()` has real
-work to do is still open and needs a longer-timeout retest.
+interposer.
+
+False start #2: once `obscan_scan_stop()` was actually fixed,
+`obscan_context_destroy()` started exceeding the worker timeout again,
+and this was logged as "Vulkan-unrelated" after grepping the native
+vendor scan log for `VK_KHR`/`VK_EXT`/`"using metallib"` and finding
+nothing. That check proved nothing either: the vendor log never
+contains MoltenVK's or ncnn's own stderr output in the first place, so
+its absence there says nothing about whether Vulkan was involved —
+this project's own full process log for the same run, checked only
+later, has a complete MoltenVK extension listing.
+
+The real cause, found by a parallel session working the same bug: the
+original `vulkan_disable_interpose.c` only interposed
+`vkCreateInstance`/`vkCreateDevice` directly, which relies on dyld
+having bound the calling code's references to those symbols at the
+interposing dylib's own load time. But `texture_mode::shutdown_network()`'s
+SuperPoint network runs on ncnn, which resolves Vulkan entry points
+*indirectly* via `dlsym()` + `vkGetInstanceProcAddr()` — a lookup path
+classic `__interpose` never touches, so the original interposer never
+actually fired against it. The fix also interposes `dlsym()` and
+`vkGetInstanceProcAddr()`/`vk_icdGetInstanceProcAddr()` themselves, so
+any route to `vkCreateInstance`/`vkCreateDevice` is caught regardless
+of how ncnn finds it.
+
+Hardware-confirmed twice, back-to-back, with no power cycle between
+runs: `obscan_context_destroy()` returning `OB_SCAN_SUCCESS` in
+729ms/695ms (vs. previously hanging past a 180s timeout), both runs
+exiting cleanly (`exit code 0`) with real mesh data (21,672 and 46,218
+vertices).
 
 The underlying lesson, still worth keeping in mind for any future
 vendor-SDK crash/hang: prefer letting a hung worker's launcher time out
