@@ -13,6 +13,7 @@
 // Usage:
 //   live_capture_test [path-to-liborbbec_scan.dylib-or-lib_orbbec_scan.dll]
 
+#include <atomic>
 #include <chrono>
 #include <cstdio>
 #include <string>
@@ -30,6 +31,30 @@ namespace {
 constexpr const char* kWorkerFlag = "--live-capture-worker";
 constexpr int kPollCount = 15;
 constexpr int kPollIntervalMs = 300;
+constexpr int kDeviceWaitAttempts = 30;    // ~6s at 200ms/attempt.
+constexpr int kDeviceWaitIntervalMs = 200;
+
+// obscan_device_management_add_device_msg_listener() is the actual trigger
+// for device detection — see the ObScanDeviceMessage* block in obscan_api.h.
+// Without a registered listener, the vendor SDK never starts its IOKit
+// device-watcher thread and obscan_device_management_get_device_num()
+// stays at 0 forever, no matter how much the run loop gets pumped. The
+// callback must be a plain C function pointer (no captures), so state is
+// communicated back via these globals; that's fine here because this
+// process only ever runs one live-capture session.
+std::atomic<bool> g_got_connect_message{false};
+
+void OnDeviceMessage(ObScanDeviceMessage msg) {
+    std::printf("[worker] device message: msg_id=%d data=%p\n", msg.msg_id, msg.data);
+    std::fflush(stdout);
+    // msg_id=0 with a non-NULL data pointer is the confirmed real
+    // connect-event shape. The first callback on every run so far has
+    // fired immediately with msg_id=308412672/data=NULL — treated as a
+    // non-actionable registration ack, not a connect event.
+    if (msg.msg_id == 0 && msg.data != nullptr) {
+        g_got_connect_message = true;
+    }
+}
 
 const char* StatusName(ObScanStatus status) {
     switch (status) {
@@ -43,14 +68,41 @@ const char* StatusName(ObScanStatus status) {
             return "OB_SCAN_ERROR_DEVICE_DISCONNECT";
         case OB_SCAN_ERROR_DEVICE_BUSY:
             return "OB_SCAN_ERROR_DEVICE_BUSY";
+        case OB_SCAN_ERROR_UNSUPPORTED_CONFIGURATION:
+            return "OB_SCAN_ERROR_UNSUPPORTED_CONFIGURATION";
         default:
             return "OB_SCAN_ERROR_(see obscan_api.h)";
     }
 }
 
 void Report(const char* step, ObScanStatus status) {
-    std::printf("[worker] %-45s -> %s\n", step, StatusName(status));
+    std::printf("[worker] %-45s -> %s (%d)\n", step, StatusName(status), static_cast<int>(status));
     std::fflush(stdout);  // Survive a crash on the very next call.
+}
+
+void OnPreviewStatus(ObScanStatus status) {
+    std::printf("[worker] preview status callback: %s (%d)\n", StatusName(status), static_cast<int>(status));
+    std::fflush(stdout);
+}
+
+void OnPreviewProgress(float progress) {
+    std::printf("[worker] preview progress callback: %.3f\n", progress);
+    std::fflush(stdout);
+}
+
+std::atomic<int> g_frame_ready_count{0};
+
+void OnDataMessage(ObScanDataMessage msg) {
+    std::printf("[worker] data message: msg_id=%d data=%p\n", msg.msg_id, msg.data);
+    std::fflush(stdout);
+    if (msg.msg_id == OB_SCAN_MESSAGE_ID_FRAME_READY) {
+        ++g_frame_ready_count;
+    }
+}
+
+void OnProcessMessage(ObScanProcessMessage msg) {
+    std::printf("[worker] process message: msg_id=%d data=%p\n", msg.msg_id, msg.data);
+    std::fflush(stdout);
 }
 
 int RunLiveCapture(const std::string& library_path) {
@@ -61,8 +113,17 @@ int RunLiveCapture(const std::string& library_path) {
     std::printf("[worker] Resolved all symbols OK.\n");
     std::fflush(stdout);
 
+    // Leaving this empty crashes the vendor SDK (uncaught std::invalid_
+    // argument, "... the file is not exists !") the moment it needs its
+    // GPU shader or ML model files — it needs to point at CrealityScan's
+    // own Unity StreamingAssets directory (dggv2_laser_macos.metallib,
+    // rot_model_core_1.bin, tex_model_core_1.bin all live there).
+    std::string algo_dir = openscanner::ObscanLibrary::FindStreamingAssetsDirForLibraryPath(library_path);
+    std::printf("[worker] input_algo_dependent_files_dir: %s\n", algo_dir.empty() ? "(not found!)" : algo_dir.c_str());
+    std::fflush(stdout);
+
     ObScanContextConfig context_config = {};
-    context_config.input_algo_dependent_files_dir = "";
+    context_config.input_algo_dependent_files_dir = algo_dir.c_str();
     context_config.output_ob_sdk_log_dir = "/tmp/openscanner_live_sdk_log";
     context_config.output_ob_scan_log_dir = "/tmp/openscanner_live_scan_log";
     context_config.output_computer_performance_fps_dir = "/tmp/openscanner_live_fps_log";
@@ -76,31 +137,48 @@ int RunLiveCapture(const std::string& library_path) {
     ObScanDeviceManagementHandle device_mgmt = nullptr;
     status = lib.obscan_context_get_device_management(context, &device_mgmt);
     Report("obscan_context_get_device_management", status);
+    if (status != OB_SCAN_SUCCESS) return 1;
 
-    // Device discovery here is IOKit notification-driven, not purely
-    // synchronous: confirmed via Frida tracing the real CrealityScan
-    // binary that obscan_device_management_get_device_num() returns 0
-    // immediately after context creation and only becomes nonzero once
-    // something has pumped the process's run loop in between (IOKit
-    // delivers device-arrival notifications through it). A bare sleep()
-    // loop never services that run loop and stays stuck at 0 forever,
-    // which is why earlier runs of this tool never saw an already-
-    // connected device. See README.md "Known issues".
-    int32_t device_num = 0;
-    if (status == OB_SCAN_SUCCESS) {
-        for (int attempt = 0; attempt < 30; ++attempt) {
-            status = lib.obscan_device_management_get_device_num(device_mgmt, &device_num);
-            if (device_num > 0) break;
+    // The real app always registers these two before touching the device
+    // or session; without them obscan_scan_preview() later fails with
+    // OB_SCAN_ERROR_LISTENER_NOT_FOUND.
+    ObScanDataMessageListener data_listener = {};
+    data_listener.onMessage = &OnDataMessage;
+    status = lib.obscan_context_add_data_msg_listener(context, &data_listener);
+    Report("obscan_context_add_data_msg_listener", status);
+    if (status != OB_SCAN_SUCCESS) return 1;
+
+    ObScanProcessMessageListener process_listener = {};
+    process_listener.onMessage = &OnProcessMessage;
+    status = lib.obscan_context_add_process_msg_listener(context, &process_listener);
+    Report("obscan_context_add_process_msg_listener", status);
+    if (status != OB_SCAN_SUCCESS) return 1;
+
+    // Registering a device-message listener is what actually starts the
+    // vendor SDK's IOKit device-watcher thread (confirmed via Frida
+    // tracing — see obscan_api.h). Without this, get_device_num() stays
+    // at 0 forever no matter how much the run loop gets pumped, which is
+    // why earlier runs of this tool never saw an already-connected
+    // device. See README.md "Known issues".
+    ObScanDeviceMessageListener listener = {};
+    listener.onMessage = &OnDeviceMessage;
+    status = lib.obscan_device_management_add_device_msg_listener(device_mgmt, &listener);
+    Report("obscan_device_management_add_device_msg_listener", status);
+    if (status != OB_SCAN_SUCCESS) return 1;
+
+    for (int attempt = 0; attempt < kDeviceWaitAttempts && !g_got_connect_message; ++attempt) {
 #if defined(__APPLE__)
-            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.2, false);
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, kDeviceWaitIntervalMs / 1000.0, false);
 #else
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kDeviceWaitIntervalMs));
 #endif
-        }
-        std::printf("[worker] obscan_device_management_get_device_num -> %s, count=%d\n", StatusName(status),
-                     device_num);
-        std::fflush(stdout);
     }
+
+    int32_t device_num = 0;
+    status = lib.obscan_device_management_get_device_num(device_mgmt, &device_num);
+    std::printf("[worker] obscan_device_management_get_device_num -> %s, count=%d\n", StatusName(status),
+                device_num);
+    std::fflush(stdout);
     if (device_num == 0) {
         std::printf("[worker] No device detected — stopping here (nothing to scan).\n");
         std::fflush(stdout);
@@ -120,22 +198,72 @@ int RunLiveCapture(const std::string& library_path) {
     ObScanConfig scan_config = {};
     scan_config.mode_config.post_texture = OB_SCAN_NO_TEXTURE;
     scan_config.mode_config.frame_rate = OB_SCAN_FRAME_RATE_AUTO;
-    scan_config.mode_config.projection = OB_SCAN_INFRARED;
+    // The connected Raptor Pro reports depthMode "Laser Lines Scan" (see
+    // the PioneerDevice.cpp log line at session creation), i.e. a blue-
+    // line-laser projector, not an infrared structured-light one.
+    scan_config.mode_config.projection = OB_SCAN_BLUE_LINE_LASER;
     scan_config.mode_config.scan_mode = OB_SCAN_MODE_OBJECT_MEDIUM;
     scan_config.mode_config.accuracy = OB_SCAN_ACCURACY_FAST;
-    scan_config.mode_config.fuse_mode = OB_SCAN_FUSE_MODE_GEOMETRY;
+    // The IL2CPP UI dump shows OB_SCAN_FUSE_MODE_GEOMETRY/RGBD are only
+    // exposed for infrared (structured-light) devices; the laser-line UI
+    // only exposes Marker/Markerless. Markerless needs no physical
+    // markers on the object (unlike Marker mode) — what actually blocked
+    // obscan_scan_start earlier was never calibration, it was that
+    // preview had never been started (see obscan_scan_preview above);
+    // now that that's fixed, prefer Markerless as the generally useful
+    // default.
+    scan_config.mode_config.fuse_mode = OB_SCAN_FUSE_MODE_MARKERLESS;
     scan_config.mode_config.scan_fov = OB_SCAN_FOV_NORMAL;
     scan_config.mode_config.object_material = OB_SCAN_OBJECT_MATERIAL_STANDARD;
-    scan_config.mode_config.voxel_size = 0.003;
     scan_config.mode_config.light_type = OB_SCAN_LIGHT_TYPE_PARALLEL;
     scan_config.mode_config.scan_type = OB_SCAN_CLOUD_FUSED;
     scan_config.mode_config.detail_voxel_size = 0.001;
     scan_config.name = "openscanner_live_scan";
 
+    // Bisected against this device's firmware: 0.003 through 0.02 were
+    // all rejected with "the line laser cannot support voxel_size ...";
+    // 0.05 was the first value accepted. Line-laser voxel sizes are
+    // apparently much coarser than the infrared-oriented defaults this
+    // was copied from. Not yet confirmed whether this is a hard firmware
+    // floor, a device-specific calibrated value, or something in
+    // between — revisit if this device ever rejects 0.05 again.
+    scan_config.mode_config.voxel_size = 0.05;
+
     ObScanScanHandle scan = nullptr;
     status = lib.obscan_session_create_scan(session, &scan_config, &scan);
     Report("obscan_session_create_scan", status);
     if (status != OB_SCAN_SUCCESS) return 1;
+
+    // Captured from the real CrealityScan app's own obscan_* call log
+    // during a live scan: it always calls obscan_scan_preview() (laser
+    // on, camera streaming) and only calls obscan_scan_start() once
+    // preview is actively flowing frames. Calling start() on a scan that
+    // was never previewed is what produced the native "cannot called
+    // start !" / OB_SCAN_ERROR_INVALID_ARGUMENT seen before this fix.
+    // obscan_scan_preview takes BOTH a progress and a status callback,
+    // like obscan_scan_stop — passing only one (or NULL) misaligned the
+    // real signature; see obscan_api.h for how we found this.
+    status = lib.obscan_scan_preview(scan, &OnPreviewProgress, &OnPreviewStatus);
+    Report("obscan_scan_preview", status);
+    if (status != OB_SCAN_SUCCESS) return 1;
+
+    // A fixed 2s wait wasn't enough — obscan_scan_start still failed with
+    // "cannot called start !" while early frames were still being
+    // dropped (size mismatches while the pipeline settles). Calling
+    // start on the very first FRAME_READY wasn't enough either — it
+    // raced the vendor SDK's own pipeline setup and crashed with an
+    // uncaught "mutex lock failed" exception. Wait for several stable
+    // FRAME_READY data messages instead, up to 20s.
+    constexpr int kWantStableFrames = 10;
+    for (int i = 0; i < 100 && g_frame_ready_count.load() < kWantStableFrames; ++i) {
+#if defined(__APPLE__)
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.2, false);
+#else
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+#endif
+    }
+    std::printf("[worker] frame_ready_count=%d\n", g_frame_ready_count.load());
+    std::fflush(stdout);
 
     status = lib.obscan_scan_start(scan);
     Report("obscan_scan_start", status);
@@ -161,8 +289,11 @@ int RunLiveCapture(const std::string& library_path) {
     status = lib.obscan_scan_pause(scan, /*is_stop_stream=*/true);
     Report("obscan_scan_pause", status);
 
-    status = lib.obscan_scan_stop(scan, /*progress_callback=*/nullptr, /*status_callback=*/nullptr,
-                                   /*is_block=*/true);
+    // NULL callbacks aren't tolerated here either — see obscan_scan_preview
+    // above, where NULL crashed outright. obscan_scan_stop silently
+    // returned OB_SCAN_ERROR_INVALID_ARGUMENT with no native log line at
+    // all here, consistent with an early argument-validation check.
+    status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/true);
     Report("obscan_scan_stop", status);
 
     status = lib.obscan_session_destroy(&session);

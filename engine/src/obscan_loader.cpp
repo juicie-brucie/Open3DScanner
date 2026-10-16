@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdlib>
+#include <cstring>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -75,6 +76,10 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
     obscan_context_destroy = reinterpret_cast<fn_obscan_context_destroy>(resolve("obscan_context_destroy"));
     obscan_context_get_device_management =
         reinterpret_cast<fn_obscan_context_get_device_management>(resolve("obscan_context_get_device_management"));
+    obscan_context_add_data_msg_listener =
+        reinterpret_cast<fn_obscan_context_add_data_msg_listener>(resolve("obscan_context_add_data_msg_listener"));
+    obscan_context_add_process_msg_listener = reinterpret_cast<fn_obscan_context_add_process_msg_listener>(
+        resolve("obscan_context_add_process_msg_listener"));
     obscan_device_management_get_device_num = reinterpret_cast<fn_obscan_device_management_get_device_num>(
         resolve("obscan_device_management_get_device_num"));
     obscan_device_management_get_device_info = reinterpret_cast<fn_obscan_device_management_get_device_info>(
@@ -84,12 +89,16 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
     obscan_device_management_select_active_device =
         reinterpret_cast<fn_obscan_device_management_select_active_device>(
             resolve("obscan_device_management_select_active_device"));
+    obscan_device_management_add_device_msg_listener =
+        reinterpret_cast<fn_obscan_device_management_add_device_msg_listener>(
+            resolve("obscan_device_management_add_device_msg_listener"));
 
     obscan_context_create_session =
         reinterpret_cast<fn_obscan_context_create_session>(resolve("obscan_context_create_session"));
     obscan_session_destroy = reinterpret_cast<fn_obscan_session_destroy>(resolve("obscan_session_destroy"));
     obscan_session_create_scan =
         reinterpret_cast<fn_obscan_session_create_scan>(resolve("obscan_session_create_scan"));
+    obscan_scan_preview = reinterpret_cast<fn_obscan_scan_preview>(resolve("obscan_scan_preview"));
     obscan_scan_start = reinterpret_cast<fn_obscan_scan_start>(resolve("obscan_scan_start"));
     obscan_scan_pause = reinterpret_cast<fn_obscan_scan_pause>(resolve("obscan_scan_pause"));
     obscan_scan_stop = reinterpret_cast<fn_obscan_scan_stop>(resolve("obscan_scan_stop"));
@@ -126,6 +135,24 @@ std::string ObscanLibrary::FindDefaultLibraryPath() {
         }
     }
     return std::string();
+}
+
+std::string ObscanLibrary::FindStreamingAssetsDirForLibraryPath(const std::string& library_path) {
+#if defined(_WIN32)
+    const char* kPluginsSuffix = "_Data\\Plugins\\x86_64\\lib_orbbec_scan.dll";
+    const char* kStreamingAssetsSuffix = "_Data\\StreamingAssets";
+#else
+    const char* kPluginsSuffix = "/Contents/PlugIns/liborbbec_scan.dylib";
+    const char* kStreamingAssetsSuffix = "/Contents/Resources/Data/StreamingAssets";
+#endif
+    if (library_path.size() <= std::strlen(kPluginsSuffix) ||
+        library_path.compare(library_path.size() - std::strlen(kPluginsSuffix), std::strlen(kPluginsSuffix),
+                              kPluginsSuffix) != 0) {
+        return std::string();
+    }
+    std::string app_root = library_path.substr(0, library_path.size() - std::strlen(kPluginsSuffix));
+    std::string streaming_assets_dir = app_root + kStreamingAssetsSuffix;
+    return PathExists(streaming_assets_dir) ? streaming_assets_dir : std::string();
 }
 
 }  // namespace openscanner

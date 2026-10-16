@@ -35,18 +35,33 @@ public:
     // back to prompting the user for a path when this returns empty.
     static std::string FindDefaultLibraryPath();
 
+    // Derives CrealityScan's Unity StreamingAssets directory from an
+    // already-resolved library_path (as returned by FindDefaultLibraryPath
+    // or passed in explicitly), or empty if it doesn't exist on disk.
+    // obscan_context_create()'s ObScanContextConfig::input_algo_dependent_
+    // files_dir must point here — leaving it empty causes the vendor SDK
+    // to abort with an uncaught exception ("<file> the file is not
+    // exists !") the first time it needs a GPU shader (dggv2_laser_*.
+    // metallib) or ML model file (rot_model_core_1.bin, tex_model_core_1.
+    // bin) that normally ships inside CrealityScan.app's own bundle.
+    static std::string FindStreamingAssetsDirForLibraryPath(const std::string& library_path);
+
     fn_obscan_version obscan_version = nullptr;
     fn_obscan_context_create obscan_context_create = nullptr;
     fn_obscan_context_destroy obscan_context_destroy = nullptr;
     fn_obscan_context_get_device_management obscan_context_get_device_management = nullptr;
+    fn_obscan_context_add_data_msg_listener obscan_context_add_data_msg_listener = nullptr;
+    fn_obscan_context_add_process_msg_listener obscan_context_add_process_msg_listener = nullptr;
     fn_obscan_device_management_get_device_num obscan_device_management_get_device_num = nullptr;
     fn_obscan_device_management_get_device_info obscan_device_management_get_device_info = nullptr;
     fn_obscan_device_management_get_active_idx obscan_device_management_get_active_idx = nullptr;
     fn_obscan_device_management_select_active_device obscan_device_management_select_active_device = nullptr;
+    fn_obscan_device_management_add_device_msg_listener obscan_device_management_add_device_msg_listener = nullptr;
 
     fn_obscan_context_create_session obscan_context_create_session = nullptr;
     fn_obscan_session_destroy obscan_session_destroy = nullptr;
     fn_obscan_session_create_scan obscan_session_create_scan = nullptr;
+    fn_obscan_scan_preview obscan_scan_preview = nullptr;
     fn_obscan_scan_start obscan_scan_start = nullptr;
     fn_obscan_scan_pause obscan_scan_pause = nullptr;
     fn_obscan_scan_stop obscan_scan_stop = nullptr;
