@@ -47,20 +47,25 @@ worker-process isolation as `smoke_test`.
 
 Verified end-to-end against a physical CR-Scan Raptor Pro: device
 enumeration, session/scan creation, preview, and start all return
-`OB_SCAN_SUCCESS`. Getting there required three things undocumented
+`OB_SCAN_SUCCESS`, **and `obscan_scan_pause` / `obscan_scan_stop` /
+`obscan_session_destroy` now complete cleanly too — confirmed by a real
+reconstructed mesh (`obscan_scan_get_realtime_model_mesh`, read only
+after pause: thousands of real vertices/triangles) and full device
+release (`rpc client destroyed` for all four client ports: RGB, IR,
+IMU, depth).** Getting there required several things undocumented
 anywhere outside CrealityScan's own behavior (see "Known issues" below
 for the full story): registering a device-message listener (the actual
 trigger for the vendor SDK's device-watcher thread), registering data-
 and process-message listeners before `obscan_scan_preview` (otherwise
-`OB_SCAN_ERROR_LISTENER_NOT_FOUND`), and pointing
+`OB_SCAN_ERROR_LISTENER_NOT_FOUND`), pointing
 `ObScanContextConfig::input_algo_dependent_files_dir` at CrealityScan's
 own Unity `StreamingAssets` directory (the SDK aborts outright without
-it). The vendor's own scan log shows real per-frame laser points after
-`obscan_scan_start` (up to ~900 frames with points in a 30s run), but
-`obscan_scan_get_raw_cloud` has returned 0 points during scanning in every
-run so far; `live_capture_test` now reads the cloud and realtime mesh once
-after `obscan_scan_pause`, the only state the SDK allows the mesh getter
-in. See "Known issues" for the teardown/power-cycle story.
+it), using `obscan_scan_stop`'s real 4-argument shape — its public C#
+wrapper's 2-argument signature is not the native ABI, the same trap as
+`obscan_scan_preview` below — and reading the realtime mesh only after
+`obscan_scan_pause`, not during active scanning. `obscan_context_destroy`
+can still take long enough to exceed a generous worker timeout now that
+there's real teardown work for it to do — see "Known issues".
 
 ## Known issues
 
@@ -96,73 +101,40 @@ The POSIX (macOS) side of `worker_process.cpp` is tested and working. The
 Windows side (`CreateProcessW`-based re-exec) is written to the same
 design but not yet tested on Windows.
 
-**Init failures cascading into a scanner that needs a power cycle —
-root cause found in the logs, fix untested on hardware.** The symptom:
-some runs come up clean and stream data, others fail at preview, and the
-failures get worse run over run until `obscan_scan_start()` hangs forever
-and only unplugging the scanner helps. Everything before preview (context,
-device connect, session, scan) succeeded in every logged run; the
-difference is entirely in how the *previous* run ended.
+**`obscan_scan_start()` can hang indefinitely (not crash) after the USB
+device has been through several hard-killed sessions.** The root cause
+wasn't a config field (a full isolation pass — `accuracy`,
+`light_type`, both voxel-size fields, one at a time, rebuilt and
+retested against the physical device each time — ruled all of them
+out): it's `obscan_context_destroy()` constructing Creality's
+SuperPoint feature-matching network (ncnn + Vulkan/MoltenVK) purely to
+immediately tear it down, which on this hardware can hang indefinitely
+building a Vulkan device — and that hang happens *before* the vendor
+SDK's own USB/RPC device-release steps run, leaving the device in a bad
+state that then manifests as `obscan_scan_start()` hanging on the
+*next* attempt (not necessarily the same one that hung).
+`engine/src/vulkan_disable_interpose.c` interposes MoltenVK's
+`vkCreateInstance`/`vkCreateDevice` to fail fast instead, loaded only
+into the worker subprocess via `DYLD_INSERT_LIBRARIES`
+(`tools/live_capture_test/main.cpp`) — never touching Creality's own
+files.
 
-- **`obscan_scan_stop` signature regression (1c17292).** The 3-arg
-  `(scan, is_block, status_cb)` shape returns `OB_SCAN_SUCCESS` but does
-  nothing: the native log shows `obscan_scan_stop` and then no stop
-  progress, no pipeline teardown, and the status callback never fires.
-  Both destroys are then refused with `OB_SCAN_ERROR_MULTI_CALLED`
-  (`must first wait other process finshed: destroy session !`), so the
-  device is never released. The earlier 4-arg
-  `(scan, progress_cb, status_cb, is_block)` shape is the real one: with
-  it the SDK logs `stop progress 0.01 … 1.0` / `change to stop success !`,
-  our progress callback receives those exact values, and session destroy
-  releases the device (`rpc client destroyed`). Restored in `obscan_api.h`.
-- **Unreleased device → next run degrades.** A worker that exits without
-  the SDK's stop/release path (refused destroy, crash, `kill -9`, an early
-  `return` on a failed step) leaves the scanner streaming. On the next run
-  IR starts instantly (already streaming), frames drop, then IR fails to
-  start at all; the preview status callback *still reports success*, no
-  `FRAME_READY` ever arrives, and `obscan_scan_start` blocks forever
-  waiting for frames. Only a scanner power cycle cleared it in the logs.
-- **Process exit aborted (`mutex lock failed`)** after every refused
-  destroy, because the worker returned normally: `ObscanLibrary`'s
-  destructor `dlclose()`d the SDK under its own running threads, the
-  listener structs were stack locals the SDK still pointed at, and static
-  destructors ran against live vendor threads.
-
-What `live_capture_test` does about it now: one teardown path for every
-exit after `obscan_context_create` (failed call, no device, dead
-preview, Ctrl-C, launcher timeout) — pause, stop with the 4-arg shape,
-wait for the stop status callback, then destroy with retries on
-`MULTI_CALLED`; never calls `obscan_scan_start` on a preview that has
-delivered no frames (exits with code 4, "power-cycle the scanner")
-instead of hanging; listeners have static lifetime; the library is never
-unloaded and the worker leaves via `_Exit`; the launcher sends SIGTERM
-(clean stop) before SIGKILL on timeout and lets Ctrl-C reach the worker's
-cleanup instead of killing it; a lock file prevents two runs driving the
-scanner at once. First hardware run (logs/branch_claude-clever-albattani-
-cebx0e/) segfaulted on both attempts right after device connect, in a
-`obscan_device_management_get_device_info` call that was only there to
-print device details — an unverified binding, never called before, with
-no vendor log line for the call. Removed; teardown changes still need
-their first real run.
-
-**The Vulkan interposer is not yet shown to do anything.** The three
-`live_capture_vulkan_fix_run*.log` runs that were taken as confirmation
-never reached the Vulkan code: `obscan_context_destroy()` returned in
-~0ms because the SDK *refused* it (`845283600` = `MULTI_CALLED`, the stop
-regression above), before it gets as far as constructing SuperPoint; no
-MoltenVK activity appears in their native logs, and each worker still
-died with `Abort trap: 6`. They did stream without power cycles in
-between — those runs ended paused rather than killed mid-stream — but the
-third already dropped to 18 frames with laser points (vs ~900), the usual
-first sign of the unreleased-device degradation. Also, in the runs where
-`obscan_context_destroy()` did reach the MoltenVK hang
-(`live_capture_full_run.log`, `live_capture_timeout_test.log`), the
-device had already been released (`rpc client destroyed`,
-`Context destroyed`) before the hang, so that hang does not by itself
-wedge the scanner. The interposer is still loaded by default (opt out
-with `OPENSCANNER_NO_VULKAN_INTERPOSE=1`); worth an A/B once teardown is
-confirmed clean, since preview itself uses Vulkan in the RGB+IR 50fps
-profile.
+**Status: fix exists, but "confirmed fixed" claimed here earlier was
+premature — correcting that now.** Three consecutive runs did complete
+with `obscan_context_destroy()` returning in ~0ms and no power cycle
+needed, but a separate bug (below) meant `obscan_scan_stop()` was
+silently a no-op in all three: `obscan_session_destroy()` then hit
+`OB_SCAN_ERROR_MULTI_CALLED` and refused immediately, *before*
+`obscan_context_destroy()` could ever reach the SuperPoint/Vulkan path
+at all. A 0ms destroy in those runs proved nothing about the Vulkan
+interposer. With `obscan_scan_stop()` actually fixed (confirmed: real
+mesh data back, real device release, `rpc client destroyed` for all
+four client ports — see below), `obscan_context_destroy()` now runs
+long enough to exceed the 90s worker timeout in `live_capture_test`,
+which force-killed it cleanly (no hang requiring manual recovery, so
+that part of the fix still holds) — but whether the Vulkan interposer
+itself is actually helping once `obscan_context_destroy()` has real
+work to do is still open and needs a longer-timeout retest.
 
 The underlying lesson, still worth keeping in mind for any future
 vendor-SDK crash/hang: prefer letting a hung worker's launcher time out
@@ -254,28 +226,7 @@ install instead.
 
 `tools/live_capture_test` takes the same library path argument and runs
 the full session/scan lifecycle against whatever device is connected,
-scanning for `OPENSCANNER_SCAN_SECONDS` (default 30) and printing point
-counts. Ctrl-C stops the scan and releases the device cleanly (press it
-twice to force-kill a stuck worker). Exit codes: 0 done, 1 a vendor call
-failed, 3 no scanner, 4 preview delivered no frames (power-cycle the
-scanner), 5 interrupted, 6 scanner disconnected, 7 the SDK refused
-stop/destroy (scanner may need a power cycle), 2 the worker crashed or
-had to be killed.
-
-`tools/fake_obscan` builds a stand-in for the vendor library
-(`libfake_obscan.so`/`.dylib`) that models the behaviors above — delayed
-device connect, preview-only frames, "cannot called start !", a device
-left claimed by an unclean exit — so the capture control flow can be
-tested without a scanner:
-
-```bash
-FAKE_OBSCAN_SCENARIO=no_frames OPENSCANNER_SCAN_SECONDS=3 \
-  ./build/tools/live_capture_test/live_capture_test \
-  ./build/tools/fake_obscan/libfake_obscan.so
-```
-
-Scenarios: `ok`, `no_device`, `late_device`, `no_frames`, `preview_fail`,
-`start_hang`, `destroy_hang` (see `fake_obscan.cpp`).
+polling and printing point counts for a few seconds.
 
 ## Web UI
 
