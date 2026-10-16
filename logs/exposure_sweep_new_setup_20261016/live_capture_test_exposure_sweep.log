@@ -1,0 +1,1602 @@
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[1;33mSDK version 3.5.3.260921[0m
+[worker] Resolved all symbols OK.
+[worker] input_algo_dependent_files_dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_scan_log
+[10/16 03:06:48.172190][info][13485348][Context.cpp:67] Context created with config: default config!
+[10/16 03:06:48.172214][info][13485348][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner/build
+[10/16 03:06:48.176760][info][13485348][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/16 03:06:48.176798][info][13485348][DeviceManager.cpp:15] Current found device(s): (0)
+[10/16 03:06:48.176806][info][13485348][Context.cpp:82] EnumerateNetDevice:true
+[10/16 03:06:48.177241][info][13485362][GVCPClient.cpp:325] bind 127.0.0.1:0
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[10/16 03:06:48.177692][info][13485362][GVCPClient.cpp:325] bind 0.0.0.0:56110
+[10/16 03:06:48.177742][info][13485362][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/16 03:06:48.177769][info][13485362][GVCPClient.cpp:325] bind 0.0.0.0:60006
+[worker] device message: msg_id=308412672 data=0x0
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/16 03:06:48.177789][info][13485362][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/16 03:06:48.177814][info][13485362][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/16 03:06:48.177842][info][13485362][GVCPClient.cpp:325] bind 0.0.0.0:63425
+[10/16 03:06:48.177859][info][13485362][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/16 03:06:48.177979][error][13485365][GVCPClient.cpp:355] sendto failed with error:49
+[10/16 03:06:48.179143][info][13485365][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/16 03:06:48.179162][info][13485365][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/16 03:06:49.186019][info][13485362][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/16 03:06:49.186124][info][13485362][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/16 03:06:50.191851][info][13485362][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/16 03:06:50.191868][info][13485362][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/16 03:06:50.191877][info][13485362][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/16 03:06:50.295933][info][13485362][Ethernet.cpp:244] rpc client connection state:1
+[10/16 03:06:50.296710][info][13485362][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/16 03:06:50.296729][info][13485362][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/16 03:06:50.296742][info][13485362][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/16 03:06:50.401422][info][13485362][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/16 03:06:50.503001][info][13485362][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/16 03:06:50.503105][info][13485362][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 03:06:50.516242][info][13485362][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:06:50.516273][info][13485362][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/16 03:06:50.717591][info][13485362][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:06:50.717616][info][13485362][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/16 03:06:50.717624][info][13485362][RPCClientPort.cpp:241] No stream need to stop
+[10/16 03:06:50.717634][info][13485362][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/16 03:06:50.717785][info][13485362][RPCClientPort.cpp:241] No stream need to stop
+[10/16 03:06:50.717804][info][13485362][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/16 03:06:50.819823][info][13485362][Ethernet.cpp:244] rpc client connection state:1
+[10/16 03:06:50.820258][info][13485362][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/16 03:06:50.820275][info][13485362][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/16 03:06:50.820284][info][13485362][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/16 03:06:50.920880][info][13485362][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/16 03:06:51.023456][info][13485362][RPCClientPort.cpp:20] create client port cost:102ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/16 03:06:51.023535][info][13485362][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 03:06:51.032102][info][13485362][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:06:51.032118][info][13485362][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[worker] device message: msg_id=0 data=0x104a928f7
+[10/16 03:06:51.188452][info][13485377][GVCPClient.cpp:421] 0, 3, 248, 1 [**5 logs in 3009ms, last: 03:06:49.186891**]
+[10/16 03:06:51.188466][info][13485378][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**5 logs in 3009ms, last: 03:06:49.186893**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=1
+[worker] obscan_context_create_session                 -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_create_scan                    -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_preview                           -> OB_SCAN_SUCCESS (0)
+[worker] preview progress callback: 0.050
+[worker] preview progress callback: 0.150
+[worker] preview progress callback: 0.200
+[worker] preview progress callback: 0.300
+[worker] preview progress callback: 0.350
+[worker] preview progress callback: 0.430
+[worker] preview progress callback: 0.520
+[worker] preview progress callback: 0.640
+[10/16 03:06:51.326804][info][13485348][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/16 03:06:51.328123][info][13485348][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[10/16 03:06:51.338326][info][13485350][AccelSensor.cpp:22] AccelSensor created
+[10/16 03:06:51.338332][info][13485350][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/16 03:06:51.339741][info][13485350][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/16 03:06:51.339805][info][13485350][GyroSensor.cpp:23] GyroSensor created!
+[10/16 03:06:51.339814][info][13485350][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/16 03:06:51.340764][info][13485350][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[worker] obscan_scan_config_combined_exposure_and_laser_current -> OB_SCAN_SUCCESS (0)
+[10/16 03:06:51.361329][info][13485350][ScannerAbstractDevice.cpp:808] switchDepthWorkMode done! same mode. currentDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}, targetDepthMode:{name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:06:51.361348][info][13485350][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 03:06:51.361754][info][13485350][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/16 03:06:51.363375][error][13485350][PioneerDevice.cpp:371] deRectifyMaskParams is nullptr
+[10/16 03:06:51.363811][info][13485350][PioneerDevice.cpp:384] Depth sensor has been created!
+[10/16 03:06:51.363840][info][13485350][PioneerDevice.cpp:1254] switchDepthWorkMode done! oldDepthMode: {name: , checksum(hex): 00000000000000000000000000000000, optionCode: NORMAL}, newDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:06:51.363924][info][13485350][Pipeline.cpp:42] Pipeline created with device: {name: Creality Raptor Pro, sn: CR0886100SN}, @0x7BE31DC498
+[10/16 03:06:51.469092][info][13485350][RPCClientPort.cpp:20] create client port cost:106ms,port name:Creality Raptor Pro RGB Camera,client port:10012
+[10/16 03:06:51.469218][info][13485350][PioneerDevice.cpp:431] Color sensor has been created!
+[10/16 03:06:51.471335][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1920,height:1200,format:OB_FORMAT_Y8,fps:50
+[10/16 03:06:51.471349][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1520,height:1200,format:OB_FORMAT_Y8,fps:60
+[10/16 03:06:51.471361][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1320,height:1040,format:OB_FORMAT_Y8,fps:60
+[10/16 03:06:51.471375][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1920,height:1200,format:OB_FORMAT_Y8,fps:50
+[10/16 03:06:51.471390][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1920,height:1200,format:OB_FORMAT_MJPG,fps:50
+[10/16 03:06:51.471398][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1520,height:1200,format:OB_FORMAT_Y8,fps:60
+[10/16 03:06:51.471408][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1520,height:1200,format:OB_FORMAT_MJPG,fps:60
+[10/16 03:06:51.471418][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1320,height:1040,format:OB_FORMAT_Y8,fps:60
+[10/16 03:06:51.471426][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1320,height:1040,format:OB_FORMAT_MJPG,fps:60
+[10/16 03:06:51.471435][info][13485350][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_COLOR,width:1280,height:800,format:OB_FORMAT_MJPG,fps:30
+[10/16 03:06:51.471883][info][13485363][PioneerDevice.cpp:584] OB_SENSOR_IR_RIGHT sensor has been created!
+[10/16 03:06:51.471897][warning][13485350][ObException.cpp:5] No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_DEPTH
+[10/16 03:06:51.473753][warning][13485350][ObException.cpp:5] No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_IR
+[10/16 03:06:51.512850][info][13485350][Pipeline.cpp:236] Try to start streams!
+[10/16 03:06:51.512965][info][13485350][VideoSensor.cpp:617] start OB_SENSOR_IR_LEFT stream with profile: {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 30}
+[10/16 03:06:51.512974][info][13485350][RPCClientPort.cpp:192] start OB_STREAM_IR_LEFT stream call
+[10/16 03:06:51.539391][info][13485350][RPCClientPort.cpp:237] start OB_STREAM_IR_LEFT stream done
+[10/16 03:06:51.539490][info][13485350][VideoSensor.cpp:617] start OB_SENSOR_IR_RIGHT stream with profile: {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 30}
+[10/16 03:06:51.539509][info][13485350][RPCClientPort.cpp:192] start OB_STREAM_IR_RIGHT stream call
+[10/16 03:06:51.558701][info][13485350][RPCClientPort.cpp:237] start OB_STREAM_IR_RIGHT stream done
+[10/16 03:06:51.558777][info][13485350][Pipeline.cpp:249] Start streams done!
+[10/16 03:06:51.558785][info][13485350][Pipeline.cpp:232] Pipeline start done!
+[10/16 03:06:51.558962][warning][13485520][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=12276, expected=2304000 @OB_SENSOR_IR_RIGHT
+using metallib
+use_poly: 1
+[worker] preview progress callback: 0.760
+[worker] preview progress callback: 0.766
+[worker] preview progress callback: 0.820
+[worker] preview progress callback: 0.850
+[worker] preview progress callback: 0.880
+[worker] preview progress callback: 0.940
+[worker] preview progress callback: 1.000
+[worker] preview status callback: OB_SCAN_SUCCESS (0)
+[10/16 03:06:51.713700][warning][13485518][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=49104, expected=2304000 @OB_SENSOR_IR_LEFT
+[10/16 03:06:51.750159][warning][13485526][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[worker] data message: msg_id=325189889 data=0x7be31d0420
+[worker] data message: msg_id=325189888 data=0x7be2ef87e0
+[worker] data message: msg_id=325189890 data=0x7be2ef8480
+[worker] data message: msg_id=325189889 data=0x7be31d1c20
+[worker] data message: msg_id=325189888 data=0x7be2ef8780
+[worker] data message: msg_id=325189890 data=0x7be2ef86c0
+[worker] data message: msg_id=325189889 data=0x7be31d1c80
+[worker] data message: msg_id=325189888 data=0x7be2ef88a0
+[worker] data message: msg_id=325189890 data=0x7be2ef8900
+[worker] data message: msg_id=325189889 data=0x7be31d1ce0
+[worker] data message: msg_id=325189888 data=0x7be2ef8960
+[worker] data message: msg_id=325189890 data=0x7be2ef89c0
+[worker] data message: msg_id=325189889 data=0x7be31d1d40
+[worker] data message: msg_id=325189888 data=0x7be2ef8a20
+[worker] data message: msg_id=325189890 data=0x7be2ef8a80
+[worker] data message: msg_id=325189889 data=0x7be31d1da0
+[worker] data message: msg_id=325189888 data=0x7be2ef8ae0
+[worker] data message: msg_id=325189890 data=0x7be2ef8b40
+[worker] data message: msg_id=325189889 data=0x7be31d1e00
+[worker] data message: msg_id=325189888 data=0x7be2ef8ba0
+[worker] data message: msg_id=325189890 data=0x7be2ef8c00
+[worker] data message: msg_id=325189889 data=0x7be31d1e60
+[worker] data message: msg_id=325189888 data=0x7be2ef8c60
+[worker] data message: msg_id=325189890 data=0x7be2ef8cc0
+[worker] data message: msg_id=325189889 data=0x7be31d1ec0
+[worker] data message: msg_id=325189888 data=0x7be2ef8d20
+[worker] data message: msg_id=325189890 data=0x7be2ef8d80
+[worker] data message: msg_id=325189889 data=0x7be31d1f20
+[worker] data message: msg_id=325189888 data=0x7be2ef8e40
+[worker] data message: msg_id=325189890 data=0x7be2ef8ea0
+[10/16 03:06:52.094345][error][13485541][GVCPClient.cpp:355] sendto failed with error:49 [**2 logs in 3916ms**]
+[worker] frame_ready_count=10
+[worker] obscan_scan_start                             -> OB_SCAN_SUCCESS (0)
+[worker] exposure_sweep: set combined_exposure_and_laser_current=100 -> OB_SCAN_SUCCESS
+中心亮度: 243.629
+Circle Points Dark
+adjust_expo 0
+input_expo 2400
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.15
+============ 输出参数 =============
+exposure_time: 2025
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 240000
+laser3_current: 240000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 208.288
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 2020
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1932
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 240000
+laser3_current: 240000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=100 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 199.864
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1930
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1842
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 240000
+laser3_current: 240000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/16 03:06:53.097203][info][13485362][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**2 logs in 3911ms**]
+[worker] exposure_sweep: value=100 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 192.455
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1840
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1752
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 240000
+laser3_current: 240000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=100 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 183.152
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1750
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1662
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 240000
+laser3_current: 240000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=100 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 175.803
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 240000
+laser3_current: 240000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=100 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 03:06:54.735129][warning][13485531][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=49104, expected=2304000 @OB_SENSOR_IR_RIGHT [**2 logs in 3176ms, last: 03:06:52.252609**]
+中心亮度: 174.076
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 240000
+laser3_current: 240000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.758
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 240000
+laser3_current: 240000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=100 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: set combined_exposure_and_laser_current=200 -> OB_SCAN_SUCCESS
+[10/16 03:06:55.264143][warning][13485551][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2119860, expected=2304000 @OB_SENSOR_IR_LEFT [**1 logs in 3550ms, last: 03:06:52.263369**]
+中心亮度: 178.312
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 380000
+laser3_current: 380000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=200 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 178.797
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 380000
+laser3_current: 380000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=200 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 178.453
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 380000
+laser3_current: 380000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=200 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 178.062
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 380000
+laser3_current: 380000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=200 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 179.219
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 380000
+laser3_current: 380000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.047
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 380000
+laser3_current: 380000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=200 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 03:06:58.095194][info][13485546][GVCPClient.cpp:421] 0, 3, 248, 1 [**9 logs in 6906ms, last: 03:06:56.100881**]
+[10/16 03:06:58.095194][info][13485547][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**9 logs in 6906ms, last: 03:06:56.100883**]
+中心亮度: 178.328
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1660
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 380000
+laser3_current: 380000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/16 03:06:58.110538][error][13485586][GVCPClient.cpp:355] sendto failed with error:49 [**3 logs in 6016ms**]
+[worker] exposure_sweep: value=200 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: set combined_exposure_and_laser_current=300 -> OB_SCAN_SUCCESS
+中心亮度: 181.578
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1660
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1572
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 520000
+laser3_current: 520000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=300 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 172.188
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 520000
+laser3_current: 520000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/16 03:06:59.113906][info][13485362][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**3 logs in 6016ms**]
+[worker] exposure_sweep: value=300 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 171.688
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 520000
+laser3_current: 520000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=300 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 171.234
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 520000
+laser3_current: 520000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 171.047
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 520000
+laser3_current: 520000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=300 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 173.484
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 520000
+laser3_current: 520000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=300 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 174.016
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 520000
+laser3_current: 520000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=300 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: set combined_exposure_and_laser_current=400 -> OB_SCAN_SUCCESS
+中心亮度: 172.422
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 660000
+laser3_current: 660000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=400 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 173.328
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 660000
+laser3_current: 660000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=400 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 175.266
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 660000
+laser3_current: 660000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.719
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 660000
+laser3_current: 660000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=400 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 172.766
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 660000
+laser3_current: 660000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=400 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 175.818
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 660000
+laser3_current: 660000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=400 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 173.219
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 660000
+laser3_current: 660000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=400 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: set combined_exposure_and_laser_current=500 -> OB_SCAN_SUCCESS
+中心亮度: 177.953
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 800000
+laser3_current: 800000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=500 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 173.903
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 800000
+laser3_current: 800000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.141
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 800000
+laser3_current: 800000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=500 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 177.667
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 800000
+laser3_current: 800000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=500 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 177.924
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 800000
+laser3_current: 800000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=500 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 174.939
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 800000
+laser3_current: 800000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=500 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 174.578
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 800000
+laser3_current: 800000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=500 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 03:07:07.326729][warning][13485520][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=8388, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/16 03:07:07.332835][warning][13485518][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=8388, expected=2304000 @OB_SENSOR_IR_LEFT
+中心亮度: 178.167
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 800000
+laser3_current: 800000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: set combined_exposure_and_laser_current=600 -> OB_SCAN_SUCCESS
+中心亮度: 175.281
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 940000
+laser3_current: 940000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=600 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 179.273
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 940000
+laser3_current: 940000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=600 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 179.636
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 940000
+laser3_current: 940000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=600 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 179.348
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 940000
+laser3_current: 940000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=600 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 175.333
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 940000
+laser3_current: 940000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=600 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 179.212
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 940000
+laser3_current: 940000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/16 03:07:10.110871][info][13485589][GVCPClient.cpp:421] 0, 3, 248, 1 [**18 logs in 12015ms, last: 03:07:08.139110**]
+[10/16 03:07:10.114291][info][13485592][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**18 logs in 12019ms, last: 03:07:08.139111**]
+[10/16 03:07:10.145304][error][13485697][GVCPClient.cpp:355] sendto failed with error:49 [**6 logs in 12034ms**]
+中心亮度: 175.288
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1570
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 940000
+laser3_current: 940000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/16 03:07:10.365879][warning][13485670][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2058480, expected=2304000 @OB_SENSOR_IR_RIGHT [**2 logs in 3039ms, last: 03:07:07.400046**]
+[10/16 03:07:10.372731][warning][13485671][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2058480, expected=2304000 @OB_SENSOR_IR_LEFT [**2 logs in 3039ms, last: 03:07:07.373180**]
+[worker] exposure_sweep: value=600 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: set combined_exposure_and_laser_current=700 -> OB_SCAN_SUCCESS
+中心亮度: 180.636
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1570
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1482
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1080000
+laser3_current: 1080000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=700 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[10/16 03:07:11.150780][info][13485362][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**6 logs in 12036ms**]
+中心亮度: 171.879
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1080000
+laser3_current: 1080000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=700 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 168.379
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1080000
+laser3_current: 1080000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=700 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 168.53
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1080000
+laser3_current: 1080000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.818
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1080000
+laser3_current: 1080000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=700 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 171.955
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1080000
+laser3_current: 1080000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=700 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 171.742
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1080000
+laser3_current: 1080000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=700 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: set combined_exposure_and_laser_current=800 -> OB_SCAN_SUCCESS
+中心亮度: 170.062
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1220000
+laser3_current: 1220000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=800 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 173.03
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1220000
+laser3_current: 1220000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=800 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 173.515
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1220000
+laser3_current: 1220000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.484
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1220000
+laser3_current: 1220000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=800 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 169.344
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1220000
+laser3_current: 1220000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=800 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 170.516
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1220000
+laser3_current: 1220000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=800 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 172.864
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1220000
+laser3_current: 1220000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=800 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: set combined_exposure_and_laser_current=900 -> OB_SCAN_SUCCESS
+中心亮度: 170.766
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=900 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 170.922
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.591
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=900 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 175.318
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=900 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 171.219
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=900 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 174.197
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=900 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 171.081
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=900 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: set combined_exposure_and_laser_current=1000 -> OB_SCAN_SUCCESS
+中心亮度: 171.547
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1400000
+laser3_current: 1400000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.894
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1400000
+laser3_current: 1400000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=1000 poll=1/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 171.919
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1400000
+laser3_current: 1400000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=1000 poll=2/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 169.258
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1400000
+laser3_current: 1400000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=1000 poll=3/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 176.152
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1400000
+laser3_current: 1400000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=1000 poll=4/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 174.547
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1400000
+laser3_current: 1400000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=1000 poll=5/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+中心亮度: 175.406
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1400000
+laser3_current: 1400000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.016
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1480
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1400000
+laser3_current: 1400000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] exposure_sweep: value=1000 poll=6/6 obscan_scan_get_raw_cloud -> OB_SCAN_SUCCESS, num_points=0
+[worker] exposure_sweep: best combined_exposure_and_laser_current=-1 (0 points seen)
+[worker] obscan_scan_pause                             -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_get_realtime_model_mesh -> OB_SCAN_SUCCESS (0), num_vertices=42224, num_triangles=34844
+[worker] preview progress callback: 0.010
+[worker] preview progress callback: 0.050
+[worker] preview progress callback: 0.100
+[10/16 03:07:27.695977][info][13485348][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/16 03:07:27.696341][info][13485348][Pipeline.cpp:344] Try to stop pipeline!
+[10/16 03:07:27.696356][info][13485348][Pipeline.cpp:316] Try to stop streams!
+[10/16 03:07:27.722628][info][13485348][RPCClientPort.cpp:255] stop OB_STREAM_IR_RIGHT stream call
+[10/16 03:07:27.724262][info][13485348][RPCClientPort.cpp:265] stop OB_STREAM_IR_RIGHT stream done
+[10/16 03:07:27.724961][info][13485348][VideoSensor.cpp:734] Video sensor stopped, @OB_SENSOR_IR_RIGHT
+[10/16 03:07:27.724970][info][13485348][Pipeline.cpp:329] Sensor stream stopped, sensorType=OB_SENSOR_IR_RIGHT
+[10/16 03:07:27.749435][info][13485348][RPCClientPort.cpp:255] stop OB_STREAM_IR_LEFT stream call
+[10/16 03:07:27.754380][info][13485348][RPCClientPort.cpp:265] stop OB_STREAM_IR_LEFT stream done
+[10/16 03:07:27.758761][info][13485348][VideoSensor.cpp:734] Video sensor stopped, @OB_SENSOR_IR_LEFT
+[10/16 03:07:27.758770][info][13485348][Pipeline.cpp:329] Sensor stream stopped, sensorType=OB_SENSOR_IR_LEFT
+[10/16 03:07:27.758777][info][13485348][Pipeline.cpp:335] Stop streams done!
+[10/16 03:07:27.758794][info][13485348][Pipeline.cpp:373] Stop pipeline done!
+[10/16 03:07:27.758812][info][13485348][Pipeline.cpp:69] Pipeline destroyed! @0x7BE31DC498
+[worker] preview progress callback: 0.200
+[worker] preview progress callback: 0.210
+[worker] preview progress callback: 0.250
+rotate pose for model.ply
+-0.000000044, -1.000000000, 0.000000000, 0.000000000
+1.000000000, -0.000000044, 0.000000000, 0.000000000
+0.000000000, 0.000000000, 1.000000000, 0.000000000
+0.000000000, 0.000000000, 0.000000000, 1.000000000
+
+[worker] preview progress callback: 0.350
+[worker] preview progress callback: 0.433
+[worker] preview progress callback: 0.465
+[worker] preview progress callback: 0.518
+[worker] preview progress callback: 0.545
+[worker] preview progress callback: 0.572
+[worker] preview progress callback: 0.572
+[worker] preview progress callback: 0.572
+[worker] preview progress callback: 0.577
+[worker] preview progress callback: 0.583
+[worker] preview progress callback: 0.589
+[worker] preview progress callback: 0.595
+[worker] preview progress callback: 0.601
+[worker] preview progress callback: 0.606
+[worker] preview progress callback: 0.612
+[worker] preview progress callback: 0.618
+[worker] preview progress callback: 0.624
+[worker] preview progress callback: 0.629
+[worker] preview progress callback: 0.635
+[worker] preview progress callback: 0.641
+[worker] preview progress callback: 0.647
+[worker] preview progress callback: 0.653
+[worker] preview progress callback: 0.658
+[worker] preview progress callback: 0.664
+[worker] preview progress callback: 0.670
+[worker] preview progress callback: 0.676
+[worker] preview progress callback: 0.682
+[worker] preview progress callback: 0.687
+[worker] preview progress callback: 0.693
+[worker] preview progress callback: 0.699
+[worker] preview progress callback: 0.705
+[worker] preview progress callback: 0.710
+[worker] preview progress callback: 0.716
+[worker] preview progress callback: 0.722
+[worker] preview progress callback: 0.728
+[worker] preview progress callback: 0.734
+[worker] preview progress callback: 0.739
+[worker] preview progress callback: 0.745
+[worker] preview progress callback: 0.751
+[worker] preview progress callback: 0.757
+[worker] preview progress callback: 0.763
+[worker] preview progress callback: 0.768
+[worker] preview progress callback: 0.774
+[worker] preview progress callback: 0.780
+[worker] preview progress callback: 0.786
+[worker] preview progress callback: 0.791
+[worker] preview progress callback: 0.797
+[worker] preview progress callback: 0.803
+[worker] preview progress callback: 0.809
+[worker] preview progress callback: 0.815
+[worker] preview progress callback: 0.820
+[worker] preview progress callback: 0.826
+[worker] preview progress callback: 0.832
+[worker] preview progress callback: 0.838
+[worker] preview progress callback: 0.844
+[worker] preview progress callback: 0.849
+[worker] preview progress callback: 0.855
+[worker] preview progress callback: 0.861
+[worker] preview progress callback: 0.867
+[worker] preview progress callback: 0.872
+[worker] preview progress callback: 0.878
+[worker] preview progress callback: 0.884
+[worker] preview progress callback: 0.890
+[worker] preview progress callback: 0.896
+[worker] preview progress callback: 0.901
+[worker] preview progress callback: 0.907
+[worker] preview progress callback: 0.913
+[worker] preview progress callback: 0.919
+[worker] preview progress callback: 0.925
+[worker] preview progress callback: 0.930
+[worker] preview progress callback: 0.936
+[worker] preview progress callback: 0.942
+[worker] preview progress callback: 0.946
+[worker] preview progress callback: 0.946
+[worker] preview progress callback: 0.946
+[worker] preview progress callback: 0.946
+[worker] preview progress callback: 0.973
+[worker] preview progress callback: 1.000
+[worker] preview progress callback: 1.000
+[worker] preview status callback: OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_stop                              -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_destroy took 56ms
+[worker] obscan_session_destroy                        -> OB_SCAN_SUCCESS (0)
+[10/16 03:07:28.111937][info][13485348][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/16 03:07:28.111982][info][13485348][RPCClientPort.cpp:241] No stream need to stop
+[10/16 03:07:28.112004][info][13485348][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro RGB Camera
+[10/16 03:07:28.112093][info][13485348][VideoSensor.cpp:281] VideoSensor destroyed, @OB_SENSOR_COLOR
+[10/16 03:07:28.112111][info][13485348][VideoSensor.cpp:281] VideoSensor destroyed, @OB_SENSOR_DEPTH
+[10/16 03:07:28.112123][info][13485348][AccelSensor.cpp:30] AccelSensor destroyed!
+[10/16 03:07:28.112136][info][13485348][GyroSensor.cpp:31] GyroSensor destroyed!
+[10/16 03:07:28.112146][info][13485348][RPCClientPort.cpp:241] No stream need to stop
+[10/16 03:07:28.112153][info][13485348][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IR Camera
+[10/16 03:07:28.112190][info][13485348][VideoSensor.cpp:281] VideoSensor destroyed, @OB_SENSOR_IR_LEFT
+[10/16 03:07:28.112206][info][13485348][VideoSensor.cpp:281] VideoSensor destroyed, @OB_SENSOR_IR_RIGHT
+[10/16 03:07:28.112216][info][13485348][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/16 03:07:28.112223][info][13485348][RPCClientPort.cpp:241] No stream need to stop
+[10/16 03:07:28.112229][info][13485348][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/16 03:07:28.113188][info][13485348][RPCClientPort.cpp:241] No stream need to stop
+[10/16 03:07:28.113206][info][13485348][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/16 03:07:28.113809][info][13485348][Context.cpp:89] Context destroyed
+[10/16 03:07:28.113899][info][13485748][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**8 logs in 16963ms, last: 03:07:27.190811**]
+[10/16 03:07:28.113929][error][13485743][GVCPClient.cpp:355] sendto failed with error:49 [**8 logs in 17968ms, last: 03:07:26.189200**]
+[10/16 03:07:28.113960][info][13485701][GVCPClient.cpp:421] 0, 3, 248, 1 [**27 logs in 18003ms, last: 03:07:26.189404**]
+[10/16 03:07:28.113991][info][13485702][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**27 logs in 17999ms, last: 03:07:26.189406**]
+[mvk-info] MoltenVK version 1.4.1, supporting Vulkan version 1.4.334.
+	The following 153 Vulkan extensions are supported:
+	VK_KHR_16bit_storage v1
+	VK_KHR_8bit_storage v1
+	VK_KHR_bind_memory2 v1
+	VK_KHR_buffer_device_address v1
+	VK_KHR_calibrated_timestamps v1
+	VK_KHR_copy_commands2 v1
+	VK_KHR_create_renderpass2 v1
+	VK_KHR_dedicated_allocation v3
+	VK_KHR_deferred_host_operations v4
+	VK_KHR_depth_stencil_resolve v1
+	VK_KHR_descriptor_update_template v1
+	VK_KHR_device_group v4
+	VK_KHR_device_group_creation v1
+	VK_KHR_driver_properties v1
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_dynamic_rendering_local_read v1
+	VK_KHR_external_fence v1
+	VK_KHR_external_fence_capabilities v1
+	VK_KHR_external_memory v1
+	VK_KHR_external_memory_capabilities v1
+	VK_KHR_external_semaphore v1
+	VK_KHR_external_semaphore_capabilities v1
+	VK_KHR_format_feature_flags2 v2
+	VK_KHR_fragment_shader_barycentric v1
+	VK_KHR_get_memory_requirements2 v1
+	VK_KHR_get_physical_device_properties2 v2
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_global_priority v1
+	VK_KHR_image_format_list v1
+	VK_KHR_imageless_framebuffer v1
+	VK_KHR_incremental_present v2
+	VK_KHR_index_type_uint8 v1
+	VK_KHR_line_rasterization v1
+	VK_KHR_load_store_op_none v1
+	VK_KHR_maintenance1 v2
+	VK_KHR_maintenance2 v1
+	VK_KHR_maintenance3 v1
+	VK_KHR_maintenance4 v2
+	VK_KHR_maintenance5 v1
+	VK_KHR_maintenance6 v1
+	VK_KHR_maintenance7 v1
+	VK_KHR_maintenance8 v1
+	VK_KHR_maintenance9 v1
+	VK_KHR_map_memory2 v1
+	VK_KHR_multiview v1
+	VK_KHR_portability_subset v1
+	VK_KHR_present_id v1
+	VK_KHR_present_id2 v1
+	VK_KHR_present_wait v1
+	VK_KHR_present_wait2 v1
+	VK_KHR_push_descriptor v2
+	VK_KHR_relaxed_block_layout v1
+	VK_KHR_robustness2 v1
+	VK_KHR_sampler_mirror_clamp_to_edge v3
+	VK_KHR_sampler_ycbcr_conversion v14
+	VK_KHR_separate_depth_stencil_layouts v1
+	VK_KHR_shader_draw_parameters v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_float_controls v4
+	VK_KHR_shader_float_controls2 v1
+	VK_KHR_shader_float16_int8 v1
+	VK_KHR_shader_fma v1
+	VK_KHR_shader_integer_dot_product v1
+	VK_KHR_shader_maximal_reconvergence v1
+	VK_KHR_shader_non_semantic_info v1
+	VK_KHR_shader_quad_control v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_extended_types v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_shader_subgroup_uniform_control_flow v1
+	VK_KHR_shader_terminate_invocation v1
+	VK_KHR_spirv_1_4 v1
+	VK_KHR_storage_buffer_storage_class v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_KHR_surface_protected_capabilities v1
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_swapchain_mutable_format v1
+	VK_KHR_synchronization2 v1
+	VK_KHR_timeline_semaphore v2
+	VK_KHR_uniform_buffer_standard_layout v1
+	VK_KHR_variable_pointers v1
+	VK_KHR_vertex_attribute_divisor v1
+	VK_KHR_vulkan_memory_model v3
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_4444_formats v1
+	VK_EXT_buffer_device_address v2
+	VK_EXT_calibrated_timestamps v2
+	VK_EXT_debug_marker v4
+	VK_EXT_debug_report v10
+	VK_EXT_debug_utils v2
+	VK_EXT_depth_clip_control v1
+	VK_EXT_descriptor_indexing v2
+	VK_EXT_extended_dynamic_state v1
+	VK_EXT_extended_dynamic_state2 v1
+	VK_EXT_extended_dynamic_state3 v2
+	VK_EXT_external_memory_host v1
+	VK_EXT_external_memory_metal v1
+	VK_EXT_fragment_shader_interlock v1
+	VK_EXT_global_priority v2
+	VK_EXT_global_priority_query v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_headless_surface v1
+	VK_EXT_host_image_copy v1
+	VK_EXT_host_query_reset v1
+	VK_EXT_image_2d_view_of_3d v1
+	VK_EXT_image_robustness v1
+	VK_EXT_index_type_uint8 v1
+	VK_EXT_inline_uniform_block v1
+	VK_EXT_layer_settings v2
+	VK_EXT_legacy_dithering v2
+	VK_EXT_line_rasterization v1
+	VK_EXT_load_store_op_none v1
+	VK_EXT_memory_budget v1
+	VK_EXT_metal_objects v2
+	VK_EXT_metal_surface v1
+	VK_EXT_non_seamless_cube_map v1
+	VK_EXT_pipeline_creation_cache_control v3
+	VK_EXT_pipeline_creation_feedback v1
+	VK_EXT_pipeline_robustness v1
+	VK_EXT_post_depth_coverage v1
+	VK_EXT_primitive_topology_list_restart v1
+	VK_EXT_private_data v1
+	VK_EXT_provoking_vertex v1
+	VK_EXT_robustness2 v1
+	VK_EXT_sample_locations v1
+	VK_EXT_scalar_block_layout v1
+	VK_EXT_separate_stencil_usage v1
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_shader_demote_to_helper_invocation v1
+	VK_EXT_shader_stencil_export v1
+	VK_EXT_shader_subgroup_ballot v1
+	VK_EXT_shader_subgroup_vote v1
+	VK_EXT_shader_viewport_index_layer v1
+	VK_EXT_subgroup_size_control v2
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+	VK_EXT_swapchain_maintenance1 v1
+	VK_EXT_texel_buffer_alignment v1
+	VK_EXT_texture_compression_astc_hdr v1
+	VK_EXT_tooling_info v1
+	VK_EXT_vertex_attribute_divisor v3
+	VK_AMD_gpu_shader_half_float v2
+	VK_AMD_negative_viewport_height v1
+	VK_AMD_shader_image_load_store_lod v1
+	VK_AMD_shader_trinary_minmax v1
+	VK_GOOGLE_display_timing v1
+	VK_IMG_format_pvrtc v1
+	VK_INTEL_shader_integer_functions2 v1
+	VK_MVK_macos_surface v3
+	VK_MVK_moltenvk v37
+	VK_NV_fragment_shader_barycentric v1
+[mvk-info] GPU device:
+	model: Apple M1
+	type: Integrated
+	vendorID: 0x106b
+	deviceID: 0x1b000207
+	pipelineCacheUUID: DB445FF2-1B00-0207-0000-000100000000
+	GPU memory available: 12124 MB
+	GPU memory used: 1 MB
+	Metal Shading Language 3.2
+	supports the following GPU Features:
+		GPU Family Metal 3
+		GPU Family Apple 7
+		GPU Family Mac 2
+		Read-Write Texture Tier 2
+[mvk-info] Created VkInstance for Vulkan version 1.4.334, as requested by app, with the following 4 Vulkan extensions enabled:
+	VK_KHR_external_memory_capabilities v1
+	VK_KHR_get_physical_device_properties2 v2
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_surface v25
+[0 Apple M1]  queueC=0[1]  queueT=0[1]
+[0 Apple M1]  fp16-p/s/u/a=1/1/1/1  int8-p/s/u/a=1/1/1/1
+[0 Apple M1]  subgroup=32(4~32)  ops=1/1/1/1/1/1/1/1/1/1
+[0 Apple M1]  fp16-cm=0  int8-cm=0  bf16-cm=0  fp8-cm=0
+[mvk-info] Vulkan semaphores using MTLEvent.
+[mvk-info] Descriptor sets binding resources using Metal3 argument buffers.
+[mvk-info] Created VkDevice to run on GPU Apple M1 with the following 33 Vulkan extensions enabled:
+	VK_KHR_16bit_storage v1
+	VK_KHR_8bit_storage v1
+	VK_KHR_bind_memory2 v1
+	VK_KHR_buffer_device_address v1
+	VK_KHR_create_renderpass2 v1
+	VK_KHR_dedicated_allocation v3
+	VK_KHR_descriptor_update_template v1
+	VK_KHR_driver_properties v1
+	VK_KHR_external_memory v1
+	VK_KHR_get_memory_requirements2 v1
+	VK_KHR_maintenance1 v2
+	VK_KHR_maintenance2 v1
+	VK_KHR_maintenance3 v1
+	VK_KHR_multiview v1
+	VK_KHR_portability_subset v1
+	VK_KHR_push_descriptor v2
+	VK_KHR_robustness2 v1
+	VK_KHR_sampler_ycbcr_conversion v14
+	VK_KHR_shader_float_controls v4
+	VK_KHR_shader_float_controls2 v1
+	VK_KHR_shader_float16_int8 v1
+	VK_KHR_shader_integer_dot_product v1
+	VK_KHR_shader_non_semantic_info v1
+	VK_KHR_shader_subgroup_extended_types v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_storage_buffer_storage_class v1
+	VK_KHR_swapchain v70
+	VK_KHR_vulkan_memory_model v3
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_descriptor_indexing v2
+	VK_EXT_memory_budget v1
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_subgroup_size_control v2
+[launcher] DYLD_INSERT_LIBRARIES=/Applications/CrealityScan.app/Contents/PlugIns/libMoltenVK.dylib:/Users/brucemackay/DevReposiMac/Open3DScanner/build/engine/libvulkan_disable_interpose.dylib
+[launcher] Running live capture session in a worker process...
+[launcher] Worker crashed or timed out inside the vendor SDK (child timed out after 180s and was force-killed). Launcher is unaffected.
