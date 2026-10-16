@@ -240,29 +240,107 @@ i.e. "is this frame's registration good enough to trust" — RMS distance below 
 actual accept/reject check sitting downstream of `b91078bd`'s scoring (not yet traced to
 its call site — would need the caller of `e0a345aa` itself, not yet located).
 
-### `compute_cloud_overlap_fast` — a *separate*, grid-based algorithm, not a wrapper
+### `compute_cloud_overlap_fast` — same outputs, rasterize-and-z-buffer instead of raw KD-tree
 
 Initially assumed (wrongly) to just be a thin dispatcher into `b91078bd` given the
-shared context type. It is not: its prologue operates on completely different context
-fields (`ctx+0x128`, a count; `ctx+0xd0`, two packed `int32`s multiplied together —
-`smull x22, w9, w8` — i.e. a **grid width × height**; `ctx+0xf8`/`ctx+0x110`, two more
-buffer pointers) and its main loop is manually unrolled ×8 for SIMD, the signature of a
-dense per-cell loop over a 2D grid rather than a sparse KD-tree point search. This reads
-as a second, independent overlap estimator working over a rasterized grid/height-map
-representation instead of raw 3D points — plausibly a cheaper, real-time-friendly
-approximation used for live UI feedback (a coverage percentage/heatmap), while
-`b91078bd`'s point-based KD-tree version is the more precise one used to gate whether a
-frame's registration is trustworthy enough to fuse at all. Not decoded further — this is
-a genuinely separate ~3KB function and a distinct follow-up task from the point-based
-algorithm above.
+shared context type. It is not a wrapper, but it **converges on exactly the same three
+output fields** (`ctx.rms_distance`, `ctx.overlap_ratio`, `ctx.inlier_count` at
+`+0x98`/`+0xa0`/`+0xa8`) via a different, cheaper strategy — fully decoded end to end:
+
+```c
+void compute_cloud_overlap_fast(PointCloudRegistrationQualityContext& ctx,
+                                 const SpeckleTotalParams& params) {
+    if (!ctx.cache || ctx.ref_cloud_count == 0 || ctx.new_cloud_count == 0) {
+        ctx.rms_distance = SENTINEL;
+        return;
+    }
+    // ctx caches a reusable grid buffer pair across calls (lazily allocated once,
+    // at ctx+0x128/+0x130: an owning OBPointCloud-ish container plus an index/depth
+    // buffer pair at ctx+0xf8 (int32 point-index per cell) / ctx+0x110 (float depth
+    // per cell), sized by ctx.grid_width * ctx.grid_height (ctx+0xd0/+0xd4, two
+    // packed int32s) — reset to "empty" (-1 index, +inf depth) each call.
+
+    // 1. Invert the stored reference orientation quaternion (ctx+0x60..+0x90,
+    //    [x,y,z,w]) into a 3x3 rotation matrix — standard quaternion-to-matrix
+    //    conversion, not scan-specific.
+    Matrix3x3 R_inv = quat_to_matrix(invert(ctx.reference_orientation));
+
+    // 2. Rasterize the FIRST cloud (ctx's "ref"-indexed buffer_view, ctx+0x8 count)
+    //    into that grid using a pinhole-camera-style projection — ctx+0xe8/+0xec are
+    //    focal-length-like scale factors (fx, fy), ctx+0xf0/+0xf4 are principal-point-
+    //    like offsets (cx, cy):
+    for (point in ref_cloud) {
+        Vector3 local = R_inv * point;         // rows 1 & 2 used for u,v; row "2" reused as depth
+        float u = cx + fx * (local.row1 - offset_u) / depth;
+        float v = cy + fy * (local.row2 - offset_v) / depth;
+        int col = (int)u, row = (int)v;
+        if (col < 0 || row < 0 || col >= grid_width || row >= grid_height) continue;
+        int cell = row * grid_width + col;
+        // Z-buffer: keep only the closest-depth point per cell.
+        if (fabs(depth) < fabs(grid_depth[cell])) {
+            grid_index[cell] = point_index;
+            grid_depth[cell] = depth;
+        }
+    }
+
+    // 3. Collect the surviving (closest-per-cell) points into a compact point cloud,
+    //    and separately push each into a CGAL Delaunay triangulation structure
+    //    (std::vector<pair<CGAL::Delaunay_triangulation_cell_base_3<...>, size_t>>)
+    //    — not consumed anywhere in this function, so plausibly built here for a
+    //    caller that wants an actual continuous surface (hole detection? the
+    //    "Quality Map" UI mesh itself?) rather than just the scalar score below.
+    //    Not traced further — would need this function's own callers.
+    OBPointCloud rasterized;
+    for (cell in grid) if (grid_index[cell] != -1) {
+        rasterized.push_back(cloud[grid_index[cell]]);
+        delaunay_cells.push_back(/* same point, as a CGAL cell/info pair */);
+    }
+
+    // 4. Build a KD-tree over the rasterized (not raw) points — far fewer nodes than
+    //    the full reference cloud, which is the actual "fast" in the name.
+    OBKdtreeSearch tree; tree.build(rasterized);
+
+    // 5. Mirror b91078bd's scoring exactly, but querying the SECOND cloud
+    //    (ctx+0x20-indexed) against this rasterized/reduced tree instead of a
+    //    KD-tree over raw reference points:
+    std::vector<float> matched_distances;
+    int inlier_count = 0;
+    for (point in new_cloud) {
+        Vector3 transformed = R * point + reference_translation;  // forward transform this time
+        float sq_dist; if (!tree.find_knn(transformed, 1, &sq_dist)) continue;
+        if (sq_dist < loose_threshold_sq) matched_distances.push_back(sq_dist);
+        if (sq_dist < tight_threshold_sq) inlier_count++;
+    }
+    size_t k = matched_distances.size() * percentile_fraction;  // same robust-percentile pattern
+    std::nth_element(matched_distances.begin(), matched_distances.begin()+k, matched_distances.end());
+    ctx.rms_distance  = sqrt(average(matched_distances.begin(), matched_distances.begin()+k));
+    ctx.overlap_ratio = (double)inlier_count / (double)ctx.new_cloud_count;  // NOT min() this time
+    ctx.inlier_count  = inlier_count;
+}
+```
+
+The real engineering tradeoff, now concrete rather than guessed: `b91078bd` KD-trees the
+**raw** reference cloud (every point); `compute_cloud_overlap_fast` first **rasterizes**
+one cloud down to at most `grid_width × grid_height` representative points (one per
+grid cell, keeping only the nearest-to-camera point per cell, like a depth-buffer) and
+KD-trees *that* instead — far fewer nodes to search, at the cost of losing points that
+lose the per-cell z-buffer competition. Both converge on the same three-field output
+shape and the same robust-percentile RMS trick, which makes sense if they're meant to be
+interchangeable scoring backends behind the same `PointCloudRegistrationQualityContext`
+interface (`compute_cloud_overlap_fastKDtree` is presumably a third variant, not yet
+examined, that takes an externally-supplied `slam::LKDtree*` instead of building its own
+from either cloud).
+
+The projection parameters recovered here (`ctx+0xe8/0xec` = fx/fy-style scale,
+`ctx+0xf0/0xf4` = cx/cy-style offset, `ctx+0xd0/0xd4` = grid width/height as packed
+int32s, `ctx+0x60..0x90` = a reference orientation quaternion) are a genuine, reusable
+piece of `PointCloudRegistrationQualityContext`'s layout, on top of the
+`+0x98`/`+0xa0`/`+0xa8` output fields already known from §4's point-based function.
 
 Also found but not traced: the literal string `"Maximum effective coverage area:
-%.2f%%"` — a percentage coverage metric gets computed and logged somewhere in this
-library, plausibly downstream of `compute_cloud_overlap_fast`'s grid-based result given
-both are naturally area/grid-shaped; the producing function hasn't been located (would
-need the string's cross-refs, which neither `nm`/`strings` nor the broken-for-this-binary
-Ghidra path can give directly — a manual scan of call sites near the grid-based function
-above is the next step).
+%.2f%%"` — plausibly downstream of this function's rasterized grid (an area/grid-shaped
+metric fits naturally here), but the producing function hasn't been located; and the
+CGAL Delaunay triangulation structure's consumer (§5 point 2 depends on knowing this).
 
 ## 5. What this means for OpenScanner's own pipeline
 
@@ -292,7 +370,7 @@ replaceable:
 
 Not yet done: tracing the actual per-point weight computation (§3's open question),
 confirming the "Points" HUD counter = bundle-adjustment valid-pose-count hypothesis
-(§2) against the Unity/IL2CPP side, decoding `compute_cloud_overlap_fast`'s grid-based
-algorithm (§4, a separate ~3KB function from the now-fully-decoded point-based one),
-and locating `e0a345aa`'s call site to confirm it's really the accept/reject gate
-downstream of `b91078bd`'s scoring.
+(§2) against the Unity/IL2CPP side, locating `e0a345aa`'s call site to confirm it's
+really the accept/reject gate downstream of the scoring functions, finding the consumer
+of §4's CGAL Delaunay triangulation output, and decoding `compute_cloud_overlap_fastKDtree`
+(presumably a third variant taking an externally-built `slam::LKDtree*`).
