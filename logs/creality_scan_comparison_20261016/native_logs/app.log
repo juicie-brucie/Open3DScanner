@@ -1,0 +1,1662 @@
+[2026-10-16 02:47:38.575547] [Debug] Development version: 1.13.9
+[2026-10-16 02:47:38.575576] [Debug] Log file path: /Users/brucemackay/Library/CrealityScan/Logs/20261016024738/app.log
+[2026-10-16 02:47:38.579004] [Debug] Previous application exit with code 0
+[2026-10-16 02:47:38.579328] [Debug] Successfully initialized: LogInitializer
+[2026-10-16 02:47:38.579525] [Debug] System information saved to: /Users/brucemackay/Library/CrealityScan/Logs/20261016024738/system_info.txt
+[2026-10-16 02:47:38.579535] [Debug] Successfully initialized: SystemInfoInitializer
+[2026-10-16 02:47:38.606095] [Debug] Successfully initialized: BacktraceInitializer
+[2026-10-16 02:47:38.608182] [Debug] Loaded en-US localization with 1357 entries.
+[2026-10-16 02:47:38.608731] [Debug] Successfully initialized: LocalizationInitializer
+[2026-10-16 02:47:38.609258] [Debug] Application is running as a single instance.
+[2026-10-16 02:47:38.609276] [Debug] [MonoSingleton] Auto-created: SingleInstanceChecker
+[2026-10-16 02:47:38.609295] [Debug] Successfully initialized: InstanceCheckInitializer
+[2026-10-16 02:47:38.609313] [Debug] Successfully initialized: ScreenResolutionInitializer
+[2026-10-16 02:47:38.611154] [Debug] [GaussianStreamingCameraGate] StreamingCamera Gaussian gated by NetworkServerHost.IsConnected
+[2026-10-16 02:47:38.613809] [Debug] OBScan log path: /Users/brucemackay/Library/CrealityScan/Logs/20261016024738
+[2026-10-16 02:47:38.613835] [Debug] Use WiFi network
+[2026-10-16 02:47:38.683770] [Warning] No device found
+[2026-10-16 02:47:38.684226] [Debug] [MonoSingleton] Auto-created: MainThreadDispatcher
+[2026-10-16 02:47:38.689762] [Debug] [MonoSingleton] Auto-created: OBScanManager
+[2026-10-16 02:47:38.689854] [Debug] [MonoSingleton] Auto-created: CoroutineRunner
+[2026-10-16 02:47:38.690076] [Debug] [MonoSingleton] Auto-created: UpdateRunner
+[2026-10-16 02:47:38.690359] [Debug] UpgradeService Enable
+[2026-10-16 02:47:38.690379] [Debug] [MonoSingleton] Auto-created: UpgradeService
+[2026-10-16 02:47:38.691109] [Debug] [MonoSingleton] Auto-created: DeviceManager
+[2026-10-16 02:47:38.691466] [Debug] [MonoSingleton] Auto-created: NetworkServerHost
+[2026-10-16 02:47:38.692067] [Debug] Preloading cursor icons...
+[2026-10-16 02:47:38.692762] [Debug] Creating readable copy: HandIcon
+[2026-10-16 02:47:38.693249] [Debug] Creating readable copy: BrushCursor
+[2026-10-16 02:47:38.693462] [Debug] Creating readable copy: 00
+[2026-10-16 02:47:38.693500] [Debug] Creating readable copy: 01
+[2026-10-16 02:47:38.693532] [Debug] Creating readable copy: 02
+[2026-10-16 02:47:38.693731] [Debug] Creating readable copy: 03
+[2026-10-16 02:47:38.693795] [Debug] Creating readable copy: 04
+[2026-10-16 02:47:38.693922] [Debug] Creating readable copy: 05
+[2026-10-16 02:47:38.693951] [Debug] Creating readable copy: 06
+[2026-10-16 02:47:38.693979] [Debug] Creating readable copy: 07
+[2026-10-16 02:47:38.694004] [Debug] Creating readable copy: 08
+[2026-10-16 02:47:38.694031] [Debug] Creating readable copy: 09
+[2026-10-16 02:47:38.694064] [Debug] Creating readable copy: 10
+[2026-10-16 02:47:38.694092] [Debug] Creating readable copy: 11
+[2026-10-16 02:47:38.694371] [Debug] Creating readable copy: 12
+[2026-10-16 02:47:38.694399] [Debug] Creating readable copy: 13
+[2026-10-16 02:47:38.694422] [Debug] Creating readable copy: 14
+[2026-10-16 02:47:38.694448] [Debug] Creating readable copy: 15
+[2026-10-16 02:47:38.694473] [Debug] Creating readable copy: 16
+[2026-10-16 02:47:38.694499] [Debug] Creating readable copy: 17
+[2026-10-16 02:47:38.694523] [Debug] Creating readable copy: 18
+[2026-10-16 02:47:38.694549] [Debug] Creating readable copy: 19
+[2026-10-16 02:47:38.694568] [Debug] Cursor icons preload completed. Cached 22 textures.
+[2026-10-16 02:47:38.694582] [Debug] [MonoSingleton] Auto-created: CursorManager
+[2026-10-16 02:47:38.694599] [Debug] Skipping already initialized initializer: CommandHandlerInitializer
+[2026-10-16 02:47:38.694609] [Debug] Skipping already initialized initializer: MigrationCheckInitializer
+[2026-10-16 02:47:38.694619] [Debug] Skipping already initialized initializer: LogInitializer
+[2026-10-16 02:47:38.694628] [Debug] Skipping already initialized initializer: SystemInfoInitializer
+[2026-10-16 02:47:38.694636] [Debug] Skipping already initialized initializer: BacktraceInitializer
+[2026-10-16 02:47:38.694645] [Debug] Skipping already initialized initializer: LocalizationInitializer
+[2026-10-16 02:47:38.694653] [Debug] Skipping already initialized initializer: InstanceCheckInitializer
+[2026-10-16 02:47:38.694662] [Debug] Skipping already initialized initializer: ScreenResolutionInitializer
+[2026-10-16 02:47:38.696108] [Debug] [Service] ActivityNoticeService starting...
+[2026-10-16 02:47:38.696125] [Debug] [Service] ActivityNoticeService started successfully.
+[2026-10-16 02:47:38.696135] [Debug] [ServiceMgr] Started ActivityNoticeService (Priority=0)
+[2026-10-16 02:47:38.696145] [Debug] [Service] LogUploadService starting...
+[2026-10-16 02:47:38.696161] [Debug] [Service] LogUploadService started successfully.
+[2026-10-16 02:47:38.696171] [Debug] [ServiceMgr] Started LogUploadService (Priority=0)
+[2026-10-16 02:47:38.696180] [Debug] [Service] SoftwareUpdateService starting...
+[2026-10-16 02:47:38.696188] [Debug] [Service] SoftwareUpdateService started successfully.
+[2026-10-16 02:47:38.696196] [Debug] [ServiceMgr] Started SoftwareUpdateService (Priority=0)
+[2026-10-16 02:47:38.696206] [Debug] [Service] FirmwareUpgradeService starting...
+[2026-10-16 02:47:38.696216] [Debug] [Service] FirmwareUpgradeService started successfully.
+[2026-10-16 02:47:38.696224] [Debug] [ServiceMgr] Started FirmwareUpgradeService (Priority=0)
+[2026-10-16 02:47:38.696233] [Debug] [Service] PerformanceCheckService starting...
+[2026-10-16 02:47:38.696242] [Debug] [Service] PerformanceCheckService started successfully.
+[2026-10-16 02:47:38.696250] [Debug] [ServiceMgr] Started PerformanceCheckService (Priority=0)
+[2026-10-16 02:47:38.696258] [Debug] [Service] GetStartService starting...
+[2026-10-16 02:47:38.696267] [Debug] [Service] GetStartService started successfully.
+[2026-10-16 02:47:38.696275] [Debug] [ServiceMgr] Started GetStartService (Priority=0)
+[2026-10-16 02:47:38.696282] [Debug] [Service] DeviceVerificationService starting...
+[2026-10-16 02:47:38.696328] [Debug] [Service] DeviceVerificationService started successfully.
+[2026-10-16 02:47:38.696337] [Debug] [ServiceMgr] Started DeviceVerificationService (Priority=0)
+[2026-10-16 02:47:38.696345] [Debug] [Service] DeviceConnectionService starting...
+[2026-10-16 02:47:38.696564] [Debug] [Service] DeviceConnectionService started successfully.
+[2026-10-16 02:47:38.696574] [Debug] [ServiceMgr] Started DeviceConnectionService (Priority=0)
+[2026-10-16 02:47:38.696582] [Debug] [Service] DeviceInfoUploadService starting...
+[2026-10-16 02:47:38.696635] [Debug] [Service] DeviceInfoUploadService started successfully.
+[2026-10-16 02:47:38.696644] [Debug] [ServiceMgr] Started DeviceInfoUploadService (Priority=0)
+[2026-10-16 02:47:38.696651] [Debug] [Service] FileUploadService starting...
+[2026-10-16 02:47:38.696674] [Debug] [Service] FileUploadService started successfully.
+[2026-10-16 02:47:38.696684] [Debug] [ServiceMgr] Started FileUploadService (Priority=0)
+[2026-10-16 02:47:38.696691] [Debug] [Service] AnalyticsService starting...
+[2026-10-16 02:47:38.704795] [Debug] [DTM] Analytics ready. targets=2, localOnly=False
+[2026-10-16 02:47:38.704833] [Debug] [MonoSingleton] Auto-created: Analytics
+[2026-10-16 02:47:38.712640] [Debug] [Singleton] Created: OAuthManager
+[2026-10-16 02:47:38.715208] [Debug] [DTM] Event enqueued: client_launch (params=4)
+[2026-10-16 02:47:38.715283] [Debug] [DTM] Batch sealed: 1 events -> queue
+[2026-10-16 02:47:38.720072] [Debug] [AnalyticsService]  Analytics Initial service started
+[2026-10-16 02:47:38.720090] [Debug] [Service] AnalyticsService started successfully.
+[2026-10-16 02:47:38.720103] [Debug] [ServiceMgr] Started AnalyticsService (Priority=0)
+[2026-10-16 02:47:38.720115] [Debug] [Service] MtpDeviceMonitorService starting...
+[2026-10-16 02:47:38.764773] [Debug] [MonoSingleton] Auto-created: MtpDeviceManager
+[2026-10-16 02:47:38.764802] [Debug] [MtpDeviceMonitorService] MTP device monitor service started
+[2026-10-16 02:47:38.764814] [Debug] [Service] MtpDeviceMonitorService started successfully.
+[2026-10-16 02:47:38.764826] [Debug] [ServiceMgr] Started MtpDeviceMonitorService (Priority=0)
+[2026-10-16 02:47:38.764836] [Debug] [Service] AIOProjectImportService starting...
+[2026-10-16 02:47:38.766944] [Debug] HTTP file server start at: 57864, root: /Users/brucemackay/Library/CrealityScan/Projects
+[2026-10-16 02:47:38.766968] [Debug] [AIOProjectImportService]  ProjectImportService started
+[2026-10-16 02:47:38.766979] [Debug] [Service] AIOProjectImportService started successfully.
+[2026-10-16 02:47:38.766988] [Debug] [ServiceMgr] Started AIOProjectImportService (Priority=0)
+[2026-10-16 02:47:38.766997] [Debug] [Service] PowerMonitorBackgroundService starting...
+[2026-10-16 02:47:38.767014] [Debug] [Service] PowerMonitorBackgroundService started successfully.
+[2026-10-16 02:47:38.767024] [Debug] [ServiceMgr] Started PowerMonitorBackgroundService (Priority=0)
+[2026-10-16 02:47:38.767035] [Debug] Successfully initialized: BackgroundServiceInitializer
+[2026-10-16 02:47:38.767047] [Debug] Successfully initialized: UsbMetaServiceInitializer
+[2026-10-16 02:47:38.767985] [Debug] [LaunchStateUtil] firstLaunch=False, firstLaunchOfCurrentVersion=False, previousVersion=4.3.2, currentVersion=4.3.2
+[2026-10-16 02:47:38.767998] [Debug] Successfully initialized: LaunchStateInitializer
+[2026-10-16 02:47:38.768009] [Warning] Key 'NewScan' not found, cannot delete.
+[2026-10-16 02:47:38.768018] [Warning] Key 'InfaredNewScan' not found, cannot delete.
+[2026-10-16 02:47:38.768027] [Warning] Key 'StopTutorial' not found, cannot delete.
+[2026-10-16 02:47:38.768037] [Warning] Key 'NextTutrial' not found, cannot delete.
+[2026-10-16 02:47:38.768045] [Warning] Key 'PreProTutrial' not found, cannot delete.
+[2026-10-16 02:47:38.768055] [Debug] Successfully initialized: TutorialCleanerInitializer
+[2026-10-16 02:47:38.768064] [Debug] Successfully initialized: SoundSettingsInitializer
+[2026-10-16 02:47:38.768073] [Debug] Successfully initialized: ProjectsPathInitializer
+[2026-10-16 02:47:38.768082] [Debug] Successfully initialized: MediaLibraryPathInitializer
+[2026-10-16 02:47:38.768207] [Debug] Create new material 'CalibBoard': Custom/CalibMeshShader (UnityEngine.Material)
+[2026-10-16 02:47:38.768221] [Debug] Create new material 'CalibTargetScanner': Custom/CalibMeshShader (UnityEngine.Material)
+[2026-10-16 02:47:38.768234] [Debug] Create new material 'CalibCurrentScanner': Custom/CalibMeshShader (UnityEngine.Material)
+[2026-10-16 02:47:38.768243] [Debug] Successfully initialized: MaterialInitializer
+[2026-10-16 02:47:38.768276] [Debug] Successfully initialized: AppRegionInitializer
+[2026-10-16 02:47:38.768306] [Debug] Successfully initialized: WindowSetupInitializer
+[2026-10-16 02:47:38.768649] [Debug] [MonoSingleton] Auto-created: APPseting
+[2026-10-16 02:47:38.768686] [Debug] Target FPS set to: 60
+[2026-10-16 02:47:38.768696] [Debug] Successfully initialized: AppSettingsInitializer
+[2026-10-16 02:47:38.768706] [Debug] Successfully initialized: DirectXCheckInitializer
+[2026-10-16 02:47:38.768716] [Debug] Requesting location permission for WiFi access via native plugin
+[2026-10-16 02:47:38.777376] [Debug] Starting location service
+[2026-10-16 02:47:38.779404] [Debug] Location service is not available yet
+[2026-10-16 02:47:38.779423] [Debug] Successfully initialized: LocationPermissionInitializer
+[2026-10-16 02:47:38.779618] [Debug] [Singleton] Created: ComputeShaderManager
+[2026-10-16 02:47:38.779666] [Debug] Resource manager initialized with loader: ResourcesLoader (repeated 2 times)
+[2026-10-16 02:47:38.779785] [Debug] [Singleton] Created: VideoManager
+[2026-10-16 02:47:38.795397] [Warning] Key 'InputShortcutBindings' not found in settings. (repeated 2 times)
+[2026-10-16 02:47:38.795446] [Warning] Key 'ShortcutKeys' not found in settings.
+[2026-10-16 02:47:38.795637] [Debug] [MonoSingleton] Auto-created: ShortcutKeyManager
+[2026-10-16 02:47:38.857079] [Debug] [MonoSingleton] Auto-created: GuideManager
+[2026-10-16 02:47:38.857732] [Debug] [HomeState]  Entering state
+[2026-10-16 02:47:38.871922] [Debug] Load panel HomePanel
+[2026-10-16 02:47:38.871966] [Debug] [ActivityNoticeService]  Adding ActivityNoticeTask
+[2026-10-16 02:47:38.872011] [Debug] Starting task ActivityNoticeTask with priority 5.
+[2026-10-16 02:47:38.872029] [Debug] [ActivityNoticeTask]  Starting ActivityNoticeTask task
+[2026-10-16 02:47:38.872042] [Warning] Key 'DonntRemindAactivityNotice' not found in settings.
+[2026-10-16 02:47:38.872358] [Debug] Task ActivityNoticeTask completed successfully.
+[2026-10-16 02:47:38.872401] [Debug] All tasks completed. (repeated 2 times)
+[2026-10-16 02:47:38.872412] [Debug] [LogUploadService]  Adding LogUpdateCheckTask
+[2026-10-16 02:47:38.872424] [Debug] Starting task LogUpdateCheckTask with priority 10.
+[2026-10-16 02:47:38.872434] [Debug] [LogUpdateCheckTask]  Starting LogUpdateCheckTask task
+[2026-10-16 02:47:38.872446] [Debug] [LogUpdateCheckTask]  Subscribed to log upload events
+[2026-10-16 02:47:38.872471] [Debug] [LogUpdateCheckTask]  Log upload finished, result: True
+[2026-10-16 02:47:38.872483] [Debug] [LogUpdateCheckTask]  Unsubscribed from log upload events
+[2026-10-16 02:47:38.872492] [Debug] Task LogUpdateCheckTask completed successfully.
+[2026-10-16 02:47:38.872508] [Debug] [SoftwareUpdateService]  Adding SoftwareUpdateTask
+[2026-10-16 02:47:38.872518] [Debug] Starting task SoftwareUpdateTask with priority 50.
+[2026-10-16 02:47:38.872529] [Debug] [SoftwareUpdateTask]  Starting SoftwareUpdateTask task
+[2026-10-16 02:47:38.872684] [Debug] 检查新版本软件
+[2026-10-16 02:47:38.872799] [Debug] GetServerSwInfo#apiPath = ota_api/v2/soft_version
+[2026-10-16 02:47:38.872886] [Debug] POST https://api.crealityscan.com/ota_api/v2/soft_version
+[2026-10-16 02:47:38.873265] [Debug] _firmwareUpGradeTask.IsCompleted=False 
+[2026-10-16 02:47:38.873278] [Warning] Task execution already in progress. (repeated 3 times)
+[2026-10-16 02:47:38.874020] [Debug] [MonoSingleton] Auto-created: FirmwareUpgradeManager
+[2026-10-16 02:47:38.874111] [Debug] [StateMachine] StateMachine Changed: null -> HomeState
+[2026-10-16 02:47:40.961353] [Warning] The referenced script on this Behaviour (Game Object '') is missing!
+[2026-10-16 02:47:40.971587] [Debug] OnDeviceDisconnect:#########DeviceInfoList Total[0]##########
+[2026-10-16 02:47:40.971623] [Debug] OnDeviceDisconnect: CurrentDeviceInfo #########
+[2026-10-16 02:47:40.971640] [Debug] OnDeviceDisconnect: isActiveDeviceDisconnect = True
+[2026-10-16 02:47:40.971651] [Debug] OnDeviceDisconnect: device is already disconnected, don't need to notify!
+[2026-10-16 02:47:40.971661] [Debug] On obscan sdk init
+[2026-10-16 02:47:40.973140] [Debug] [DTM] Region fetched from IP: US
+[2026-10-16 02:47:40.973442] [Debug] requestBody = SoftwareAndFirmware.Update.SoftwareUpgrade+SoftVersionReq
+[2026-10-16 02:47:40.973766] [Debug] saved SoftwareInfo = : /Users/brucemackay/Library/Application Support/com.creality.crealityscan/software_info.json
+[2026-10-16 02:47:40.974095] [Debug] Serialize SoftwareInfo = : https://bucket-ota-api-v2.s3.us-east-2.amazonaws.com/online/20260922/d85d0eff709a44b2803877cfa2cccaa5/CrealityScan_mac_4.3.2%281.13.9%29_3.5.3.260921_202609212222_universal.pkg+ 4.3.2 + 7499f5ddf9f4f6943c2b1e39c1203a3e + False + CrealityScan_mac_4.3.2(1.13.9)_3.5.3.260921_202609212222_universal.pkg
+[2026-10-16 02:47:40.974110] [Debug] Current Version :4.3.2, Server Version:4.3.2+CrealityScan_mac_4.3.2(1.13.9)_3.5.3.260921_202609212222_universal.pkg
+[2026-10-16 02:47:40.974124] [Warning] Key 'DontRemindSWNewInfo' not found in settings.
+[2026-10-16 02:47:40.974161] [Debug] [SoftwareUpdateTask]  No updates available
+[2026-10-16 02:47:40.974174] [Debug] Task SoftwareUpdateTask completed successfully.
+[2026-10-16 02:47:40.974190] [Debug] Starting task GetStartTask with priority 150.
+[2026-10-16 02:47:40.974208] [Debug] GetStartPanelTask started.
+[2026-10-16 02:47:40.974220] [Debug] GetStartPanelTask skipped due to config setting.
+[2026-10-16 02:47:40.974238] [Debug] Task GetStartTask completed successfully.
+[2026-10-16 02:47:40.974248] [Debug] All tasks completed.
+[2026-10-16 02:47:40.988833] [Debug] Loaded en-US localization with 1357 entries.
+[2026-10-16 02:47:40.988891] [Debug] GetServerSwInfo#apiPath = ota_api/v2/soft_version
+[2026-10-16 02:47:40.988910] [Debug] POST https://api.crealityscan.com/ota_api/v2/soft_version
+[2026-10-16 02:47:40.989253] [Debug]  sub scribe massge ------------------
+[2026-10-16 02:47:40.991780] [Debug] SoftwareUpdateNotice Initialize completed
+[2026-10-16 02:47:41.038437] [Debug] [Singleton] Created: DataCacheManager
+[2026-10-16 02:47:41.042081] [Debug] [Singleton] Created: ProjectManager
+[2026-10-16 02:47:41.043237] [Debug] [Singleton] Created: ModelFileManager
+[2026-10-16 02:47:41.054378] [Warning] Key 'ScanFullScreen' not found in settings.
+[2026-10-16 02:47:41.054478] [Warning] Key 'ScanAutoPreview' not found in settings.
+[2026-10-16 02:47:41.054861] [Debug] [HomeMobileMenu] interactable:False, IsSupportScreenCast:False, NotConnected:False
+[2026-10-16 02:47:41.055006] [Debug] [FirmwareUpgradeManager] PreDownloadAsync#SCANNER_RAPTORPRO: checking firmware...
+[2026-10-16 02:47:41.055023] [Debug] [Singleton] Created: FirmwareManager
+[2026-10-16 02:47:41.055139] [Debug] [FirmwareManager] GetServerFwInfo#apiPath = ota_api/v2/fire_version?pid=3075&new_soft_version_flag=true&platform=mac (devicePid = SCANNER_RAPTORPRO)
+[2026-10-16 02:47:41.055163] [Debug] GET https://api.crealityscan.com/ota_api/v2/fire_version?pid=3075&new_soft_version_flag=true&platform=mac
+[2026-10-16 02:47:41.141998] [Warning] Default audio device was changed, but the audio system failed to initialize it. Attempting to reset sound system.
+[2026-10-16 02:47:41.609719] [Debug] OnDeviceConnect: CurrentDeviceInfo = DeviceInfo
+[
+	scannerPid:SCANNER_RAPTORPRO,
+	scannerName:Creality Raptor Pro,
+	scannerSn:CR0886100SN,
+	connectionType:USB3.0,
+	scannerFwVersion:1.5.7,
+	wifiBridgePid:UNKNOWN,
+	wifiBridgeSsid:Unknown,
+	wifiBridgeFwVersion:Unknown,
+	calibrationTsp:1792014971,
+]
+[2026-10-16 02:47:41.609778] [Debug] [DeviceManager]  Adding Task: [MultiScannerConnectedTask]. 
+[2026-10-16 02:47:41.609807] [Debug] Starting task MultiScannerConnectedTask with priority 400.
+[2026-10-16 02:47:41.609840] [Debug] [MultiScannerConnectedTask]  Starting MultiScannerConnectedTask task
+[2026-10-16 02:47:41.609853] [Debug] [MultiScannerConnectedTask]  Subscribed to scanner count events
+[2026-10-16 02:47:41.609869] [Debug] GetConnectedDeviceCount: devInfo.scannerPid =1 SCANNER_RAPTORPRO+ (repeated 2 times)
+[2026-10-16 02:47:41.609879] [Debug] GetConnectedDeviceCount: 1 (repeated 2 times)
+[2026-10-16 02:47:41.609888] [Debug] [MultiScannerConnectedTask]  Multi scanner not connected, completing task
+[2026-10-16 02:47:41.609901] [Debug] Task MultiScannerConnectedTask completed successfully.
+[2026-10-16 02:47:41.609913] [Debug] All tasks completed. (repeated 2 times)
+[2026-10-16 02:47:41.609940] [Debug] [FirmwareUpgradeService]  Device connected — isHomeState=True taskCompleted=False isBootDevice=False isMultiScanner=False
+[2026-10-16 02:47:41.609951] [Debug] [FirmwareUpgradeService]  Adding FirmwareUpgradeTask.
+[2026-10-16 02:47:41.609988] [Debug] [DeviceConnectionService]  Device connection status changed: True
+[2026-10-16 02:47:41.610340] [Debug] try addtask of poorsupportdevice
+[2026-10-16 02:47:41.610381] [Warning] Key 'DontRemindSWNewInfo' not found in settings. (repeated 3 times)
+[2026-10-16 02:47:41.615838] [Debug] [DTM] Event enqueued: device_connect_result (params=6)
+[2026-10-16 02:47:41.615992] [Debug] OnDeviceConnect: _isScanChangedScanner = False
+[2026-10-16 02:47:41.616017] [Debug] [LogUploadService]  Scanner connection status changed: True
+[2026-10-16 02:47:41.616227] [Debug] [LogUploadService]  Device info saved to /Users/brucemackay/Library/CrealityScan/Logs/20261016024738/device_info.json
+[2026-10-16 02:47:41.616242] [Debug] [DeviceVerificationService] Device status changed: True
+[2026-10-16 02:47:41.616260] [Debug] [DeviceVerificationService] Device verification successful
+[2026-10-16 02:47:41.617284] [Debug] [HomeMobileMenu] interactable:False, IsSupportScreenCast:False, NotConnected:False
+[2026-10-16 02:47:41.620060] [Debug] MacBorderlessWindow Initialize
+[2026-10-16 02:47:41.644415] [Debug] [MonoSingleton] Auto-created: MacBorderlessWindow
+[2026-10-16 02:47:41.644449] [Debug] MacBorderlessWindow Zoom called
+[2026-10-16 02:47:42.002743] [Debug] [GuideManager] Guide 'FirstHomeGuide' is disabled for this launch, skipped.
+[2026-10-16 02:47:42.002872] [Debug] requestBody = SoftwareAndFirmware.Update.SoftwareUpgrade+SoftVersionReq
+[2026-10-16 02:47:42.003217] [Debug] saved SoftwareInfo = : /Users/brucemackay/Library/Application Support/com.creality.crealityscan/software_info.json
+[2026-10-16 02:47:42.003321] [Debug] Serialize SoftwareInfo = : https://bucket-ota-api-v2.s3.us-east-2.amazonaws.com/online/20260922/d85d0eff709a44b2803877cfa2cccaa5/CrealityScan_mac_4.3.2%281.13.9%29_3.5.3.260921_202609212222_universal.pkg+ 4.3.2 + 7499f5ddf9f4f6943c2b1e39c1203a3e + False + CrealityScan_mac_4.3.2(1.13.9)_3.5.3.260921_202609212222_universal.pkg
+[2026-10-16 02:47:42.003347] [Debug] Current Version :4.3.2, Server Version:4.3.2+CrealityScan_mac_4.3.2(1.13.9)_3.5.3.260921_202609212222_universal.pkg
+[2026-10-16 02:47:42.003395] [Debug] get saved software info
+[2026-10-16 02:47:42.003435] [Debug] savedSoftwareFilePath = /Users/brucemackay/Library/Application Support/com.creality.crealityscan/software_info.json
+[2026-10-16 02:47:42.003451] [Debug] Find The SoftwareInfo Successfully。
+[2026-10-16 02:47:42.004073] [Debug] Current language: en-US + remarkData System.Collections.Generic.Dictionary`2[System.String,System.String]
+[2026-10-16 02:47:42.004086] [Debug] Successfully parsed JSON into Dictionary with 18 entries.
+[2026-10-16 02:47:42.004104] [Debug] localizedRemark = 1.Added My Cloud feature
+2.Raptor series scanners now support marker-free scanning in USB connection mode
+3.Added support for exporting mesh data to 3MF file format
+4.Added support for importing 3MF files from Sermoon P1/P1S to the desktop application
+5.Added support for Sermoon P1S scanner
+6.Optimized the position of the color texture toggle in blue line laser scanning mode
+7.Added an “Invert Data” option to the Clipping Plane feature
+8.Optimize the rendering effect of the mesh model and enhance the contrast of highlights
+9.Fixed some bugs
+[2026-10-16 02:47:42.004942] [Debug] [Singleton] Created: ImageCacheManager
+[2026-10-16 02:47:42.005435] [Debug] [FirmwareManager] GetServerFwInfo#url = https://bucket-ota-api-v2.s3.us-east-2.amazonaws.com/online/20260922/be0120819ce94d31b496c187cb171943/CR-Scan_Raptor_App%2BCfg_V1.5.7.zip (devicePid = SCANNER_RAPTORPRO) version = 1.5.7 md5 = de998341862c19f30b8ccb2f6d3f5916 size = 137630 force = False minRequiredSwVersion =  filename = CR-Scan_Raptor_App+Cfg_V1.5.7.zip (repeated 2 times)
+[2026-10-16 02:47:42.005466] [Debug] [FirmwareManager] CheckMinSwVersionAsync#SCANNER_RAPTORPRO: querying ota_api/v2/fire/soft?fire_version=1.5.7&pid=3075&new_soft_version_flag=true&platform=mac (repeated 2 times)
+[2026-10-16 02:47:42.005483] [Debug] GET https://api.crealityscan.com/ota_api/v2/fire/soft?fire_version=1.5.7&pid=3075&new_soft_version_flag=true&platform=mac (repeated 3 times)
+[2026-10-16 02:47:42.005882] [Debug] Starting task MinSwVerCheckTask with priority 650.
+[2026-10-16 02:47:42.006035] [Debug] [MinSwVerCheckTask] : OTA API Request: ota_api/v2/fire/soft?fire_version=1.5.7&pid=3075&new_soft_version_flag=true&platform=mac
+[2026-10-16 02:47:42.059562] [Debug] [FirmwareManager] CheckMinSwVersionAsync#SCANNER_RAPTORPRO: no MinRequiredSwVersion, allowing upgrade. (repeated 2 times)
+[2026-10-16 02:47:42.068187] [Debug] [HomeBannerView] ApplyBanners: sourceCount=2, validCount=2
+[2026-10-16 02:47:42.068671] [Debug] [HomeBannerView] LoadBannersAsync: loaded from cache. count=2
+[2026-10-16 02:47:42.068703] [Debug] [HomeBannerView] LoadBannersAsync#apiPath = ota_api/v2/banner
+[2026-10-16 02:47:42.068725] [Debug] GET https://api.crealityscan.com/ota_api/v2/banner
+[2026-10-16 02:47:42.077586] [Debug] [FirmwareUpgradeManager] PreDownloadAsync#SCANNER_RAPTORPRO: local firmware is up to date, skipping.
+[2026-10-16 02:47:42.181626] [Debug] [MinSwVerCheckTask] : OTA API Response: {"code":0,"msg":"ok","data":""}
+[2026-10-16 02:47:42.181877] [Debug] [MinSwVerCheckTask] : No new version information available.
+[2026-10-16 02:47:42.181893] [Debug] Task MinSwVerCheckTask completed successfully.
+[2026-10-16 02:47:42.181910] [Debug] Starting task FirmwareUpgradeTask with priority 700.
+[2026-10-16 02:47:42.181944] [Debug] Starting FirmwareUpgradeTask task
+[2026-10-16 02:47:42.181997] [Debug] [FirmwareUpgradeManager] ResolveScannerFirmwareAsync#SCANNER_RAPTORPRO: fetching server firmware info...
+[2026-10-16 02:47:42.182014] [Debug] [FirmwareManager] GetServerFwInfo#apiPath = ota_api/v2/fire_version?pid=3075&new_soft_version_flag=true&platform=mac (devicePid = SCANNER_RAPTORPRO)
+[2026-10-16 02:47:42.182032] [Debug] GET https://api.crealityscan.com/ota_api/v2/fire_version?pid=3075&new_soft_version_flag=true&platform=mac
+[2026-10-16 02:47:42.182112] [Debug] [MinSwVerCheckTask] : CompleteMinSwVerCheck, isNoRemind = 
+[2026-10-16 02:47:42.182130] [Debug] [HomeBannerView] ApplyBanners: banner data is unchanged.
+[2026-10-16 02:47:42.231934] [Debug] [FirmwareUpgradeManager] ResolveScannerFirmwareAsync#SCANNER_RAPTORPRO: server firmware version = 1.5.7
+[2026-10-16 02:47:42.282513] [Debug] [FirmwareUpgradeManager] ResolveScannerFirmwareAsync#SCANNER_RAPTORPRO: no upgrade needed.
+[2026-10-16 02:47:42.282532] [Debug] Task FirmwareUpgradeTask completed successfully.
+[2026-10-16 02:47:45.011930] [Debug] Load panel NewProjectDialog
+[2026-10-16 02:47:53.712007] [Debug] [DTM] Batch sealed: 2 events -> queue
+[2026-10-16 02:48:06.528873] [Debug] Create project 1st_comp_to_open3dscanner at /Users/brucemackay/Library/CrealityScan/Projects/1st_comp_to_open3dscanner
+[2026-10-16 02:48:06.528900] [Debug] Create session
+[2026-10-16 02:48:06.528915] [Debug] Project: /Users/brucemackay/Library/CrealityScan/Projects/1st_comp_to_open3dscanner
+[2026-10-16 02:48:06.536936] [Debug] [DTM] Event enqueued: project_created (params=3)
+[2026-10-16 02:48:06.536963] [Debug] [DTM] Batch sealed: 1 events -> queue
+[2026-10-16 02:48:06.540589] [Debug] UpgradeService Disable
+[2026-10-16 02:48:06.968797] [Debug] [MonoSingleton] Auto-created: CommonEditComponent
+[2026-10-16 02:48:06.977235] [Debug] [ScanDataService] ReplaceRGB result: method=OB_SCAN_REPLACE_RGB_IMAGE_NORMAL, meshVerts=0 (repeated 2 times)
+[2026-10-16 02:48:06.979816] [Debug] [ScanDataService] 3DGS result: gsDir=, scanPly=, retexturePly= (repeated 2 times)
+[2026-10-16 02:48:06.980862] [Debug] [AITextureDiag] TryResolveConfirmedGaussianPlyPath SDK empty/failed: [OB_SCAN_ERROR_FILE_NOT_EXIST] obscan_session_get_texturization_3D_GS_mesh_absolute_dir failed! (OB_SCAN_ERROR_FILE_NOT_EXIST) (repeated 4 times)
+[2026-10-16 02:48:06.983542] [Debug] [AITextureDiag] RefreshData: REPLACE_RGB mesh vertices=0, vertex_textures=0, materials=0, containsAITextureData=False (repeated 2 times)
+[2026-10-16 02:48:06.983770] [Debug] [AITextureDiag] RefreshData: scanPly=null, retexturePly=null, containsScan=False, containsRetexture=False, swapRow=False (repeated 2 times)
+[2026-10-16 02:48:06.991168] [Debug] [MonoSingleton] Auto-created: ScanFusionModelManager
+[2026-10-16 02:48:06.991207] [Debug] [CursorManager]  PushBusy: Busy_1, stack count: 1
+[2026-10-16 02:48:06.991230] [Debug] Loaded 20 busy animation frames
+[2026-10-16 02:48:06.991362] [Debug] Load panel InvisibleBlockingPanel
+[2026-10-16 02:48:06.992569] [Debug] RefreshSelectionAndVisibleWithDefRule result: scanData selected count: 0 _meshlizationModelData: False/False _repairedModelData: False/False _completedModelData: False/False _texturezationModelData: False/False _aiTexturedModelData: False/False, containsAI=False, scanGaussian: False/False/False, retextureGaussian: False/False/False
+[2026-10-16 02:48:06.992593] [Debug] [CursorManager]  PushBusy: Busy_2, stack count: 2
+[2026-10-16 02:48:06.992823] [Debug] [MeshProcessPanel] Exiting Fill Holes Plane.
+[2026-10-16 02:48:06.992835] [Debug] [MeshProcessPanel] Exiting meshprocess process.
+[2026-10-16 02:48:06.992865] [Debug] [DTM] Event enqueued: scan_created (params=3)
+[2026-10-16 02:48:06.992975] [Debug] [ScanStatus] ScanStatus Changed: Uncreate -> Uncreate
+[2026-10-16 02:48:06.993317] [Warning] Settings file not found, starting with empty settings.
+[2026-10-16 02:48:06.993340] [Warning] Key 'DeviceInfo' not found in settings. (repeated 3 times)
+[2026-10-16 02:48:06.993352] [Warning] Key 'Version' not found in settings.
+[2026-10-16 02:48:06.996664] [Debug] Get ScanConfigJson from Device [SCANNER_RAPTORPRO]:
+{
+	"blue_light" : 
+	{
+		"fov" : 
+		[
+			true,
+			false
+		],
+		"fuse_modes" : 
+		[
+			false,
+			false,
+			true,
+			true
+		],
+		"light_type" : 
+		[
+			true,
+			true,
+			false
+		],
+		"ref_rod" : false,
+		"remove_plane" : true,
+		"remove_turntable" : false,
+		"scan_type" : 
+		[
+			true,
+			true,
+			true
+		],
+		"support" : true,
+		"texture" : 
+		[
+			true,
+			true
+		],
+		"voxel_size" : 
+		{
+			"default" : "0.15",
+			"max" : "2.00",
+			"min" : "0.10"
+		}
+	},
+	"infrared" : 
+	{
+		"face" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"support" : false
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"human" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"support" : false
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"obj_big" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"obj_medium" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"obj_small" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"ref_rod" : false,
+		"remove_plane" : true,
+		"remove_turntable" : true,
+		"scan_type" : 
+		[
+			true,
+			false,
+			true
+		],
+		"support" : true,
+		"texture" : 
+		[
+			true,
+			false
+		]
+	},
+	"pid" : 3075
+}
+[2026-10-16 02:48:06.997772] [Warning] CheckScanConfigSupport: parse scan config json for [infrared.wide] failed-Object reference not set to an instance of an object.
+[2026-10-16 02:48:06.997893] [Warning] Key 'LaserFrameRenderParam' not found in settings.
+[2026-10-16 02:48:06.998432] [Debug] [CursorManager]  PushBusy: Busy_3, stack count: 3
+[2026-10-16 02:48:07.008587] [Debug] ScanData.VoxelSize: 0.5
+[2026-10-16 02:48:07.009339] [Debug] Check isPointCloudButContainFrameworkTexture: IsNewScan = True, HasHistoryFramework = , HasCurrentFramework = False, LaserScanType = OB_SCAN_CLOUD_FUSED, TextureMode = OB_SCAN_NO_TEXTURE, result = False
+[2026-10-16 02:48:07.009358] [Debug] RefreshLaserFrameRate: Device [SCANNER_RAPTORPRO] support frame rate config = False, connection type = USB, isLaser = True, isMarkerScan = True, isFrameworkPointWithTexture = False, isPointCloudButContainFrameworkTexture = False, shouldShow = False
+[2026-10-16 02:48:07.009582] [Debug] [RefreshLaserTextureMode]  ScanParamData.TextureMode: OB_SCAN_NO_TEXTURE
+[2026-10-16 02:48:07.012915] [Debug] set frame render panle visible False
+[2026-10-16 02:48:07.012962] [Warning] Key 'ScannerGuideDontShowAgain' not found in settings. (repeated 2 times)
+[2026-10-16 02:48:07.012974] [Warning] Attempted to stop a null coroutine
+[2026-10-16 02:48:07.013067] [Debug] InitEidtModelView
+[2026-10-16 02:48:07.013586] [Debug] UnloadMeshModelData: TModelData = MeshlizationModelData
+[2026-10-16 02:48:07.013604] [Debug] UnloadMeshModelData: TModelData = RepairedModelData
+[2026-10-16 02:48:07.013616] [Debug] UnloadMeshModelData: TModelData = CompletedModelData
+[2026-10-16 02:48:07.013629] [Debug] UnloadMeshModelData: TModelData = TexturezationModelData
+[2026-10-16 02:48:07.013640] [Debug] UnloadMeshModelData: TModelData = AITexturedModelData
+[2026-10-16 02:48:07.013652] [Debug] UnloadMeshModelData: TModelData = AIGaussianTexturedModelData
+[2026-10-16 02:48:07.014060] [Debug] [CameraControlService] Focus camera changed from <null> to <ScanningCamera>
+[2026-10-16 02:48:07.014131] [Debug] [CameraControlService] Camera controllers list changed: [ScanningCamera](1)
+[2026-10-16 02:48:07.017291] [Debug] [StateMachine] StateMachine Changed: HomeState -> ScanFusionState
+[2026-10-16 02:48:07.022133] [Debug] LoadSelectedScanDataModels#selectedScanDataList.Count = 0 (repeated 3 times)
+[2026-10-16 02:48:07.022189] [Debug] LoadMeshModelData: TModelData = MeshlizationModelData (repeated 3 times)
+[2026-10-16 02:48:07.022202] [Debug] LoadMeshModelData: data is unselected, don't need to load! (repeated 18 times)
+[2026-10-16 02:48:07.022215] [Debug] LoadMeshModelData: TModelData = RepairedModelData (repeated 3 times)
+[2026-10-16 02:48:07.022236] [Debug] LoadMeshModelData: TModelData = CompletedModelData (repeated 3 times)
+[2026-10-16 02:48:07.022255] [Debug] LoadMeshModelData: TModelData = TexturezationModelData (repeated 3 times)
+[2026-10-16 02:48:07.022276] [Debug] LoadMeshModelData: TModelData = AITexturedModelData (repeated 3 times)
+[2026-10-16 02:48:07.022298] [Debug] LoadMeshModelData: TModelData = AIGaussianTexturedModelData (repeated 3 times)
+[2026-10-16 02:48:07.022323] [Debug] [CursorManager]  PopBusy: Busy_3, stack count: 2
+[2026-10-16 02:48:07.022359] [Debug] [TakeModelThumbnailShot] is scanValid: False
+[2026-10-16 02:48:07.022492] [Debug] [CursorManager]  PopBusy: Busy_2, stack count: 1
+[2026-10-16 02:48:07.022502] [Debug] [TakeModelThumbnailShot] Skipped duplicate frame: 1465 (repeated 2 times)
+[2026-10-16 02:48:07.022645] [Debug] [CursorManager]  PopBusy: Busy_1, stack count: 0
+[2026-10-16 02:48:07.045090] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:48:07.046698] [Debug] localizationKey = GetStart02-Raptor deviceKey = -Raptor
+[2026-10-16 02:48:07.050029] [Debug] [GuideManager] Guide 'FirstCreateProjectGuide' is disabled for this launch, skipped.
+[2026-10-16 02:48:07.050199] [Debug] [InvisibleBlockingPanel] OnHide
+[2026-10-16 02:48:07.060315] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:48:08.713487] [Debug] [DTM] Batch sealed: 2 events -> queue
+[2026-10-16 02:48:09.098581] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:48:09.132177] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:48:15.110203] [Debug] OnMiddleScanButtonClicked: status = BTN_STATUS_PREVIEW
+[2026-10-16 02:48:15.110424] [Debug] ApplyScanAndPreview: Status = Uncreate
+[2026-10-16 02:48:15.113483] [Debug] new scan [Scan_1]'s ScanModeConfigToString:
+PostTexture: OB_SCAN_NO_TEXTURE
+FrameRate: OB_SCAN_FRAME_RATE_AUTO
+Projection: OB_SCAN_BLUE_LINE_LASER
+ScanMode: OB_SCAN_MODE_FACE
+Accuracy: OB_SCAN_ACCURACY_HIGH
+FuseMode: OB_SCAN_FUSE_MODE_MARKER
+FOV: OB_SCAN_FOV_NORMAL
+ObjectMaterial: OB_SCAN_OBJECT_MATERIAL_STANDARD
+VoxelSize: 0.5
+LightType: OB_SCAN_LIGHT_TYPE_CROSS
+ScanType: OB_SCAN_CLOUD_FUSED
+DetailVoxelSize: 0.25
+
+[2026-10-16 02:48:15.113501] [Debug] Create scan
+[2026-10-16 02:48:15.122573] [Debug] [ScanDataService] ReplaceRGB result: method=OB_SCAN_REPLACE_RGB_IMAGE_NORMAL, meshVerts=0
+[2026-10-16 02:48:15.122593] [Debug] [ScanDataService] 3DGS result: gsDir=, scanPly=, retexturePly=
+[2026-10-16 02:48:15.123229] [Debug] [AITextureDiag] TryResolveConfirmedGaussianPlyPath SDK empty/failed: [OB_SCAN_ERROR_FILE_NOT_EXIST] obscan_session_get_texturization_3D_GS_mesh_absolute_dir failed! (OB_SCAN_ERROR_FILE_NOT_EXIST) (repeated 2 times)
+[2026-10-16 02:48:15.123286] [Debug] [AITextureDiag] RefreshData: REPLACE_RGB mesh vertices=0, vertex_textures=0, materials=0, containsAITextureData=False
+[2026-10-16 02:48:15.123298] [Debug] [AITextureDiag] RefreshData: scanPly=null, retexturePly=null, containsScan=False, containsRetexture=False, swapRow=False
+[2026-10-16 02:48:15.157677] [Debug] GetSupportContinueScanState=True: uniqueId=1792133295, support_continue_scan=True, scannerPid=3075, currentScannerPid=3075, isReadParamsFailed=False, isCRCCheckFailed=False
+[2026-10-16 02:48:15.157733] [Debug] LoadModels: NormalModelParent is inactive, don't need to refresh render models
+[2026-10-16 02:48:15.157751] [Debug] [TakeModelThumbnailShot] is scanValid: False
+[2026-10-16 02:48:15.160387] [Debug] ActiveScanData: activeUniqueId = 1792133295
+[2026-10-16 02:48:15.160483] [Debug] IsDiffFromDefault: No differences found (repeated 2 times)
+[2026-10-16 02:48:15.160496] [Debug] OnLLScanDistanceRangeSliderChanged: min = 200 max = 550
+[2026-10-16 02:48:15.160505] [Debug] ConfigDepthRange: min = 200 max = 550 (repeated 2 times)
+[2026-10-16 02:48:15.163143] [Debug] ConfigDepthRange: success! (repeated 2 times)
+[2026-10-16 02:48:15.163203] [Debug] RefreshDepthRange#depthRange.min:200  depthRange.max:550
+[2026-10-16 02:48:15.163254] [Debug] [ScanStatus] ScanStatus Changed: Uncreate -> Created
+[2026-10-16 02:48:15.163283] [Debug] [ScanStatus] ScanStatus Changed: Created -> Previewing
+[2026-10-16 02:48:15.163293] [Warning] Key 'RemoteFilterTipsDontShowAgain' not found in settings.
+[2026-10-16 02:48:15.163304] [Debug] [CursorManager]  PushBusy: Busy_1, stack count: 1
+[2026-10-16 02:48:15.163425] [Debug] [InvisibleBlockingPanel] OnShow
+[2026-10-16 02:48:15.163450] [Debug] Preview
+[2026-10-16 02:48:15.183096] [Debug] IsDetailedScanSupport: [OB_SCAN_ERROR_MULTI_CALLED] obscan_scan_get_model_point_color_clouds failed!
+[2026-10-16 02:48:15.543287] [Debug] [ToDelete][RemoteConnect] OnScanningPreviewMessage Receive: Status=True, IsMessageConnected=False
+[2026-10-16 02:48:15.543585] [Debug] set frame render panle visible True
+[2026-10-16 02:48:15.543749] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 0 (repeated 2 times)
+[2026-10-16 02:48:15.592991] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 2 times)
+[2026-10-16 02:48:15.593020] [Debug] ConfigRgbExposureTime: value = 0 (repeated 2 times)
+[2026-10-16 02:48:15.596218] [Debug] ConfigRgbExposureTime: success! (repeated 2 times)
+[2026-10-16 02:48:15.600659] [Debug] [ScanParamConfig]Save ScanParamData for OB_SCAN_BLUE_LINE_LASER to local:
+{
+  "ScanProjectionProperty": "OB_SCAN_BLUE_LINE_LASER",
+  "LaserScanFuseModeProperty": "OB_SCAN_FUSE_MODE_MARKER",
+  "LaserScanTypeProperty": "OB_SCAN_CLOUD_FUSED",
+  "LaserPhotogrammetryProperty": false,
+  "IrScanTypeProperty": "OB_SCAN_CLOUD_FUSED",
+  "IrPhotogrammetryProperty": false,
+  "VoxelSizeProperty": 0.5,
+  "IrVoxelSizeProperty": 0.0,
+  "VoxelSizeRangeProperty": {
+    "min": 0.1,
+    "max": 2.0
+  },
+  "DetailVoxelSizeProperty": 0.25,
+  "DetailVoxelSizeRangeProperty": {
+    "min": 0.05,
+    "max": 0.25
+  },
+  "ScanLightTypeProperty": "OB_SCAN_LIGHT_TYPE_CROSS",
+  "FrameRateProperty": "OB_SCAN_FRAME_RATE_AUTO",
+  "IrScanModeProperty": "OB_SCAN_MODE_FACE",
+  "ObjectMaterialProperty": "OB_SCAN_OBJECT_MATERIAL_STANDARD",
+  "ScanAccuracyProperty": "OB_SCAN_ACCURACY_FAST",
+  "ScanFOVProperty": "OB_SCAN_FOV_NORMAL",
+  "LaserScanFOVProperty": "OB_SCAN_FOV_NORMAL",
+  "ScanFuseModeProperty": "OB_SCAN_FUSE_MODE_GEOMETRY",
+  "DepthRangeProperty": {
+    "min": 200,
+    "max": 550
+  },
+  "CurrentDepthRangeProperty": {
+    "min": 200,
+    "max": 550
+  },
+  "TextureModeProperty": "OB_SCAN_NO_TEXTURE",
+  "PlaneRemoveProperty": false
+}
+[2026-10-16 02:48:15.601168] [Debug] [ScanParamConfig]Save FrameRenderParamData for OB_SCAN_BLUE_LINE_LASER to local:
+{"IrAutoMode":true,"IrDefaultExpAndLaserValue":500,"IrExpAndLaserValue":500,"IrExpAndLaserRange":{"min":1,"max":1000},"RgbAutoMode":true,"RgbDefaultExpValue":500,"RgbExpValue":500,"RgbExpRange":{"min":1,"max":1000},"RgbLightState":false}
+[2026-10-16 02:48:15.601229] [Debug] [CursorManager]  PopBusy: Busy_1, stack count: 0
+[2026-10-16 02:48:15.601247] [Debug] [InvisibleBlockingPanel] OnHide
+[2026-10-16 02:48:15.677611] [Debug] UpdateScanFrame: force update history frame model!
+[2026-10-16 02:48:15.711136] [Debug] render markers frame=======
+[2026-10-16 02:48:15.712735] [Debug] ===================awake OBScanMarkerInstance===================
+[2026-10-16 02:48:28.046162] [Debug] OnMiddleScanButtonClicked: status = BTN_STATUS_START
+[2026-10-16 02:48:28.046629] [Debug] [CursorManager]  PushBusy: Busy_1, stack count: 1
+[2026-10-16 02:48:28.046799] [Debug] [InvisibleBlockingPanel] OnShow
+[2026-10-16 02:48:28.047161] [Debug] UpdateScanFrame: force update history frame model!
+[2026-10-16 02:48:28.066091] [Debug] [CursorManager]  PopBusy: Busy_1, stack count: 0
+[2026-10-16 02:48:28.066188] [Debug] [InvisibleBlockingPanel] OnHide
+[2026-10-16 02:48:28.066453] [Debug] ActiveScanData: activeUniqueId = 1792133295
+[2026-10-16 02:48:28.067001] [Debug] [ScanStatus] ScanStatus Changed: Previewing -> Scanning
+[2026-10-16 02:48:28.067030] [Debug] set frame render panle visible True
+[2026-10-16 02:48:28.069247] [Debug] [DTM] Event enqueued: scan_started (params=13)
+[2026-10-16 02:48:28.069297] [Debug] [DTM] Batch sealed: 1 events -> queue (repeated 2 times)
+[2026-10-16 02:48:28.108827] [Debug] [GuideManager] Guide 'FirstScanGuide' is disabled for this launch, skipped.
+[2026-10-16 02:48:29.547032] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:48:29.597413] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:48:30.460028] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:48:31.118567] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:48:31.676910] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:48:33.282974] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 500 (repeated 2 times)
+[2026-10-16 02:48:33.386568] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 2 times)
+[2026-10-16 02:48:33.386635] [Debug] SetRenderViewVisible true (repeated 2 times)
+[2026-10-16 02:48:33.386667] [Debug] set frame render panle visible True (repeated 2 times)
+[2026-10-16 02:48:35.894049] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 490
+[2026-10-16 02:48:36.035342] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 5 times)
+[2026-10-16 02:48:36.035365] [Debug] SetRenderViewVisible true (repeated 5 times)
+[2026-10-16 02:48:36.035380] [Debug] set frame render panle visible True (repeated 5 times)
+[2026-10-16 02:48:36.060337] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 450
+[2026-10-16 02:48:36.193484] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 440
+[2026-10-16 02:48:36.293564] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 420
+[2026-10-16 02:48:36.393839] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 360
+[2026-10-16 02:48:36.844157] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:48:37.578837] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 320
+[2026-10-16 02:48:37.612679] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 3 times)
+[2026-10-16 02:48:37.612702] [Debug] SetRenderViewVisible true (repeated 3 times)
+[2026-10-16 02:48:37.612715] [Debug] set frame render panle visible True (repeated 3 times)
+[2026-10-16 02:48:37.627088] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 280
+[2026-10-16 02:48:37.659532] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 270
+[2026-10-16 02:48:37.777167] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 260
+[2026-10-16 02:48:37.797690] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 2 times)
+[2026-10-16 02:48:37.797713] [Debug] SetRenderViewVisible true (repeated 2 times)
+[2026-10-16 02:48:37.797726] [Debug] set frame render panle visible True (repeated 2 times)
+[2026-10-16 02:48:37.809672] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 240
+[2026-10-16 02:48:38.910384] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 230
+[2026-10-16 02:48:38.939621] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 6 times)
+[2026-10-16 02:48:38.939644] [Debug] SetRenderViewVisible true (repeated 6 times)
+[2026-10-16 02:48:38.939656] [Debug] set frame render panle visible True (repeated 6 times)
+[2026-10-16 02:48:38.960059] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 190
+[2026-10-16 02:48:39.059748] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 180
+[2026-10-16 02:48:39.092364] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 170
+[2026-10-16 02:48:39.126539] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 140
+[2026-10-16 02:48:39.159297] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 120
+[2026-10-16 02:48:40.177630] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 130
+[2026-10-16 02:48:40.189620] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 7 times)
+[2026-10-16 02:48:40.189656] [Debug] SetRenderViewVisible true (repeated 7 times)
+[2026-10-16 02:48:40.189671] [Debug] set frame render panle visible True (repeated 7 times)
+[2026-10-16 02:48:40.209280] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 160
+[2026-10-16 02:48:40.244132] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 180
+[2026-10-16 02:48:40.292746] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 200
+[2026-10-16 02:48:40.326601] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 230
+[2026-10-16 02:48:40.348585] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:48:40.359728] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 270
+[2026-10-16 02:48:40.392266] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 280
+[2026-10-16 02:48:41.210508] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 290
+[2026-10-16 02:48:41.226514] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 9 times)
+[2026-10-16 02:48:41.226561] [Debug] SetRenderViewVisible true (repeated 9 times)
+[2026-10-16 02:48:41.226660] [Debug] set frame render panle visible True (repeated 9 times)
+[2026-10-16 02:48:41.243435] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 310
+[2026-10-16 02:48:41.293342] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 340
+[2026-10-16 02:48:41.325957] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 350
+[2026-10-16 02:48:41.359240] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 360
+[2026-10-16 02:48:41.392894] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 370
+[2026-10-16 02:48:41.493238] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 380
+[2026-10-16 02:48:41.543448] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 390
+[2026-10-16 02:48:41.576730] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 410
+[2026-10-16 02:48:42.410550] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 420
+[2026-10-16 02:48:42.443217] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 5 times)
+[2026-10-16 02:48:42.443302] [Debug] SetRenderViewVisible true (repeated 5 times)
+[2026-10-16 02:48:42.443355] [Debug] set frame render panle visible True (repeated 5 times)
+[2026-10-16 02:48:42.460096] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 440
+[2026-10-16 02:48:42.576319] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 450
+[2026-10-16 02:48:42.610210] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 460
+[2026-10-16 02:48:42.660098] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 470
+[2026-10-16 02:48:42.692773] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 480
+[2026-10-16 02:48:42.722911] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 8 times)
+[2026-10-16 02:48:42.722942] [Debug] SetRenderViewVisible true (repeated 8 times)
+[2026-10-16 02:48:42.722971] [Debug] set frame render panle visible True (repeated 8 times)
+[2026-10-16 02:48:43.463240] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 490
+[2026-10-16 02:48:43.492762] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 510
+[2026-10-16 02:48:43.542541] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 520
+[2026-10-16 02:48:43.592897] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 530
+[2026-10-16 02:48:43.626196] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 540
+[2026-10-16 02:48:43.659600] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 550
+[2026-10-16 02:48:43.692922] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 560
+[2026-10-16 02:48:43.860256] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:48:44.760876] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 580
+[2026-10-16 02:48:44.785806] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 8 times)
+[2026-10-16 02:48:44.785833] [Debug] SetRenderViewVisible true (repeated 8 times)
+[2026-10-16 02:48:44.785845] [Debug] set frame render panle visible True (repeated 8 times)
+[2026-10-16 02:48:44.792407] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 590
+[2026-10-16 02:48:44.826382] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 610
+[2026-10-16 02:48:44.859444] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 620
+[2026-10-16 02:48:44.910155] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 630
+[2026-10-16 02:48:44.943588] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 640
+[2026-10-16 02:48:44.976443] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 650
+[2026-10-16 02:48:45.060437] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 660
+[2026-10-16 02:48:46.030302] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 670
+[2026-10-16 02:48:46.053020] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 4 times)
+[2026-10-16 02:48:46.053041] [Debug] SetRenderViewVisible true (repeated 4 times)
+[2026-10-16 02:48:46.053054] [Debug] set frame render panle visible True (repeated 4 times)
+[2026-10-16 02:48:46.076716] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 690
+[2026-10-16 02:48:46.126454] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 700
+[2026-10-16 02:48:46.176853] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 710
+[2026-10-16 02:48:47.126733] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 720
+[2026-10-16 02:48:47.138451] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 5 times)
+[2026-10-16 02:48:47.138488] [Debug] SetRenderViewVisible true (repeated 5 times)
+[2026-10-16 02:48:47.138515] [Debug] set frame render panle visible True (repeated 5 times)
+[2026-10-16 02:48:47.159479] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 730
+[2026-10-16 02:48:47.209446] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 760
+[2026-10-16 02:48:47.242589] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 770
+[2026-10-16 02:48:47.276447] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 780
+[2026-10-16 02:48:47.376982] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:48:48.565686] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 790
+[2026-10-16 02:48:48.611447] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 4 times)
+[2026-10-16 02:48:48.611495] [Debug] SetRenderViewVisible true (repeated 4 times)
+[2026-10-16 02:48:48.611538] [Debug] set frame render panle visible True (repeated 4 times)
+[2026-10-16 02:48:48.626872] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 820
+[2026-10-16 02:48:48.660120] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 830
+[2026-10-16 02:48:48.692510] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 840
+[2026-10-16 02:48:48.725890] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 850
+[2026-10-16 02:48:48.739931] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 5 times)
+[2026-10-16 02:48:48.739951] [Debug] SetRenderViewVisible true (repeated 5 times)
+[2026-10-16 02:48:48.739962] [Debug] set frame render panle visible True (repeated 5 times)
+[2026-10-16 02:48:48.760181] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 860
+[2026-10-16 02:48:48.860185] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 870
+[2026-10-16 02:48:48.892402] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 880
+[2026-10-16 02:48:49.628465] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 890
+[2026-10-16 02:48:49.709755] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 910
+[2026-10-16 02:48:49.741995] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 5 times)
+[2026-10-16 02:48:49.742014] [Debug] SetRenderViewVisible true (repeated 5 times)
+[2026-10-16 02:48:49.742025] [Debug] set frame render panle visible True (repeated 5 times)
+[2026-10-16 02:48:49.776135] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 920
+[2026-10-16 02:48:49.876562] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 930
+[2026-10-16 02:48:49.927269] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 940
+[2026-10-16 02:48:49.959915] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 950
+[2026-10-16 02:48:51.160345] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 940
+[2026-10-16 02:48:51.177606] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 16 times)
+[2026-10-16 02:48:51.177639] [Debug] SetRenderViewVisible true (repeated 16 times)
+[2026-10-16 02:48:51.177657] [Debug] set frame render panle visible True (repeated 16 times)
+[2026-10-16 02:48:51.193112] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 910
+[2026-10-16 02:48:51.226181] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 890
+[2026-10-16 02:48:51.259889] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 880
+[2026-10-16 02:48:51.292919] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 870
+[2026-10-16 02:48:51.326081] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 850
+[2026-10-16 02:48:51.360083] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 830
+[2026-10-16 02:48:51.393317] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 800
+[2026-10-16 02:48:51.426258] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 730
+[2026-10-16 02:48:51.476304] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 680
+[2026-10-16 02:48:51.509303] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 670
+[2026-10-16 02:48:51.542676] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 650
+[2026-10-16 02:48:51.576326] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 620
+[2026-10-16 02:48:51.608968] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 540
+[2026-10-16 02:48:51.643487] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 490
+[2026-10-16 02:48:51.676783] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 480
+[2026-10-16 02:48:52.818274] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 620
+[2026-10-16 02:48:52.837332] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 9 times)
+[2026-10-16 02:48:52.837361] [Debug] SetRenderViewVisible true (repeated 9 times)
+[2026-10-16 02:48:52.837374] [Debug] set frame render panle visible True (repeated 9 times)
+[2026-10-16 02:48:52.876176] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 610
+[2026-10-16 02:48:52.926980] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 570
+[2026-10-16 02:48:52.959220] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 500
+[2026-10-16 02:48:52.992492] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 430
+[2026-10-16 02:48:53.025873] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 330
+[2026-10-16 02:48:53.059360] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 290
+[2026-10-16 02:48:53.092708] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 280
+[2026-10-16 02:48:53.126408] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 270
+[2026-10-16 02:48:53.543612] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:48:54.093680] [Debug] SetEditModelViewPointerEnterFalse (repeated 2 times)
+[2026-10-16 02:48:54.110026] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:48:54.410943] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:48:54.744703] [Debug] OnLeftScanButtonClicked: status = BTN_STATUS_DELETE
+[2026-10-16 02:48:54.875156] [Debug] Enter EditBarState: ScanPauseState
+[2026-10-16 02:48:54.876706] [Debug] set frame render panle visible False
+[2026-10-16 02:48:54.877781] [Warning] LoadEditModelPointCloud: frame marker data is inconsistent; skip edit markers.
+[2026-10-16 02:48:54.878052] [Debug] [ScanStatus] ScanStatus Changed: Scanning -> Paused
+[2026-10-16 02:48:54.878242] [Debug] Load panel ModalDialog
+[2026-10-16 02:48:57.043334] [Debug] ActiveScanData: activeUniqueId = 1792133295
+[2026-10-16 02:48:57.043378] [Debug] [CursorManager]  PushBusy: Busy_1, stack count: 1 (repeated 2 times)
+[2026-10-16 02:48:57.043496] [Debug] [InvisibleBlockingPanel] OnShow (repeated 2 times)
+[2026-10-16 02:48:57.363060] [Debug] [ScanDataService] ReplaceRGB result: method=OB_SCAN_REPLACE_RGB_IMAGE_NORMAL, meshVerts=0 (repeated 2 times)
+[2026-10-16 02:48:57.363128] [Debug] [ScanDataService] 3DGS result: gsDir=, scanPly=, retexturePly= (repeated 2 times)
+[2026-10-16 02:48:57.363896] [Debug] [AITextureDiag] TryResolveConfirmedGaussianPlyPath SDK empty/failed: [OB_SCAN_ERROR_FILE_NOT_EXIST] obscan_session_get_texturization_3D_GS_mesh_absolute_dir failed! (OB_SCAN_ERROR_FILE_NOT_EXIST) (repeated 4 times)
+[2026-10-16 02:48:57.363960] [Debug] [AITextureDiag] RefreshData: REPLACE_RGB mesh vertices=0, vertex_textures=0, materials=0, containsAITextureData=False (repeated 2 times)
+[2026-10-16 02:48:57.363984] [Debug] [AITextureDiag] RefreshData: scanPly=null, retexturePly=null, containsScan=False, containsRetexture=False, swapRow=False (repeated 2 times)
+[2026-10-16 02:48:57.364090] [Debug] LoadModels: NormalModelParent is inactive, don't need to refresh render models
+[2026-10-16 02:48:57.364117] [Debug] [TakeModelThumbnailShot] is scanValid: False
+[2026-10-16 02:48:57.364136] [Debug] [CursorManager]  PopBusy: Busy_1, stack count: 0 (repeated 2 times)
+[2026-10-16 02:48:57.364155] [Debug] [InvisibleBlockingPanel] OnHide (repeated 2 times)
+[2026-10-16 02:48:57.365403] [Debug] [ScanParamConfig]Save ScanParamData for OB_SCAN_BLUE_LINE_LASER to local:
+{
+  "ScanProjectionProperty": "OB_SCAN_BLUE_LINE_LASER",
+  "LaserScanFuseModeProperty": "OB_SCAN_FUSE_MODE_MARKER",
+  "LaserScanTypeProperty": "OB_SCAN_CLOUD_FUSED",
+  "LaserPhotogrammetryProperty": false,
+  "IrScanTypeProperty": "OB_SCAN_CLOUD_FUSED",
+  "IrPhotogrammetryProperty": false,
+  "VoxelSizeProperty": 0.5,
+  "IrVoxelSizeProperty": 0.0,
+  "VoxelSizeRangeProperty": {
+    "min": 0.1,
+    "max": 2.0
+  },
+  "DetailVoxelSizeProperty": 0.25,
+  "DetailVoxelSizeRangeProperty": {
+    "min": 0.05,
+    "max": 0.25
+  },
+  "ScanLightTypeProperty": "OB_SCAN_LIGHT_TYPE_CROSS",
+  "FrameRateProperty": "OB_SCAN_FRAME_RATE_AUTO",
+  "IrScanModeProperty": "OB_SCAN_MODE_FACE",
+  "ObjectMaterialProperty": "OB_SCAN_OBJECT_MATERIAL_STANDARD",
+  "ScanAccuracyProperty": "OB_SCAN_ACCURACY_FAST",
+  "ScanFOVProperty": "OB_SCAN_FOV_NORMAL",
+  "LaserScanFOVProperty": "OB_SCAN_FOV_NORMAL",
+  "ScanFuseModeProperty": "OB_SCAN_FUSE_MODE_GEOMETRY",
+  "DepthRangeProperty": {
+    "min": 200,
+    "max": 550
+  },
+  "CurrentDepthRangeProperty": {
+    "min": 200,
+    "max": 550
+  },
+  "TextureModeProperty": "OB_SCAN_NO_TEXTURE",
+  "PlaneRemoveProperty": false
+}
+[2026-10-16 02:48:57.365602] [Debug] [ScanParamConfig]Save FrameRenderParamData for OB_SCAN_BLUE_LINE_LASER to local:
+{"IrAutoMode":false,"IrDefaultExpAndLaserValue":500,"IrExpAndLaserValue":270,"IrExpAndLaserRange":{"min":1,"max":1000},"RgbAutoMode":true,"RgbDefaultExpValue":500,"RgbExpValue":500,"RgbExpRange":{"min":1,"max":1000},"RgbLightState":false}
+[2026-10-16 02:48:57.365935] [Debug] [CameraControlService] Focus camera changed from <ScanningCamera> to <null>
+[2026-10-16 02:48:57.365950] [Debug] [CameraControlService] Camera controllers list changed: [](0)
+[2026-10-16 02:48:57.369876] [Debug] [MonoSingleton] Auto-created: PlaneRemoveEditComponent
+[2026-10-16 02:48:57.370000] [Warning] _stateBuffer or _stateArray is null. Cannot sync state array.
+[2026-10-16 02:48:57.371259] [Debug] [MonoSingleton] Auto-created: MarkersEditComponent
+[2026-10-16 02:48:57.371278] [Debug] ExitPlaneRemoveEdit... keepPlaneState=False
+[2026-10-16 02:48:57.371309] [Warning] Material (_goMat) is null in RefreshMat (repeated 2 times)
+[2026-10-16 02:48:57.371649] [Debug] [Singleton] Created: SelectVertShaderUtil
+[2026-10-16 02:48:57.371769] [Debug] DeletePlane: _planeDeletedDuringEdit = true
+[2026-10-16 02:48:57.371791] [Debug] Call ConfigManaulRemovePlane
+[2026-10-16 02:48:57.371801] [Warning] ConfigManaulRemovePlane failed: _scanTarget is null!
+[2026-10-16 02:48:57.371818] [Debug] ExitPlaneRemoveEdit: Plane deleted (cancel or deleted during edit)
+[2026-10-16 02:48:57.371945] [Debug] set frame render panle visible False
+[2026-10-16 02:48:57.372763] [Debug] InitEidtModelView
+[2026-10-16 02:48:57.373108] [Debug] Exit EditBarState: ScanPauseState
+[2026-10-16 02:48:57.373552] [Debug] Enter EditBarState: NormalEditState
+[2026-10-16 02:48:57.374335] [Debug] AttachLineComponent: AddComponent success
+[2026-10-16 02:48:57.374816] [Debug]  IsMeshVisibleOrRepairVisible false
+[2026-10-16 02:48:57.374830] [Debug] scanData item edit mode  false
+[2026-10-16 02:48:57.375145] [Debug] EditBarVisibleCondition false (repeated 2 times)
+[2026-10-16 02:48:57.375886] [Debug] enter idel state clean plane ================== 
+[2026-10-16 02:48:57.376486] [Debug] SetShareButtonEnable: True
+[2026-10-16 02:48:57.376499] [Debug] SetMeshInfluenceBtsStates: True
+[2026-10-16 02:48:57.376511] [Debug] SetShareButtonEnable: False (repeated 2 times)
+[2026-10-16 02:48:57.376523] [Debug] SetMeshAppliedStates: False
+[2026-10-16 02:48:57.377313] [Debug] NormalEditState _editBar is inactive
+[2026-10-16 02:48:57.377324] [Debug] NormalEditState IsEditingFalse
+[2026-10-16 02:48:57.377334] [Debug] enter idel stateTrueFalse
+[2026-10-16 02:48:57.393121] [Debug] 刷新编辑栏消息---RefreshEditBarMessage 
+[2026-10-16 02:48:57.393897] [Debug] LoadSelectedScanDataModels#selectedScanDataList.Count = 0
+[2026-10-16 02:48:57.393925] [Debug] LoadMeshModelData: TModelData = MeshlizationModelData
+[2026-10-16 02:48:57.393936] [Debug] LoadMeshModelData: data is unselected, don't need to load! (repeated 6 times)
+[2026-10-16 02:48:57.393950] [Debug] LoadMeshModelData: TModelData = RepairedModelData
+[2026-10-16 02:48:57.393970] [Debug] LoadMeshModelData: TModelData = CompletedModelData
+[2026-10-16 02:48:57.393991] [Debug] LoadMeshModelData: TModelData = TexturezationModelData
+[2026-10-16 02:48:57.394013] [Debug] LoadMeshModelData: TModelData = AITexturedModelData
+[2026-10-16 02:48:57.394033] [Debug] LoadMeshModelData: TModelData = AIGaussianTexturedModelData
+[2026-10-16 02:48:57.394142] [Debug] [TakeModelThumbnailShot] NormalActiveRendererCount: 0 (repeated 2 times)
+[2026-10-16 02:48:57.394160] [Debug] [CameraControlService] Focus camera changed from <null> to <NormalCamera>
+[2026-10-16 02:48:57.394171] [Debug] [CameraControlService] Camera controllers list changed: [NormalCamera](1)
+[2026-10-16 02:48:57.409666] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:48:57.410404] [Debug] [TakeModelThumbnailShot] Try idle ready thumbnail.
+[2026-10-16 02:48:58.393188] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:48:59.026627] [Debug] OnLeftScanButtonClicked: status = BTN_STATUS_NEW
+[2026-10-16 02:48:59.026883] [Debug] NormalEditState _editBar is inactive
+[2026-10-16 02:48:59.026899] [Debug] NormalEditState IsEditingFalse
+[2026-10-16 02:48:59.026934] [Debug] [MeshProcessPanel] Exiting Fill Holes Plane.
+[2026-10-16 02:48:59.026945] [Debug] [MeshProcessPanel] Exiting meshprocess process.
+[2026-10-16 02:48:59.026988] [Debug] [DTM] Event enqueued: scan_created (params=3)
+[2026-10-16 02:48:59.027002] [Debug] [DTM] Batch sealed: 1 events -> queue (repeated 2 times)
+[2026-10-16 02:48:59.028106] [Debug] [ScanStatus] ScanStatus Changed: Paused -> Uncreate
+[2026-10-16 02:48:59.028224] [Debug] Exit EditBarState: NormalEditState
+[2026-10-16 02:48:59.028253] [Debug] QuitEdit...
+[2026-10-16 02:48:59.028277] [Debug] Origin--Edit...
+[2026-10-16 02:48:59.028294] [Debug] MarkerStateBuffer == null
+[2026-10-16 02:48:59.028306] [Warning] _stateArray is null. cannot origin.
+[2026-10-16 02:48:59.028327] [Warning] _stateArray or _stateBuffer is null. Cannot get marked indices.
+[2026-10-16 02:48:59.028338] [Debug] Ending edit session...
+[2026-10-16 02:48:59.028368] [Debug] CommonEditComponent ReleaseObj
+[2026-10-16 02:48:59.028391] [Debug] CommonEditComponent ReleaseBuffer
+[2026-10-16 02:48:59.028404] [Debug] release compute buffer (repeated 4 times)
+[2026-10-16 02:48:59.028423] [Debug] Edit session ended successfully.
+[2026-10-16 02:48:59.028453] [Debug] Set HasSetEditObj: False (repeated 2 times)
+[2026-10-16 02:48:59.028473] [Debug] DetachLineComponent
+[2026-10-16 02:48:59.028488] [Debug] Destroying CommonEditSelector.
+[2026-10-16 02:48:59.028556] [Debug] [CameraControlService] Focus camera changed from <NormalCamera> to <null>
+[2026-10-16 02:48:59.028568] [Debug] [CameraControlService] Camera controllers list changed: [](0)
+[2026-10-16 02:48:59.028580] [Warning] Key 'Version' not found in settings.
+[2026-10-16 02:48:59.028815] [Debug] Get ScanConfigJson from Device [SCANNER_RAPTORPRO]:
+{
+	"blue_light" : 
+	{
+		"fov" : 
+		[
+			true,
+			false
+		],
+		"fuse_modes" : 
+		[
+			false,
+			false,
+			true,
+			true
+		],
+		"light_type" : 
+		[
+			true,
+			true,
+			false
+		],
+		"ref_rod" : false,
+		"remove_plane" : true,
+		"remove_turntable" : false,
+		"scan_type" : 
+		[
+			true,
+			true,
+			true
+		],
+		"support" : true,
+		"texture" : 
+		[
+			true,
+			true
+		],
+		"voxel_size" : 
+		{
+			"default" : "0.15",
+			"max" : "2.00",
+			"min" : "0.10"
+		}
+	},
+	"infrared" : 
+	{
+		"face" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"support" : false
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"human" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"support" : false
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"obj_big" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"obj_medium" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"obj_small" : 
+		{
+			"fuse_modes" : 
+			{
+				"geo" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"marker" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				},
+				"markerless" : 
+				{
+					"support" : false
+				},
+				"rgbd" : 
+				{
+					"accuracy" : 
+					[
+						false,
+						true
+					],
+					"fov" : 
+					[
+						true,
+						false
+					],
+					"support" : true
+				}
+			},
+			"support" : true
+		},
+		"ref_rod" : false,
+		"remove_plane" : true,
+		"remove_turntable" : true,
+		"scan_type" : 
+		[
+			true,
+			false,
+			true
+		],
+		"support" : true,
+		"texture" : 
+		[
+			true,
+			false
+		]
+	},
+	"pid" : 3075
+}
+[2026-10-16 02:48:59.029149] [Debug] [ScanParamConfig]Load ScanParamData for OB_SCAN_BLUE_LINE_LASER from local:
+{
+  "ScanProjectionProperty": 1,
+  "LaserScanFuseModeProperty": 2,
+  "LaserScanTypeProperty": 0,
+  "LaserPhotogrammetryProperty": false,
+  "IrScanTypeProperty": 0,
+  "IrPhotogrammetryProperty": false,
+  "VoxelSizeProperty": 0.5,
+  "IrVoxelSizeProperty": 0.0,
+  "VoxelSizeRangeProperty": {
+    "min": 0.1,
+    "max": 2.0
+  },
+  "DetailVoxelSizeProperty": 0.25,
+  "DetailVoxelSizeRangeProperty": {
+    "min": 0.05,
+    "max": 0.25
+  },
+  "ScanLightTypeProperty": 1,
+  "FrameRateProperty": 0,
+  "IrScanModeProperty": 0,
+  "ObjectMaterialProperty": 0,
+  "ScanAccuracyProperty": 0,
+  "ScanFOVProperty": 0,
+  "LaserScanFOVProperty": 0,
+  "ScanFuseModeProperty": 0,
+  "DepthRangeProperty": {
+    "min": 200,
+    "max": 550
+  },
+  "CurrentDepthRangeProperty": {
+    "min": 200,
+    "max": 550
+  },
+  "TextureModeProperty": 1,
+  "PlaneRemoveProperty": false
+} (repeated 2 times)
+[2026-10-16 02:48:59.029179] [Debug] [ScanParamConfig]Load FrameRenderParamData for  OB_SCAN_BLUE_LINE_LASER from local:
+{"IrAutoMode":false,"IrDefaultExpAndLaserValue":500,"IrExpAndLaserValue":270,"IrExpAndLaserRange":{"min":1,"max":1000},"RgbAutoMode":true,"RgbDefaultExpValue":500,"RgbExpValue":500,"RgbExpRange":{"min":1,"max":1000},"RgbLightState":false}
+[2026-10-16 02:48:59.029239] [Debug] [ScanDataService] ReplaceRGB result: method=OB_SCAN_REPLACE_RGB_IMAGE_NORMAL, meshVerts=0
+[2026-10-16 02:48:59.029251] [Debug] [ScanDataService] 3DGS result: gsDir=, scanPly=, retexturePly=
+[2026-10-16 02:48:59.029703] [Debug] [AITextureDiag] TryResolveConfirmedGaussianPlyPath SDK empty/failed: [OB_SCAN_ERROR_FILE_NOT_EXIST] obscan_session_get_texturization_3D_GS_mesh_absolute_dir failed! (OB_SCAN_ERROR_FILE_NOT_EXIST) (repeated 2 times)
+[2026-10-16 02:48:59.029757] [Debug] [AITextureDiag] RefreshData: REPLACE_RGB mesh vertices=0, vertex_textures=0, materials=0, containsAITextureData=False
+[2026-10-16 02:48:59.029769] [Debug] [AITextureDiag] RefreshData: scanPly=null, retexturePly=null, containsScan=False, containsRetexture=False, swapRow=False
+[2026-10-16 02:48:59.029792] [Debug] [CursorManager]  PushBusy: Busy_1, stack count: 1
+[2026-10-16 02:48:59.029888] [Debug] [InvisibleBlockingPanel] OnShow
+[2026-10-16 02:48:59.040468] [Debug] ScanData.VoxelSize: 0.5
+[2026-10-16 02:48:59.040949] [Debug] Check isPointCloudButContainFrameworkTexture: IsNewScan = True, HasHistoryFramework = , HasCurrentFramework = False, LaserScanType = OB_SCAN_CLOUD_FUSED, TextureMode = OB_SCAN_NO_TEXTURE, result = False
+[2026-10-16 02:48:59.040967] [Debug] RefreshLaserFrameRate: Device [SCANNER_RAPTORPRO] support frame rate config = False, connection type = USB, isLaser = True, isMarkerScan = True, isFrameworkPointWithTexture = False, isPointCloudButContainFrameworkTexture = False, shouldShow = False
+[2026-10-16 02:48:59.041036] [Debug] [RefreshLaserTextureMode]  ScanParamData.TextureMode: OB_SCAN_NO_TEXTURE
+[2026-10-16 02:48:59.041693] [Debug] set frame render panle visible False
+[2026-10-16 02:48:59.041746] [Debug] InitEidtModelView
+[2026-10-16 02:48:59.041943] [Debug] UnloadMeshModelData: TModelData = MeshlizationModelData
+[2026-10-16 02:48:59.041958] [Debug] UnloadMeshModelData: TModelData = RepairedModelData
+[2026-10-16 02:48:59.041969] [Debug] UnloadMeshModelData: TModelData = CompletedModelData
+[2026-10-16 02:48:59.041979] [Debug] UnloadMeshModelData: TModelData = TexturezationModelData
+[2026-10-16 02:48:59.041990] [Debug] UnloadMeshModelData: TModelData = AITexturedModelData
+[2026-10-16 02:48:59.042002] [Debug] UnloadMeshModelData: TModelData = AIGaussianTexturedModelData
+[2026-10-16 02:48:59.042054] [Debug] [CameraControlService] Focus camera changed from <null> to <ScanningCamera>
+[2026-10-16 02:48:59.042068] [Debug] [CameraControlService] Camera controllers list changed: [ScanningCamera](1)
+[2026-10-16 02:48:59.045135] [Debug] LoadSelectedScanDataModels#selectedScanDataList.Count = 0
+[2026-10-16 02:48:59.045153] [Debug] LoadMeshModelData: TModelData = MeshlizationModelData
+[2026-10-16 02:48:59.045164] [Debug] LoadMeshModelData: data is unselected, don't need to load! (repeated 6 times)
+[2026-10-16 02:48:59.045174] [Debug] LoadMeshModelData: TModelData = RepairedModelData
+[2026-10-16 02:48:59.045195] [Debug] LoadMeshModelData: TModelData = CompletedModelData
+[2026-10-16 02:48:59.045214] [Debug] LoadMeshModelData: TModelData = TexturezationModelData
+[2026-10-16 02:48:59.045230] [Debug] LoadMeshModelData: TModelData = AITexturedModelData
+[2026-10-16 02:48:59.045249] [Debug] LoadMeshModelData: TModelData = AIGaussianTexturedModelData
+[2026-10-16 02:48:59.045271] [Debug] [CursorManager]  PopBusy: Busy_1, stack count: 0
+[2026-10-16 02:48:59.045283] [Debug] [InvisibleBlockingPanel] OnHide
+[2026-10-16 02:48:59.045321] [Debug] [TakeModelThumbnailShot] is scanValid: False
+[2026-10-16 02:48:59.060774] [Debug] [GuideManager] Guide 'FirstCreateProjectGuide' is disabled for this launch, skipped.
+[2026-10-16 02:48:59.676327] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:48:59.943013] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:49:00.726564] [Debug] OnMiddleScanButtonClicked: status = BTN_STATUS_PREVIEW
+[2026-10-16 02:49:00.726636] [Debug] ApplyScanAndPreview: Status = Uncreate
+[2026-10-16 02:49:00.726674] [Debug] new scan [Scan_1]'s ScanModeConfigToString:
+PostTexture: OB_SCAN_NO_TEXTURE
+FrameRate: OB_SCAN_FRAME_RATE_AUTO
+Projection: OB_SCAN_BLUE_LINE_LASER
+ScanMode: OB_SCAN_MODE_FACE
+Accuracy: OB_SCAN_ACCURACY_HIGH
+FuseMode: OB_SCAN_FUSE_MODE_MARKER
+FOV: OB_SCAN_FOV_NORMAL
+ObjectMaterial: OB_SCAN_OBJECT_MATERIAL_STANDARD
+VoxelSize: 0.5
+LightType: OB_SCAN_LIGHT_TYPE_CROSS
+ScanType: OB_SCAN_CLOUD_FUSED
+DetailVoxelSize: 0.25
+
+[2026-10-16 02:49:00.726686] [Debug] Create scan
+[2026-10-16 02:49:00.730121] [Debug] [ScanDataService] ReplaceRGB result: method=OB_SCAN_REPLACE_RGB_IMAGE_NORMAL, meshVerts=0
+[2026-10-16 02:49:00.730138] [Debug] [ScanDataService] 3DGS result: gsDir=, scanPly=, retexturePly=
+[2026-10-16 02:49:00.730831] [Debug] [AITextureDiag] TryResolveConfirmedGaussianPlyPath SDK empty/failed: [OB_SCAN_ERROR_FILE_NOT_EXIST] obscan_session_get_texturization_3D_GS_mesh_absolute_dir failed! (OB_SCAN_ERROR_FILE_NOT_EXIST) (repeated 2 times)
+[2026-10-16 02:49:00.730891] [Debug] [AITextureDiag] RefreshData: REPLACE_RGB mesh vertices=0, vertex_textures=0, materials=0, containsAITextureData=False
+[2026-10-16 02:49:00.730905] [Debug] [AITextureDiag] RefreshData: scanPly=null, retexturePly=null, containsScan=False, containsRetexture=False, swapRow=False
+[2026-10-16 02:49:00.730937] [Debug] GetSupportContinueScanState=True: uniqueId=1792133340, support_continue_scan=True, scannerPid=3075, currentScannerPid=3075, isReadParamsFailed=False, isCRCCheckFailed=False
+[2026-10-16 02:49:00.730965] [Debug] LoadModels: NormalModelParent is inactive, don't need to refresh render models
+[2026-10-16 02:49:00.730982] [Debug] [TakeModelThumbnailShot] is scanValid: False
+[2026-10-16 02:49:00.730999] [Debug] ActiveScanData: activeUniqueId = 1792133340
+[2026-10-16 02:49:00.731012] [Debug] RefreshDepthRange#depthRange.min:200  depthRange.max:550
+[2026-10-16 02:49:00.731021] [Debug] ConfigDepthRange: min = 200 max = 550
+[2026-10-16 02:49:00.731032] [Debug] ConfigDepthRange: success!
+[2026-10-16 02:49:00.731050] [Debug] [ScanStatus] ScanStatus Changed: Uncreate -> Created
+[2026-10-16 02:49:00.731067] [Debug] [ScanStatus] ScanStatus Changed: Created -> Previewing
+[2026-10-16 02:49:00.731831] [Warning] Key 'RemoteFilterTipsDontShowAgain' not found in settings.
+[2026-10-16 02:49:00.731854] [Debug] [CursorManager]  PushBusy: Busy_1, stack count: 1
+[2026-10-16 02:49:00.732104] [Debug] [InvisibleBlockingPanel] OnShow
+[2026-10-16 02:49:00.732135] [Debug] Preview
+[2026-10-16 02:49:00.734737] [Debug] IsDetailedScanSupport: [OB_SCAN_ERROR_MULTI_CALLED] obscan_scan_get_model_point_color_clouds failed!
+[2026-10-16 02:49:00.876631] [Debug] [ToDelete][RemoteConnect] OnScanningPreviewMessage Receive: Status=True, IsMessageConnected=False
+[2026-10-16 02:49:00.876989] [Debug] set frame render panle visible True (repeated 2 times)
+[2026-10-16 02:49:00.877098] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 270 (repeated 4 times)
+[2026-10-16 02:49:00.897640] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 4 times)
+[2026-10-16 02:49:00.916910] [Debug] ConfigRgbExposureTime: value = 500 (repeated 2 times)
+[2026-10-16 02:49:00.916925] [Debug] ConfigRgbExposureTime: success! (repeated 4 times)
+[2026-10-16 02:49:00.916942] [Debug] ConfigRgbExposureTime: value = 0 (repeated 2 times)
+[2026-10-16 02:49:00.939742] [Debug] [ScanParamConfig]Save ScanParamData for OB_SCAN_BLUE_LINE_LASER to local:
+{
+  "ScanProjectionProperty": "OB_SCAN_BLUE_LINE_LASER",
+  "LaserScanFuseModeProperty": "OB_SCAN_FUSE_MODE_MARKER",
+  "LaserScanTypeProperty": "OB_SCAN_CLOUD_FUSED",
+  "LaserPhotogrammetryProperty": false,
+  "IrScanTypeProperty": "OB_SCAN_CLOUD_FUSED",
+  "IrPhotogrammetryProperty": false,
+  "VoxelSizeProperty": 0.5,
+  "IrVoxelSizeProperty": 0.0,
+  "VoxelSizeRangeProperty": {
+    "min": 0.1,
+    "max": 2.0
+  },
+  "DetailVoxelSizeProperty": 0.25,
+  "DetailVoxelSizeRangeProperty": {
+    "min": 0.05,
+    "max": 0.25
+  },
+  "ScanLightTypeProperty": "OB_SCAN_LIGHT_TYPE_CROSS",
+  "FrameRateProperty": "OB_SCAN_FRAME_RATE_AUTO",
+  "IrScanModeProperty": "OB_SCAN_MODE_FACE",
+  "ObjectMaterialProperty": "OB_SCAN_OBJECT_MATERIAL_STANDARD",
+  "ScanAccuracyProperty": "OB_SCAN_ACCURACY_FAST",
+  "ScanFOVProperty": "OB_SCAN_FOV_NORMAL",
+  "LaserScanFOVProperty": "OB_SCAN_FOV_NORMAL",
+  "ScanFuseModeProperty": "OB_SCAN_FUSE_MODE_GEOMETRY",
+  "DepthRangeProperty": {
+    "min": 200,
+    "max": 550
+  },
+  "CurrentDepthRangeProperty": {
+    "min": 200,
+    "max": 550
+  },
+  "TextureModeProperty": "OB_SCAN_NO_TEXTURE",
+  "PlaneRemoveProperty": false
+}
+[2026-10-16 02:49:00.940015] [Debug] [ScanParamConfig]Save FrameRenderParamData for OB_SCAN_BLUE_LINE_LASER to local:
+{"IrAutoMode":false,"IrDefaultExpAndLaserValue":500,"IrExpAndLaserValue":270,"IrExpAndLaserRange":{"min":1,"max":1000},"RgbAutoMode":true,"RgbDefaultExpValue":500,"RgbExpValue":500,"RgbExpRange":{"min":1,"max":1000},"RgbLightState":false}
+[2026-10-16 02:49:00.940081] [Debug] [CursorManager]  PopBusy: Busy_1, stack count: 0 (repeated 2 times)
+[2026-10-16 02:49:00.940101] [Debug] [InvisibleBlockingPanel] OnHide (repeated 2 times)
+[2026-10-16 02:49:01.010520] [Debug] UpdateScanFrame: force update history frame model! (repeated 2 times)
+[2026-10-16 02:49:01.011518] [Debug] render markers frame=======
+[2026-10-16 02:49:01.011622] [Debug] ===================awake OBScanMarkerInstance===================
+[2026-10-16 02:49:01.376710] [Debug] OnMiddleScanButtonClicked: status = BTN_STATUS_START
+[2026-10-16 02:49:01.376939] [Debug] [CursorManager]  PushBusy: Busy_1, stack count: 1
+[2026-10-16 02:49:01.377114] [Debug] [InvisibleBlockingPanel] OnShow
+[2026-10-16 02:49:01.399274] [Debug] ActiveScanData: activeUniqueId = 1792133340
+[2026-10-16 02:49:01.399585] [Debug] [ScanStatus] ScanStatus Changed: Previewing -> Scanning
+[2026-10-16 02:49:01.400583] [Debug] [DTM] Event enqueued: scan_started (params=13)
+[2026-10-16 02:49:01.400668] [Debug] [DTM] Batch sealed: 1 events -> queue
+[2026-10-16 02:49:01.430676] [Debug] [GuideManager] Guide 'FirstScanGuide' is disabled for this launch, skipped.
+[2026-10-16 02:49:03.650414] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:49:03.683841] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:49:04.493454] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:06.360509] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:49:08.010671] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:08.718512] [Debug] [DTM] Batch sealed: 1 events -> queue
+[2026-10-16 02:49:11.371950] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:49:11.399454] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:49:11.517535] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:15.047157] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:18.410667] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:49:18.431039] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:49:18.583513] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:20.411629] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:49:20.442906] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:49:22.093749] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:23.761759] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:49:23.793052] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:49:25.593727] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:29.100304] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:31.860986] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:49:31.876652] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:49:32.630679] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:33.477431] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:49:33.510022] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:49:33.526755] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:49:36.127276] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:36.562547] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:49:37.276011] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:49:39.644116] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:40.462962] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:49:41.127422] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:49:43.160300] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:43.512981] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:49:44.165394] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:49:46.394442] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:49:46.644402] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:49:46.689180] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:50.193469] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:53.711605] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:55.747184] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:49:55.769022] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:49:57.210052] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:49:57.443347] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:49:59.610660] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 0
+[2026-10-16 02:49:59.754080] [Debug] ConfigCombinedExposureAndLaserCurrent: success!
+[2026-10-16 02:49:59.754105] [Debug] SetRenderViewVisible true
+[2026-10-16 02:49:59.754117] [Debug] set frame render panle visible True
+[2026-10-16 02:49:59.995973] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:50:00.028621] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:01.027386] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:50:01.066828] [Debug] SetEditModelViewPointerEnterFalse (repeated 2 times)
+[2026-10-16 02:50:01.526470] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:50:04.844872] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:50:11.311132] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:50:15.459763] [Debug] SetEditModelViewPointerEnterFalse (repeated 4 times)
+[2026-10-16 02:50:15.476454] [Debug] SetEditModelViewPointerEnterTrue (repeated 3 times)
+[2026-10-16 02:50:16.793044] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:17.929138] [Debug] SetEditModelViewPointerEnterFalse (repeated 9 times)
+[2026-10-16 02:50:17.962781] [Debug] SetEditModelViewPointerEnterTrue (repeated 9 times)
+[2026-10-16 02:50:19.259731] [Debug] SetEditModelViewPointerEnterFalse (repeated 6 times)
+[2026-10-16 02:50:19.276339] [Debug] SetEditModelViewPointerEnterTrue (repeated 5 times)
+[2026-10-16 02:50:20.446057] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:20.976262] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:50:21.009878] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:27.479508] [Debug] CheckAndEnterFullScreen: enter full screen scan mode!
+[2026-10-16 02:50:28.038350] [Debug] CheckAndExitFullScreen: exit full screen scan mode!
+[2026-10-16 02:50:31.493496] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:50:34.927218] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:34.993483] [Debug] SetEditModelViewPointerEnterFalse (repeated 3 times)
+[2026-10-16 02:50:35.110498] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:50:38.543532] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:39.676171] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:50:39.693357] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:41.712908] [Debug] SetEditModelViewPointerEnterFalse (repeated 3 times)
+[2026-10-16 02:50:41.729751] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:50:43.360714] [Debug] OnRightScanButtonClicked: status = BTN_STATUS_FINISH
+[2026-10-16 02:50:43.509654] [Debug] Enter EditBarState: ScanPauseState
+[2026-10-16 02:50:43.509964] [Debug] set frame render panle visible False
+[2026-10-16 02:50:43.511407] [Debug] [ScanStatus] ScanStatus Changed: Scanning -> Paused
+[2026-10-16 02:50:46.076145] [Debug] [CursorManager]  PushBusy: Busy_1, stack count: 1
+[2026-10-16 02:50:46.076250] [Debug] [InvisibleBlockingPanel] OnShow
+[2026-10-16 02:50:46.097972] [Debug] [CursorManager]  PopBusy: Busy_1, stack count: 0
+[2026-10-16 02:50:46.098029] [Debug] [InvisibleBlockingPanel] OnHide
+[2026-10-16 02:50:46.098428] [Debug] ActiveScanData: activeUniqueId = 1792133340
+[2026-10-16 02:50:46.098476] [Debug] [ScanStatus] ScanStatus Changed: Paused -> Scanning
+[2026-10-16 02:50:46.098864] [Debug] Exit EditBarState: ScanPauseState
+[2026-10-16 02:50:46.098891] [Debug] set frame render panle visible True (repeated 3 times)
+[2026-10-16 02:50:46.099090] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 270
+[2026-10-16 02:50:46.135942] [Debug] ConfigCombinedExposureAndLaserCurrent: success! (repeated 2 times)
+[2026-10-16 02:50:46.135965] [Debug] SetRenderViewVisible true (repeated 2 times)
+[2026-10-16 02:50:46.135999] [Debug] ConfigCombinedExposureAndLaserCurrent: value = 0
+[2026-10-16 02:50:46.169849] [Debug] ConfigRgbExposureTime: value = 500
+[2026-10-16 02:50:46.169867] [Debug] ConfigRgbExposureTime: success! (repeated 2 times)
+[2026-10-16 02:50:46.169886] [Debug] ConfigRgbExposureTime: value = 0
+[2026-10-16 02:50:46.186451] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:46.186729] [Debug] OnDeviceTipsMessage received msg: OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME
+[2026-10-16 02:50:46.187039] [Debug] UpdateScanFrame: force update history frame model!
+[2026-10-16 02:50:47.278135] [Debug] SetEditModelViewPointerEnterFalse (repeated 3 times)
+[2026-10-16 02:50:47.328813] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:50:48.243544] [Debug] OnMiddleScanButtonClicked: status = BTN_STATUS_PAUSE
+[2026-10-16 02:50:48.329823] [Debug] Enter EditBarState: ScanPauseState
+[2026-10-16 02:50:48.330130] [Debug] set frame render panle visible False
+[2026-10-16 02:50:48.331261] [Debug] [ScanStatus] ScanStatus Changed: Scanning -> Paused
+[2026-10-16 02:50:49.726412] [Debug] OnRightScanButtonClicked: status = BTN_STATUS_FINISH
+[2026-10-16 02:50:50.827612] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:50:54.226982] [Debug] SetEditModelViewPointerEnterFalse (repeated 2 times)
+[2026-10-16 02:50:54.243590] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:50:56.604156] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:50:58.059578] [Debug] OnRightScanButtonClicked: status = BTN_STATUS_FINISH
+[2026-10-16 02:50:59.263395] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:51:04.092481] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:51:04.476496] [Debug] OnRightScanButtonClicked: status = BTN_STATUS_FINISH
+[2026-10-16 02:51:07.142505] [Debug] SetEditModelViewPointerEnterTrue
+[2026-10-16 02:51:08.159591] [Debug] SetEditModelViewPointerEnterFalse (repeated 3 times)
+[2026-10-16 02:51:08.660695] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:51:11.142988] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:51:11.226353] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:51:18.084764] [Debug] SetEditModelViewPointerEnterFalse (repeated 2 times)
+[2026-10-16 02:51:18.224801] [Debug] SetEditModelViewPointerEnterTrue (repeated 2 times)
+[2026-10-16 02:51:19.226002] [Debug] SetEditModelViewPointerEnterFalse
+[2026-10-16 02:51:19.279055] [Warning] Key 'CONFIRM_TIPS_EditHover' not found in settings.
+[2026-10-16 02:51:24.278761] [Warning] Key 'InputShortcutBindings' not found in settings.
+[2026-10-16 02:51:24.279141] [Warning] Key 'RECTANGLE_SELECT_TIPS_EditHover' not found in settings.
+[2026-10-16 02:51:25.613603] [Warning] Key 'InputShortcutBindings' not found in settings.
+[2026-10-16 02:51:25.613962] [Warning] Key 'CUTTING_PLANE_TIPS_EditHover' not found in settings.
+[2026-10-16 02:51:41.610988] [Warning] Key 'InputShortcutBindings' not found in settings.
+[2026-10-16 02:51:41.611185] [Warning] Key 'CUTTING_PLANE_TIPS_EditHover' not found in settings.
