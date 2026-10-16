@@ -398,19 +398,29 @@ typedef ObScanStatus (*fn_obscan_session_create_scan)(ObScanSessionHandle sessio
 // statusCallback)`, which looks like a single-callback signature — but
 // OBScanTarget (the class that wraps this native call) separately defines
 // static trampolines for BOTH a ProgressCallbackDelegate and a
-// StatusCallbackDelegate ([MonoPInvokeCallback(typeof(...))]), the same
-// pairing obscan_scan_stop() uses. Passing only one callback pointer here
-// silently misaligns the real two-callback native signature: the garbage
-// "status" values we saw (e.g. 10281832) were actually stale integer-
-// register contents from calling our function as if it were the
-// *progress* callback (a float, passed in an FP register under AAPCS64,
-// read back as a bogus int), and passing NULL crashed when the SDK tried
-// to invoke the still-missing second (real status) callback.
+// StatusCallbackDelegate ([MonoPInvokeCallback(typeof(...))]). Passing
+// only one callback pointer here silently misaligns the real two-
+// callback native signature: the garbage "status" values we saw (e.g.
+// 10281832) were actually stale integer-register contents from calling
+// our function as if it were the *progress* callback (a float, passed
+// in an FP register under AAPCS64, read back as a bogus int), and
+// passing NULL crashed when the SDK tried to invoke the still-missing
+// second (real status) callback.
 typedef ObScanStatus (*fn_obscan_scan_preview)(ObScanScanHandle scan, ObScanProgressCallback progress_callback,
                                                 ObScanStatusCallback status_callback);
 typedef ObScanStatus (*fn_obscan_scan_start)(ObScanScanHandle scan);
-typedef ObScanStatus (*fn_obscan_scan_pause)(ObScanScanHandle scan, bool is_stop_stream);
-typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, ObScanProgressCallback progress_callback, ObScanStatusCallback status_callback, bool is_block);
+// OBScanTarget.PauseScan() takes NO parameters beyond the implicit
+// handle — our earlier `is_stop_stream` bool was invented, not
+// recovered from the real ABI. Likely harmless under AAPCS64 (an unused
+// extra argument just sits in a register the real function never
+// reads), but it was never real and is removed for accuracy.
+typedef ObScanStatus (*fn_obscan_scan_pause)(ObScanScanHandle scan);
+// OBScanTarget.StopScan(bool isBlock = false, Action<OBScanStatus>
+// statusCallback) — two params, isBlock FIRST, no progress callback at
+// all. Our earlier 4-arg (scan, progress_cb, status_cb, is_block) had
+// both the wrong count and the wrong order; this is the likely cause of
+// the reliable OB_SCAN_ERROR_INVALID_SCAN seen calling the old shape.
+typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, bool is_block, ObScanStatusCallback status_callback);
 typedef ObScanStatus (*fn_obscan_scan_get_raw_cloud)(ObScanScanHandle scan, ObScanPointClouds* out_cloud);
 typedef ObScanStatus (*fn_obscan_scan_get_realtime_model_mesh)(ObScanScanHandle scan, ObScanTriangleMesh* out_mesh);
 typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, ObScanModeConfig* out_config);

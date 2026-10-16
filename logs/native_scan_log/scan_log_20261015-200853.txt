@@ -1,0 +1,90 @@
+[2026-10-15 20:08:53.676453][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:08:53.676740][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-15 20:08:53.676760][INFO ][0x1fd68bf80][::0] dependent files dir: 
+[2026-10-15 20:08:53.676770][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-15 20:08:53.676779][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-15 20:08:53.676787][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:08:53.676795][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:08:53.676804][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:08:53.676811][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-15 20:08:53.676820][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-15 20:08:53.680336][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-15 20:08:53.680401][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-15 20:08:53.680426][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-15 20:08:53.680448][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-15 20:08:53.680484][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-15 20:08:53.680510][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-15 20:08:53.680520][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-15 20:08:53.680528][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-15 20:08:53.680536][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-15 20:08:53.680545][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-15 20:08:53.680563][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-15 20:08:53.680570][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-15 20:08:53.680577][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-15 20:08:53.680584][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-15 20:08:53.680591][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-15 20:08:53.680598][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-15 20:08:53.680604][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-15 20:08:53.680611][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-15 20:08:53.680617][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-15 20:08:53.680669][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-15 20:08:53.680678][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:08:53.680686][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:08:53.680707][INFO ][0x1fd68bf80][::0] send device msg begin
+[2026-10-15 20:08:53.680715][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT
+[2026-10-15 20:08:53.680724][INFO ][0x1fd68bf80][::0] send device msg end
+[2026-10-15 20:08:53.680732][ERROR][0x1fd68bf80][::0] connect to device failed!
+[2026-10-15 20:08:53.680739][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-15 20:08:55.702873][INFO ][0x16b6df000][::0] removedList count: 0, addedList count:1
+[2026-10-15 20:08:56.228134][INFO ][0x16b6df000][::0] firmware version:1.5.7,get device calibration timestamp:1792014971
+[2026-10-15 20:08:56.228187][INFO ][0x16b6df000][::0] add device info to list sn:CR0886100SN
+[2026-10-15 20:08:56.228198][INFO ][0x16b6df000][::0] current device info list:
+[2026-10-15 20:08:56.228208][INFO ][0x16b6df000][::0] device sn:CR0886100SN
+[2026-10-15 20:08:56.542729][INFO ][0x16b6df000][::0] get device calibration timestamp:1792014971
+[2026-10-15 20:08:56.542753][ERROR][0x16b6df000][::0] property is not permission to operate.
+[2026-10-15 20:08:56.542762][INFO ][0x16b6df000][::0] usb device is registered successfully 
+[2026-10-15 20:08:56.542770][INFO ][0x16b6df000][::0] set select device serial number:CR0886100SN
+[2026-10-15 20:08:56.542778][INFO ][0x16b6df000][::0] device connected state call back begin
+[2026-10-15 20:08:56.542792][INFO ][0x16b6df000][::0] #########camera state###############
+[2026-10-15 20:08:56.542798][INFO ][0x16b6df000][::0] #########usb connected##############
+[2026-10-15 20:08:56.542804][INFO ][0x16b6df000][::0] [1;31mupdate_camera_status 0, cur_device: true[0m
+[2026-10-15 20:08:56.542809][INFO ][0x16b6df000][::0] calib update callback begin
+[2026-10-15 20:08:56.542815][INFO ][0x16b6df000][::0] calib update callback end
+[2026-10-15 20:08:56.542820][INFO ][0x16b6df000][::0] camera name: Creality Raptor Pro
+[2026-10-15 20:08:56.542825][INFO ][0x16b6df000][::0] camera serial number: CR0886100SN
+[2026-10-15 20:08:56.542830][INFO ][0x16b6df000][::0] camera connection type: USB3.0
+[2026-10-15 20:08:56.542835][INFO ][0x16b6df000][::0] camera firmware version: 1.5.7
+[2026-10-15 20:08:56.542840][INFO ][0x16b6df000][::0] wifi device firmware version: Unknown
+[2026-10-15 20:08:56.542846][INFO ][0x16b6df000][::0] get active device serial number:CR0886100SN
+[2026-10-15 20:08:56.543210][INFO ][0x16b6df000][::0] the device calib status: false
+[2026-10-15 20:08:56.543221][INFO ][0x16b6df000][::0] check device pccupancy status begin
+[2026-10-15 20:08:56.566134][INFO ][0x16b6df000][::0] get origin calibration param done,origin params size:1
+[2026-10-15 20:08:56.612211][INFO ][0x16b6df000][::0] is support rescan: true
+[2026-10-15 20:08:56.612230][INFO ][0x16b6df000][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_CONNECT
+[2026-10-15 20:08:56.612237][INFO ][0x16b6df000][::0] device connected state call back done
+[2026-10-15 20:08:56.612243][INFO ][0x16b6df000][::0] Init device return:1.
+[2026-10-15 20:08:56.721150][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 20:08:56.721180][INFO ][0x1fd68bf80][::0] obscan_context_create_session
+[2026-10-15 20:08:56.721188][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:08:56.721196][INFO ][0x1fd68bf80][::0] [OBScanSession] Thread spawned successfully.
+[2026-10-15 20:08:56.721202][INFO ][0x1fd68bf80][::0] create dir before: /tmp/openscanner_live_session
+[2026-10-15 20:08:56.721209][INFO ][0x1fd68bf80][::0] create dir after: /tmp/openscanner_live_session
+[2026-10-15 20:08:56.723069][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:08:56.725266][INFO ][0x1fd68bf80][::0] session init state : OB_SCAN_SUCCESS
+[2026-10-15 20:08:56.725277][INFO ][0x1fd68bf80][::0] create session success !
+[2026-10-15 20:08:56.725285][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:08:56.725292][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:08:56.725299][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_INFRARED
+[2026-10-15 20:08:56.725307][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:08:56.725313][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:08:56.725320][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:08:56.725326][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_GEOMETRY
+[2026-10-15 20:08:56.725333][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:08:56.725340][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:08:56.725348][INFO ][0x1fd68bf80][::0] voxel_size: 0.003000
+[2026-10-15 20:08:56.725354][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:08:56.725361][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:08:56.725368][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:08:56.725374][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:08:56.725381][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:08:56.725387][ERROR][0x1fd68bf80][::0] [1;31mthe raptor serial cannot support OB_SCAN_ACCURACY_FAST ![0m

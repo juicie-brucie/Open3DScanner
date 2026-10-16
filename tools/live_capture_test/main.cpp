@@ -16,6 +16,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <thread>
 
@@ -29,8 +30,11 @@
 namespace {
 
 constexpr const char* kWorkerFlag = "--live-capture-worker";
-constexpr int kPollCount = 15;
-constexpr int kPollIntervalMs = 300;
+// 15 * 300ms (4.5s) was fine for exercising the API shape, but nowhere
+// near enough real time for a human to actually move the scanner around
+// an object — bumped to a real scan-length window (~30s).
+constexpr int kPollCount = 60;
+constexpr int kPollIntervalMs = 500;
 constexpr int kDeviceWaitAttempts = 30;    // ~6s at 200ms/attempt.
 constexpr int kDeviceWaitIntervalMs = 200;
 
@@ -212,16 +216,27 @@ int RunLiveCapture(const std::string& library_path) {
     scan_config.mode_config.projection = OB_SCAN_BLUE_LINE_LASER;    // ScanProjectionProperty: 1
     scan_config.mode_config.scan_mode = OB_SCAN_MODE_OBJECT_MEDIUM;  // not present in scanParamConfig.dat; kept as-is
     scan_config.mode_config.accuracy = OB_SCAN_ACCURACY_HIGH;  // ScanAccuracyProperty: 1 (ground truth)
-    // LaserScanFuseModeProperty: 2 == OB_SCAN_FUSE_MODE_MARKER — this
-    // device's real saved session used physical markers (confirmed by
-    // scanDataConfig.dat's "remove_markers": true during optimization),
-    // not Markerless.
+    // Marker mode reliably gets real per-frame laser points (confirmed:
+    // hundreds of nonzero "lasere total_points_num" lines) — Markerless
+    // didn't produce any laser points at all in its own retest, with
+    // OrbbecFusion explicitly logging "total is zero". Back to Marker;
+    // the raw_cloud/mesh-never-reflecting-real-points question is
+    // tracked separately (see README) and may need
+    // obscan_session_import_marker_framework_datas, which we don't call.
     scan_config.mode_config.fuse_mode = OB_SCAN_FUSE_MODE_MARKER;
     scan_config.mode_config.scan_fov = OB_SCAN_FOV_NORMAL;                  // LaserScanFOVProperty: 0
     scan_config.mode_config.object_material = OB_SCAN_OBJECT_MATERIAL_STANDARD;  // ObjectMaterialProperty: 0
     // CROSS (ScanLightTypeProperty: 1) wasn't actually the cause of the
     // obscan_scan_start hang — PARALLEL hung identically. Restored.
-    scan_config.mode_config.light_type = OB_SCAN_LIGHT_TYPE_CROSS;  // ScanLightTypeProperty: 1 (ground truth)
+    // Cross (ScanLightTypeProperty: 1, real ground truth) is NOT the
+    // cause of the light_type-0/BLAE-skip/zero-points runs — a log from
+    // earlier tonight (right after a power cycle, before any crashes
+    // since) used this exact value and got real non-zero laser point
+    // counts within 10ms of obscan_scan_start. Switching to Parallel
+    // and still getting zero points confirmed it: this is the same
+    // stale-device-state issue as before, re-triggered by crashes since
+    // the last power cycle, not a config field.
+    scan_config.mode_config.light_type = OB_SCAN_LIGHT_TYPE_CROSS;
     scan_config.mode_config.scan_type = OB_SCAN_CLOUD_FUSED;         // LaserScanTypeProperty: 0
     scan_config.mode_config.detail_voxel_size = 0.05;  // DetailVoxelSizeProperty: 0.05 (ground truth)
     scan_config.mode_config.voxel_size = 0.1;          // VoxelSizeProperty: 0.1 (ground truth)
@@ -249,9 +264,9 @@ int RunLiveCapture(const std::string& library_path) {
     // preview is actively flowing frames. Calling start() on a scan that
     // was never previewed is what produced the native "cannot called
     // start !" / OB_SCAN_ERROR_INVALID_ARGUMENT seen before this fix.
-    // obscan_scan_preview takes BOTH a progress and a status callback,
-    // like obscan_scan_stop — passing only one (or NULL) misaligned the
-    // real signature; see obscan_api.h for how we found this.
+    // obscan_scan_preview takes BOTH a progress and a status callback —
+    // passing only one (or NULL) misaligned the real signature; see
+    // obscan_api.h for how we found this.
     status = lib.obscan_scan_preview(scan, &OnPreviewProgress, &OnPreviewStatus);
     Report("obscan_scan_preview", status);
     if (status != OB_SCAN_SUCCESS) return 1;
@@ -292,18 +307,33 @@ int RunLiveCapture(const std::string& library_path) {
             const ObScanPoint& p = cloud.points[0];
             std::printf("[worker]   points[0] = (%.4f, %.4f, %.4f)\n", p.x, p.y, p.z);
         }
+
+        // The native log shows the per-frame laser-detection pipeline
+        // genuinely finding points (hundreds of nonzero "lasere
+        // total_points_num" lines), but obscan_scan_get_raw_cloud stays
+        // at 0 throughout — testing whether that's a getter mismatch:
+        // this one is explicitly named for the *live, during-scan*
+        // model, which raw_cloud may not be.
+        ObScanTriangleMesh mesh = {};
+        ObScanStatus mesh_status = lib.obscan_scan_get_realtime_model_mesh(scan, &mesh);
+        std::printf(
+            "[worker] poll %2d/%d: obscan_scan_get_realtime_model_mesh -> %s (%d), num_vertices=%u, num_triangles=%u\n",
+            i + 1, kPollCount, StatusName(mesh_status), static_cast<int>(mesh_status), mesh.num_vertices,
+            mesh.num_triangles);
         std::fflush(stdout);
     }
 
-    status = lib.obscan_scan_pause(scan, /*is_stop_stream=*/true);
+    // OBScanTarget.PauseScan() takes no parameters — see obscan_api.h.
+    // Our earlier is_stop_stream bool was invented, not real ABI.
+    status = lib.obscan_scan_pause(scan);
     Report("obscan_scan_pause", status);
 
     // The real app's own captured call log had a ~5s gap between pause
-    // and stop (20:35:44 -> 20:35:49); we called them back-to-back with
-    // no delay, which is a likely cause of obscan_scan_stop's reliable
-    // OB_SCAN_ERROR_INVALID_SCAN (845283618) here — stopping a stream
-    // before its pause/teardown has actually settled. Give it the same
-    // runway before calling stop.
+    // and stop (20:35:44 -> 20:35:49); tried adding the same gap here as
+    // a first hypothesis for OB_SCAN_ERROR_INVALID_SCAN (845283618), but
+    // it made no difference — the real cause turned out to be a wrong
+    // obscan_scan_stop signature (wrong arg count AND order; see
+    // obscan_api.h). Kept anyway: cheap, and harmless if unnecessary.
     for (int i = 0; i < 25; ++i) {
 #if defined(__APPLE__)
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.2, false);
@@ -312,11 +342,13 @@ int RunLiveCapture(const std::string& library_path) {
 #endif
     }
 
-    // NULL callbacks aren't tolerated here either — see obscan_scan_preview
-    // above, where NULL crashed outright. obscan_scan_stop silently
-    // returned OB_SCAN_ERROR_INVALID_ARGUMENT with no native log line at
-    // all here, consistent with an early argument-validation check.
-    status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/true);
+    // OBScanTarget.StopScan(bool isBlock, Action<OBScanStatus>
+    // statusCallback) — no progress callback, isBlock comes first. The
+    // old 4-arg call (with a bogus progress callback) is the likely
+    // cause of the reliable OB_SCAN_ERROR_INVALID_SCAN seen before this
+    // fix. NULL still isn't tolerated for the status callback (crashes,
+    // same as obscan_scan_preview).
+    status = lib.obscan_scan_stop(scan, /*is_block=*/true, &OnPreviewStatus);
     Report("obscan_scan_stop", status);
 
     auto session_destroy_start = std::chrono::steady_clock::now();
@@ -359,6 +391,35 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "No OBScan SDK library found. Pass the path explicitly.\n");
         return 1;
     }
+
+#if defined(__APPLE__) && defined(VULKAN_DISABLE_INTERPOSE_DYLIB)
+    // See vulkan_disable_interpose.c for the full story. Two things must
+    // both be present by the time our interposer binds, or dyld aborts
+    // with "symbol not found in flat namespace": MoltenVK's real
+    // vkCreateInstance/vkCreateDevice (it's only otherwise loaded much
+    // later, transitively, when the worker dlopen()s liborbbec_scan.dylib)
+    // and our own interposer. DYLD_INSERT_LIBRARIES loads a colon-
+    // separated list in order, so inserting CrealityScan's own,
+    // unmodified libMoltenVK.dylib (a sibling of the obscan library)
+    // first makes its symbols available before our interposer needs
+    // them — we're pointing dyld at a vendor file that already exists
+    // on disk, not copying or altering it.
+    std::string moltenvk_path;
+    {
+        size_t slash = library_path.find_last_of('/');
+        if (slash != std::string::npos) {
+            moltenvk_path = library_path.substr(0, slash + 1) + "libMoltenVK.dylib";
+        }
+    }
+    if (!moltenvk_path.empty()) {
+        std::string insert = moltenvk_path + ":" + VULKAN_DISABLE_INTERPOSE_DYLIB;
+        setenv("DYLD_INSERT_LIBRARIES", insert.c_str(), /*overwrite=*/1);
+        std::printf("[launcher] DYLD_INSERT_LIBRARIES=%s\n", insert.c_str());
+    } else {
+        std::printf("[launcher] Could not derive libMoltenVK.dylib path from '%s'; skipping Vulkan-disable fix.\n",
+                     library_path.c_str());
+    }
+#endif
 
     std::printf("[launcher] Running live capture session in a worker process...\n");
     int worker_exit_code = -1;

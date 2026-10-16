@@ -1,0 +1,243 @@
+[2026-10-15 20:12:18.028226][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:12:18.028482][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-15 20:12:18.028496][INFO ][0x1fd68bf80][::0] dependent files dir: 
+[2026-10-15 20:12:18.028505][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-15 20:12:18.028600][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-15 20:12:18.028619][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:12:18.028631][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:12:18.028639][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-15 20:12:18.028647][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-15 20:12:18.028654][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-15 20:12:18.032194][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-15 20:12:18.032219][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-15 20:12:18.032227][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-15 20:12:18.032234][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-15 20:12:18.032241][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-15 20:12:18.032248][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-15 20:12:18.032254][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-15 20:12:18.032261][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-15 20:12:18.032268][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-15 20:12:18.032274][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-15 20:12:18.032281][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-15 20:12:18.032287][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-15 20:12:18.032293][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-15 20:12:18.032299][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-15 20:12:18.032307][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-15 20:12:18.032315][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-15 20:12:18.032321][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-15 20:12:18.032328][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-15 20:12:18.032334][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-15 20:12:18.032340][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-15 20:12:18.032346][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:12:18.032353][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-15 20:12:18.032358][INFO ][0x1fd68bf80][::0] send device msg begin
+[2026-10-15 20:12:18.032364][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT
+[2026-10-15 20:12:18.032371][INFO ][0x1fd68bf80][::0] send device msg end
+[2026-10-15 20:12:18.032376][ERROR][0x1fd68bf80][::0] connect to device failed!
+[2026-10-15 20:12:18.032382][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-15 20:12:20.050880][INFO ][0x16c47f000][::0] removedList count: 0, addedList count:1
+[2026-10-15 20:12:20.569951][INFO ][0x16c47f000][::0] firmware version:1.5.7,get device calibration timestamp:1792014971
+[2026-10-15 20:12:20.569979][INFO ][0x16c47f000][::0] add device info to list sn:CR0886100SN
+[2026-10-15 20:12:20.569989][INFO ][0x16c47f000][::0] current device info list:
+[2026-10-15 20:12:20.569997][INFO ][0x16c47f000][::0] device sn:CR0886100SN
+[2026-10-15 20:12:20.895866][INFO ][0x16c47f000][::0] get device calibration timestamp:1792014971
+[2026-10-15 20:12:20.895890][ERROR][0x16c47f000][::0] property is not permission to operate.
+[2026-10-15 20:12:20.895899][INFO ][0x16c47f000][::0] usb device is registered successfully 
+[2026-10-15 20:12:20.895907][INFO ][0x16c47f000][::0] set select device serial number:CR0886100SN
+[2026-10-15 20:12:20.895914][INFO ][0x16c47f000][::0] device connected state call back begin
+[2026-10-15 20:12:20.895933][INFO ][0x16c47f000][::0] #########camera state###############
+[2026-10-15 20:12:20.895940][INFO ][0x16c47f000][::0] #########usb connected##############
+[2026-10-15 20:12:20.895946][INFO ][0x16c47f000][::0] [1;31mupdate_camera_status 0, cur_device: true[0m
+[2026-10-15 20:12:20.895952][INFO ][0x16c47f000][::0] calib update callback begin
+[2026-10-15 20:12:20.895957][INFO ][0x16c47f000][::0] calib update callback end
+[2026-10-15 20:12:20.895961][INFO ][0x16c47f000][::0] camera name: Creality Raptor Pro
+[2026-10-15 20:12:20.895966][INFO ][0x16c47f000][::0] camera serial number: CR0886100SN
+[2026-10-15 20:12:20.895971][INFO ][0x16c47f000][::0] camera connection type: USB3.0
+[2026-10-15 20:12:20.895977][INFO ][0x16c47f000][::0] camera firmware version: 1.5.7
+[2026-10-15 20:12:20.895982][INFO ][0x16c47f000][::0] wifi device firmware version: Unknown
+[2026-10-15 20:12:20.895987][INFO ][0x16c47f000][::0] get active device serial number:CR0886100SN
+[2026-10-15 20:12:20.896267][INFO ][0x16c47f000][::0] the device calib status: false
+[2026-10-15 20:12:20.896276][INFO ][0x16c47f000][::0] check device pccupancy status begin
+[2026-10-15 20:12:20.919614][INFO ][0x16c47f000][::0] get origin calibration param done,origin params size:1
+[2026-10-15 20:12:20.963942][INFO ][0x16c47f000][::0] is support rescan: true
+[2026-10-15 20:12:20.963959][INFO ][0x16c47f000][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_CONNECT
+[2026-10-15 20:12:20.963967][INFO ][0x16c47f000][::0] device connected state call back done
+[2026-10-15 20:12:20.963972][INFO ][0x16c47f000][::0] Init device return:1.
+[2026-10-15 20:12:21.079396][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-15 20:12:21.079437][INFO ][0x1fd68bf80][::0] obscan_context_create_session
+[2026-10-15 20:12:21.079449][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.079455][INFO ][0x1fd68bf80][::0] [OBScanSession] Thread spawned successfully.
+[2026-10-15 20:12:21.079462][INFO ][0x1fd68bf80][::0] create dir before: /tmp/openscanner_live_session
+[2026-10-15 20:12:21.079468][INFO ][0x1fd68bf80][::0] create dir after: /tmp/openscanner_live_session
+[2026-10-15 20:12:21.081760][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:12:21.083881][INFO ][0x1fd68bf80][::0] session init state : OB_SCAN_SUCCESS
+[2026-10-15 20:12:21.083895][INFO ][0x1fd68bf80][::0] create session success !
+[2026-10-15 20:12:21.083903][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.083910][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.083917][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.083923][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.083930][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.083936][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.083943][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.083949][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.083955][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.083961][INFO ][0x1fd68bf80][::0] voxel_size: 0.000100
+[2026-10-15 20:12:21.083968][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.083976][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.083982][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.083989][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.083997][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084003][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.000100[0m
+[2026-10-15 20:12:21.084013][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084019][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084025][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084048][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084054][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084060][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084067][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084073][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084080][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084088][INFO ][0x1fd68bf80][::0] voxel_size: 0.000200
+[2026-10-15 20:12:21.084093][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084099][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084105][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084112][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084118][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084124][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.000200[0m
+[2026-10-15 20:12:21.084130][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084136][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084142][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084148][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084154][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084160][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084166][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084172][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084178][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084184][INFO ][0x1fd68bf80][::0] voxel_size: 0.000500
+[2026-10-15 20:12:21.084189][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084194][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084199][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084204][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084209][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084214][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.000500[0m
+[2026-10-15 20:12:21.084219][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084224][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084229][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084234][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084239][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084244][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084249][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084254][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084259][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084265][INFO ][0x1fd68bf80][::0] voxel_size: 0.000800
+[2026-10-15 20:12:21.084269][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084274][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084279][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084285][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084289][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084294][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.000800[0m
+[2026-10-15 20:12:21.084300][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084308][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084314][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084319][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084324][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084329][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084334][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084340][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084345][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084350][INFO ][0x1fd68bf80][::0] voxel_size: 0.001500
+[2026-10-15 20:12:21.084355][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084360][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084366][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084371][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084376][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084381][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.001500[0m
+[2026-10-15 20:12:21.084387][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084393][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084398][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084403][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084408][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084414][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084419][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084424][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084429][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084435][INFO ][0x1fd68bf80][::0] voxel_size: 0.002000
+[2026-10-15 20:12:21.084440][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084445][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084450][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084455][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084461][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084466][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.002000[0m
+[2026-10-15 20:12:21.084471][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084476][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084482][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084487][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084493][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084498][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084504][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084510][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084515][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084520][INFO ][0x1fd68bf80][::0] voxel_size: 0.005000
+[2026-10-15 20:12:21.084525][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084530][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084535][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084540][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084546][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084552][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.005000[0m
+[2026-10-15 20:12:21.084564][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084569][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084574][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084580][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084585][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084590][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084595][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084601][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084606][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084612][INFO ][0x1fd68bf80][::0] voxel_size: 0.010000
+[2026-10-15 20:12:21.084617][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084622][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084627][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084632][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084637][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084642][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.010000[0m
+[2026-10-15 20:12:21.084648][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084653][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084658][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084663][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084668][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084673][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084679][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084684][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084689][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084695][INFO ][0x1fd68bf80][::0] voxel_size: 0.020000
+[2026-10-15 20:12:21.084700][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084705][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084710][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084715][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084720][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084726][ERROR][0x1fd68bf80][::0] [1;31mthe line laser cannot support voxel_size 0.020000[0m
+[2026-10-15 20:12:21.084731][INFO ][0x1fd68bf80][::0] obscan_session_create_scan
+[2026-10-15 20:12:21.084736][INFO ][0x1fd68bf80][::0] before create session !
+[2026-10-15 20:12:21.084741][INFO ][0x1fd68bf80][::0] projection: OB_SCAN_BLUE_LINE_LASER
+[2026-10-15 20:12:21.084746][INFO ][0x1fd68bf80][::0] post_texture: OB_SCAN_NO_TEXTURE
+[2026-10-15 20:12:21.084751][INFO ][0x1fd68bf80][::0] accuracy: OB_SCAN_ACCURACY_FAST
+[2026-10-15 20:12:21.084756][INFO ][0x1fd68bf80][::0] scan_mode: OB_SCAN_MODE_OBJECT_MEDIUM
+[2026-10-15 20:12:21.084762][INFO ][0x1fd68bf80][::0] fuse_mode: OB_SCAN_FUSE_MODE_MARKERLESS
+[2026-10-15 20:12:21.084768][INFO ][0x1fd68bf80][::0] scan_fov: OB_SCAN_FOV_NORMAL
+[2026-10-15 20:12:21.084773][INFO ][0x1fd68bf80][::0] obj_material: OB_SCAN_OBJECT_MATERIAL_STANDARD
+[2026-10-15 20:12:21.084779][INFO ][0x1fd68bf80][::0] voxel_size: 0.050000
+[2026-10-15 20:12:21.084785][INFO ][0x1fd68bf80][::0] light_type: OB_SCAN_LIGHT_TYPE_PARALLEL
+[2026-10-15 20:12:21.084791][INFO ][0x1fd68bf80][::0] scan_type: OB_SCAN_CLOUD_FUSED
+[2026-10-15 20:12:21.084797][INFO ][0x1fd68bf80][::0] frame_rate: OB_SCAN_FRAME_RATE_AUTO
+[2026-10-15 20:12:21.084802][INFO ][0x1fd68bf80][::0] detail_voxel_size: 0.001000
+[2026-10-15 20:12:21.084812][INFO ][0x1fd68bf80][::0] check supported begin !
+[2026-10-15 20:12:21.084818][INFO ][0x1fd68bf80][::0] check supported end !
+[2026-10-15 20:12:21.084824][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:12:21.084831][INFO ][0x1fd68bf80][::0] free mem: 10.950522
+[2026-10-15 20:12:21.085096][WARN ][0x1fd68bf80][::0] the connection remains unchanged(1/1)
+[2026-10-15 20:12:21.085103][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-15 20:12:21.085627][INFO ][0x1fd68bf80][::0] save init project data success !
+[2026-10-15 20:12:21.085700][INFO ][0x1fd68bf80][::0] create scan init state : OB_SCAN_SUCCESS
+[2026-10-15 20:12:21.086819][INFO ][0x1fd68bf80][::0] create scan success !
+[2026-10-15 20:12:21.086891][INFO ][0x1fd68bf80][::0] obscan_scan_start
+[2026-10-15 20:12:21.086899][ERROR][0x1fd68bf80][::0] [1;31mcannot called start ![0m

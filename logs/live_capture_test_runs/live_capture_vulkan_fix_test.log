@@ -1,0 +1,4 @@
+dyld[69353]: warning could not apply interposing tuples in /Users/brucemackay/DevReposiMac/Open3DScanner/build/engine/libvulkan_disable_interpose.dylib
+dyld[69353]: symbol not found in flat namespace '_vkCreateDevice'
+[launcher] Running live capture session in a worker process...
+[launcher] Worker crashed or timed out inside the vendor SDK (child killed by signal Abort trap: 6). Launcher is unaffected.
