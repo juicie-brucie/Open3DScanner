@@ -23,11 +23,20 @@ The version is **pinned deliberately**: reproducible analysis means analysis of 
 known artifact. If CrealityScan updates, re-point the links at the new version on
 purpose, and note the change.
 
-## Snapshots
+## Snapshots and listings
 
-REA writes `<target>.analysis.json` here (at the top of `.recon-cache/`). Rule:
-never re-run analysis for a snapshot that already exists. A second Ghidra JVM on
-this dylib is the most expensive mistake in the workflow.
+A recon pass leaves one or both of these under `.recon-cache/`:
+
+- **`*.analysis.json`** — REA/Ghidra snapshots, at the top of the directory.
+  Rule: if a snapshot exists for a target, **never re-run analysis** for it. A
+  second Ghidra JVM on this dylib is the most expensive mistake in the workflow.
+- **`listings/`** — targeted scratch output: `nm` symbol dumps, `objdump -d`
+  disassembly of named functions, decoded `*_name` tables. The PLAN #1 pass used
+  this route and needed no persisted snapshot.
+
+Either way, a pass's **provenance is the sha256 pinned in the header of its
+`docs/recon/findings/*.md`** — identify an artifact by that hash, not by its
+filename in the cache.
 
 ## arm64-only slice
 
@@ -37,6 +46,12 @@ The target is fat. To produce an arm64-only slice for analysis:
 lipo -thin arm64 .recon-cache/vendor/liborbbec_scan.3.5.3.dylib \
      -output .recon-cache/liborbbec_scan_arm64.dylib
 ```
+
+The slice used for the PLAN #1 pass is 100,557,552 bytes and hashes to
+`184d92a87bdebba1cb5207ee1a111d49aa497f46088cc9f12d9abd3b59c017ec`. Re-run the
+command and check `shasum -a 256` against that before reusing any finding: a
+mismatch means the vendor binary moved under the version pin. The slice itself
+need not be kept — it is reproducible from the pinned fat dylib.
 
 ## The builder cannot see any of this
 
