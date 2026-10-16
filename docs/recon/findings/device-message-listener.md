@@ -237,6 +237,6 @@ Raw listings for this pass (disassembly, symbol tables, decoded tables) are in
 `OBDeviceManagement_add_device_msg_listener.asm`,
 `OBDeviceManagement_send_device_msg_msg.asm`,
 `OrbbecInternalDevice_set_call_back.asm`, `classes.symbols.txt` — and
-`.recon-cache/vendor/liborbbec_scan_arm64.nm-gU.txt`. Per the wall in
+`.recon-cache/listings/liborbbec_scan_arm64.symbols.txt`. Per the wall in
 `docs/recon/README.md` these are read-only for `builder` and are not reproduced
 here.
