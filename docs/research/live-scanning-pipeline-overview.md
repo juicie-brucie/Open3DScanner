@@ -138,17 +138,70 @@ in this library; only one is live for this project's own scan mode:
   relationship to `FastMarkerDetector` not yet determined (newer replacement? a
   different detection mode?).
 
-Not yet traced: the actual ellipse/circle-fitting and sub-pixel localization algorithm
-inside `FastMarkerDetector` itself, and how its output becomes a `TrackedFrame` (marker
-ID correspondence → PnP/pose estimation → `TrackedFrame` construction) feeding into §2's
-bundle adjustment. This is a genuinely separate body of work from pipeline mapping — a
-real computer-vision algorithm, not glue/architecture code — and a natural place to stop
-"mapping" and start "decoding an algorithm" if this needs to go further.
+### The actual algorithm, stage by stage
+
+`FastMarkerDetector::mk_detect_markers(image1, image2, MkStereoCameraModel const*, ...)`
+is a 116-byte thin wrapper — it just forwards to
+`MkDetImpl::detect_markers_and_trianglate(...)` ("trianglate" typo preserved from the
+vendor), the real 12.7KB implementation. Full line-by-line decoding of a function this
+size wasn't attempted (it's the vendor's actual CV algorithm, not architecture glue —
+a different kind of work from everything else in this doc); the call-graph skeleton
+(every `bl` it makes, cross-referenced back to symbol names) is enough to map its real
+stages with confidence, and two of its sub-functions were fully decoded to confirm the
+approach:
+
+1. **Per-image ellipse detection** — `mkv5::MarkerFinder::detect_markers_one_view_aio_2506`
+   / `..._2603` / `..._2603_wide` / `detect_markers_one_view` (plain fallback) are tried
+   in that order on each of the two stereo images independently, each producing a
+   `vector<VELLIPSE>`. The numeric suffixes (2506, 2603) read as calibration/resolution
+   generation identifiers tried as a cascade — `get_debug_info()` and string
+   concatenation calls interleaved between attempts suggest a diagnostic trail recording
+   which variant actually found markers, consistent with a "try the preferred one, fall
+   back if it comes up short" pattern rather than always running all four.
+2. **Stereo correspondence via epipolar geometry** — `_epipolar_matching_fix` (and a
+   `_epipolar_matching_fix_collision` sibling, presumably handling the case where more
+   than one candidate match satisfies the epipolar constraint) matches ellipses between
+   the two `VELLIPSE` lists using the stereo pair's relative rotation/translation
+   (`m3d`/`v3d` params) and several double thresholds, producing `vector<pair<int,int>>`
+   correspondences.
+3. **Triangulation** — `_triangulate_stereo_point`/`_triangulate_stereo_point_optimized`
+   turn each matched 2D/2D pair into a 3D point. The "optimized" variant (960 bytes,
+   fully decoded) is a **closed-form linear least-squares ray intersection**: builds a
+   3×3 normal-equations matrix and right-hand-side vector from the two camera rays
+   (accounting for the stereo extrinsics), then solves directly via
+   `Eigen::LDLT<Matrix3d>` (a Cholesky variant) — the standard "midpoint method" for
+   stereo triangulation, not an iterative or SVD-based approach. Heavily NEON-vectorized
+   (paired `fmul.2d`/`fadd.2d`/`faddp.2d` throughout building the matrix), but the
+   algorithm itself is textbook, not scan-specific.
+4. **Per-marker pose/orientation** — `stereo_circle_pose_estimation_context::check()` —
+   a circular marker viewed off-axis projects as an ellipse; the ellipse's eccentricity
+   and orientation encode the physical marker's surface normal, not just its center
+   position. Not decoded in detail, but the class name and its position in the pipeline
+   (right after triangulation, before landmark building) fit recovering per-marker
+   orientation this way, not just a 3D point.
+5. **Landmark association** — results accumulate into `vector<mk_align::Landmark>`
+   ("Landmark" being the standard SLAM term for a tracked 3D feature reused across
+   frames), with an `nanoflann`-backed KD-tree search in the mix — almost certainly
+   matching newly-triangulated marker positions against already-known landmarks from
+   prior frames for ID continuity, rather than treating every frame's markers as new.
+6. **Robust refinement** — a `std::nth_element` partial-sort over doubles (the same
+   robust-percentile pattern already seen in the overlap-scoring algorithm) plus
+   `rs_common::plane_fit` appear late in the function, plausibly filtering outlier
+   triangulated points or refining a local marker-cluster plane before the final result
+   is returned.
+
+Not yet traced: the exact epipolar-matching distance/threshold formula, the ellipse
+detection image-processing internals themselves (Hough-transform-style? contour-based?
+not determined), and precisely how the resulting landmark/pose data becomes a
+`mkscan::TrackedFrame` object (PnP solve from 2D/3D correspondences is the standard next
+step, but not confirmed here) feeding into §2's bundle adjustment.
 
 ## What's still open
 
-- The marker detection algorithm itself (`FastMarkerDetector`'s internals) and how its
-  output becomes a `TrackedFrame` — see above.
+- The ellipse-detection image-processing internals (`detect_markers_one_view_aio_*`)
+  and the exact epipolar-matching threshold formula — see above.
+- How triangulated/associated landmarks become a `TrackedFrame` object (plausibly a PnP
+  pose solve, not confirmed).
 - Where the per-point `weight` passed to `FuseMap::AddPoint` gets computed — plausibly
   somewhere in this worker lambda or its callback, not yet traced to the exact
   instructions.
