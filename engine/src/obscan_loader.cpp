@@ -111,9 +111,14 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
 }
 
 ObscanLibrary::~ObscanLibrary() {
-    if (handle_ != nullptr) {
-        CloseLibrary(handle_);
-    }
+    // Deliberately never unloads a successfully-loaded library. The vendor
+    // SDK spawns its own threads (device watcher, preview/stream pipeline,
+    // network discovery) that keep running — and keep calling back into
+    // our listeners — until the SDK itself tears them down, and that
+    // teardown (obscan_context_destroy) is the very call known to crash or
+    // hang. dlclose()ing underneath a live vendor thread unmaps the code
+    // it's executing. Process exit reclaims the mapping anyway, and every
+    // caller already confines the library to a disposable worker process.
 }
 
 std::string ObscanLibrary::FindDefaultLibraryPath() {

@@ -294,8 +294,19 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // that registers this listener inside a disposable worker process (see
 // worker_process.h), not in a process that cannot afford to crash.
 // ---------------------------------------------------------------------------
+// OBScan.SDK.OBScanDeviceMessageID. DISCONNECT is the message delivered
+// synchronously during add_device_msg_listener (the initial "no device yet"
+// state) — previously read as a registration ack. Matched against the
+// native log's "send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT"
+// at exactly that point in every run, and to the same 0x..620000 numbering
+// scheme as ObScanDataMessageID.
+typedef enum ObScanDeviceMessageID {
+    OB_SCAN_MESSAGE_ID_DEVICE_CONNECT = 0,
+    OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT = 308412672,  // 0x12620000
+} ObScanDeviceMessageID;
+
 typedef struct ObScanDeviceMessage {
-    int32_t msg_id;  // 0x00 — OBScanDeviceMessageID; only 0 (device connect) confirmed so far.
+    int32_t msg_id;  // 0x00 — ObScanDeviceMessageID.
     int32_t _pad;    // 0x04 — alignment padding to 8-byte boundary for `data`.
     void* data;      // 0x08 — NULL on the spurious registration callback; non-NULL on a real connect event.
 } ObScanDeviceMessage;
@@ -307,7 +318,16 @@ typedef struct ObScanDeviceMessageListener {
 } ObScanDeviceMessageListener;
 
 // OBScan.SDK.OBScanDataMessage* / OBScanProcessMessage* — same shape as the
-// device-message family above. obscan_scan_preview() returns
+// device-message family above. Observed on the Raptor Pro: data messages
+// (DEPTH, IR, FRAME_READY triples — never NEW_RGB_IMAGE in the IR-only
+// 30fps profile) arrive only while previewing and stop once
+// obscan_scan_start is called. A healthy device delivers its first
+// FRAME_READY well under a second after preview completes; a device left
+// unreleased by an earlier process delivers none (the vendor's own stream
+// watchdog restarts IR at +3s, fails, and gives up), and obscan_scan_start
+// on it then blocks forever waiting for frames.
+//
+// obscan_scan_preview() returns
 // OB_SCAN_ERROR_LISTENER_NOT_FOUND unless a data-message listener (and,
 // per the real app's own call log, a process-message listener too) is
 // registered on the context before the scan is created: preview delivers
@@ -415,13 +435,36 @@ typedef ObScanStatus (*fn_obscan_scan_start)(ObScanScanHandle scan);
 // extra argument just sits in a register the real function never
 // reads), but it was never real and is removed for accuracy.
 typedef ObScanStatus (*fn_obscan_scan_pause)(ObScanScanHandle scan);
-// OBScanTarget.StopScan(bool isBlock = false, Action<OBScanStatus>
-// statusCallback) — two params, isBlock FIRST, no progress callback at
-// all. Our earlier 4-arg (scan, progress_cb, status_cb, is_block) had
-// both the wrong count and the wrong order; this is the likely cause of
-// the reliable OB_SCAN_ERROR_INVALID_SCAN seen calling the old shape.
-typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, bool is_block, ObScanStatusCallback status_callback);
+// Same two-callback shape as obscan_scan_preview, plus a trailing isBlock:
+// (scan, progress_cb, status_cb, is_block). Settled by the vendor's own
+// log, not by the managed wrapper: with this shape the native side logs
+// "stop progress 0.01 ... 1.0" / "change to stop success !", stops the
+// pipeline synchronously on the calling thread, and our progress callback
+// receives exactly those same progress values (live_capture_full_run.log,
+// scan_log_20261015-215147.txt) — after which session/context destroy
+// release the device cleanly.
+//
+// The 3-arg (scan, is_block, status_cb) shape taken from
+// OBScanTarget.StopScan(bool isBlock, Action<OBScanStatus>) in 1c17292 was
+// a regression: it returns OB_SCAN_SUCCESS immediately but the native log
+// shows nothing after "obscan_scan_stop" — no stop progress, no pipeline
+// teardown, status callback never invoked — and both destroys are then
+// refused with OB_SCAN_ERROR_MULTI_CALLED ("must first wait other process
+// finshed: destroy session !"), leaving the device unreleased. (The
+// managed wrapper's parameter list is not the P/Invoke signature: the
+// progress trampoline exists on OBScanTarget for this call too.)
+//
+// The status callback reporting OB_SCAN_ERROR_INVALID_SCAN after a
+// successful stop (native "change to stop success !" logged first) is a
+// verdict on the scan's content (e.g. a near-empty model), not a failed
+// call. NULL callbacks are rejected ("cannot begin async task SCAN_STOP:
+// status callback is nullptr").
+typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, ObScanProgressCallback progress_callback,
+                                             ObScanStatusCallback status_callback, bool is_block);
 typedef ObScanStatus (*fn_obscan_scan_get_raw_cloud)(ObScanScanHandle scan, ObScanPointClouds* out_cloud);
+// Only valid while the scan is paused: called during an active scan it
+// fails with OB_SCAN_ERROR_MULTI_CALLED and the native log line "get model
+// mesh must first pause scan !".
 typedef ObScanStatus (*fn_obscan_scan_get_realtime_model_mesh)(ObScanScanHandle scan, ObScanTriangleMesh* out_mesh);
 typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, ObScanModeConfig* out_config);
 

@@ -10,7 +10,10 @@
 namespace openscanner {
 
 bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_code, std::string* out_reason,
-                      int timeout_seconds) {
+                      int timeout_seconds, int term_grace_seconds) {
+    // No SIGTERM equivalent is wired up for Windows workers yet, so the
+    // grace period is unused and a timeout goes straight to TerminateProcess.
+    (void)term_grace_seconds;
     wchar_t self_path[MAX_PATH];
     DWORD len = GetModuleFileNameW(nullptr, self_path, MAX_PATH);
     if (len == 0 || len == MAX_PATH) {
@@ -75,6 +78,7 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
 
 #else  // POSIX
 
+#include <cerrno>
 #include <climits>
 #include <csignal>
 #include <cstdlib>
@@ -117,10 +121,16 @@ bool GetSelfExecutablePath(std::string* out_path) {
 #endif
 }
 
+volatile sig_atomic_t g_launcher_sigint_count = 0;
+
+void CountLauncherSigint(int) {
+    g_launcher_sigint_count = g_launcher_sigint_count + 1;
+}
+
 }  // namespace
 
 bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_code, std::string* out_reason,
-                      int timeout_seconds) {
+                      int timeout_seconds, int term_grace_seconds) {
     std::string self_path;
     if (!GetSelfExecutablePath(&self_path)) {
         if (out_reason != nullptr) *out_reason = "could not resolve own executable path";
@@ -152,33 +162,80 @@ bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_c
         _exit(127);
     }
 
+    // Ctrl-C in the terminal delivers SIGINT to the whole foreground process
+    // group, worker included. The worker handles it by stopping the scan and
+    // releasing the device; if the launcher died on the same SIGINT, the
+    // shell would get its prompt back while the worker is still mid-
+    // teardown, and nothing would be left to escalate if that teardown
+    // hangs. So the launcher keeps waiting instead, and only a second
+    // Ctrl-C force-kills a worker whose cleanup is stuck. (Set only here, in
+    // the parent after fork: an ignored disposition would survive execv
+    // into the worker, a caught one doesn't.)
+    g_launcher_sigint_count = 0;
+    struct sigaction count_int = {};
+    struct sigaction old_int = {};
+    count_int.sa_handler = &CountLauncherSigint;
+    sigemptyset(&count_int.sa_mask);
+    sigaction(SIGINT, &count_int, &old_int);
+    struct RestoreSigint {
+        struct sigaction* old;
+        ~RestoreSigint() { sigaction(SIGINT, old, nullptr); }
+    } restore_sigint{&old_int};
+
     // Poll rather than block on waitpid(..., 0): that call has no timeout
     // parameter, and we need to be able to reclaim a worker that's still
     // alive but not making progress (see the "no further logging at all"
     // case documented in worker_process.h), not just one that's exited or
     // been killed by a signal.
-    int status = 0;
-    bool exited = false;
     const int kPollIntervalMs = 100;
-    const int kMaxPolls = (timeout_seconds * 1000) / kPollIntervalMs;
-    for (int poll_count = 0; poll_count < kMaxPolls; ++poll_count) {
-        pid_t wait_ret = waitpid(pid, &status, WNOHANG);
-        if (wait_ret < 0) {
-            if (out_reason != nullptr) *out_reason = std::string("waitpid failed: ") + strerror(errno);
-            return false;
+    auto wait_for_exit = [pid](int seconds, int* out_status) -> int {
+        const int max_polls = (seconds * 1000) / kPollIntervalMs;
+        for (int poll_count = 0; poll_count < max_polls; ++poll_count) {
+            pid_t wait_ret = waitpid(pid, out_status, WNOHANG);
+            if (wait_ret < 0 && errno == EINTR) continue;
+            if (wait_ret != 0) return wait_ret < 0 ? -1 : 1;
+            if (g_launcher_sigint_count >= 2) return 0;
+            usleep(kPollIntervalMs * 1000);
         }
-        if (wait_ret == pid) {
-            exited = true;
-            break;
-        }
-        usleep(kPollIntervalMs * 1000);
-    }
+        return 0;
+    };
 
-    if (!exited) {
+    int status = 0;
+    int waited = wait_for_exit(timeout_seconds, &status);
+    bool timed_out = false;
+    if (waited == 0 && g_launcher_sigint_count < 2) {
+        // SIGKILL never runs the vendor SDK's own stop/release path, and a
+        // device killed mid-stream has been confirmed to need a physical
+        // power cycle afterwards (README.md "Known issues"). Ask first: a
+        // worker that is only slow, or blocked between vendor calls, gets
+        // the chance to stop the scan and destroy its context cleanly.
+        // Escalate only if it can't — e.g. it's stuck inside a vendor call
+        // that never returns.
+        timed_out = true;
+        kill(pid, SIGTERM);
+        waited = wait_for_exit(term_grace_seconds, &status);
+    }
+    if (waited == 0) {
         kill(pid, SIGKILL);
         waitpid(pid, &status, 0);  // Reap it — SIGKILL is asynchronous.
         if (out_reason != nullptr) {
-            *out_reason = "child timed out after " + std::to_string(timeout_seconds) + "s and was force-killed";
+            *out_reason = timed_out ? "child timed out after " + std::to_string(timeout_seconds) +
+                                          "s, ignored SIGTERM for " + std::to_string(term_grace_seconds) +
+                                          "s, and was force-killed (device may need a power cycle)"
+                                    : "interrupted twice; child force-killed (device may need a power cycle)";
+        }
+        return false;
+    }
+    if (waited < 0) {
+        if (out_reason != nullptr) *out_reason = std::string("waitpid failed: ") + strerror(errno);
+        return false;
+    }
+    if (timed_out) {
+        if (out_reason != nullptr) {
+            *out_reason = "child timed out after " + std::to_string(timeout_seconds) +
+                          "s and shut down on SIGTERM" +
+                          (WIFEXITED(status) ? " (exit code " + std::to_string(WEXITSTATUS(status)) + ")"
+                                             : std::string(" (killed by signal ") + strsignal(WTERMSIG(status)) + ")");
         }
         return false;
     }

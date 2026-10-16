@@ -33,12 +33,20 @@ namespace openscanner {
 // if the child hasn't exited by then, it's forcibly killed and treated the
 // same as a crash (via `out_reason`), so the caller never blocks forever.
 //
+// On POSIX the timeout is two-stage: the child first gets SIGTERM and
+// `term_grace_seconds` to stop its scan and release the device through the
+// vendor SDK's own teardown, and only then SIGKILL. A hard kill skips that
+// release path, and a scanner killed mid-stream has been confirmed to need
+// a physical power cycle before it streams again — so workers that touch
+// the device should handle SIGTERM (and SIGINT, which the launcher ignores
+// while it waits so Ctrl-C reaches only the worker's cleanup path).
+//
 // Returns true if the child exited normally (any exit code, including
 // non-zero) and fills `out_exit_code`. Returns false if the child was
 // killed by a fatal signal (POSIX), crashed (Windows access violation), or
-// had to be force-killed after `timeout_seconds`, and fills `out_reason`
-// with a short description instead.
+// timed out (whether it then shut down on SIGTERM or had to be force-
+// killed), and fills `out_reason` with a short description instead.
 bool RunSelfAsWorker(const std::vector<std::string>& extra_args, int* out_exit_code, std::string* out_reason,
-                      int timeout_seconds = 60);
+                      int timeout_seconds = 60, int term_grace_seconds = 20);
 
 }  // namespace openscanner

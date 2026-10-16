@@ -20,7 +20,10 @@ public:
 // this project at build time — the caller points this loader at an
 // existing CrealityScan install (or an extracted copy) at runtime.
 //
-// Not copyable; owns the loaded module handle for its lifetime.
+// Not copyable. The library stays loaded until process exit even after
+// this object is destroyed: the vendor SDK runs background threads that
+// outlive any single call, so unloading it is never safe (see the
+// destructor).
 class ObscanLibrary {
 public:
     // Loads from an explicit path. Throws ObscanLoadError on failure.
