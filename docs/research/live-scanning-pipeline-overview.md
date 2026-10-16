@@ -112,12 +112,46 @@ before it's allowed to affect the running reconstruction.
    final extraction keeps only voxels whose accumulated weight clears a
    per-device `credible_ratio` threshold.
 
+## Marker detection — identified entry point, algorithm internals not yet traced
+
+The actual producer of `TrackedFrame` objects (§3's missing upstream link) starts with
+marker *detection* — finding the physical circular dot markers in each camera frame,
+before anything can be tracked or bundle-adjusted. Two candidate implementations exist
+in this library; only one is live for this project's own scan mode:
+
+- `CircleMarkerDetector` (a full Canny-edge/gradient/local-maxima pipeline:
+  `CannyFindLocalMaxima`, `Gradient`, `SmoothGradient`, `ThinAndThreshold`, `MyCanny`) —
+  initially assumed to be the live-scan marker detector given the name, but its only
+  constructor call site is inside `CaliBoarDetector` ("calibration board detector").
+  **It's for the laser calibration tool** (`camera_user_calib`, a separate app
+  component), not live scanning — a dead end for this purpose, kept here as a record of
+  the wrong turn.
+- `mkscan::lib_mkdet::FastMarkerDetector` — constructed from
+  `device::LLMKDET_wrapper_impl::wrapper_impl_init(DeviceParameters*, int, bool, int,
+  bool, const OBScanModeConfig_&)` ("LLMKDET" = **L**ine-**L**aser **M**ar**K**er
+  **DET**ection) and `device::IRMKDET_wrapper_impl::wrapper_impl_init(...)` (the IR
+  equivalent). The line-laser variant takes this project's own already-recovered
+  `OBScanModeConfig_` struct directly, confirming **this is the real live detector** for
+  `OB_SCAN_BLUE_LINE_LASER` + `OB_SCAN_FUSE_MODE_MARKER` — exactly this project's own
+  scan configuration. A separate, apparently newer "v5" detection API also exists
+  (`mkscan::lib_mkdet::mkv5::MarkerFinder::detect_markers_one_view_aio_impl`) —
+  relationship to `FastMarkerDetector` not yet determined (newer replacement? a
+  different detection mode?).
+
+Not yet traced: the actual ellipse/circle-fitting and sub-pixel localization algorithm
+inside `FastMarkerDetector` itself, and how its output becomes a `TrackedFrame` (marker
+ID correspondence → PnP/pose estimation → `TrackedFrame` construction) feeding into §2's
+bundle adjustment. This is a genuinely separate body of work from pipeline mapping — a
+real computer-vision algorithm, not glue/architecture code — and a natural place to stop
+"mapping" and start "decoding an algorithm" if this needs to go further.
+
 ## What's still open
 
-- The exact producer of `TrackedFrame` objects onto the queue the worker lambda
-  dequeues from (the ICP/marker-tracking code that actually computes a frame's
-  candidate pose before quality-gating) — named (`mkscan`/`MarkerGlobalOptResult`
-  machinery) but not disassembled.
+- The marker detection algorithm itself (`FastMarkerDetector`'s internals) and how its
+  output becomes a `TrackedFrame` — see above.
+- Where the per-point `weight` passed to `FuseMap::AddPoint` gets computed — plausibly
+  somewhere in this worker lambda or its callback, not yet traced to the exact
+  instructions.
 - Where the per-point `weight` passed to `FuseMap::AddPoint` gets computed — plausibly
   somewhere in this worker lambda or its callback, not yet traced to the exact
   instructions.
