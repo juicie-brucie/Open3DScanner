@@ -2,6 +2,7 @@
 
 An open-source macOS/Windows application for Creality (Orbbec-based) 3D
 scanners, built as a clean-room replacement for CrealityScan's app layer.
+Development is starting on MacOS with a Creality Raptor Pro
 
 ## What this is, concretely
 
