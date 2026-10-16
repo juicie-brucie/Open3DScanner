@@ -132,9 +132,16 @@ mesh data back, real device release, `rpc client destroyed` for all
 four client ports — see below), `obscan_context_destroy()` now runs
 long enough to exceed the 90s worker timeout in `live_capture_test`,
 which force-killed it cleanly (no hang requiring manual recovery, so
-that part of the fix still holds) — but whether the Vulkan interposer
-itself is actually helping once `obscan_context_destroy()` has real
-work to do is still open and needs a longer-timeout retest.
+that part of the fix still holds). The longer 180s retest answered
+whether the interposer helps: it doesn't, as originally written. Both
+runs' stdout logs show MoltenVK creating a `VkInstance` and a `VkDevice`
+after the vendor's `Context destroyed`, with the interposer loaded, and
+then nothing until the timeout — see the correction at the end of
+`logs/stop_abi_fix_validation/README.md`. ncnn reaches Vulkan through
+`dlsym` + `vkGetInstanceProcAddr`, which `__interpose` on
+`vkCreateInstance`/`vkCreateDevice` alone never sees; the interposer now
+covers those too and logs each interception, pending a hardware rerun.
+In those runs the device release completed before the hang began.
 
 The underlying lesson, still worth keeping in mind for any future
 vendor-SDK crash/hang: prefer letting a hung worker's launcher time out
