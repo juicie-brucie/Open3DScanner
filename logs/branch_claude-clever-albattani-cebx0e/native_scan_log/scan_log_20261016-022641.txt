@@ -1,0 +1,119 @@
+[2026-10-16 02:26:41.712832][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-16 02:26:41.713065][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_live_fps_log
+[2026-10-16 02:26:41.713130][INFO ][0x1fd68bf80][::0] dependent files dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+[2026-10-16 02:26:41.713157][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-16 02:26:41.713200][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-16 02:26:41.713221][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 02:26:41.713230][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 02:26:41.713238][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-16 02:26:41.713247][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_live_scan_log
+[2026-10-16 02:26:41.713255][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-16 02:26:41.717632][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-16 02:26:41.717712][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_live_sdk_log
+[2026-10-16 02:26:41.717758][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-16 02:26:41.717779][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-16 02:26:41.717796][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-16 02:26:41.717805][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-16 02:26:41.717826][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-16 02:26:41.717838][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-16 02:26:41.717847][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-16 02:26:41.717856][INFO ][0x1fd68bf80][::0] obscan_context_add_data_msg_listener
+[2026-10-16 02:26:41.717869][INFO ][0x1fd68bf80][::0] add OBScanMessageListener success !
+[2026-10-16 02:26:41.717877][INFO ][0x1fd68bf80][::0] obscan_context_add_process_msg_listener
+[2026-10-16 02:26:41.717891][INFO ][0x1fd68bf80][::0] add OBScanProcessMessageListener success !
+[2026-10-16 02:26:41.717901][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-16 02:26:41.717909][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-16 02:26:41.717916][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-16 02:26:41.717926][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-16 02:26:41.717955][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-16 02:26:41.717998][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-16 02:26:41.718027][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-16 02:26:41.718074][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-16 02:26:41.718087][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-16 02:26:41.718095][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-16 02:26:41.718102][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-16 02:26:41.718129][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-16 02:26:41.718135][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-16 02:26:41.718141][INFO ][0x1fd68bf80][::0] send device msg begin
+[2026-10-16 02:26:41.718147][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT
+[2026-10-16 02:26:41.718153][INFO ][0x1fd68bf80][::0] send device msg end
+[2026-10-16 02:26:41.718160][ERROR][0x1fd68bf80][::0] connect to device failed!
+[2026-10-16 02:26:41.718167][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-16 02:26:41.718172][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:41.774468][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:41.831093][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:41.888495][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:41.947354][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.005274][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.064149][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.121798][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.180724][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.238499][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.297403][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.355401][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.414006][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.471848][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.530760][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.588479][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.647425][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.705216][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.764084][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.822130][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.880729][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.938485][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:42.997397][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.055186][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.114026][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.171911][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.230750][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.288566][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.347360][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.406201][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.464059][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.524104][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.580704][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.638531][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.697380][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.734756][INFO ][0x170307000][::0] removedList count: 0, addedList count:1
+[2026-10-16 02:26:43.755206][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.813997][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.874009][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.931845][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:43.990262][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.047389][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.105220][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.164016][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.221876][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.250893][INFO ][0x170307000][::0] firmware version:1.5.7,get device calibration timestamp:1792014971
+[2026-10-16 02:26:44.250917][INFO ][0x170307000][::0] add device info to list sn:CR0886100SN
+[2026-10-16 02:26:44.250925][INFO ][0x170307000][::0] current device info list:
+[2026-10-16 02:26:44.250932][INFO ][0x170307000][::0] device sn:CR0886100SN
+[2026-10-16 02:26:44.280745][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.338551][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.397333][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.455212][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.514058][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.571816][INFO ][0x1fd68bf80][::0] obscan_device_management_get_device_num
+[2026-10-16 02:26:44.572279][INFO ][0x170307000][::0] get device calibration timestamp:1792014971
+[2026-10-16 02:26:44.572294][ERROR][0x170307000][::0] property is not permission to operate.
+[2026-10-16 02:26:44.572301][INFO ][0x170307000][::0] usb device is registered successfully 
+[2026-10-16 02:26:44.572308][INFO ][0x170307000][::0] set select device serial number:CR0886100SN
+[2026-10-16 02:26:44.572314][INFO ][0x170307000][::0] device connected state call back begin
+[2026-10-16 02:26:44.572320][INFO ][0x170307000][::0] #########camera state###############
+[2026-10-16 02:26:44.572326][INFO ][0x170307000][::0] #########usb connected##############
+[2026-10-16 02:26:44.572332][INFO ][0x170307000][::0] [1;31mupdate_camera_status 0, cur_device: true[0m
+[2026-10-16 02:26:44.572338][INFO ][0x170307000][::0] calib update callback begin
+[2026-10-16 02:26:44.572343][INFO ][0x170307000][::0] calib update callback end
+[2026-10-16 02:26:44.572348][INFO ][0x170307000][::0] camera name: Creality Raptor Pro
+[2026-10-16 02:26:44.572353][INFO ][0x170307000][::0] camera serial number: CR0886100SN
+[2026-10-16 02:26:44.572359][INFO ][0x170307000][::0] camera connection type: USB3.0
+[2026-10-16 02:26:44.572364][INFO ][0x170307000][::0] camera firmware version: 1.5.7
+[2026-10-16 02:26:44.572369][INFO ][0x170307000][::0] wifi device firmware version: Unknown
+[2026-10-16 02:26:44.572374][INFO ][0x170307000][::0] get active device serial number:CR0886100SN
+[2026-10-16 02:26:44.572718][INFO ][0x170307000][::0] the device calib status: false
+[2026-10-16 02:26:44.572727][INFO ][0x170307000][::0] check device pccupancy status begin
+[2026-10-16 02:26:44.592436][INFO ][0x170307000][::0] get origin calibration param done,origin params size:1
+[2026-10-16 02:26:44.628703][INFO ][0x170307000][::0] is support rescan: true
+[2026-10-16 02:26:44.628726][INFO ][0x170307000][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_CONNECT
+[2026-10-16 02:26:44.628735][INFO ][0x170307000][::0] device connected state call back done
+[2026-10-16 02:26:44.628742][INFO ][0x170307000][::0] Init device return:1.
