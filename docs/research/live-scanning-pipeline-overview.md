@@ -158,12 +158,65 @@ approach:
    concatenation calls interleaved between attempts suggest a diagnostic trail recording
    which variant actually found markers, consistent with a "try the preferred one, fall
    back if it comes up short" pattern rather than always running all four.
+
+   **The cascading variants are tiling wrappers, not separate detectors.** Each one
+   (`_2603` fully decoded as representative) reshapes/crops the input image into a
+   `vector<cv::Mat>` of overlapping sub-tiles (different tile size/count per variant —
+   the actual difference between "2506"/"2603"/"2603_wide"), stashes per-tile state into
+   a `MILD::database_frame` (`MILD` — a known open-source loop-closure/visual-place-
+   recognition library, reused here rather than written from scratch), `cv::vconcat`s
+   tile results back together, and converges all four variants on the **same** shared
+   implementation: `detect_markers_one_view_aio_impl(...)`. The tiling itself is the only
+   thing that differs between generations.
+
+   `detect_markers_one_view_aio_impl` (3.7KB) does the real per-image work, and
+   **its call graph contains zero OpenCV detection primitives** — no `Canny`, no
+   `findContours`, no `HoughCircles`, no `threshold`. Just `operator new`/`memcpy`/
+   `vector<float>::__append` in a tight loop, i.e. **hand-written inline pixel
+   scanning**, not a generic CV pipeline — consistent with "Fast" in the class name: the
+   vendor rolled their own blob/candidate-region scan rather than paying OpenCV's
+   generic-pipeline overhead. It ends by calling `mkv5::EllipseFit(...)` once per
+   detected blob.
+
+   `EllipseFit` (2.3KB) is similarly light on library calls — no `Eigen`, no generic
+   conic-fitting solve. Its only non-trivial calls are `atan`, `sincos`, and **six calls
+   to `hypot`**. That signature matches a **closed-form image-moments ellipse fit**, not
+   a direct/algebraic conic least-squares (Fitzgibbon-style, which would need a 5×5 or
+   6×6 eigensolve): compute the blob's centroid and second-order central moments, derive
+   orientation via `atan2` of the moment ratios, and derive the two semi-axis lengths via
+   the closed-form 2×2-covariance-matrix eigenvalues (`hypot` showing up repeatedly fits
+   the `sqrt((mu20-mu02)² + 4·mu11²)` term in that formula). Cheap and non-iterative —
+   again the "Fast" branding earning its name, at the cost of being less robust to
+   partial occlusion than a full conic fit.
+
 2. **Stereo correspondence via epipolar geometry** — `_epipolar_matching_fix` (and a
-   `_epipolar_matching_fix_collision` sibling, presumably handling the case where more
-   than one candidate match satisfies the epipolar constraint) matches ellipses between
-   the two `VELLIPSE` lists using the stereo pair's relative rotation/translation
-   (`m3d`/`v3d` params) and several double thresholds, producing `vector<pair<int,int>>`
-   correspondences.
+   `_epipolar_matching_fix_collision` sibling for when more than one candidate satisfies
+   the constraint) matches ellipses between the two `VELLIPSE` lists. The core per-pair
+   test, fully decoded:
+
+   ```c
+   // Precomputed once per call, from the stereo extrinsics + one candidate ellipse:
+   // (a, b, c) = coefficients of that ellipse's epipolar line in the OTHER image,
+   // already normalized by dividing through by sqrt(a² + b²).
+   double norm = sqrt(a_raw*a_raw + b_raw*b_raw);
+   double a = a_raw / norm, b = b_raw / norm, c = c_raw / norm;
+
+   // For every candidate ellipse center (x, y) in the other image:
+   double signed_distance = a*x + b*y + c;   // perpendicular distance, point to line
+   if (fabs(signed_distance) < threshold) {
+       // candidate match — record (index_a, index_b, distance) for collision resolution
+   }
+   ```
+
+   `threshold` is the function's own trailing `double` parameter (the one separate from
+   the block of 8 — those 8 build the line equation from the stereo camera intrinsics;
+   this one is the actual matching tolerance, in the same units as the normalized line
+   equation — i.e. pixels). Textbook epipolar-constraint matching: a genuine match's
+   ellipse center must lie close to its counterpart's epipolar line. Every candidate
+   within tolerance gets recorded, not just the closest one — resolving cases where more
+   than one candidate satisfies the threshold (ambiguous/duplicate matches) is what
+   `_epipolar_matching_fix_collision` and the `unordered_map`-based uniqueness-enforcing
+   code seen in the broader call graph are for, not decoded in further detail.
 3. **Triangulation** — `_triangulate_stereo_point`/`_triangulate_stereo_point_optimized`
    turn each matched 2D/2D pair into a 3D point. The "optimized" variant (960 bytes,
    fully decoded) is a **closed-form linear least-squares ray intersection**: builds a
@@ -190,16 +243,18 @@ approach:
    triangulated points or refining a local marker-cluster plane before the final result
    is returned.
 
-Not yet traced: the exact epipolar-matching distance/threshold formula, the ellipse
-detection image-processing internals themselves (Hough-transform-style? contour-based?
-not determined), and precisely how the resulting landmark/pose data becomes a
-`mkscan::TrackedFrame` object (PnP solve from 2D/3D correspondences is the standard next
-step, but not confirmed here) feeding into §2's bundle adjustment.
+Not yet traced: the exact inline pixel-scanning logic inside
+`detect_markers_one_view_aio_impl` that produces candidate blobs before `EllipseFit`
+runs on each one (confirmed hand-written, not OpenCV, but the precise thresholding/
+scan rule itself wasn't decoded instruction-by-instruction), and precisely how the
+resulting landmark/pose data becomes a `mkscan::TrackedFrame` object (PnP solve from
+2D/3D correspondences is the standard next step, but not confirmed here) feeding into
+§2's bundle adjustment.
 
 ## What's still open
 
-- The ellipse-detection image-processing internals (`detect_markers_one_view_aio_*`)
-  and the exact epipolar-matching threshold formula — see above.
+- The exact inline pixel-scanning/candidate-blob logic inside
+  `detect_markers_one_view_aio_impl`, upstream of `EllipseFit` — see above.
 - How triangulated/associated landmarks become a `TrackedFrame` object (plausibly a PnP
   pose solve, not confirmed).
 - Where the per-point `weight` passed to `FuseMap::AddPoint` gets computed — plausibly
