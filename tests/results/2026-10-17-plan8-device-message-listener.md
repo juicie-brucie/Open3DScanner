@@ -99,23 +99,55 @@ logs **"Trying to create a device that you've already created!"** for the
 same SN immediately after check 7's `add` succeeded — i.e. re-registering the
 listener after remove appears to have triggered the vendor SDK to attempt
 *re-creating* the device object, colliding with one that still exists from the
-first registration. That double-device-creation attempt, not obviously
-anticipated by the PLAN #1 spec's model of what registration does, is a
-plausible root cause and the first thing worth checking in a debugger before
-assuming this is the already-known Vulkan/SuperPoint hang family — this looks
-like a different failure mode (a real SIGSEGV, fast, not a hang) and the
-interposer being active didn't prevent it, so it's unlikely to be related to
-that known issue at all.
+first registration. Worth keeping as a possible contributing trigger, but it
+is very likely **not the primary cause** — see below.
+
+### This almost certainly isn't a new bug — link to prior work
+
+This project already has a fully root-caused, **never-fixed** `obscan_context_
+destroy()` crash on record, documented in `README.md` ("Known issues",
+`obscan_context_destroy() crashes inside the vendor SDK on macOS`): the call
+triggers `texture_mode::shutdown_network()`, which constructs Creality's
+SuperPoint AI network (ncnn + Vulkan) purely to immediately tear it down —
+the first OpenMP parallel region ever run in a minimal host process, and the
+vendor's bundled `libomp.dylib` 5.0 segfaults on a NULL `__kmp_threads`
+global during the join barrier, confirmed via lldb, reproduced 100% of the
+time **on vendor-spawned worker threads**, not the calling thread. Every
+direct fix was ruled out at the time (`NSApplicationLoad`,
+`OMP_NUM_THREADS=1`, `KMP_DUPLICATE_LIB_OK=TRUE`, pre-warming `libomp`,
+skipping the call entirely — which just trades it for a different crash, an
+unjoined background thread aborting on exit). The only real mitigation on
+record is exactly the one already in use here: running the risky call inside
+a disposable `RunSelfAsWorker` child process (`engine/include/openscanner/
+worker_process.h`) so a crash there only kills the worker, which is precisely
+what happened — the launcher survived and reported the signal cleanly,
+exactly as designed.
+
+This is a **different failure mode from the Vulkan/SuperPoint *hang*** that
+`vulkan_disable_interpose.c` fixes (see `docs/research/live-scanning-
+pipeline-overview.md` and the README's "False start #1/#2/#3" history for
+that saga) — the interposer blocks `vkCreateInstance`/`vkCreateDevice` to
+stop ncnn's Vulkan device construction from hanging, but `shutdown_network()`
+still runs its OpenMP-parallel region regardless of whether Vulkan succeeds
+or is blocked, so the interposer being active here doesn't rule this out —
+if anything, it makes the libomp explanation *more* likely, since the known
+Vulkan hang is accounted for and this crashed fast instead of hanging, which
+is the libomp crash's own documented signature. The "device already created"
+warning may simply be incidental noise from the same teardown window, not a
+distinct root cause — plausible, but secondary to the much better-evidenced
+libomp explanation already on record.
 
 ## Recommendation for `/openscanner/reconcile`
 
 - All of PLAN #8's and PLAN #10's own items (§2.3, OQ-3, §5 both error paths,
   OQ-4) are now hardware-confirmed. Good to move those to `DONE`.
-- New issue, not yet filed: `device_message_listener_test` crashes
-  (`SIGSEGV`) during teardown after a remove→re-add cycle, with
-  `"Trying to create a device that you've already created!"` logged
-  immediately before. This is a different failure mode than the known
-  Vulkan/SuperPoint hang (fast crash, not a 180s-class hang, and the
-  interposer was active) and isn't resolved by anything already landed —
-  worth its own PLAN item. Not investigated further here per "do not modify
-  any source file."
+- The teardown `SIGSEGV` is very likely the same already-documented,
+  never-fixed `libomp`/OpenMP crash in `obscan_context_destroy()` →
+  `texture_mode::shutdown_network()` recorded in `README.md`'s "Known
+  issues" — not a new bug, and not something the Vulkan interposer was ever
+  going to fix (it addresses a hang, not this crash). Worth a PLAN item that
+  cross-references that README section and `logs/stop_abi_fix_validation/`
+  rather than being investigated as something new; the "device already
+  created" warning logged just before it is a secondary, not-yet-ruled-out
+  lead. Not investigated further here per "do not modify any source file" —
+  left for recon.
