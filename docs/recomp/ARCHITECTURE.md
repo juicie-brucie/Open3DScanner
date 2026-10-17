@@ -18,7 +18,8 @@ artifact: the only thing both sides agree on, and the thing a human reviews.
 
 | Agent | Mode | Writes | Model |
 | --- | --- | --- | --- |
-| `openscanner/recon` | primary | `obscan_api.h`, `docs/recon/**` | `opencode/ll-alpha-free#max` |
+| `openscanner/dispatch` | primary | `docs/recomp/**`, `.claude/**` | `opencode/nemotron-3-ultra-free` |
+| `openscanner/recon` | primary | `obscan_api.h`, `docs/recon/**` | `opencode/glm-5.3-flash-free#max` |
 | `openscanner/builder` | primary | `engine/src`, `mesh`, `ui`, `tools` | `opencode/beam-free#high` |
 | `openscanner/recon-sweep` | subagent | `docs/recon/findings/**` (draft) | `opencode/deepseek-v4.1-flash-free#low` |
 | `openscanner/verifier` | all | *nothing* (read-only) | `opencode/space-bunny-free#max` |
@@ -28,6 +29,10 @@ artifact: the only thing both sides agree on, and the thing a human reviews.
 
 Error costs are asymmetric, so model spend follows the cost, not the job title:
 
+- **Orchestration errors (dispatch)** are the most leveraged: one mis-stated claim
+  reaches every agent the round dispatches at once. It also has to hold the board, the
+  specs and several long reports at the same time → a 1M-context model, picked for
+  deliberation over speed.
 - **Spec errors (recon)** are invisible and propagate into every downstream artifact.
   Highest cost → strongest model with the deepest reasoning variant.
 - **Verification errors (verifier)** let bugs through silently. Second highest cost,
@@ -45,6 +50,7 @@ explicitly — otherwise fan-out would run on recon's `#max` model, which is bac
 
 | | `edit` | `read .recon-cache` | `rea_*` | may launch |
 | --- | --- | --- | --- | --- |
+| `dispatch` | `docs/recomp` + `.claude` | **deny** | **deny** | `verifier` only |
 | `recon` | header + `docs/recon` | allow | allow | `recon-sweep`, `verifier` |
 | `builder` | src dirs; **deny header** | **deny** | **deny** | `verifier` only |
 | `recon-sweep` | `docs/recon` only | allow | **deny** | — |
@@ -63,6 +69,11 @@ Three rules carry the design:
    builder against everything else costs nothing; it can grep/read its own source
    directly.
 
+The dispatcher is walled the same way and for the same reason: it orchestrates the
+round but cannot touch vendor code, the header, or product source. Its `edit` reach is
+the board and the harness guardrails — so nothing about who is coordinating the work
+widens the wall around `engine/src/`.
+
 ## Where things live
 
 Agent and command definitions are **global**, not in this repo, so the repo stays
@@ -71,14 +82,16 @@ clean and the definitions sit next to the `rea` MCP server they depend on:
 ```
 ~/.config/opencode/
   opencode.json                       # rea MCP server
-  agents/openscanner/{recon,builder,recon-sweep,verifier}.md
-  commands/openscanner/{recon,build,reconcile,verify}.md
+  agents/openscanner/{dispatch,recon,builder,recon-sweep,verifier}.md
+  commands/openscanner/{dispatch,recon,build,reconcile,verify}.md
 ```
 
 The repo holds only the work products:
 
 ```
 Open3DScanner/
+  .claude/                                  # harness guardrails (dispatch writes)
+  CLAUDE.md
   engine/include/openscanner/obscan_api.h   # THE CONTRACT (recon writes)
   docs/recon/findings/*.md                  # narrative spec (recon writes)
   docs/recomp/PLAN.md                       # task board (you own)
@@ -113,6 +126,9 @@ Open3DScanner/
                                          test wrong → fix the test
 ```
 
+The dispatcher (`openscanner/dispatch`) runs this loop one round at a time: it hands
+each role its next row, keeps the board honest, and merges what the round produces.
+
 Two review gates, deliberately different kinds:
 
 - **verifier** — static, cheap, automated: "does the code disagree with the header?"
@@ -143,15 +159,18 @@ Copilot** OAuth login, or **OpenRouter** credits.
 
 ## Running it
 
-Start two **new** sessions (an agent is fixed per session) in the project directory:
+Start a **new** session per role (an agent is fixed per session), each in its own
+worktree — two `git` clients in one checkout will interleave the index:
 
 ```
+session D — agent: openscanner/dispatch   /openscanner/dispatch
 session A — agent: openscanner/recon      /openscanner/recon <target>
 session B — agent: openscanner/builder    /openscanner/build <item>
 ```
 
 Then, after a hardware run: `/openscanner/reconcile`. And any time:
-`/openscanner/verify <item>`.
+`/openscanner/verify <item>`. The dispatcher session runs `/openscanner/dispatch` to
+start the next round.
 
 ## Open items
 
