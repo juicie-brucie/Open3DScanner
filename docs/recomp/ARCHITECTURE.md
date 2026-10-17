@@ -127,12 +127,20 @@ Open3DScanner/
 ```
 
 The dispatcher (`openscanner/dispatch`) runs this loop one round at a time: it hands
-each role its next row, keeps the board honest, and merges what the round produces.
+each role its next row, keeps the board honest, and lands what the round produces.
 
 Two review gates, deliberately different kinds:
 
 - **verifier** — static, cheap, automated: "does the code disagree with the header?"
 - **hardware** — empirical, manual: "does the header disagree with the real device?"
+
+Landing is gated on the first of those. **Nothing merges without a verdict from
+someone other than the dispatcher** — a verifier session, or the user, reports
+`MERGEABLE` or `NEEDS CHANGE` against the exact head commit, by SHA. Reading the diff
+yourself is participation, not verification. A verdict goes stale the moment the branch
+moves; a `NEEDS CHANGE` verdict is fixed on the branch, never merged with a follow-up;
+and the verifier **reports, never acts** — it does not merge, push, or edit, so a
+verifier session running `gh pr merge` is a merge by proxy, not a verified one.
 
 ## Claude Pro's place
 
@@ -175,8 +183,9 @@ start the next round.
 ## Open items
 
 - **Git discipline:** settled — one worktree per role, each on its own branch off
-  `main`, landing through a PR with a merge commit. Two `git` clients in one checkout
-  interleave the index, so sessions never share one.
+  `main`, landing through a PR with a merge commit that carries a verifier verdict on
+  its head commit. Two `git` clients in one checkout interleave the index, so sessions
+  never share one, and a room is only ever torn down by the user.
 - **Hardware seam:** decide whether the Claude Code agent works in this checkout
   (writing only `tests/results/**`) or its own clone.
 - **Vendor binaries:** `.recon-cache/` must be populated before the first
