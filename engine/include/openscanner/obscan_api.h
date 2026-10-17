@@ -388,6 +388,8 @@ typedef struct ObScanDeviceMessage {
 
 typedef void (*ObScanDeviceMessageDelegate)(ObScanDeviceMessage msg);
 
+// Shape natively verified (see OQ-2 resolution, findings §6.1):
+// docs/recon/findings/device-message-listener.md
 typedef struct ObScanDeviceMessageListener {
     ObScanDeviceMessageDelegate onMessage;  // 0x00
 } ObScanDeviceMessageListener;
@@ -395,7 +397,9 @@ typedef struct ObScanDeviceMessageListener {
 // OBScan.SDK.OBScanDataMessage* / OBScanProcessMessage* — frames and process
 // events arrive through these listeners rather than a polling API. Spec:
 // docs/recon/findings/data-process-message-listeners.md (entry points §1,
-// registration §2, preview guard §3, delivery §4, id tables §5). Caller-
+// registration §2, preview guard §3, delivery §4, id tables §5). Listener
+// object shape verified in
+// docs/recon/findings/device-message-listener.md §6.1. Caller-
 // facing rules recovered natively from the shipped dylib (all four exports
 // verified; the process id values below are read from the vendor's own
 // *_name table, not inferred):

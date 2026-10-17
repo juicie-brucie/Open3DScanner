@@ -57,9 +57,12 @@ three failure paths share the same return value `845283584`
 
 **Installation** does two things:
 
-- Stores a `std::function<void(OBScanDeviceMessage_)>` in the manager at
-  `this+0xa0`. Its target captures `{monostub, <caller's listener pointer>}` —
-  the listener object is referenced, never copied.
+- Stores an inline `std::function<void(OBScanDeviceMessage_)>` in the manager at
+  `this+0xa0` (the probe word at `this+0xb8` is that function's `__f_`). Its
+  16-byte capture is `{<caller's listener pointer>, the manager this}` — the
+  listener object is referenced, never copied. The functor's vtable is
+  `__DATA_CONST 0x454d3b0`; resolving what it does with the capture is OQ-2,
+  resolved in §6.
 - If the device object at `this+0x158` (`device::OrbbecDevice`) exists, it also
   calls `device::OrbbecDevice::set_call_back(std::function<void(bool,
   device::DeviceConnectStatus, std::list<device::DeviceInfo>)>)`, which forwards
@@ -177,10 +180,97 @@ Evidence: the value is passed by value in `x1` (low 8 bytes) / `x2` (the `data`
 pointer) at every call site, and is materialised with a single 16-byte store.
 This confirms the header's offsets rather than merely assuming them.
 
-`OBScanDeviceMessageListener_` is still taken to be a lone delegate pointer at
-`0x00`. It was **not** re-verified in this pass (the capture stores
-`{monostub, listener}`, and following the monostub's vtable was out of scope) —
-see **OQ-2**.
+`OBScanDeviceMessageListener_` is **a single delegate pointer at `0x00`,
+natively resolved in the 2026-10-17-plan9 pass** (§6.1) — the header's one-word
+shape is exact.
+
+### 6.1 OQ-2 resolved — the `0x454d3b0` vtable chain
+
+OQ-2 asked whether the listener is a lone pointer at `0x00`, verifiable by
+following the "monostub vtable" at `__DATA_CONST 0x454d3b0`. Raw listing:
+`.recon-cache/listings/device-msg-listener.monostub-vtable.plan9.asm`. The
+address-map is the identity (`otool -l`: every segment's `vmaddr == fileoff`),
+so the file offset equals the VM address.
+
+**What `0x454d3b0` actually is.** Not a listener stub: it is the `__func`
+vtable of the `std::function` installed at registration —
+`std::__1::__function::__func<OBDeviceManagement::add_device_msg_listener(OBScanDeviceMessageListener_*)::$_0, void(OBScanDeviceMessage_)>`,
+pinned by the typeinfo name string at `__TEXT 0x2cefbe4` referenced from the
+vtable's RTTI slot. §2's earlier "{monostub, listener}" capture phrasing was a
+misreading of the inline representation: the inline buffer is
+`{vptr = 0x454d3b0, capture0 = listener, capture1 = manager this}` with `__f_`
+pointing at the buffer (`0x5c1f90`–`0x5c1fb8`: `stp {0x454d3b0, x1}, [sp,#8]`,
+`stp {x0, &capture}, [sp,#0x18]`, then `__value_func::swap` into `this+0xa0`;
+`sizeof(__func) == 0x18`, per the 24-byte allocation in `__clone`).
+
+**Slot map** (vtable-relative, each entry pinned by its symbol):
+
+| slot | symbol (at `0x5c2194`+) | body |
+| --- | --- | --- |
+| `+0x00` | `~__func()` (D1) | `ret` |
+| `+0x08` | `~__func()` (D0) | tail `b operator delete` |
+| `+0x10` | `__clone() const` | alloc 0x18, re-store vptr, copy 16-byte capture |
+| `+0x18` | `__clone(__base*)` | copy 16-byte capture only |
+| `+0x20` | `destroy()` | `ret` — **nothing to clean up** |
+| `+0x28` | `destroy_deallocate()` | `operator delete` path |
+| `+0x30` | `operator()(OBScanDeviceMessage_&&)` | **the invoke** |
+| `+0x38` | `target(type_info)` | RTTI compare |
+| `+0x40` | `target_type()` | returns typeinfo id |
+
+**The invoke** — reached from `send_device_msg` (`0x5c5420`: `ldr x0,
+[x20,#0xb8]` = `__f_`, `ldr x8,[x8,#0x30]`, `add x1, sp, #0x8` = `&msg` copy,
+`blr`):
+
+```
+__func::operator() @ 0x5c2204
+  ldp x8, x1, [x1]    ; x8 = msg.words[0] = {int32 msg_id, int32 pad}, x1 = msg.words[1] = data
+  ldr x9, [x0, #0x8]  ; x9 = capture0 = the registered listener pointer
+  ldr x2, [x9]        ; x2 = [listener + 0x00]  <- THE ONLY LOAD THROUGH THE LISTENER
+  mov x0, x8
+  br  x2              ; tail-call delegate(x0 = msg.words[0], x1 = msg.words[1])
+```
+
+The listener object is double-dereferenced exactly once: one 8-byte load at
+offset `0x00`. `__clone`/`__clone(__base*)` copy the *capture* (the 16 bytes at
+`__func+8`), never walking into the listener; `destroy()` is `ret`; the invoke
+never loads beyond `[listener+0]` and never writes it. So the ABI consumes one
+pointer-sized word of the listener object and nothing else — no vtable, no
+extra field, no object header behind it (this is not an IL2CPP object shape;
+word 0 is called as code).
+
+**Delegate argument ABI.** The call is the by-value ABI of the header's
+`void (*)(ObScanDeviceMessage msg)`: a static one-argument callee takes the
+16-byte composite in `x0`/`x1`. The `pad` word is *not* observable as a separate
+scalar (a 3-scalar `(msg_id, pad, data)` ABI would need `x2`; the invoke leaves
+`x2` untouched), so the header signature distinguishes correctly from
+`(int32, int32, void*)`.
+`[hw-confirmed: 2026-10-17-plan8-device-message-listener]` — the harness
+log (raw.log:23 / raw.log:75) records `DEVICE_DISCONNECT (msg_id=308412672)
+data=0x0` and `DEVICE_CONNECT (msg_id=0) data=0x104d93e67`, exactly what the
+by-value-in-`(x0,x1)` delivery produces through this invoke for the harness's
+declared `void OnDeviceMessage(ObScanDeviceMessage msg)`. Note the register
+split is *emitter-side vs delegate-side*: `send_device_msg` itself receives the
+message in `x1`/`x2` (its own `this` in `x0`), the delegate in `x0`/`x1` — no
+contradiction, just different function signatures.
+
+**Family cross-check.** The structurally identical `__func` vtables of the
+other registered families pin the same shape:
+
+| family | capture (`__func` vtable) | `operator()` | invoke body |
+| --- | --- | --- | --- |
+| device (`this+0xa0`) | `0x454d3b0` | `0x5c2204` | `ldp; ldr x9,[x0,#8]; ldr x2,[x9]; br` |
+| data (context) | `0x4539308` | `0x1b7ec` | byte-identical |
+| process (context) | `0x4539398` | `0x1bbc4` | byte-identical |
+| tips | `0x454d440` | not ranged | — |
+| control | `0x454d…` (capture at `0x5c2bdc`) | not ranged | — |
+
+data/process are therefore **static-verified** this pass; tips/control only
+share the registration construction (`stp vptr, listener` at `0x5c24d4` /
+`0x5c2bdc`) so far — their `+0x30` invokes were not separately disassembled.
+Suggested (non-blocking for this spec) follow-up: range those two slots.
+**[inferred] for tips/control.** Also unrelated: the `0x454d888` capture seen
+next to `add_device_msg_listener` belongs to `device::OrbbecDevice::
+set_call_back`'s connect lambda, not to any listener family.
 
 ## 7. Device-message vocabulary — complete
 
@@ -256,9 +346,12 @@ no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
   through the struct overload with its own `data` values. Per-call-site payloads
   are not yet mapped. Nothing in the header should claim `data` is a device list
   until this is settled.
-- **OQ-2** — Is `OBScanDeviceMessageListener_` really a single pointer at
-  `0x00`? Verifiable by following the monostub vtable at `__DATA_CONST`
-  `0x454d3b0`. The other listener families use the same shape.
+- **OQ-2** — *Resolved* (2026-10-17-plan9) → §6.1. The listener is a single delegate
+  pointer at `0x00`, consumed by one load through the `__func` vtable chain at
+  `__DATA_CONST 0x454d3b0`; the delegate ABI is the by-value message in
+  `x0`/`x1` `[hw-confirmed: 2026-10-17-plan8-device-message-listener]`. The
+  data/process families are byte-identical statically; tips/control remain
+  analogy-only (`[inferred]`, follow-up noted in §6.1).
 - **OQ-3** — Does `remove_device_msg_listener` fully clear the `std::function`
   (making a subsequent add succeed)? Not disassembled.
 - **OQ-4** — Exact thread that invokes the listener (vendor device thread?), and
@@ -295,9 +388,11 @@ Raw listings for this pass (disassembly, symbol tables, decoded tables) are in
 `OBDeviceManagement_add_device_msg_listener.asm`,
 `OBDeviceManagement_send_device_msg_msg.asm`,
 `OrbbecInternalDevice_set_call_back.asm`, `classes.symbols.txt` — and
-`.recon-cache/listings/liborbbec_scan_arm64.symbols.txt`. Per the wall in
-`docs/recon/README.md` these are read-only for `builder` and are not reproduced
-here.
+`.recon-cache/listings/liborbbec_scan_arm64.symbols.txt`. The OQ-2 evidence is
+`.recon-cache/listings/device-msg-listener.monostub-vtable.plan9.asm`
+(registration capture, vtable slots, send_device_msg vcall, and the
+data/process byte-identical invokes). Per the wall in `docs/recon/README.md`
+these are read-only for `builder` and are not reproduced here.
 
 Hardware results carried in this file (kept in-repo under `tests/results/`):
 `2026-10-17-plan8-device-message-listener.raw.log` (the Pioneer
