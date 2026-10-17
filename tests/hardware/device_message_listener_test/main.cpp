@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> args = {kWorkerFlag, lib_path};
     int exit_code = 0;
     std::string reason;
-    bool ok = openscanner::RunSelfAsWorker(args, &exit_code, &reason, 60);
+    bool ok = openscanner::RunSelfAsWorker(args, &exit_code, &reason, 180);
     if (!ok) {
         std::printf("worker did not exit cleanly: %s\n", reason.c_str());
         return 1;

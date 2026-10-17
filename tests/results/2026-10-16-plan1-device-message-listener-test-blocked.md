@@ -14,20 +14,22 @@ launcher never actually calls `setenv("DYLD_INSERT_LIBRARIES", ...)` with it bef
 re-execing into the worker. Both of those other tools do this explicitly; this one
 doesn't.
 
-That matters specifically because this test calls `obscan_context_destroy()` at
-the end (`main.cpp:184`) with no scan ever started — i.e. it *will* reach the exact
-call this project has already confirmed (twice, earlier the same day) hangs on
-this hardware without the interpose fix, building Creality's SuperPoint/ncnn
-network via MoltenVK for no reason. Without `DYLD_INSERT_LIBRARIES` set, that call
-would run unprotected.
+The interposer is still required regardless: without `DYLD_INSERT_LIBRARIES`,
+dyld aborts with "symbol not found in flat namespace" when loading the worker,
+because `vulkan_disable_interpose` needs MoltenVK's real `vkCreateInstance`/
+`vkCreateDevice` symbols to be present before it binds. So the missing
+`setenv` is a genuine launcher gap, not cosmetic.
 
-The launcher's own `RunSelfAsWorker(..., /*timeout_seconds=*/60)` would eventually
-`SIGKILL` a worker stuck there — but killing a worker *while it's inside the
-vendor's own context_destroy teardown* is a materially different (and worse) risk
-than killing one before teardown starts: it's exactly the failure mode that has
-left this hardware needing a physical power cycle before. A 60s timeout is also
-shorter than the ~180s budget this project's other tools use for exactly this
-reason.
+The remaining blocker is the timeout, not the Vulkan path. The SuperPoint/ncnn
+hang seen during `obscan_context_destroy()` is a second, Vulkan-unrelated hang
+(see `logs/stop_abi_fix_validation/README.md`); those runs never entered the
+Vulkan path. The interposer does not prevent that hang. The launcher's
+`RunSelfAsWorker(..., /*timeout_seconds=*/60)` would `SIGKILL` a worker stuck
+there, and killing a worker *while it is inside the vendor's own
+context_destroy teardown* is a materially different (and worse) risk than
+killing one before teardown starts — it is exactly the failure mode that has
+left this hardware needing a physical power cycle before. A 60s budget is also
+shorter than the ~180s this project's other tools use for exactly this reason.
 
 ## What would fix it
 
@@ -42,4 +44,5 @@ defined(VULKAN_DISABLE_INTERPOSE_DYLIB)`).
 
 This isn't a spec-vs-hardware mismatch — it's a gap in the test program itself
 (builder's `tests/hardware/*`, not `docs/recon/**`). PLAN #8 shouldn't move past
-`BUILD` until this is fixed; re-run once it is.
+`BUILD` until this is fixed; re-run once it is. (PLAN #10 tracks the timeout
+raise to 180 s alongside this interposer fix.)
