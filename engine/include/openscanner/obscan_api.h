@@ -278,22 +278,28 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // OBScan.SDK.OBScanDeviceMessage / OBScanDeviceMessageDelegate /
 // OBScanDeviceMessageListener (IL2CPP TypeDefIndex 12707-12709).
 //
-// This is the trigger for device detection: obscan_context_create()
-// and obscan_context_get_device_management() do NOT by themselves cause the
-// process's IOKit device watcher to register (confirmed by Frida-tracing
-// IOServiceAddMatchingNotification/CFRunLoopAddSource against our own
-// process: zero registrations happen without a listener). Registration goes
-// through obscan_device_management_add_device_msg_listener().
+// Device detection on macOS — recovered model; full spec in
+// docs/recon/findings/plan7-detection-path.md. The watchers start inside
+// obscan_context_create(), before any listener exists (hardware run f4c5f86:
+// MacPal.cpp:159 `Create PollingDeviceWatcher!` and the first GVCP hit land
+// on/before the context-create moment). Both watchers live in the Orbbec SDK
+// dylib this library links against (libOrbbecSDK.1.7.1.dylib, loaded via its
+// @loader_path dependency libOrbbecSDK.1.7.dylib): libusb USB hotplug
+// (watched vendor IDs 0x2BC5 = Orbbec and 0x1B20) plus a GVCP network
+// watcher (~1 s cycles). liborbbec_scan itself imports no IOKit or CFRunLoop
+// symbols; the process's IOServiceAddMatchingNotification calls are made by
+// the SDK's own embedded libusb darwin backend when the USB transport
+// context is constructed (USB device materialization / firmware-upgrade
+// path), NOT at listener registration.
 //
-// Correction to an earlier reading: the watcher itself is NOT implemented in
-// this library. liborbbec_scan imports no IOKit or CFRunLoop symbols at all,
-// so the matching-notification watcher lives in the separate Orbbec SDK dylib
-// it links against. What registration does here is install the message
-// callback and then immediately re-evaluate the current device list via the
-// device object's connect callback — which is why a DISCONNECT arrives
-// synchronously inside the add call. Once a device is physically connected,
-// the SDK delivers a message to onMessage (confirmed: msg_id=0 with a
-// non-NULL data pointer corresponds to a real connect event, and
+// Registering this listener only installs the message callback and then
+// immediately re-evaluates the current device list via the device object's
+// connect callback — which is why a DISCONNECT arrives synchronously inside
+// the add call: that is the "no device yet" report (the data=NULL callback
+// earlier code took for a registration acknowledgment), not watcher
+// activity. Once a device is physically connected, the SDK delivers a
+// message to onMessage (confirmed: msg_id=0 with a non-NULL data pointer
+// corresponds to a real connect event, and
 // obscan_device_management_get_device_num() called synchronously inside that
 // callback correctly returns count=1).
 //
@@ -358,14 +364,25 @@ typedef struct ObScanDeviceMessageListener {
     ObScanDeviceMessageDelegate onMessage;  // 0x00
 } ObScanDeviceMessageListener;
 
-// OBScan.SDK.OBScanDataMessage* / OBScanProcessMessage* — same shape as the
-// device-message family above. obscan_scan_preview() returns
-// OB_SCAN_ERROR_LISTENER_NOT_FOUND unless a data-message listener (and,
-// per the real app's own call log, a process-message listener too) is
-// registered on the context before the scan is created: preview delivers
-// new RGB/depth/IR frames and FRAME_READY through this listener rather
-// than letting the caller poll for them.
-// OBScan.SDK.OBScanDataMessageID.
+// OBScan.SDK.OBScanDataMessage* / OBScanProcessMessage* — frames and process
+// events arrive through these listeners rather than a polling API. Spec:
+// docs/recon/findings/data-process-message-listeners.md (entry points §1,
+// registration §2, preview guard §3, delivery §4, id tables §5). Caller-
+// facing rules recovered natively from the shipped dylib (all four exports
+// verified; the process id values below are read from the vendor's own
+// *_name table, not inferred):
+// - single-slot registration: a second add without a remove, or a NULL
+//   listener, fails with OB_SCAN_ERROR_INVALID_ARGUMENT; remove on an empty
+//   slot returns OB_SCAN_ERROR_LISTENER_NOT_FOUND, after which a fresh add
+//   succeeds;
+// - BOTH listeners must be registered before obscan_scan_preview(): its
+//   guard checks the data and process slots and otherwise reports
+//   OB_SCAN_ERROR_LISTENER_NOT_FOUND;
+// - data messages dispatch synchronously on the emitting thread and are
+//   dropped, not queued, when the slot is empty; process messages are
+//   enqueued for asynchronous dispatch (delivery thread / drop semantics —
+//   findings OQ-P1), with a logged enqueue failure if the thread pool is
+//   down.
 typedef enum ObScanDataMessageID {
     OB_SCAN_MESSAGE_ID_NEW_RGB_IMAGE = 0,
     OB_SCAN_MESSAGE_ID_NEW_DEPTH_IMAGE = 325189888,
@@ -373,6 +390,9 @@ typedef enum ObScanDataMessageID {
     OB_SCAN_MESSAGE_ID_FRAME_READY = 325189890,
 } ObScanDataMessageID;
 
+// Materialised with one 16-byte store at the send site, same rule as the
+// device family above (send_data_msg copies the message by value, then
+// invokes the function — findings §6).
 typedef struct ObScanDataMessage {
     int32_t msg_id;  // 0x00 — ObScanDataMessageID.
     int32_t _pad;    // 0x04
@@ -385,18 +405,26 @@ typedef struct ObScanDataMessageListener {
     ObScanDataMessageDelegate onMessage;  // 0x00
 } ObScanDataMessageListener;
 
-// OBScan.SDK.OBScanProcessMessageID — only the value confirmed so far: the
-// vendor's native log writes "send process msg id :
-// OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR" at the same point our
-// process listener receives 341967109 (the only process message in those
-// runs). The real CrealityScan app receives it on the same physical setup;
-// it's a warning about the marker layout, not a failure.
+// OBScan.SDK.OBScanProcessMessageID — completed by decoding the vendor's own
+// native OBScanProcessMessageID_name() jump table (six entries,
+// index = msg_id − 0x14620100; findings §5). All six values are read from
+// the decode; 341967109 was also confirmed in hardware (the vendor log
+// emits its name at delivery; a marker-layout warning, not a failure).
 typedef enum ObScanProcessMessageID {
+    OB_SCAN_MESSAGE_ID_FRAME_BUFFER_FULL = 341967104,
+    OB_SCAN_MESSAGE_ID_MAX_FRAMES_REACHED = 341967105,
+    OB_SCAN_MESSAGE_ID_DETECT_FACE = 341967106,
+    OB_SCAN_MESSAGE_ID_SCANNING_FAILED = 341967107,
+    OB_SCAN_MESSAGE_ID_OPTIMIZATION_TO_MESH_NEED_CHANGE_VOXEL_SIZE = 341967108,
     OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR = 341967109,
 } ObScanProcessMessageID;
 
+// The 16-byte message materialization is natively verified for the data
+// family only (send_data_msg — findings §6); this struct's runtime size
+// stays [inferred] from the C# declaration until one is sized at a send
+// site. docs/recon/findings/data-process-message-listeners.md §6.
 typedef struct ObScanProcessMessage {
-    int32_t msg_id;  // 0x00 — ObScanProcessMessageID; the managed enum also names FRAME_BUFFER_FULL, MAX_FRAMES_REACHED, DETECT_FACE, SCANNING_FAILED, ... (values unconfirmed).
+    int32_t msg_id;  // 0x00 — ObScanProcessMessageID
     int32_t _pad;    // 0x04
     void* data;      // 0x08
 } ObScanProcessMessage;
@@ -418,20 +446,28 @@ typedef ObScanStatus (*fn_obscan_context_create)(ObScanContextHandle* out_contex
 typedef ObScanStatus (*fn_obscan_context_destroy)(ObScanContextHandle* context);
 typedef ObScanStatus (*fn_obscan_context_get_device_management)(ObScanContextHandle context, ObScanDeviceManagementHandle* out_device_handle);
 
-// Registering these on the context is required before obscan_scan_preview()
-// will succeed — without them it returns OB_SCAN_ERROR_LISTENER_NOT_FOUND,
-// confirmed by diffing our own call sequence against the real app's own
-// obscan_* call log. Preview delivers frames/process events through these
-// listeners rather than a polling API.
+// Registering BOTH of these on the context is required before
+// obscan_scan_preview() will succeed — its guard inspects both listener
+// slots and otherwise returns OB_SCAN_ERROR_LISTENER_NOT_FOUND (recovered
+// natively in OBScanParasContext::judge_is_exist_listener; findings §3).
+// Single-slot add/remove discipline, error codes and delivery semantics:
+// see the message-family block above and findings §2/§4. The two remove_*
+// entry points exist as exports and take a const listener (mangled K
+// qualifier, findings §1).
 typedef ObScanStatus (*fn_obscan_context_add_data_msg_listener)(ObScanContextHandle context, ObScanDataMessageListener* listener);
 typedef ObScanStatus (*fn_obscan_context_add_process_msg_listener)(ObScanContextHandle context, ObScanProcessMessageListener* listener);
+typedef ObScanStatus (*fn_obscan_context_remove_data_msg_listener)(ObScanContextHandle context, ObScanDataMessageListener const* listener);
+typedef ObScanStatus (*fn_obscan_context_remove_process_msg_listener)(ObScanContextHandle context, ObScanProcessMessageListener const* listener);
 
 typedef ObScanStatus (*fn_obscan_device_management_get_device_num)(ObScanDeviceManagementHandle device_handle, int32_t* out_device_num);
 typedef ObScanStatus (*fn_obscan_device_management_get_device_info)(ObScanDeviceManagementHandle device_handle, int32_t idx, ObScanDeviceInfo* out_device_info);
 typedef ObScanStatus (*fn_obscan_device_management_get_active_idx)(ObScanDeviceManagementHandle device_handle, int32_t* out_active_idx);
 typedef ObScanStatus (*fn_obscan_device_management_select_active_device)(ObScanDeviceManagementHandle device_handle, int32_t active_idx);
 
-// The trigger for device detection — see the ObScanDeviceMessage* block above.
+// Device-detection results arrive through this listener; the detection
+// watchers themselves start at obscan_context_create, not here (see the
+// device-message block above and docs/recon/findings/plan7-detection-path.md
+// §1–§5).
 // Single-slot: registering a second listener without removing the first, or
 // passing NULL, returns OB_SCAN_ERROR_INVALID_ARGUMENT. `listener` must stay
 // alive for as long as the SDK might still invoke it (it is referenced, not

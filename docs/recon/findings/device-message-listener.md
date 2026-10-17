@@ -88,8 +88,11 @@ Correcting an implication in the current header:
   (zero IOKit registrations until a listener exists) but should be re-worded:
   the watcher is not *implemented* here, and what registration does here is
   attach a connect callback, which triggers an immediate device-list evaluation.
-  Which side actually performs the first IOKit registration is not determined by
-  this pass — see **OQ-7**.
+  Which side actually performs the first IOKit registration — **resolved** in
+  [`plan7-detection-path.md`](plan7-detection-path.md) (the SDK dylib's embedded
+  libusb darwin backend, on `UsbContext` construction). The watcher start itself
+  is *not* tied to listener registration: both device watchers are constructed
+  inside `obscan_context_create` [hw-confirmed: f4c5f86].
 
 ## 4. Delivery path and the "lost if no listener" rule
 
@@ -224,10 +227,12 @@ connect callback was bound separately (rather than from
   the member offsets used (`0xb8`, `0x158`, `0xa0`) match that object, but the
   vendor type name is `OBScanDeviceManagementHandle_`. Low risk for callers, who
   only forward the out-parameter.
-- **OQ-7** — Reconcile "registration starts the device watcher" with §3: this
-  dylib contains no IOKit. Determine which side performs the first
-  `IOServiceAddMatchingNotification`. Candidate artifact:
-  `libOrbbecSDK.1.7.1.dylib` in `.recon-cache/vendor/`.
+- **OQ-7** — *Resolved* → [`plan7-detection-path.md`](plan7-detection-path.md).
+  Watchers (libusb USB hotplug + GVCP net) start at `obscan_context_create`
+  inside `libOrbbecSDK.1.7.1.dylib`; the first `IOServiceAddMatchingNotification`
+  belongs to that dylib's embedded libusb, triggered by `UsbContext`
+  construction. A listener-less with-device run is still unobserved (OQ-7b
+  there).
 
 ## Evidence
 
