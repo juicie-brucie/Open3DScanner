@@ -7,7 +7,7 @@ session.
 Hardware tests run from the worktree that holds the interposer build:
 
 ```
-/Users/brucemackay/DevReposiMac/Open3DScanner-wt-build1
+/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
 ```
 
 Never from the main checkout — it lacks the interposer and the 180 s timeout.

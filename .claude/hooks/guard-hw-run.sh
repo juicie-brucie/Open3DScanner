@@ -48,11 +48,11 @@ esac
 case "$cmd" in
   *device_message_listener_test*)
     case "$cwd" in
-      *Open3DScanner-wt-build1*) ;;
+      *Open3DScanner-wt-hw*) ;;
       *)
         case "$cmd" in
-          *Open3DScanner-wt-build1*) ;;
-          *) block "run the hardware test only from Open3DScanner-wt-build1 (the interposer build)";;
+          *Open3DScanner-wt-hw*) ;;
+          *) block "run the hardware test only from Open3DScanner-wt-hw (the interposer build)";;
         esac
         ;;
     esac
