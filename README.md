@@ -198,17 +198,18 @@ after the fact.
 
 **~~Device enumeration returns 0 devices even with a scanner physically
 connected~~ — resolved.** The RPCServer/privileged-helper theory below was
-wrong. The real cause: `obscan_context_create()` and
-`obscan_context_get_device_management()` don't start the vendor SDK's
-IOKit device-watcher thread by themselves — confirmed by Frida-tracing
-`IOServiceAddMatchingNotification`/`CFRunLoopAddSource` against our own
-process and seeing zero registrations without a listener. The watcher
-thread only starts as a side effect of registering a real
-`ObScanDeviceMessageListener` via
-`obscan_device_management_add_device_msg_listener()` (see
-`obscan_api.h`'s `ObScanDeviceMessage*` block for the full story,
-including the known post-callback crash hazard this call sites must run
-inside a worker process).
+wrong. The real cause: detection is performed by two watchers (libusb USB
+hotplug — VIDs `0x2BC5`/`0x1B20` — and a GVCP network watcher) that start
+inside `obscan_context_create()` and live wholly in
+`libOrbbecSDK.1.7.1.dylib`; IOKit matching registrations are that
+library's embedded-libusb darwin backend firing at `UsbContext`
+construction, not something this project triggers by registering a
+listener. Registering an `ObScanDeviceMessageListener` is how this tool
+*receives* the resulting CONNECT/DISCONNECT — it does not start detection.
+See `docs/recon/findings/plan7-detection-path.md` and
+`obscan_api.h`'s `ObScanDeviceMessage*` block (including the known
+post-callback crash hazard, which requires this call site to run inside a
+worker process).
 
 Needed no privileged helper, no real install, nothing beyond what this
 project already does. Superseded the following, kept only as a record
