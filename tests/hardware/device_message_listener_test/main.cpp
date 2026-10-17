@@ -15,6 +15,7 @@
 #include <functional>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -95,6 +96,16 @@ void Check(const char* label, ObScanStatus actual, ObScanStatus expected) {
 typedef ObScanStatus (*fn_remove)(ObScanDeviceManagementHandle, ObScanDeviceMessageListener*);
 
 
+// Every reader of g_cb_threads takes g_cb_mutex. The callback appends from the
+// emitting (vendor) thread, so an unguarded `.size()` can miss a message that
+// lands between the add and the wait, misattributing the phase it belongs to.
+// std::mutex is not recursive: ThreadHashList() takes the same lock, so call
+// CbCount() from outside a locked region.
+size_t CbCount() {
+    std::lock_guard<std::mutex> lk(g_cb_mutex);
+    return g_cb_threads.size();
+}
+
 std::string ThreadHashList(size_t from, size_t to) {
     std::lock_guard<std::mutex> lk(g_cb_mutex);
     std::string out;
@@ -163,7 +174,7 @@ int RunTests(const std::string& library_path) {
     status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_a);
     std::printf("[worker] add(handle, listener_a) #1 -> %s (%d)\n", StatusName(status), (int)status);
     Check("add(handle, listener_a) #1 == SUCCESS", status, OB_SCAN_SUCCESS);
-    size_t count_after_add1 = g_cb_threads.size();
+    size_t count_after_add1 = CbCount();
     std::printf("[worker]   messages delivered during add: %zu; callback thread id hashes=%s; registration thread id hash=%lu\n",
                 count_after_add1,
                 ThreadHashList(0, count_after_add1).c_str(),
@@ -177,7 +188,7 @@ int RunTests(const std::string& library_path) {
     std::printf("[worker] waiting 2s for any asynchronous device messages...\n");
     std::fflush(stdout);
     std::this_thread::sleep_for(std::chrono::seconds(2));
-    size_t count_after_wait = g_cb_threads.size();
+    size_t count_after_wait = CbCount();
     std::printf("[worker] total messages observed: %d\n", g_msg_count.load());
     std::printf("[worker]   messages after 2s wait: %zu; callback thread id hashes=%s\n",
                 count_after_wait,
@@ -195,11 +206,11 @@ int RunTests(const std::string& library_path) {
         std::printf("[worker] remove(NULL handle, listener) -> %s (%d)\n", StatusName(status), (int)status);
         Check("remove(NULL handle, listener) == DEADLINE_EXCEEDED", status, OB_SCAN_ERROR_DEADLINE_EXCEEDED);
 
-        size_t count_before_readd = g_cb_threads.size();
+        size_t count_before_readd = CbCount();
         status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_a);
         std::printf("[worker] add(handle, listener_a) after remove -> %s (%d)\n", StatusName(status), (int)status);
         Check("add after remove == SUCCESS (OQ-3 cleared slot)", status, OB_SCAN_SUCCESS);
-        size_t count_after_readd = g_cb_threads.size();
+        size_t count_after_readd = CbCount();
         std::printf("[worker]   messages delivered during re-add: %zu; callback thread id hashes=%s\n",
                     count_after_readd - count_before_readd,
                     ThreadHashList(count_before_readd, count_after_readd).c_str());
