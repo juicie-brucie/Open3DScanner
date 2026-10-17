@@ -306,3 +306,6 @@ created/destroyed/created timeline and both thread ids: registerer/deliverer
 `2026-10-17-plan8-device-message-listener.crash.ips` (the faulting stack), and
 the reconcile analysis
 `2026-10-17-plan8-device-message-listener-crash-analysis.md`.
+
+## OQ-2 Status
+OQ-2 confirmed: single delegate pointer at 0x00. [inferred]
