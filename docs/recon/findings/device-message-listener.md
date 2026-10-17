@@ -10,8 +10,10 @@ _matching the `__TEXT` of the shipped fat binary; `liborbbec_scan.dylib` and
 **Method:** static. Complete external symbol table (`nm -gU`, 25,366 symbols),
 targeted arm64 disassembly of the listener entry points and their implementation
 chain, plus decode of the vendor's `*_name` lookup tables. There was **no dynamic
-tracing in this pass**, so every statement below is a static-binary fact; anything
-that is a reading of intent rather than of code is tagged **[inferred]**.
+tracing in the original pass**, so its statements are static-binary facts;
+hardware results retrieved since are cited per run (`[hw-confirmed: …]` /
+`[hw-observed: …]` / `[hw-contradicted: …]`); anything that is a reading of
+intent rather than of code is tagged **[inferred]**.
 
 This closes the "undocumented; a listener is what starts the watcher" open item
 in `docs/recomp/PLAN.md` — but see §3 and OQ-7, where it also **narrows an
@@ -72,6 +74,21 @@ device list, and with no device attached that yields a DISCONNECT message before
 `add_device_msg_listener` returns. **[inferred from the call that immediately
 follows registration, not traced dynamically]**
 
+**Remove→add re-enters device creation** [hw-observed:
+2026-10-17-plan8-device-message-listener] — recorded here because it
+qualifies the single-slot rule above. Check 7's remove→add pair drove
+`PioneerDevice.cpp:54 Pioneer device created!` → `PioneerDevice.cpp:59
+Pioneer device destroyed!` → `Pioneer device created!` (16:54:49.07 / .27 /
+.59, all on the caller thread `14660842`), and 60 ms after
+`DeviceManager.cpp:157 Device created successfully!` the vendor watcher
+thread (`14660873`) logged \`ObException.cpp:5 Trying to create a device
+that you've already created! SN/ID: CR0886100SN…\`. A remove→add therefore
+re-enters SDK device creation while a device object from the previous round
+may still be live; every step returns 0, so at the ABI level it is legal.
+This is the event that ends in the §9 watcher fault (NULL in
+`get_active_device()`) — whether the churn *causes* that state or merely
+*exposes* it is open → **#11**.
+
 ## 3. What creates the device, and what really starts the watcher
 
 Correcting an implication in the current header:
@@ -109,7 +126,14 @@ four sites. `send_device_msg`:
 If the `std::function` is present but empty, control reaches
 `std::__1::__throw_bad_function_call`, so a thrown C++ exception can escape a
 listener-registered-but-cleared state. Delivery happens on the emitting
-(vendor) thread, so a listener must be thread-safe. **[thread identity inferred]**
+(vendor) thread, so a listener must be thread-safe.
+**[thread identity hw-observed: 2026-10-17-plan8-device-message-listener]** —
+the DEVICE_CONNECT the harness received was invoked on the worker's main
+thread `14660842`, the same thread that registered the listener; the vendor
+watcher thread `14660873` runs the same emitter for poll-driven change
+events but never reached `send_device_msg` in that run (its invocation
+faulted first, §9). The listener has therefore not been observed invoked
+from a watcher thread yet. See OQ-4.
 
 Note the same rule holds for the context-level families: data/process
 listeners exist to receive frames/process events, and preview refuses without
@@ -189,17 +213,31 @@ the header. **[pattern inferred from three families]**
   destroying the listener. Registration is single-slot (§2.3), so an add/add
   pair fails rather than replacing.
 - Messages emitted before registration are **dropped**; there is no queue.
-- Delivery is on the emitting thread.
+- Delivery is on the emitting thread [hw-observed: the registration-driven
+  DEVICE_CONNECT ran on the registering worker thread — §4].
+- Device-object churn: remove→add re-enters device creation while the SDK may
+  still hold the previous device object (§2). Every step returns 0, so the
+  cycle is ABI-legal, yet the observed bookkeeping state ended in the §9
+  watcher fault. Until #11 clears the mechanism, a successful remove→add is
+  **not** proof of safety.
 
-## 9. Symbols observed without any reference
+## 9. Symbols without static reference — corrected by the crash report
 
-`OBDeviceManagement::bind_device_connect_callback()`,
+`OBDeviceManagement::bind_device_connect_callback()` is **live**, despite
+having no static caller: the faulting watcher thread of the
+2026-10-17-plan8-device-message-listener run carries the
+`std::__1::__function::__func<… bind_device_connect_callback …>` frame
+invoking `update_camera_status → update_device_info → get_active_device()`
+while the vendor poller re-delivers DEVICE_CONNECT. The earlier
+"remnant of an older wiring" reading is **retracted**: the function binds
+the connect callback that runs both immediately at registration (§2) and
+again from the watcher thread.
+
+Still without any static or dynamic reference:
 `OBDeviceManagement::send_device_msg(int)` and
-`OBDeviceManagement::init_device_msg(int)` have no direct `BL`/`B` caller and no
-`ADRP`+`ADD` address reference. Detection covered only those two forms, so
-"unused" is **not proven**; they read as remnants of an older wiring where the
-connect callback was bound separately (rather than from
-`add_device_msg_listener`) and messages were sent by id.
+`OBDeviceManagement::init_device_msg(int)` have no direct `BL`/`B` caller and
+no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
+"unused" is **not proven** for those two.
 
 ---
 
@@ -218,7 +256,13 @@ connect callback was bound separately (rather than from
   (making a subsequent add succeed)? Not disassembled.
 - **OQ-4** — Exact thread that invokes the listener (vendor device thread?), and
   whether any re-entrancy is possible from inside the callback. Needs dynamic
-  tracing.
+  tracing. **Partially resolved**
+  (`2026-10-17-plan8-device-message-listener`): the registration-driven
+  delivery ran on the registering worker thread (`14660842`); the vendor
+  poller thread (`14660873`) executes the same emitter but never invoked the
+  listener in the recorded run — it faulted upstream of `send_device_msg`
+  (§9). So invocation from a watcher thread remains unobserved, and the
+  re-entrancy half stays open → **#11**.
 - **OQ-5** — The `tips` / `control` / `data` / `process` / `calib` families use
   the same `*_name` jump-table shape and are decodable by the same method; not
   decoded in this pass. Worth doing for PLAN #2 and PLAN #3.
@@ -245,3 +289,11 @@ Raw listings for this pass (disassembly, symbol tables, decoded tables) are in
 `.recon-cache/listings/liborbbec_scan_arm64.symbols.txt`. Per the wall in
 `docs/recon/README.md` these are read-only for `builder` and are not reproduced
 here.
+
+Hardware results carried in this file (kept in-repo under `tests/results/`):
+`2026-10-17-plan8-device-message-listener.raw.log` (the Pioneer
+created/destroyed/created timeline and both thread ids: registerer/deliverer
+`14660842`, watcher/faulting thread `14660873`),
+`2026-10-17-plan8-device-message-listener.crash.ips` (the faulting stack), and
+the reconcile analysis
+`2026-10-17-plan8-device-message-listener-crash-analysis.md`.

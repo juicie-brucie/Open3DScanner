@@ -305,12 +305,21 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 //
 // Registration guards, recovered natively: a NULL listener, or a second
 // registration while one is already installed and never removed, both fail
-// with OB_SCAN_ERROR_INVALID_ARGUMENT. The slot is single. Messages emitted
-// while no listener is installed are dropped, not queued. The listener object
-// is referenced (a pointer to it is captured), never copied, so the caller
-// must keep it alive until it is removed or the context is destroyed.
-// Delivery happens on the emitting (vendor) thread, so a listener must be
-// thread-safe. See docs/recon/findings/device-message-listener.md.
+// with OB_SCAN_ERROR_INVALID_ARGUMENT. The slot is single. Remove clears the
+// slot and a re-add then returns SUCCESS [hw-observed: the
+// 2026-10-17-plan8-device-message-listener run exercised exactly that pair]
+// — but the cycle re-enters the vendor's device-creation machinery on the
+// caller thread (Pioneer created!/destroyed!/created! ~200 ms apart) while
+// the vendor watcher thread later logs "Trying to create a device that
+// you've already created!" and faults (NULL in get_active_device()).
+// ABI-legal, correctness-unproven — findings §2/§8/§9, board #11.
+// Messages emitted while no listener is installed are dropped, not queued.
+// The listener object is referenced (a pointer to it is captured), never
+// copied, so the caller must keep it alive until it is removed or the
+// context is destroyed. Delivery happens on the emitting (vendor) thread
+// [hw-confirmed: 2026-10-17-plan8 — DEVICE_CONNECT was invoked on the
+// thread that registered the listener], so a listener must be thread-safe.
+// See docs/recon/findings/device-message-listener.md.
 //
 // Message IDs, confirmed against the vendor's own native log, which writes
 // "send device msg id : <NAME>" at the moment each one is delivered:
@@ -322,13 +331,25 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // thread once the device is opened. A DISCONNECT after a CONNECT is a real
 // unplug.
 //
-// Known hazard: in standalone testing, the real connect-event callback is
-// reproducibly followed by a crash inside the vendor SDK shortly after
-// returning from onMessage. This is the same class of fragility as the
-// obscan_context_destroy() crash elsewhere in this SDK (vendor code that
-// assumes a full Unity/Cocoa runtime context) — callers must run any code
-// that registers this listener inside a disposable worker process (see
-// worker_process.h), not in a process that cannot afford to crash.
+// Known hazard — rewritten from the PLAN #8 crash analysis
+// (tests/results/2026-10-17-plan8-device-message-listener-crash-analysis.md).
+// Established [hw-confirmed, that crash report]: a SIGSEGV in the vendor SDK
+// faults on its polling device-watcher thread, strictly upstream of
+// send_device_msg — update_camera_status -> update_device_info ->
+// get_active_device() (device::OrbbecDevice) — and the only images on the
+// stack are liborbbec_scan / libOrbbecSDK / libsystem_pthread. Not
+// established: what leaves device bookkeeping in that NULL state — a
+// pre-existing inconsistency that the remove->add cycle merely exposes, or
+// the callback re-entering while the device object re-creates; board #11
+// exists to settle that. The crash is NOT the onMessage return path (the
+// run's DEVICE_CONNECT delivery to the caller's callback completed
+// successfully on the worker thread beforehand) and it is NOT the same
+// class of fragility as the obscan_context_destroy()/libomp crash
+// (different thread, no such frames) — the earlier "reproducibly" claim and
+// that analogy are withdrawn. Until #11 rules, still run anything that
+// registers this listener inside a disposable worker process (see
+// worker_process.h), but for the unproven watcher threading around
+// remove->add, not for callback-run fragility.
 // ---------------------------------------------------------------------------
 // OBScan.SDK.OBScanDeviceMessageID — the complete device family, recovered by
 // decoding the vendor's own OBScanDeviceMessageID_name() lookup table. The
