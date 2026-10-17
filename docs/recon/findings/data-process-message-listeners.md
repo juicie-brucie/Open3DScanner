@@ -205,10 +205,15 @@ materialization is confirmed for the data family specifically; the process
 struct's runtime size is **[inferred — same construction family and C#
 declaration, not yet natively sized]**.
 
-The stored listener remains the C#-shaped single-delegate struct. For these
-families the capture stubs (`0x4539308`, `0x4539398`) differ from the device
-family's monostub (`0x454d3b0`), so OQ-2's listener-obj question must be
-answered per family, not by analogy (**OQ-2**, still open, PLAN row #9).
+The stored listener remains the C#-shaped single-delegate struct. The "capture
+stubs" are the `__func` vtables of the registered `std::function`s (not stub
+objects); their `operator()` slots were disassembled on 2026-10-17-plan9 and
+are **byte-identical to the device family's** (`0x1b7ec` for data, `0x1bbc4`
+for process, both ending `ldr x2,[x9]; mov x0,x8; br x2` with
+`x9 = capture0 = listener`) — one load through `[listener+0x00]`, so the
+per-family shape question is settled for these two families — see §6.1 of
+[`device-message-listener.md`](device-message-listener.md). Tips and control
+remain analogy-only (**[inferred]**; noted as a follow-up there).
 
 ## 7. Lifetime rules
 
@@ -245,7 +250,10 @@ in this pass relied on an unreferenced symbol.
 
 Raw evidence: `.recon-cache/listings/data-process-listeners.plan2.asm` (wrapper
 bodies, native registration bodies, both name tables, crossing emitters, the
-preview-guard chain, and the address-map bias test). Export cross-checks:
+preview-guard chain, and the address-map bias test), plus
+`.recon-cache/listings/device-msg-listener.monostub-vtable.plan9.asm` for the
+plan9 shard covering this file's data/process `operator()` windows. Export
+cross-checks:
 `.recon-cache/listings/liborbbec_scan_arm64.symbols.txt`. Analysis snapshot:
 `.recon-cache/liborbbec_scan_arm64.analysis.json` (read-only; always `open`
 with this snapshot, never re-analyze). Per `docs/recon/README.md` none of the
@@ -272,6 +280,9 @@ raw listings are reproduced here.
   those labels if possible; also follow the `[+0xe1]` enable flag and the
   `[+0x4c8]` state machine (`{1,3,4,5}` membership) and the `[+0xe1]` enable flag for exact preview
   lifecycle semantics.
-- **inherited OQ-2** (PLAN row #9) — listener-object shape for these families:
-  same C#-single-delegate declaration, but distinct capture stubs; verify per
-  family.
+- **inherited OQ-2** (PLAN row #9) — *Resolved* for data & process
+  (2026-10-17-plan9): both `__func` vtables' `operator()` invokes are
+  byte-identical to the device family's — one load through `[listener+0x00]`
+  and nothing else. See §6 (above) and §6.1 of
+  [`device-message-listener.md`](device-message-listener.md); tips/control
+  stay `[inferred]`.
