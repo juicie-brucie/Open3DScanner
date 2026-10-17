@@ -96,11 +96,10 @@ void Check(const char* label, ObScanStatus actual, ObScanStatus expected) {
 typedef ObScanStatus (*fn_remove)(ObScanDeviceManagementHandle, ObScanDeviceMessageListener*);
 
 
-// Every reader of g_cb_threads takes g_cb_mutex. The callback appends from the
-// emitting (vendor) thread, so an unguarded `.size()` can miss a message that
-// lands between the add and the wait, misattributing the phase it belongs to.
-// std::mutex is not recursive: ThreadHashList() takes the same lock, so call
-// CbCount() from outside a locked region.
+// g_cb_threads is appended by the callback on the emitting (vendor) thread, so
+// every read of its size must take the same g_cb_mutex. std::mutex is not
+// recursive: ThreadHashList() takes the lock too, so call CbCount() from
+// outside a locked region.
 size_t CbCount() {
     std::lock_guard<std::mutex> lk(g_cb_mutex);
     return g_cb_threads.size();

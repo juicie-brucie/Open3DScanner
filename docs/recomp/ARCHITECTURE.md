@@ -184,8 +184,9 @@ start the next round.
 
 - **Git discipline:** settled — one worktree per role, each on its own branch off
   `main`, landing through a PR with a merge commit that carries a verifier verdict on
-  its head commit. Two `git` clients in one checkout interleave the index, so sessions
-  never share one, and a room is only ever torn down by the user.
+  its exact head commit, recorded on the PR by SHA. Two `git` clients in one checkout
+  interleave the index, so sessions never share one, and a room is only ever torn down
+  by the user.
 - **Hardware seam:** decide whether the Claude Code agent works in this checkout
   (writing only `tests/results/**`) or its own clone.
 - **Vendor binaries:** `.recon-cache/` must be populated before the first
