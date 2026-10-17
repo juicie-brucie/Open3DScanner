@@ -46,7 +46,7 @@ esac
 #    Accept either the session's cwd or an explicit `cd <worktree>` in the
 #    command — a bare relative path is only safe when the cwd is the worktree.
 case "$cmd" in
-  *device_message_listener_test*)
+  *message_listener_test*)
     case "$cwd" in
       *Open3DScanner-wt-hw*) ;;
       *)
