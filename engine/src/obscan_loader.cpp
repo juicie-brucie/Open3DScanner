@@ -74,6 +74,10 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
         reinterpret_cast<fn_obscan_context_add_data_msg_listener>(resolve("obscan_context_add_data_msg_listener"));
     obscan_context_add_process_msg_listener = reinterpret_cast<fn_obscan_context_add_process_msg_listener>(
         resolve("obscan_context_add_process_msg_listener"));
+    obscan_context_remove_data_msg_listener = reinterpret_cast<fn_obscan_context_remove_data_msg_listener>(
+        resolve("obscan_context_remove_data_msg_listener"));
+    obscan_context_remove_process_msg_listener = reinterpret_cast<fn_obscan_context_remove_process_msg_listener>(
+        resolve("obscan_context_remove_process_msg_listener"));
     obscan_device_management_get_device_num = reinterpret_cast<fn_obscan_device_management_get_device_num>(
         resolve("obscan_device_management_get_device_num"));
     obscan_device_management_get_device_info = reinterpret_cast<fn_obscan_device_management_get_device_info>(

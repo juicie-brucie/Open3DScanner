@@ -53,6 +53,8 @@ public:
     fn_obscan_context_get_device_management obscan_context_get_device_management = nullptr;
     fn_obscan_context_add_data_msg_listener obscan_context_add_data_msg_listener = nullptr;
     fn_obscan_context_add_process_msg_listener obscan_context_add_process_msg_listener = nullptr;
+    fn_obscan_context_remove_data_msg_listener obscan_context_remove_data_msg_listener = nullptr;
+    fn_obscan_context_remove_process_msg_listener obscan_context_remove_process_msg_listener = nullptr;
     fn_obscan_device_management_get_device_num obscan_device_management_get_device_num = nullptr;
     fn_obscan_device_management_get_device_info obscan_device_management_get_device_info = nullptr;
     fn_obscan_device_management_get_active_idx obscan_device_management_get_active_idx = nullptr;
