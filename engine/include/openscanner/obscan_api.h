@@ -278,22 +278,28 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // OBScan.SDK.OBScanDeviceMessage / OBScanDeviceMessageDelegate /
 // OBScanDeviceMessageListener (IL2CPP TypeDefIndex 12707-12709).
 //
-// This is the trigger for device detection: obscan_context_create()
-// and obscan_context_get_device_management() do NOT by themselves cause the
-// process's IOKit device watcher to register (confirmed by Frida-tracing
-// IOServiceAddMatchingNotification/CFRunLoopAddSource against our own
-// process: zero registrations happen without a listener). Registration goes
-// through obscan_device_management_add_device_msg_listener().
+// Device detection on macOS — recovered model; full spec in
+// docs/recon/findings/plan7-detection-path.md. The watchers start inside
+// obscan_context_create(), before any listener exists (hardware run f4c5f86:
+// MacPal.cpp:159 `Create PollingDeviceWatcher!` and the first GVCP hit land
+// on/before the context-create moment). Both watchers live in the Orbbec SDK
+// dylib this library links against (libOrbbecSDK.1.7.1.dylib, loaded via its
+// @loader_path dependency libOrbbecSDK.1.7.dylib): libusb USB hotplug
+// (watched vendor IDs 0x2BC5 = Orbbec and 0x1B20) plus a GVCP network
+// watcher (~1 s cycles). liborbbec_scan itself imports no IOKit or CFRunLoop
+// symbols; the process's IOServiceAddMatchingNotification calls are made by
+// the SDK's own embedded libusb darwin backend when the USB transport
+// context is constructed (USB device materialization / firmware-upgrade
+// path), NOT at listener registration.
 //
-// Correction to an earlier reading: the watcher itself is NOT implemented in
-// this library. liborbbec_scan imports no IOKit or CFRunLoop symbols at all,
-// so the matching-notification watcher lives in the separate Orbbec SDK dylib
-// it links against. What registration does here is install the message
-// callback and then immediately re-evaluate the current device list via the
-// device object's connect callback — which is why a DISCONNECT arrives
-// synchronously inside the add call. Once a device is physically connected,
-// the SDK delivers a message to onMessage (confirmed: msg_id=0 with a
-// non-NULL data pointer corresponds to a real connect event, and
+// Registering this listener only installs the message callback and then
+// immediately re-evaluates the current device list via the device object's
+// connect callback — which is why a DISCONNECT arrives synchronously inside
+// the add call: that is the "no device yet" report (the data=NULL callback
+// earlier code took for a registration acknowledgment), not watcher
+// activity. Once a device is physically connected, the SDK delivers a
+// message to onMessage (confirmed: msg_id=0 with a non-NULL data pointer
+// corresponds to a real connect event, and
 // obscan_device_management_get_device_num() called synchronously inside that
 // callback correctly returns count=1).
 //
@@ -431,7 +437,10 @@ typedef ObScanStatus (*fn_obscan_device_management_get_device_info)(ObScanDevice
 typedef ObScanStatus (*fn_obscan_device_management_get_active_idx)(ObScanDeviceManagementHandle device_handle, int32_t* out_active_idx);
 typedef ObScanStatus (*fn_obscan_device_management_select_active_device)(ObScanDeviceManagementHandle device_handle, int32_t active_idx);
 
-// The trigger for device detection — see the ObScanDeviceMessage* block above.
+// Device-detection results arrive through this listener; the detection
+// watchers themselves start at obscan_context_create, not here (see the
+// device-message block above and docs/recon/findings/plan7-detection-path.md
+// §1–§5).
 // Single-slot: registering a second listener without removing the first, or
 // passing NULL, returns OB_SCAN_ERROR_INVALID_ARGUMENT. `listener` must stay
 // alive for as long as the SDK might still invoke it (it is referenced, not

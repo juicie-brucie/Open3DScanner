@@ -15,7 +15,7 @@ Status: `TODO` · `RECON` · `SPEC-READY` · `BUILD` · `HW` · `DONE` · `BLOCK
 | 4 | `obscan_scan_pause` / `stop` / `session_destroy` clean teardown (4 client ports) | TODO | Confirm all four ports released (RGB/IR/IMU/depth). |
 | 5 | Header claim that the connect callback is "reproducibly" followed by a crash (and the `obscan_context_destroy` crash) | RECON | **HW-contradicted** (`f4c5f86`): worker exit 0, `destroy` SUCCESS in 807 ms, no power cycle. Narrow to exact conditions or drop "reproducibly". `2026-10-17-plan8-device-message-listener` crashed after an add/remove, but on the watcher thread in the connect callback (**#11**) — it never reached `obscan_context_destroy()`, so it neither supports nor contradicts this claim. |
 | 6 | `tools/live_capture_test/main.cpp:72-74` describes detection as an "IOKit device-watcher thread" | DONE | **test wrong**: this dylib imports no IOKit; the run shows `MacPal.cpp` `Create PollingDeviceWatcher!` + `Ethernet.cpp` `NetDeviceWatcher`. Fixed in the named file. The header still carries the same claim at `obscan_api.h:283-286` — that occurrence is #7's scope. |
-| 7 | OQ-7 revisit: the macOS detection path | RECON | `f4c5f86` shows **polling** + GVCP network discovery, no IOKit matching. Header asserts the watcher "lives in the Orbbec dylib"; findings leave it open. Reconcile the two. |
+| 7 | OQ-7 revisit: the macOS detection path | SPEC-READY | **Resolved.** Both watchers (libusb USB hotplug — VIDs `0x2BC5`/`0x1B20` — and GVCP net) start inside `obscan_context_create` and live wholly in `libOrbbecSDK.1.7.1.dylib`; `IOServiceAddMatchingNotification` is the SDK's own embedded-libusb backend, fired at `UsbContext` construction (device/upgrade transport init), never at listener registration. Header + findings reworded. Spec: [`findings/plan7-detection-path.md`](../recon/findings/plan7-detection-path.md). Follow-ups: OQ-7b/c/d. |
 | 8 | Purpose-built `tests/hardware/*` for the PLAN #1 paths the existing tool never exercises | DONE | All 7 checks pass on hardware (`tests/results/2026-10-17-plan8-device-message-listener.md`): §2.3 double-add → `845283584`, OQ-3 remove-then-add → SUCCESS, §5 NULL-handle → `845283591`, OQ-4 callback thread hash == registration thread hash. **Caveat: the run was not clean** — the process died of `SIGSEGV` right after check 7, in the vendor's connect callback (#11), so the checks are confirmed while the OQ-3 path is not yet proven safe. Crash analysis and archived evidence: `tests/results/2026-10-17-plan8-device-message-listener-crash-analysis.md`. |
 | 9 | OQ-2: confirm `OBScanDeviceMessageListener_` shape (single delegate at `0x00`) | RECON | Follow the monostub vtable at `__DATA_CONST 0x454d3b0`; the other listener families share the shape. |
 | 10 | `device_message_listener_test` worker timeout (60 s) and the blocked doc's Vulkan rationale | DONE | Worker timeout raised to 180 s (`main.cpp:232`) and the blocked doc's Vulkan rationale corrected — additively, in `tests/results/2026-10-16-plan1-device-message-listener-test-blocked-correction.md`, leaving the original record untouched (#34). The run itself finished in ~4 s, so it did **not** exercise the new timeout — the earlier blocker simply did not recur. Neither the timeout nor the Vulkan path is implicated in the crash (#11). |
@@ -50,9 +50,12 @@ sha256 `184d92a8…c017ec`; spec in
 - **OQ-7** — Reconcile "registration starts the device watcher" with the fact that
   this dylib imports no IOKit: which side performs the first
   `IOServiceAddMatchingNotification`? Candidate artifact
-  `libOrbbecSDK.1.7.1.dylib` in `.recon-cache/vendor/`. → **#7** — but the HW run
-  suggests the macOS path polls and uses GVCP network discovery, so this question may
-  be misframed (no IOKit matching to find).
+  `libOrbbecSDK.1.7.1.dylib` in `.recon-cache/vendor/`. → **#7** — **resolved**: watchers (libusb hotplug
+  VIDs `0x2BC5`/`0x1B20` + GVCP net) are constructed inside
+  `obscan_context_create` and live wholly in `libOrbbecSDK.1.7.1.dylib`; the first
+  `IOServiceAddMatchingNotification` is that dylib's embedded-libusb darwin
+  backend at `UsbContext` construction. Follow-ups OQ-7b/c/d in
+  [`findings/plan7-detection-path.md`](../recon/findings/plan7-detection-path.md).
 
 ## Log
 
@@ -78,3 +81,8 @@ _Append dated one-liners: what changed, which agent, and the outcome._
   `chore/claude-hw-guardrails`; #34 is build-only again. Run artefacts (crash report,
   vendor `scan_log`, SDK log window) archived under `tests/results/` instead of being
   left in `/tmp` and `~/Library/Logs/DiagnosticReports`.
+- 2026-10-17 — recon (`openscanner/recon`): PLAN #7 OQ-7 resolved → `SPEC-READY`
+  (branch `recon/plan7-detection-path`): detection = SDK-dylib libusb hotplug
+  (VIDs `0x2BC5`/`0x1B20`) + GVCP net watcher, both started at
+  `obscan_context_create`; IOKit matching belongs to the embedded-libusb darwin
+  backend at `UsbContext` construction. Header + findings reworded.
