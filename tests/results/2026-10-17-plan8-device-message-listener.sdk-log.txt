@@ -1,0 +1,144 @@
+[10/17 16:54:46.719139][info][14660873][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/17 16:54:46.719385][info][14660873][GVCPClient.cpp:325] bind 0.0.0.0:57131
+[10/17 16:54:46.719465][info][14660873][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/17 16:54:46.719495][info][14660873][GVCPClient.cpp:325] bind 0.0.0.0:56960
+[10/17 16:54:46.719536][info][14660873][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/17 16:54:46.719553][info][14660873][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/17 16:54:46.719578][info][14660873][GVCPClient.cpp:325] bind 0.0.0.0:60318
+[10/17 16:54:46.719611][info][14660873][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/17 16:54:46.719935][error][14660875][GVCPClient.cpp:355] sendto failed with error:49
+[10/17 16:54:46.722435][info][14660875][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/17 16:54:46.722460][info][14660875][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/17 16:54:47.739262][info][14660873][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/17 16:54:47.739364][info][14660873][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/17 16:54:48.744997][debug][14660873][NetDeviceEnumerator.cpp:65] Current net source port list:
+[10/17 16:54:48.745041][debug][14660873][NetDeviceEnumerator.cpp:68]  - mac:30:30:34:30:35:30, ip:127.0.0.1, port:10010
+[10/17 16:54:48.745052][debug][14660873][NetDeviceEnumerator.cpp:296] Net device list changed!
+[10/17 16:54:48.745057][debug][14660873][NetDeviceEnumerator.cpp:298] 1 net device(s) found:
+[10/17 16:54:48.745059][debug][14660842][DeviceManager.cpp:115] DeviceManager  createDevice...
+[10/17 16:54:48.745084][debug][14660842][UsbDeviceEnumerator.cpp:338] UsbDeviceEnumerator createDevice...
+[10/17 16:54:48.745097][debug][14660842][NetDeviceEnumerator.cpp:325] NetDeviceEnumerator createDevice...
+[10/17 16:54:48.745067][debug][14660873][NetDeviceEnumerator.cpp:301]   - Name: CR-Scan Raptor Pro, PID: 0x0C03, SN/ID: CR0886100SN, MAC:30:30:34:30:35:30, IP:127.0.0.1
+[10/17 16:54:48.745112][debug][14660873][NetDeviceEnumerator.cpp:313] Current net device list: (1)
+[10/17 16:54:48.745116][debug][14660873][NetDeviceEnumerator.cpp:316]   - Name: CR-Scan Raptor Pro, PID: 0x0C03, SN/ID: CR0886100SN, MAC:30:30:34:30:35:30, IP:127.0.0.1
+[10/17 16:54:48.745121][info][14660873][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/17 16:54:48.745136][info][14660873][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/17 16:54:48.745144][info][14660873][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/17 16:54:48.846359][info][14660842][Ethernet.cpp:244] rpc client connection state:1
+[10/17 16:54:48.848960][info][14660842][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/17 16:54:48.848996][info][14660842][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/17 16:54:48.849003][info][14660842][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/17 16:54:48.849401][debug][14660842][LicenseManager.cpp:244] load license file success!
+[10/17 16:54:48.849438][debug][14660842][ScannerAbstractDevice.cpp:97] Create command start!
+[10/17 16:54:48.952922][info][14660842][RPCClientPort.cpp:20] create client port cost:103ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/17 16:54:48.953226][debug][14660842][VendorCommand.cpp:198] VendorCommand constructor 104d9b298
+[10/17 16:54:48.954413][debug][14660842][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[10/17 16:54:49.059559][info][14660842][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/17 16:54:49.059604][debug][14660842][ScannerAbstractDevice.cpp:227] Create command done!
+[10/17 16:54:49.059778][info][14660842][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/17 16:54:49.060738][debug][14660842][PropertyAccessor.cpp:79] get struct data success! propertyId: 1043
+[10/17 16:54:49.060758][debug][14660842][ScannerAbstractDevice.cpp:398] init sensor map start!
+[10/17 16:54:49.060795][debug][14660842][ScannerAbstractDevice.cpp:449] init sensor map done!
+[10/17 16:54:49.060823][debug][14660842][PioneerDevice.cpp:590] Init depth process param start!
+[10/17 16:54:49.063090][debug][14660842][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4027, async: false
+[10/17 16:54:49.065042][debug][14660842][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4026, async: false
+[10/17 16:54:49.065054][debug][14660842][PioneerDevice.cpp:663] Get depth calibration params success! num=1
+[10/17 16:54:49.065069][debug][14660842][PioneerDevice.cpp:667]  - {baseline: -131.18, depthMode: 1, focalPix: 2101.08, unit: 1, z0: 0, dispOffset: 450, invalidDisp: 0}
+[10/17 16:54:49.066632][debug][14660842][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4024, async: false
+[10/17 16:54:49.066644][debug][14660842][PioneerDevice.cpp:717] d2cProfileList_(cmd:OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST:4024) size: 5
+[10/17 16:54:49.067135][debug][14660842][PropertyAccessor.cpp:79] get struct data success! propertyId: 4037
+[10/17 16:54:49.067664][debug][14660842][HostProtocol.cpp:461] get property value success! propertyId=85, cur={intValue: 0, floatValue: 0}, max={intValue: 0, floatValue: 0}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 0, floatValue: 0}
+[10/17 16:54:49.067679][debug][14660842][PropertyAccessor.cpp:28] get property value success! propertyId: 85, value: {intValue: 0, floatValue: 0}
+[10/17 16:54:49.069770][debug][14660842][PropertyAccessor.cpp:64] get raw data! propertyId: 4036, async: false
+[10/17 16:54:49.069800][debug][14660842][PioneerDevice.cpp:808] hwD2DEnable_: false, depthValueScale_: 0.2
+[10/17 16:54:49.069809][debug][14660842][PioneerDevice.cpp:809] Init depth process param done!
+[10/17 16:54:49.070353][debug][14660842][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[10/17 16:54:49.070442][debug][14660842][ScannerAbstractDevice.cpp:284] Create command done!
+[10/17 16:54:49.070900][debug][14660842][HostProtocol.cpp:461] get property value success! propertyId=89, cur={intValue: 0, floatValue: 0}, max={intValue: 0, floatValue: 0}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 0, floatValue: 0}
+[10/17 16:54:49.070913][debug][14660842][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/17 16:54:49.070919][debug][14660842][PropertyAccessor.cpp:28] get property value success! propertyId: 89, value: {intValue: 0, floatValue: 0}
+[10/17 16:54:49.070923][debug][14660842][ScannerAbstractDevice.cpp:294] heartbeat: 0
+[10/17 16:54:49.070929][debug][14660842][HostProtocol.cpp:425] Set property value, propertyId=89, value={intValue: 0, floatValue: 0}
+[10/17 16:54:49.071422][debug][14660842][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/17 16:54:49.071432][debug][14660842][PropertyAccessor.cpp:17] set property value success! propertyId: 89, value: {intValue: 0, floatValue: 0}
+[10/17 16:54:49.071709][info][14660842][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/17 16:54:49.071725][debug][14660842][NetDeviceEnumerator.cpp:407] Device 30:30:34:30:35:30 added to created devices list for connection monitoring
+[10/17 16:54:49.071733][info][14660842][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/17 16:54:49.273178][debug][14660842][HostProtocol.cpp:461] get property value success! propertyId=181, cur={intValue: 1792014971, floatValue: 1.25715e+26}, max={intValue: -1, floatValue: nan}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 1, floatValue: 1.4013e-45}
+[10/17 16:54:49.273219][debug][14660842][PropertyAccessor.cpp:28] get property value success! propertyId: 181, value: {intValue: 1792014971, floatValue: 1.25715e+26}
+[10/17 16:54:49.273511][info][14660842][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/17 16:54:49.273537][info][14660842][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/17 16:54:49.273546][info][14660842][RPCClientPort.cpp:241] No stream need to stop
+[10/17 16:54:49.273554][info][14660842][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/17 16:54:49.273628][debug][14660842][VendorCommand.cpp:206] destructor 104d9b298
+[10/17 16:54:49.273642][debug][14660842][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/17 16:54:49.273648][debug][14660842][HostProtocol.cpp:140] ~HostProtocol()
+[10/17 16:54:49.273658][debug][14660915][HostProtocol.cpp:168] emitTranDataFutureSignalThread_ finish
+[10/17 16:54:49.273683][info][14660842][RPCClientPort.cpp:241] No stream need to stop
+[10/17 16:54:49.273694][info][14660842][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/17 16:54:49.273738][debug][14660842][DeviceManager.cpp:115] DeviceManager  createDevice...
+[10/17 16:54:49.273746][debug][14660842][UsbDeviceEnumerator.cpp:338] UsbDeviceEnumerator createDevice...
+[10/17 16:54:49.273757][debug][14660842][NetDeviceEnumerator.cpp:325] NetDeviceEnumerator createDevice...
+[10/17 16:54:49.378867][info][14660842][Ethernet.cpp:244] rpc client connection state:1
+[10/17 16:54:49.379301][info][14660842][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/17 16:54:49.379319][info][14660842][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/17 16:54:49.379327][info][14660842][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/17 16:54:49.379364][debug][14660842][ScannerAbstractDevice.cpp:97] Create command start!
+[10/17 16:54:49.479535][info][14660842][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/17 16:54:49.479640][debug][14660842][VendorCommand.cpp:198] VendorCommand constructor 104d9a4b8
+[10/17 16:54:49.480423][debug][14660842][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[10/17 16:54:49.585098][info][14660842][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/17 16:54:49.585154][debug][14660842][ScannerAbstractDevice.cpp:227] Create command done!
+[10/17 16:54:49.585164][info][14660842][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/17 16:54:49.585830][debug][14660842][PropertyAccessor.cpp:79] get struct data success! propertyId: 1043
+[10/17 16:54:49.585876][debug][14660842][ScannerAbstractDevice.cpp:398] init sensor map start!
+[10/17 16:54:49.585898][debug][14660842][ScannerAbstractDevice.cpp:449] init sensor map done!
+[10/17 16:54:49.585904][debug][14660842][PioneerDevice.cpp:590] Init depth process param start!
+[10/17 16:54:49.587304][debug][14660842][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4027, async: false
+[10/17 16:54:49.588459][debug][14660842][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4026, async: false
+[10/17 16:54:49.588475][debug][14660842][PioneerDevice.cpp:663] Get depth calibration params success! num=1
+[10/17 16:54:49.588486][debug][14660842][PioneerDevice.cpp:667]  - {baseline: -131.18, depthMode: 1, focalPix: 2101.08, unit: 1, z0: 0, dispOffset: 450, invalidDisp: 0}
+[10/17 16:54:49.589654][debug][14660842][PropertyAccessor.cpp:93] get struct data list success! propertyId: 4024, async: false
+[10/17 16:54:49.589676][debug][14660842][PioneerDevice.cpp:717] d2cProfileList_(cmd:OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST:4024) size: 5
+[10/17 16:54:49.590001][debug][14660842][PropertyAccessor.cpp:79] get struct data success! propertyId: 4037
+[10/17 16:54:49.590302][debug][14660842][HostProtocol.cpp:461] get property value success! propertyId=85, cur={intValue: 0, floatValue: 0}, max={intValue: 0, floatValue: 0}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 0, floatValue: 0}
+[10/17 16:54:49.590313][debug][14660842][PropertyAccessor.cpp:28] get property value success! propertyId: 85, value: {intValue: 0, floatValue: 0}
+[10/17 16:54:49.591680][debug][14660842][PropertyAccessor.cpp:64] get raw data! propertyId: 4036, async: false
+[10/17 16:54:49.591689][debug][14660842][PioneerDevice.cpp:808] hwD2DEnable_: false, depthValueScale_: 0.2
+[10/17 16:54:49.591693][debug][14660842][PioneerDevice.cpp:809] Init depth process param done!
+[10/17 16:54:49.592028][debug][14660842][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[10/17 16:54:49.592098][debug][14660842][ScannerAbstractDevice.cpp:284] Create command done!
+[10/17 16:54:49.592372][debug][14660842][HostProtocol.cpp:461] get property value success! propertyId=89, cur={intValue: 0, floatValue: 0}, max={intValue: 0, floatValue: 0}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 0, floatValue: 0}
+[10/17 16:54:49.592379][debug][14660842][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/17 16:54:49.592383][debug][14660842][PropertyAccessor.cpp:28] get property value success! propertyId: 89, value: {intValue: 0, floatValue: 0}
+[10/17 16:54:49.592387][debug][14660842][ScannerAbstractDevice.cpp:294] heartbeat: 0
+[10/17 16:54:49.592392][debug][14660842][HostProtocol.cpp:425] Set property value, propertyId=89, value={intValue: 0, floatValue: 0}
+[10/17 16:54:49.592661][debug][14660842][VendorCommand.cpp:457] disableHeartBeat heartBeatHelper_: 0
+[10/17 16:54:49.592667][debug][14660842][PropertyAccessor.cpp:17] set property value success! propertyId: 89, value: {intValue: 0, floatValue: 0}
+[10/17 16:54:49.592673][info][14660842][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/17 16:54:49.592684][debug][14660842][NetDeviceEnumerator.cpp:407] Device 30:30:34:30:35:30 added to created devices list for connection monitoring
+[10/17 16:54:49.592689][info][14660842][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/17 16:54:49.593010][debug][14660842][HostProtocol.cpp:461] get property value success! propertyId=181, cur={intValue: 1792014971, floatValue: 1.25715e+26}, max={intValue: -1, floatValue: nan}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 1, floatValue: 1.4013e-45}
+[10/17 16:54:49.593017][debug][14660842][PropertyAccessor.cpp:28] get property value success! propertyId: 181, value: {intValue: 1792014971, floatValue: 1.25715e+26}
+[10/17 16:54:49.593341][debug][14660842][HostProtocol.cpp:461] get property value success! propertyId=186, cur={intValue: 0, floatValue: 0}, max={intValue: 1, floatValue: 1.4013e-45}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 1, floatValue: 1.4013e-45}
+[10/17 16:54:49.593349][debug][14660842][PropertyAccessor.cpp:28] get property value success! propertyId: 186, value: {intValue: 0, floatValue: 0}
+[10/17 16:54:49.593397][debug][14660842][HostProtocol.cpp:29] onStart readFlash
+[10/17 16:54:49.599616][debug][14660842][HostProtocol.cpp:53] onFinish readFlash
+[10/17 16:54:49.599649][debug][14660842][PropertyAccessor.cpp:123] readFlash success! propertyId: 4057, offset: 8192, dataLen: 8192, async: false
+[10/17 16:54:49.599694][debug][14660842][HostProtocol.cpp:29] onStart readFlash
+[10/17 16:54:49.612455][debug][14660842][HostProtocol.cpp:53] onFinish readFlash
+[10/17 16:54:49.612541][debug][14660842][HostProtocol.cpp:29] onStart readFlash
+[10/17 16:54:49.619024][debug][14660842][HostProtocol.cpp:53] onFinish readFlash
+[10/17 16:54:49.619097][debug][14660842][HostProtocol.cpp:29] onStart readFlash
+[10/17 16:54:49.630276][debug][14660842][HostProtocol.cpp:53] onFinish readFlash
+[10/17 16:54:49.630362][debug][14660842][HostProtocol.cpp:29] onStart readFlash
+[10/17 16:54:49.639711][debug][14660842][HostProtocol.cpp:53] onFinish readFlash
+[10/17 16:54:49.639875][debug][14660842][HostProtocol.cpp:29] onStart readFlash
+[10/17 16:54:49.645947][debug][14660842][HostProtocol.cpp:53] onFinish readFlash
+[10/17 16:54:49.645975][debug][14660842][PropertyAccessor.cpp:123] readFlash success! propertyId: 4058, offset: 8192, dataLen: 8192, async: false
+[10/17 16:54:49.646021][debug][14660842][HostProtocol.cpp:29] onStart readFlash
+[10/17 16:54:49.652660][debug][14660842][HostProtocol.cpp:53] onFinish readFlash
+[10/17 16:54:49.652760][debug][14660873][DeviceManager.cpp:115] DeviceManager  createDevice...
+[10/17 16:54:49.652777][warning][14660873][ObException.cpp:5] Trying to create a device that you've already created! SN/ID: CR0886100SN, uid: 30:30:34:30:35:30
+[10/17 16:54:49.737223][info][14660885][GVCPClient.cpp:421] 0, 3, 248, 1 [**5 logs in 3014ms, last: 16:54:47.740231**]
+[10/17 16:54:49.737229][info][14660886][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**5 logs in 3014ms, last: 16:54:47.740233**]
