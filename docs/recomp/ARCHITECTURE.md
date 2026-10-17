@@ -174,8 +174,9 @@ start the next round.
 
 ## Open items
 
-- **Git discipline:** builder is the only code writer, so one branch with a commit per
-  contract change is enough for now. Add a worktree only when two writers collide.
+- **Git discipline:** settled — one worktree per role, each on its own branch off
+  `main`, landing through a PR with a merge commit. Two `git` clients in one checkout
+  interleave the index, so sessions never share one.
 - **Hardware seam:** decide whether the Claude Code agent works in this checkout
   (writing only `tests/results/**`) or its own clone.
 - **Vendor binaries:** `.recon-cache/` must be populated before the first
