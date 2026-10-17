@@ -212,6 +212,19 @@ int main(int argc, char** argv) {
         return 2;
     }
 
+#if defined(__APPLE__) && defined(VULKAN_DISABLE_INTERPOSE_DYLIB)
+    {
+        size_t slash = lib_path.find_last_of('/');
+        std::string moltenvk_path;
+        if (slash != std::string::npos) moltenvk_path = lib_path.substr(0, slash + 1) + "libMoltenVK.dylib";
+        if (!moltenvk_path.empty()) {
+            std::string insert = moltenvk_path + ":" + VULKAN_DISABLE_INTERPOSE_DYLIB;
+            setenv("DYLD_INSERT_LIBRARIES", insert.c_str(), 1);
+            std::printf("[launcher] DYLD_INSERT_LIBRARIES=%s\n", insert.c_str());
+        }
+    }
+#endif
+
     std::vector<std::string> args = {kWorkerFlag, lib_path};
     int exit_code = 0;
     std::string reason;
