@@ -1,0 +1,86 @@
+[2026-10-17 16:54:46.708641][INFO ][0x1fd68bf80][::0] [1;33mSDK version 3.5.3.260921[0m
+[2026-10-17 16:54:46.708970][INFO ][0x1fd68bf80][::0] set fps file dir: /tmp/openscanner_fps_log
+[2026-10-17 16:54:46.708990][INFO ][0x1fd68bf80][::0] dependent files dir: /Applications/CrealityScan.app/Contents/Resources/Data/StreamingAssets
+[2026-10-17 16:54:46.709001][INFO ][0x1fd68bf80][::0] create thread pool with 4 threads
+[2026-10-17 16:54:46.709009][INFO ][0x1fd68bf80][::0] create thread pool with 2 threads
+[2026-10-17 16:54:46.709017][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-17 16:54:46.709024][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-17 16:54:46.709032][INFO ][0x1fd68bf80][::0] create thread pool with 1 threads
+[2026-10-17 16:54:46.709039][INFO ][0x1fd68bf80][::0] scan log dir: /tmp/openscanner_ob_scan_log
+[2026-10-17 16:54:46.709047][INFO ][0x1fd68bf80][::0] the device config file path is nullptr !
+[2026-10-17 16:54:46.717989][INFO ][0x1fd68bf80][::0] [1;33mthis is connect device mode ![0m
+[2026-10-17 16:54:46.718005][INFO ][0x1fd68bf80][::0] ob_sdk_log_dir: /tmp/openscanner_ob_sdk_log
+[2026-10-17 16:54:46.718348][INFO ][0x1fd68bf80][::0] init context success !
+[2026-10-17 16:54:46.718392][INFO ][0x1fd68bf80][::0] create OBScanContext success !
+[2026-10-17 16:54:46.718426][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread spawned successfully.
+[2026-10-17 16:54:46.718465][INFO ][0x1fd68bf80][::0] start hardware detect thread
+[2026-10-17 16:54:46.718473][INFO ][0x1fd68bf80][::0] obscan_context_get_device_management
+[2026-10-17 16:54:46.718511][INFO ][0x1fd68bf80][::0] before get device info list !
+[2026-10-17 16:54:46.718556][INFO ][0x1fd68bf80][::0] get device infos success !
+[2026-10-17 16:54:46.718566][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-17 16:54:46.718602][ERROR][0x1fd68bf80][::0] the OBScanDeviceManagementHandle is nullptr !
+[2026-10-17 16:54:46.718610][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-17 16:54:46.718645][ERROR][0x1fd68bf80][::0] [1;31mthe listener is nullptr ![0m
+[2026-10-17 16:54:46.718652][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-17 16:54:46.718659][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-17 16:54:46.718696][INFO ][0x1fd68bf80][::0] ########usb disconnect##############
+[2026-10-17 16:54:46.718706][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 1, cur_device: true[0m
+[2026-10-17 16:54:46.718713][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-17 16:54:46.718719][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-17 16:54:46.718747][INFO ][0x1fd68bf80][::0] update device info end
+[2026-10-17 16:54:46.718754][INFO ][0x1fd68bf80][::0] cur device in
+[2026-10-17 16:54:46.718761][INFO ][0x1fd68bf80][::0] pause callback begin
+[2026-10-17 16:54:46.718791][INFO ][0x1fd68bf80][::0] pause callback end
+[2026-10-17 16:54:46.718798][INFO ][0x1fd68bf80][::0] cur device end
+[2026-10-17 16:54:46.718804][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-17 16:54:46.718810][INFO ][0x1fd68bf80][::0] update callback begin
+[2026-10-17 16:54:46.718841][INFO ][0x1fd68bf80][::0] send device msg begin
+[2026-10-17 16:54:46.718848][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT
+[2026-10-17 16:54:46.718854][INFO ][0x1fd68bf80][::0] send device msg end
+[2026-10-17 16:54:46.718893][ERROR][0x1fd68bf80][::0] connect to device failed!
+[2026-10-17 16:54:46.718899][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-17 16:54:46.718905][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-17 16:54:46.718912][ERROR][0x1fd68bf80][::0] [1;31mOBScanDeviceMessageListener is already set ![0m
+[2026-10-17 16:54:48.721991][INFO ][0x1fd68bf80][::0] obscan_device_management_remove_device_msg_listener
+[2026-10-17 16:54:48.722024][INFO ][0x1fd68bf80][::0] obscan_device_management_remove_device_msg_listener
+[2026-10-17 16:54:48.722034][ERROR][0x1fd68bf80][::0] the OBScanDeviceManagementHandle is nullptr !
+[2026-10-17 16:54:48.722061][INFO ][0x1fd68bf80][::0] obscan_device_management_add_device_msg_listener
+[2026-10-17 16:54:48.745987][INFO ][0x16bf17000][::0] removedList count: 0, addedList count:1
+[2026-10-17 16:54:49.273570][INFO ][0x1fd68bf80][::0] firmware version:1.5.7,get device calibration timestamp:1792014971
+[2026-10-17 16:54:49.273604][INFO ][0x1fd68bf80][::0] add device info to list sn:CR0886100SN
+[2026-10-17 16:54:49.273612][INFO ][0x1fd68bf80][::0] current device info list:
+[2026-10-17 16:54:49.273619][INFO ][0x1fd68bf80][::0] device sn:CR0886100SN
+[2026-10-17 16:54:49.593088][INFO ][0x1fd68bf80][::0] get device calibration timestamp:1792014971
+[2026-10-17 16:54:49.593107][ERROR][0x1fd68bf80][::0] property is not permission to operate.
+[2026-10-17 16:54:49.593114][INFO ][0x1fd68bf80][::0] usb device is registered successfully 
+[2026-10-17 16:54:49.593120][INFO ][0x1fd68bf80][::0] set select device serial number:CR0886100SN
+[2026-10-17 16:54:49.593127][INFO ][0x1fd68bf80][::0] device connected state call back begin
+[2026-10-17 16:54:49.593132][INFO ][0x1fd68bf80][::0] #########camera state###############
+[2026-10-17 16:54:49.593138][INFO ][0x1fd68bf80][::0] #########usb connected##############
+[2026-10-17 16:54:49.593143][INFO ][0x1fd68bf80][::0] [1;31mupdate_camera_status 0, cur_device: true[0m
+[2026-10-17 16:54:49.593149][INFO ][0x1fd68bf80][::0] calib update callback begin
+[2026-10-17 16:54:49.593154][INFO ][0x1fd68bf80][::0] calib update callback end
+[2026-10-17 16:54:49.593159][INFO ][0x1fd68bf80][::0] camera name: Creality Raptor Pro
+[2026-10-17 16:54:49.593164][INFO ][0x1fd68bf80][::0] camera serial number: CR0886100SN
+[2026-10-17 16:54:49.593169][INFO ][0x1fd68bf80][::0] camera connection type: USB3.0
+[2026-10-17 16:54:49.593175][INFO ][0x1fd68bf80][::0] camera firmware version: 1.5.7
+[2026-10-17 16:54:49.593180][INFO ][0x1fd68bf80][::0] wifi device firmware version: Unknown
+[2026-10-17 16:54:49.593186][INFO ][0x1fd68bf80][::0] get active device serial number:CR0886100SN
+[2026-10-17 16:54:49.593390][INFO ][0x1fd68bf80][::0] the device calib status: false
+[2026-10-17 16:54:49.593401][INFO ][0x1fd68bf80][::0] check device pccupancy status begin
+[2026-10-17 16:54:49.612585][INFO ][0x1fd68bf80][::0] get origin calibration param done,origin params size:1
+[2026-10-17 16:54:49.652765][INFO ][0x1fd68bf80][::0] is support rescan: true
+[2026-10-17 16:54:49.652796][INFO ][0x1fd68bf80][::0] send device msg id : OB_SCAN_MESSAGE_ID_DEVICE_CONNECT
+[2026-10-17 16:54:49.652804][INFO ][0x1fd68bf80][::0] device connected state call back done
+[2026-10-17 16:54:49.652811][INFO ][0x1fd68bf80][::0] device state callback success !
+[2026-10-17 16:54:49.652821][INFO ][0x1fd68bf80][::0] obscan_device_management_remove_device_msg_listener
+[2026-10-17 16:54:49.652827][INFO ][0x1fd68bf80][::0] obscan_context_destroy
+[2026-10-17 16:54:49.654921][ERROR][0x16bf17000][::0] function: getDevice
+args: index
+message: Trying to create a device that you've already created! SN/ID: CR0886100SN, uid: 30:30:34:30:35:30
+type: 3
+[2026-10-17 16:54:49.660048][INFO ][0x16bfa3000][::0] [OBHardwareDetect] Thread execution finished.
+[2026-10-17 16:54:49.660075][INFO ][0x1fd68bf80][::0] [OBHardwareDetect] Thread joined and stopped.
+[2026-10-17 16:54:49.660082][INFO ][0x1fd68bf80][::0] destroy thread pool
+[2026-10-17 16:54:49.660300][INFO ][0x1fd68bf80][::0] destory OBScanContextHandle success !
+[2026-10-17 16:54:49.660310][INFO ][0x1fd68bf80][::0] device stop call
