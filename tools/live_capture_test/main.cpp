@@ -67,15 +67,17 @@ constexpr int kPollIntervalMs = 500;
 constexpr int kDeviceWaitAttempts = 30;    // ~6s at 200ms/attempt.
 constexpr int kDeviceWaitIntervalMs = 200;
 
-// obscan_device_management_add_device_msg_listener() is the actual trigger
-// for device detection — see the ObScanDeviceMessage* block in obscan_api.h.
-// Without a registered listener, the vendor SDK never starts its device
-// watcher (this dylib imports no IOKit; the watcher lives in the Orbbec
-// SDK dylib it links against) and obscan_device_management_get_device_num()
-// stays at 0 forever, no matter how much the run loop gets pumped. The
-// callback must be a plain C function pointer (no captures), so state is
-// communicated back via these globals; that's fine here because this
-// process only ever runs one live-capture session.
+// This tool registers a device-message listener so it learns when a device
+// connects (the CONNECT/DISCONNECT messages are how get_device_num() becomes
+// meaningful here) — see the ObScanDeviceMessage* block in obscan_api.h.
+// PLAN #7 hw-confirms the libusb hotplug + GVCP net watchers start inside
+// obscan_context_create, before any listener exists, so registering one is
+// not what "starts" detection; it is how this tool receives the result.
+// (Whether get_device_num() stays 0 without a listener is unobserved —
+// OQ-7b — so this tool does not rely on that either way.) The callback
+// must be a plain C function pointer (no captures), so state is communicated
+// back via these globals; that's fine here because this process only ever
+// runs one live-capture session.
 std::atomic<bool> g_got_connect_message{false};
 // Set by a DISCONNECT that arrives after a CONNECT, i.e. a real unplug. The
 // SDK also sends a DISCONNECT right at listener registration to report the
@@ -366,12 +368,11 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
     Report("obscan_context_add_process_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
-    // Registering a device-message listener is what actually starts the
-    // vendor SDK's device watcher (this dylib imports no IOKit; the
-    // watcher lives in the Orbbec SDK dylib it links against — see
-    // obscan_api.h). Without this, get_device_num() stays at 0 forever
-    // no matter how much the run loop gets pumped, which is why earlier
-    // runs of this tool never saw an already-connected device. See
+    // Register a device-message listener so this tool receives the
+    // CONNECT/DISCONNECT that tells it a device is available (the
+    // watcher itself starts inside obscan_context_create per PLAN #7, not
+    // here). Whether get_device_num() would stay 0 without one is
+    // unobserved (OQ-7b); this tool does not depend on that. See
     // README.md "Known issues".
     status = lib.obscan_device_management_add_device_msg_listener(device_mgmt, &g_device_listener);
     Report("obscan_device_management_add_device_msg_listener", status);
