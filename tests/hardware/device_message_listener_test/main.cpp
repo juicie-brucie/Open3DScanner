@@ -1,0 +1,225 @@
+// Purpose-built hardware test for PLAN #8: exercises the PLAN #1
+// device-message-listener paths that the existing tools never touch:
+//   - NULL handle -> OB_SCAN_ERROR_DEADLINE_EXCEEDED (845283591)
+//   - NULL listener -> OB_SCAN_ERROR_INVALID_ARGUMENT (845283584)
+//   - double add without remove -> OB_SCAN_ERROR_INVALID_ARGUMENT (845283584)
+//   - remove then add (OQ-3) and the status codes it returns
+//   - delivery thread identity (OQ-4)
+//
+// Usage:
+//   device_message_listener_test [path-to-liborbbec_scan.dylib-or-lib_orbbec_scan.dll]
+
+#include <atomic>
+#include <chrono>
+#include <cstdio>
+#include <functional>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <thread>
+#include <vector>
+
+#if !defined(_WIN32)
+#include <unistd.h>
+#include <dlfcn.h>
+#endif
+
+#if defined(__APPLE__)
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
+#include "openscanner/obscan_api.h"
+#include "openscanner/obscan_loader.h"
+#include "openscanner/worker_process.h"
+
+namespace {
+
+constexpr const char* kWorkerFlag = "--device-msg-listener-worker";
+
+std::atomic<int> g_msg_count{0};
+int g_failures = 0;
+std::atomic<std::thread::id> g_callback_thread{};
+std::thread::id g_registration_thread{};
+
+const char* DeviceMessageName(int32_t msg_id);
+
+void OnDeviceMessage(ObScanDeviceMessage msg) {
+    g_callback_thread.store(std::this_thread::get_id());
+    g_msg_count++;
+    std::printf("[worker][cb] device message: %s (msg_id=%d) data=%p (thread=%lu)\n",
+                DeviceMessageName(msg.msg_id), msg.msg_id, msg.data,
+                static_cast<unsigned long>(std::hash<std::thread::id>{}(g_callback_thread.load())));
+    std::fflush(stdout);
+}
+
+const char* DeviceMessageName(int32_t msg_id) {
+    switch (msg_id) {
+        case OB_SCAN_MESSAGE_ID_DEVICE_CONNECT: return "DEVICE_CONNECT";
+        case OB_SCAN_MESSAGE_ID_DEVICE_DISCONNECT: return "DEVICE_DISCONNECT";
+        default: return "unknown";
+    }
+}
+
+ObScanDeviceMessageListener g_listener_a{OnDeviceMessage};
+ObScanDeviceMessageListener g_listener_b{OnDeviceMessage};
+
+const char* StatusName(ObScanStatus status) {
+    switch (status) {
+        case OB_SCAN_SUCCESS: return "OB_SCAN_SUCCESS";
+        case OB_SCAN_ERROR_INVALID_ARGUMENT: return "OB_SCAN_ERROR_INVALID_ARGUMENT";
+        case OB_SCAN_ERROR_DEADLINE_EXCEEDED: return "OB_SCAN_ERROR_DEADLINE_EXCEEDED";
+        default: return "OB_SCAN_ERROR_(see obscan_api.h)";
+    }
+}
+
+void Check(const char* label, ObScanStatus actual, ObScanStatus expected) {
+    if (actual == expected) {
+        std::printf("[worker][PASS] %s\n", label);
+    } else {
+        g_failures++;
+        std::printf("[worker][FAIL] %s (got %d, expected %d)\n", label, (int)actual, (int)expected);
+    }
+    std::fflush(stdout);
+}
+
+// Local typedef for the not-yet-header-declared remove entry point.
+// The findings (device-message-listener.md §1) record this symbol as
+// exported: obscan_device_management_remove_device_msg_listener.
+typedef ObScanStatus (*fn_remove)(ObScanDeviceManagementHandle, ObScanDeviceMessageListener*);
+
+int RunTests(const std::string& library_path) {
+    std::printf("[worker] Loading OBScan SDK from: %s\n", library_path.c_str());
+    openscanner::ObscanLibrary* libptr = nullptr;
+    try {
+        libptr = new openscanner::ObscanLibrary(library_path);
+    } catch (const std::exception& e) {
+        std::printf("[worker] FAILED to load SDK: %s\n", e.what());
+        std::fflush(stdout);
+        return 1;
+    }
+    openscanner::ObscanLibrary& lib = *libptr;
+    std::printf("[worker] Resolved bootstrap symbols OK.\n");
+
+    // Resolve the remove entry point opportunistically (not in the header).
+    fn_remove remove_fn = nullptr;
+#if !defined(_WIN32)
+    void* native_handle = dlopen(library_path.c_str(), RTLD_NOW | RTLD_NOLOAD);
+    if (native_handle == nullptr) native_handle = dlopen(library_path.c_str(), RTLD_NOW | RTLD_LOCAL);
+    if (native_handle != nullptr) remove_fn = reinterpret_cast<fn_remove>(dlsym(native_handle, "obscan_device_management_remove_device_msg_listener"));
+#endif
+    std::printf("[worker] remove entry point resolved: %s\n", remove_fn != nullptr ? "yes" : "NO (OQ-3 untestable)");
+
+    std::string streaming_assets = openscanner::ObscanLibrary::FindStreamingAssetsDirForLibraryPath(library_path);
+    ObScanContextConfig config = {};
+    config.input_algo_dependent_files_dir = streaming_assets.empty() ? nullptr : streaming_assets.c_str();
+    config.output_ob_sdk_log_dir = "/tmp/openscanner_ob_sdk_log";
+    config.output_ob_scan_log_dir = "/tmp/openscanner_ob_scan_log";
+    config.output_computer_performance_fps_dir = "/tmp/openscanner_fps_log";
+    config.output_windows_gpu_info_dir = "";
+
+    ObScanContextHandle context = nullptr;
+    ObScanStatus status = lib.obscan_context_create(&context, &config);
+    std::printf("[worker] obscan_context_create() -> %s (%d)\n", StatusName(status), (int)status);
+    if (status != OB_SCAN_SUCCESS) return 1;
+
+    ObScanDeviceManagementHandle dm = nullptr;
+    status = lib.obscan_context_get_device_management(context, &dm);
+    std::printf("[worker] obscan_context_get_device_management() -> %s (%d)\n", StatusName(status), (int)status);
+    if (status != OB_SCAN_SUCCESS) return 1;
+
+    // 1. NULL handle.
+    status = lib.obscan_device_management_add_device_msg_listener(nullptr, &g_listener_a);
+    std::printf("[worker] add(NULL handle, listener) -> %s (%d)\n", StatusName(status), (int)status);
+    Check("add(NULL handle, listener) == DEADLINE_EXCEEDED", status, OB_SCAN_ERROR_DEADLINE_EXCEEDED);
+
+    // 2. NULL listener.
+    status = lib.obscan_device_management_add_device_msg_listener(dm, nullptr);
+    std::printf("[worker] add(handle, NULL listener) -> %s (%d)\n", StatusName(status), (int)status);
+    Check("add(handle, NULL listener) == INVALID_ARGUMENT", status, OB_SCAN_ERROR_INVALID_ARGUMENT);
+
+    // 3. First valid registration.
+    g_registration_thread = std::this_thread::get_id();
+    g_msg_count = 0;
+    status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_a);
+    std::printf("[worker] add(handle, listener_a) #1 -> %s (%d)\n", StatusName(status), (int)status);
+    Check("add(handle, listener_a) #1 == SUCCESS", status, OB_SCAN_SUCCESS);
+    std::printf("[worker]   messages delivered during add: %d; callback thread id hash=%lu; registration thread id hash=%lu\n",
+                g_msg_count.load(),
+                static_cast<unsigned long>(std::hash<std::thread::id>{}(g_callback_thread.load())),
+                static_cast<unsigned long>(std::hash<std::thread::id>{}(g_registration_thread)));
+
+    // 4. Double add without remove.
+    status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_b);
+    std::printf("[worker] add(handle, listener_b) #2 (no remove) -> %s (%d)\n", StatusName(status), (int)status);
+    Check("double add (no remove) == INVALID_ARGUMENT", status, OB_SCAN_ERROR_INVALID_ARGUMENT);
+
+    std::printf("[worker] waiting 2s for any asynchronous device messages...\n");
+    std::fflush(stdout);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::printf("[worker] total messages observed: %d\n", g_msg_count.load());
+    std::fflush(stdout);
+
+    // 5. Remove then add (OQ-3).
+    if (remove_fn != nullptr) {
+        status = remove_fn(dm, &g_listener_a);
+        std::printf("[worker] remove(handle, listener_a) -> %s (%d)  [OQ-3: does this clear the slot?]\n",
+                    StatusName(status), (int)status);
+
+        // NULL handle for remove.
+        status = remove_fn(nullptr, &g_listener_a);
+        std::printf("[worker] remove(NULL handle, listener) -> %s (%d)  [expected DEADLINE_EXCEEDED %d]\n",
+                    StatusName(status), (int)status, (int)OB_SCAN_ERROR_DEADLINE_EXCEEDED);
+
+        status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_a);
+        std::printf("[worker] add(handle, listener_a) after remove -> %s (%d)  [expected SUCCESS if remove cleared slot]\n",
+                    StatusName(status), (int)status);
+
+        // Clean up: remove again if registered.
+        remove_fn(dm, &g_listener_a);
+    } else {
+        std::printf("[worker] skipping remove-then-add (remove symbol unavailable)\n");
+    }
+
+    // Teardown.
+    status = lib.obscan_context_destroy(&context);
+    std::printf("[worker] obscan_context_destroy() -> %s (%d)\n", StatusName(status), (int)status);
+
+    std::printf("[worker] DONE (failures=%d)\n", g_failures);
+    std::fflush(stdout);
+    return g_failures ? 1 : 0;
+}
+
+} // namespace
+
+int main(int argc, char** argv) {
+    // Worker mode.
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == kWorkerFlag) {
+            if (i + 1 >= argc) {
+                std::fprintf(stderr, "missing library path after %s\n", kWorkerFlag);
+                return 2;
+            }
+            return RunTests(argv[i + 1]);
+        }
+    }
+
+    // Launcher mode.
+    std::string lib_path;
+    if (argc >= 2) lib_path = argv[1];
+    else lib_path = openscanner::ObscanLibrary::FindDefaultLibraryPath();
+    if (lib_path.empty()) {
+        std::fprintf(stderr, "No OBScan SDK library path given and no default found.\n");
+        return 2;
+    }
+
+    std::vector<std::string> args = {kWorkerFlag, lib_path};
+    int exit_code = 0;
+    std::string reason;
+    bool ok = openscanner::RunSelfAsWorker(args, &exit_code, &reason, 60);
+    if (!ok) {
+        std::printf("worker did not exit cleanly: %s\n", reason.c_str());
+        return 1;
+    }
+    std::printf("worker exit code: %d\n", exit_code);
+    return exit_code;
+}

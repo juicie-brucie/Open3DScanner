@@ -69,8 +69,9 @@ constexpr int kDeviceWaitIntervalMs = 200;
 
 // obscan_device_management_add_device_msg_listener() is the actual trigger
 // for device detection — see the ObScanDeviceMessage* block in obscan_api.h.
-// Without a registered listener, the vendor SDK never starts its IOKit
-// device-watcher thread and obscan_device_management_get_device_num()
+// Without a registered listener, the vendor SDK never starts its device
+// watcher (this dylib imports no IOKit; the watcher lives in the Orbbec
+// SDK dylib it links against) and obscan_device_management_get_device_num()
 // stays at 0 forever, no matter how much the run loop gets pumped. The
 // callback must be a plain C function pointer (no captures), so state is
 // communicated back via these globals; that's fine here because this
@@ -366,11 +367,12 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
     if (status != OB_SCAN_SUCCESS) return 1;
 
     // Registering a device-message listener is what actually starts the
-    // vendor SDK's IOKit device-watcher thread (confirmed via Frida
-    // tracing — see obscan_api.h). Without this, get_device_num() stays
-    // at 0 forever no matter how much the run loop gets pumped, which is
-    // why earlier runs of this tool never saw an already-connected
-    // device. See README.md "Known issues".
+    // vendor SDK's device watcher (this dylib imports no IOKit; the
+    // watcher lives in the Orbbec SDK dylib it links against — see
+    // obscan_api.h). Without this, get_device_num() stays at 0 forever
+    // no matter how much the run loop gets pumped, which is why earlier
+    // runs of this tool never saw an already-connected device. See
+    // README.md "Known issues".
     status = lib.obscan_device_management_add_device_msg_listener(device_mgmt, &g_device_listener);
     Report("obscan_device_management_add_device_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;
