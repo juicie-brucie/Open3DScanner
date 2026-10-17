@@ -1,1 +1,2 @@
 add_subdirectory(device_message_listener_test)
+add_subdirectory(data_process_message_listener_test)
