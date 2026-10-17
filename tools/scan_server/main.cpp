@@ -390,6 +390,14 @@ void OnDataMessage(ObScanDataMessage msg) {
 
 void OnProcessMessage(ObScanProcessMessage) {}
 void OnPreviewStatus(ObScanStatus) {}
+
+// The vendor SDK keeps the listener pointers it's given and calls them from
+// its own threads, which can still be running after RunLiveServer returns
+// (and during process exit). Static storage keeps them valid for the whole
+// process lifetime instead of pointing into a dead stack frame.
+ObScanDataMessageListener g_data_listener = {&OnDataMessage};
+ObScanProcessMessageListener g_process_listener = {&OnProcessMessage};
+ObScanDeviceMessageListener g_device_listener = {&OnDeviceMessage};
 void OnPreviewProgress(float) {}
 
 const char* StatusName(ObScanStatus status) {
@@ -445,21 +453,15 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     Report("obscan_context_get_device_management", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
-    ObScanDataMessageListener data_listener = {};
-    data_listener.onMessage = &OnDataMessage;
-    status = lib.obscan_context_add_data_msg_listener(context, &data_listener);
+    status = lib.obscan_context_add_data_msg_listener(context, &g_data_listener);
     Report("obscan_context_add_data_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
-    ObScanProcessMessageListener process_listener = {};
-    process_listener.onMessage = &OnProcessMessage;
-    status = lib.obscan_context_add_process_msg_listener(context, &process_listener);
+    status = lib.obscan_context_add_process_msg_listener(context, &g_process_listener);
     Report("obscan_context_add_process_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
-    ObScanDeviceMessageListener listener = {};
-    listener.onMessage = &OnDeviceMessage;
-    status = lib.obscan_device_management_add_device_msg_listener(device_mgmt, &listener);
+    status = lib.obscan_device_management_add_device_msg_listener(device_mgmt, &g_device_listener);
     Report("obscan_device_management_add_device_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
