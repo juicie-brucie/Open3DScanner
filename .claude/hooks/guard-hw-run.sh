@@ -4,13 +4,20 @@
 # Exit 0  -> allow the tool call.
 # Exit 2  -> block it; stderr is shown to the agent as the reason.
 #
-# Claude Code passes the tool call as JSON on stdin:
-#   {"session_id": "...", "tool_name": "Bash", "tool_input": {"command": "..."}}
+# Claude Code passes the tool call as JSON on stdin, including the working
+# directory:
+#   {"session_id":"...","cwd":"/path","tool_name":"Bash",
+#    "tool_input":{"command":"..."}}
 set -euo pipefail
 
 input=$(cat)
+field() {
+  printf '%s' "$input" | python3 -c \
+    'import sys,json; print(json.load(sys.stdin).get(sys.argv[1],""))' "$1" 2>/dev/null || true
+}
 cmd=$(printf '%s' "$input" | python3 -c \
   'import sys,json; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null || true)
+cwd=$(field cwd)
 
 block() {
   printf 'BLOCKED by hw-test guard: %s\n' "$1" >&2
@@ -34,13 +41,20 @@ case "$cmd" in
   *"obscan_api.h"*) block "obscan_api.h is recon-only";;
 esac
 
-# 4. The hardware test must run from the worktree that carries the interposer
-#    build; the main checkout still has the old launcher.
+# 4. The hardware test must run against the interposer build. The main checkout
+#    still has the old launcher, so a run there is both unsafe and meaningless.
+#    Accept either the session's cwd or an explicit `cd <worktree>` in the
+#    command — a bare relative path is only safe when the cwd is the worktree.
 case "$cmd" in
   *device_message_listener_test*)
-    case "$cmd" in
+    case "$cwd" in
       *Open3DScanner-wt-build1*) ;;
-      *) block "run the hardware test only from Open3DScanner-wt-build1";;
+      *)
+        case "$cmd" in
+          *Open3DScanner-wt-build1*) ;;
+          *) block "run the hardware test only from Open3DScanner-wt-build1 (the interposer build)";;
+        esac
+        ;;
     esac
     ;;
 esac
