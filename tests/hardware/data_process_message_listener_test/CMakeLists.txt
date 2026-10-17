@@ -1,0 +1,2 @@
+add_executable(data_process_message_listener_test main.cpp)
+target_link_libraries(data_process_message_listener_test PRIVATE openscanner_engine)

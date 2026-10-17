@@ -112,10 +112,11 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
 }
 
 // Deliberately never unloads the vendor library. It starts its own
-// background threads (IOKit device watcher, RPC clients, GVCP network
-// discovery) and keeps the listener pointers it's given; some of those
-// outlive obscan_context_destroy() and all of them are still running if a
-// run bails out before teardown. Unloading the image under them means
+// background threads (libusb hotplug + GVCP network discovery watchers,
+// plus RPC clients) inside obscan_context_create per PLAN #7, and keeps
+// the listener pointers it's given; some of those outlive
+// obscan_context_destroy() and all of them are still running if a run
+// bails out before teardown. Unloading the image under them means
 // executing unmapped code — a crash at exit on top of whatever went wrong.
 // The process is about to exit anyway; the OS reclaims the mapping then.
 ObscanLibrary::~ObscanLibrary() = default;
