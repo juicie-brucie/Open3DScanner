@@ -39,8 +39,14 @@ libsystem_pthread.dylib   _pthread_start
   dereference.
 - Faulting thread id `14660873`, the same thread that prints the `GVCPClient.cpp`
   / `Ethernet.cpp NetDeviceWatcher` / `DeviceManager.cpp` lines in the raw log —
-  the vendor's **polling device-watcher thread**, not the worker's main thread
-  (`14660842` throughout).
+  the vendor's **NetDeviceWatcher (GVCP)** thread, not the worker's main thread
+  (`14660842` throughout). **Correction (2026-10-17, reconcile):** this file
+  originally called it the "polling device-watcher thread". That conflated two
+  distinct watchers: `NetDeviceWatcher` is its own object, and the *polling*
+  watcher (`LibusbDeviceWatcher`, whose `Create PollingDeviceWatcher!` printed
+  on `14660842` at context-create — `raw.log:14`) never printed on `14660873`.
+  Consistent with `crash.ips` frame 13,
+  `libobsensor::pal::NetDeviceWatcher::start(…)::$_1`, and with PLAN #7's OQ-7d.
 - The only images on the stack are `liborbbec_scan.3.5.3.dylib`,
   `libOrbbecSDK.1.7.1.dylib`, and `libsystem_pthread.dylib`. No `libomp`, no
   `texture_mode::shutdown_network()`, no `obscan_context_destroy()` frame.
