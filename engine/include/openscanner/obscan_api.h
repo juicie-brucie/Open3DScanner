@@ -16,13 +16,8 @@
 // layout unless a comment marks them otherwise; treat them as a working
 // hypothesis until a smoke test confirms round-tripping (see tools/smoke_test).
 // Natively verified so far: ObScanDeviceMessage (16 bytes: int32 msg_id,
-// int32 pad, void* data), the ObScanDeviceMessageID enum, the whole
-// ObScanStatus enum (checked against the vendor's own status-name table), the
-// ObScanDataMessageID and ObScanProcessMessageID enums, and the context-level
-// data/process listener add/remove contracts (single-slot homes on
-// ob_scan_common::OBScanParasContext, and the both-listeners preview guard) --
-// see docs/recon/findings/device-message-listener.md and
-// docs/recon/findings/data-process-message-listeners.md.
+// int32 pad, void* data), the ObScanDeviceMessageID enum, and the whole
+// ObScanStatus enum (checked against the vendor's own status-name table).
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -364,30 +359,12 @@ typedef struct ObScanDeviceMessageListener {
 } ObScanDeviceMessageListener;
 
 // OBScan.SDK.OBScanDataMessage* / OBScanProcessMessage* — same shape as the
-// device-message family above.
-//
-// natively recovered (PLAN #2, docs/recon/findings/data-process-message-listeners.md):
-// - Both listeners live on ob_scan_common::OBScanParasContext (reachable from
-//   the context at +0x08): data std::function home +0x50 / probe +0x68,
-//   process std::function home +0x70 / probe +0x88. Single slot per family:
-//   a NULL listener, or a second add without a remove, returns
-//   OB_SCAN_ERROR_INVALID_ARGUMENT ("... is already set !"); removing an
-//   empty slot returns OB_SCAN_ERROR_LISTENER_NOT_FOUND ("... is not set !").
-// - Both families only exist at context level (add + remove each); the
-//   exported symbol table carries no context-level tips/control/calib pairs.
-// - Preview guard: obscan_scan_preview() -> OBScanBase::judge_can_preview()
-//   calls judge_is_exist_listener() on the same paras object, which returns
-//   true only when BOTH the data and the process slot are installed; either
-//   missing makes preview fail with OB_SCAN_ERROR_LISTENER_NOT_FOUND. The
-//   earlier "per the real app's own call log, a process-message listener
-//   too" guess is now a code fact, not an observation.
-// - Delivery: data messages invoke the installed std::function directly and
-//   synchronously on the emitting thread, and are dropped, not queued, when
-//   no listener is installed. Process messages are dispatched asynchronously
-//   through the paras task queue (and never delivered if the thread pool
-//   rejects the enqueue). Listener lifetime follows the device-message
-//   family rules: caller-owned, referenced not copied, keep alive until
-//   removed or the context is destroyed.
+// device-message family above. obscan_scan_preview() returns
+// OB_SCAN_ERROR_LISTENER_NOT_FOUND unless a data-message listener (and,
+// per the real app's own call log, a process-message listener too) is
+// registered on the context before the scan is created: preview delivers
+// new RGB/depth/IR frames and FRAME_READY through this listener rather
+// than letting the caller poll for them.
 // OBScan.SDK.OBScanDataMessageID.
 typedef enum ObScanDataMessageID {
     OB_SCAN_MESSAGE_ID_NEW_RGB_IMAGE = 0,
@@ -399,14 +376,8 @@ typedef enum ObScanDataMessageID {
 typedef struct ObScanDataMessage {
     int32_t msg_id;  // 0x00 — ObScanDataMessageID.
     int32_t _pad;    // 0x04
-    void* data;      // 0x08 — emitted frames/payload; meaning is per-emitter.
+    void* data;      // 0x08
 } ObScanDataMessage;
-// The data/process message structs are materialised as 16-byte register pairs
-// (x1/x2) at every emit site ABI-observed (send_data_msg copies them with one
-// stp), the same physical shape as the natively-verified ObScanDeviceMessage.
-// Field-level probing of both structs' non-id members has not been done —
-// layout stands on the device-message verification plus IL2CPP layout
-// agreement; treat `data` payloads as opaque and per-emitter.
 
 typedef void (*ObScanDataMessageDelegate)(ObScanDataMessage msg);
 
@@ -414,24 +385,20 @@ typedef struct ObScanDataMessageListener {
     ObScanDataMessageDelegate onMessage;  // 0x00
 } ObScanDataMessageListener;
 
-// OBScan.SDK.OBScanProcessMessageID — complete, decoded from the vendor's own
-// OBScanProcessMessageID_name() jump table (index = msg_id - 0x14620100,
-// entries 0..5; anything else prints "UNKNOWN"). 341967109 is the last entry,
-// matching the value the real app received with a warning about pasted
-// markers (a layout hint, not a failure).
+// OBScan.SDK.OBScanProcessMessageID — only the value confirmed so far: the
+// vendor's native log writes "send process msg id :
+// OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR" at the same point our
+// process listener receives 341967109 (the only process message in those
+// runs). The real CrealityScan app receives it on the same physical setup;
+// it's a warning about the marker layout, not a failure.
 typedef enum ObScanProcessMessageID {
-    OB_SCAN_MESSAGE_ID_FRAME_BUFFER_FULL = 341967104,
-    OB_SCAN_MESSAGE_ID_MAX_FRAMES_REACHED = 341967105,
-    OB_SCAN_MESSAGE_ID_DETECT_FACE = 341967106,
-    OB_SCAN_MESSAGE_ID_SCANNING_FAILED = 341967107,
-    OB_SCAN_MESSAGE_ID_OPTIMIZATION_TO_MESH_NEED_CHANGE_VOXEL_SIZE = 341967108,
     OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR = 341967109,
 } ObScanProcessMessageID;
 
 typedef struct ObScanProcessMessage {
-    int32_t msg_id;  // 0x00 — ObScanProcessMessageID (enum complete above).
+    int32_t msg_id;  // 0x00 — ObScanProcessMessageID; the managed enum also names FRAME_BUFFER_FULL, MAX_FRAMES_REACHED, DETECT_FACE, SCANNING_FAILED, ... (values unconfirmed).
     int32_t _pad;    // 0x04
-    void* data;      // 0x08 — payload; meaning is per-emitter (see data note above).
+    void* data;      // 0x08
 } ObScanProcessMessage;
 
 typedef void (*ObScanProcessMessageDelegate)(ObScanProcessMessage msg);
@@ -451,21 +418,13 @@ typedef ObScanStatus (*fn_obscan_context_create)(ObScanContextHandle* out_contex
 typedef ObScanStatus (*fn_obscan_context_destroy)(ObScanContextHandle* context);
 typedef ObScanStatus (*fn_obscan_context_get_device_management)(ObScanContextHandle context, ObScanDeviceManagementHandle* out_device_handle);
 
-// Registering BOTH of these on the context is required before
-// obscan_scan_preview() will succeed — the vendor's own judge_is_exist_listener
-// requires the data and the process slot at the same time, and either missing
-// makes preview return OB_SCAN_ERROR_LISTENER_NOT_FOUND. Registration is
-// single-slot per family: a NULL listener, or a second add without a remove,
-// returns OB_SCAN_ERROR_INVALID_ARGUMENT; removing an empty slot returns
-// OB_SCAN_ERROR_LISTENER_NOT_FOUND. NULL context returns
-// OB_SCAN_ERROR_DEADLINE_EXCEEDED (shared null-handle code, not a timeout).
-// Listeners are caller-owned and referenced, not copied — keep each alive
-// until it is removed or the context is destroyed. Preview delivers frames
-// and process events through these listeners rather than a polling API.
+// Registering these on the context is required before obscan_scan_preview()
+// will succeed — without them it returns OB_SCAN_ERROR_LISTENER_NOT_FOUND,
+// confirmed by diffing our own call sequence against the real app's own
+// obscan_* call log. Preview delivers frames/process events through these
+// listeners rather than a polling API.
 typedef ObScanStatus (*fn_obscan_context_add_data_msg_listener)(ObScanContextHandle context, ObScanDataMessageListener* listener);
-typedef ObScanStatus (*fn_obscan_context_remove_data_msg_listener)(ObScanContextHandle context, const ObScanDataMessageListener* listener);
 typedef ObScanStatus (*fn_obscan_context_add_process_msg_listener)(ObScanContextHandle context, ObScanProcessMessageListener* listener);
-typedef ObScanStatus (*fn_obscan_context_remove_process_msg_listener)(ObScanContextHandle context, const ObScanProcessMessageListener* listener);
 
 typedef ObScanStatus (*fn_obscan_device_management_get_device_num)(ObScanDeviceManagementHandle device_handle, int32_t* out_device_num);
 typedef ObScanStatus (*fn_obscan_device_management_get_device_info)(ObScanDeviceManagementHandle device_handle, int32_t idx, ObScanDeviceInfo* out_device_info);
