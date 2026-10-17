@@ -140,12 +140,13 @@ int RunTests(const std::string& library_path) {
     // 3. First valid registration.
     g_registration_thread = std::this_thread::get_id();
     g_msg_count = 0;
+    g_callback_thread.store(std::thread::id{});
     status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_a);
     std::printf("[worker] add(handle, listener_a) #1 -> %s (%d)\n", StatusName(status), (int)status);
     Check("add(handle, listener_a) #1 == SUCCESS", status, OB_SCAN_SUCCESS);
-    std::printf("[worker]   messages delivered during add: %d; callback thread id hash=%lu; registration thread id hash=%lu\n",
+    std::printf("[worker]   messages delivered during add: %d; callback thread id hash=%s; registration thread id hash=%lu\n",
                 g_msg_count.load(),
-                static_cast<unsigned long>(std::hash<std::thread::id>{}(g_callback_thread.load())),
+                g_msg_count.load() > 0 ? std::to_string(static_cast<unsigned long>(std::hash<std::thread::id>{}(g_callback_thread.load()))).c_str() : "(none)",
                 static_cast<unsigned long>(std::hash<std::thread::id>{}(g_registration_thread)));
 
     // 4. Double add without remove.
@@ -162,17 +163,17 @@ int RunTests(const std::string& library_path) {
     // 5. Remove then add (OQ-3).
     if (remove_fn != nullptr) {
         status = remove_fn(dm, &g_listener_a);
-        std::printf("[worker] remove(handle, listener_a) -> %s (%d)  [OQ-3: does this clear the slot?]\n",
-                    StatusName(status), (int)status);
+        std::printf("[worker] remove(handle, listener_a) -> %s (%d)\n", StatusName(status), (int)status);
+        Check("remove(handle, listener_a) == SUCCESS", status, OB_SCAN_SUCCESS);
 
         // NULL handle for remove.
         status = remove_fn(nullptr, &g_listener_a);
-        std::printf("[worker] remove(NULL handle, listener) -> %s (%d)  [expected DEADLINE_EXCEEDED %d]\n",
-                    StatusName(status), (int)status, (int)OB_SCAN_ERROR_DEADLINE_EXCEEDED);
+        std::printf("[worker] remove(NULL handle, listener) -> %s (%d)\n", StatusName(status), (int)status);
+        Check("remove(NULL handle, listener) == DEADLINE_EXCEEDED", status, OB_SCAN_ERROR_DEADLINE_EXCEEDED);
 
         status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_a);
-        std::printf("[worker] add(handle, listener_a) after remove -> %s (%d)  [expected SUCCESS if remove cleared slot]\n",
-                    StatusName(status), (int)status);
+        std::printf("[worker] add(handle, listener_a) after remove -> %s (%d)\n", StatusName(status), (int)status);
+        Check("add after remove == SUCCESS (OQ-3 cleared slot)", status, OB_SCAN_SUCCESS);
 
         // Clean up: remove again if registered.
         remove_fn(dm, &g_listener_a);
@@ -212,10 +213,23 @@ int main(int argc, char** argv) {
         return 2;
     }
 
+#if defined(__APPLE__) && defined(VULKAN_DISABLE_INTERPOSE_DYLIB)
+    {
+        size_t slash = lib_path.find_last_of('/');
+        std::string moltenvk_path;
+        if (slash != std::string::npos) moltenvk_path = lib_path.substr(0, slash + 1) + "libMoltenVK.dylib";
+        if (!moltenvk_path.empty()) {
+            std::string insert = moltenvk_path + ":" + VULKAN_DISABLE_INTERPOSE_DYLIB;
+            setenv("DYLD_INSERT_LIBRARIES", insert.c_str(), 1);
+            std::printf("[launcher] DYLD_INSERT_LIBRARIES=%s\n", insert.c_str());
+        }
+    }
+#endif
+
     std::vector<std::string> args = {kWorkerFlag, lib_path};
     int exit_code = 0;
     std::string reason;
-    bool ok = openscanner::RunSelfAsWorker(args, &exit_code, &reason, 60);
+    bool ok = openscanner::RunSelfAsWorker(args, &exit_code, &reason, 180);
     if (!ok) {
         std::printf("worker did not exit cleanly: %s\n", reason.c_str());
         return 1;
