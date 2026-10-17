@@ -357,9 +357,9 @@ int RunCaptureSteps(const openscanner::ObscanLibrary& lib, const std::string& li
     Report("obscan_context_get_device_management", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
-    // The real app always registers these two before touching the device
-    // or session; without them obscan_scan_preview() later fails with
-    // OB_SCAN_ERROR_LISTENER_NOT_FOUND.
+    // Registering these two is required before obscan_scan_preview()
+    // (otherwise OB_SCAN_ERROR_LISTENER_NOT_FOUND); the device-management
+    // handle above is only used to receive CONNECT/DISCONNECT.
     status = lib.obscan_context_add_data_msg_listener(h.context, &g_data_listener);
     Report("obscan_context_add_data_msg_listener", status);
     if (status != OB_SCAN_SUCCESS) return 1;

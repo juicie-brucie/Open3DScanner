@@ -55,8 +55,8 @@ after pause: thousands of real vertices/triangles) and full device
 release (`rpc client destroyed` for all four client ports: RGB, IR,
 IMU, depth).** Getting there required several things undocumented
 anywhere outside CrealityScan's own behavior (see "Known issues" below
-for the full story): registering a device-message listener (the actual
-trigger for the vendor SDK's device-watcher thread), registering data-
+for the full story): registering a device-message listener (how this tool receives the
+CONNECT/DISCONNECT result; detection starts inside `obscan_context_create()` per PLAN #7), registering data-
 and process-message listeners before `obscan_scan_preview` (otherwise
 `OB_SCAN_ERROR_LISTENER_NOT_FOUND`), pointing
 `ObScanContextConfig::input_algo_dependent_files_dir` at CrealityScan's
