@@ -1,0 +1,1 @@
+add_subdirectory(device_message_listener_test)

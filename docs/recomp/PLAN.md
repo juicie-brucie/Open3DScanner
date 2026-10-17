@@ -9,14 +9,14 @@ Status: `TODO` · `RECON` · `SPEC-READY` · `BUILD` · `HW` · `DONE` · `BLOCK
 
 | # | Target | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Device-message listener registration (trigger for SDK device-watcher) | BUILD | Spec: [`findings/device-message-listener.md`](../recon/findings/device-message-listener.md). **HW-confirmed** (`f4c5f86`) for synchronous delivery and `data` NULL/non-NULL. Open: OQ-3, §2.3, §5 → #8. |
+| 1 | Device-message listener registration (trigger for SDK device-watcher) | DONE | Spec: [`findings/device-message-listener.md`](../recon/findings/device-message-listener.md). **HW-confirmed** (`f4c5f86`) for synchronous delivery and `data` NULL/non-NULL. Open: OQ-3, §2.3, §5 → #8. |
 | 2 | Data- and process-message listeners before `obscan_scan_preview` | TODO | Ordering requirement; preview fails otherwise. Decodable by the OQ-5 method. |
 | 3 | `obscan_scan_get_realtime_model_mesh` read-only-after-pause constraint | TODO | Partially observed; recover exact lifetime rules. |
 | 4 | `obscan_scan_pause` / `stop` / `session_destroy` clean teardown (4 client ports) | TODO | Confirm all four ports released (RGB/IR/IMU/depth). |
 | 5 | Header claim that the connect callback is "reproducibly" followed by a crash (and the `obscan_context_destroy` crash) | RECON | **HW-contradicted** (`f4c5f86`): worker exit 0, `destroy` SUCCESS in 807 ms, no power cycle. Narrow to exact conditions or drop "reproducibly". |
-| 6 | `tools/live_capture_test/main.cpp:72-74` describes detection as an "IOKit device-watcher thread" | BUILD | **test wrong**: this dylib imports no IOKit; the run shows `MacPal.cpp` `Create PollingDeviceWatcher!` + `Ethernet.cpp` `NetDeviceWatcher`. Fix the comment. |
+| 6 | `tools/live_capture_test/main.cpp:72-74` describes detection as an "IOKit device-watcher thread" | DONE | **test wrong**: this dylib imports no IOKit; the run shows `MacPal.cpp` `Create PollingDeviceWatcher!` + `Ethernet.cpp` `NetDeviceWatcher`. Fix the comment. |
 | 7 | OQ-7 revisit: the macOS detection path | RECON | `f4c5f86` shows **polling** + GVCP network discovery, no IOKit matching. Header asserts the watcher "lives in the Orbbec dylib"; findings leave it open. Reconcile the two. |
-| 8 | Purpose-built `tests/hardware/*` for the PLAN #1 paths the existing tool never exercises | BUILD | §2.3 double-add, OQ-3 remove-then-add, §5 NULL-handle (`845283591`) + already-registered (`845283584`), OQ-4 thread identity. |
+| 8 | Purpose-built `tests/hardware/*` for the PLAN #1 paths the existing tool never exercises | DONE | §2.3 double-add, OQ-3 remove-then-add, §5 NULL-handle (`845283591`) + already-registered (`845283584`), OQ-4 thread identity. |
 | 9 | OQ-2: confirm `OBScanDeviceMessageListener_` shape (single delegate at `0x00`) | RECON | Follow the monostub vtable at `__DATA_CONST 0x454d3b0`; the other listener families share the shape. |
 
 ## Open questions (from recon)
