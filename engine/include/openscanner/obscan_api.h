@@ -419,6 +419,10 @@ typedef enum ObScanProcessMessageID {
     OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR = 341967109,
 } ObScanProcessMessageID;
 
+// The 16-byte message materialization is natively verified for the data
+// family only (send_data_msg — findings §6); this struct's runtime size
+// stays [inferred] from the C# declaration until one is sized at a send
+// site. docs/recon/findings/data-process-message-listeners.md §6.
 typedef struct ObScanProcessMessage {
     int32_t msg_id;  // 0x00 — ObScanProcessMessageID
     int32_t _pad;    // 0x04
