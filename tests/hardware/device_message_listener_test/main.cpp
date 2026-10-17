@@ -40,15 +40,22 @@ std::atomic<int> g_msg_count{0};
 int g_failures = 0;
 std::atomic<std::thread::id> g_callback_thread{};
 std::thread::id g_registration_thread{};
+std::mutex g_cb_mutex;
+std::vector<std::thread::id> g_cb_threads;
 
 const char* DeviceMessageName(int32_t msg_id);
 
 void OnDeviceMessage(ObScanDeviceMessage msg) {
-    g_callback_thread.store(std::this_thread::get_id());
+    std::thread::id tid = std::this_thread::get_id();
+    g_callback_thread.store(tid);
+    {
+        std::lock_guard<std::mutex> lk(g_cb_mutex);
+        g_cb_threads.push_back(tid);
+    }
     g_msg_count++;
     std::printf("[worker][cb] device message: %s (msg_id=%d) data=%p (thread=%lu)\n",
                 DeviceMessageName(msg.msg_id), msg.msg_id, msg.data,
-                static_cast<unsigned long>(std::hash<std::thread::id>{}(g_callback_thread.load())));
+                static_cast<unsigned long>(std::hash<std::thread::id>{}(tid)));
     std::fflush(stdout);
 }
 
@@ -86,6 +93,18 @@ void Check(const char* label, ObScanStatus actual, ObScanStatus expected) {
 // The findings (device-message-listener.md §1) record this symbol as
 // exported: obscan_device_management_remove_device_msg_listener.
 typedef ObScanStatus (*fn_remove)(ObScanDeviceManagementHandle, ObScanDeviceMessageListener*);
+
+
+std::string ThreadHashList(size_t from, size_t to) {
+    std::lock_guard<std::mutex> lk(g_cb_mutex);
+    std::string out;
+    for (size_t i = from; i < to && i < g_cb_threads.size(); ++i) {
+        if (!out.empty()) out += ",";
+        out += std::to_string(static_cast<unsigned long>(std::hash<std::thread::id>{}(g_cb_threads[i])));
+    }
+    if (out.empty()) out = "(none)";
+    return out;
+}
 
 int RunTests(const std::string& library_path) {
     std::printf("[worker] Loading OBScan SDK from: %s\n", library_path.c_str());
@@ -144,9 +163,10 @@ int RunTests(const std::string& library_path) {
     status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_a);
     std::printf("[worker] add(handle, listener_a) #1 -> %s (%d)\n", StatusName(status), (int)status);
     Check("add(handle, listener_a) #1 == SUCCESS", status, OB_SCAN_SUCCESS);
-    std::printf("[worker]   messages delivered during add: %d; callback thread id hash=%s; registration thread id hash=%lu\n",
-                g_msg_count.load(),
-                g_msg_count.load() > 0 ? std::to_string(static_cast<unsigned long>(std::hash<std::thread::id>{}(g_callback_thread.load()))).c_str() : "(none)",
+    size_t count_after_add1 = g_cb_threads.size();
+    std::printf("[worker]   messages delivered during add: %zu; callback thread id hashes=%s; registration thread id hash=%lu\n",
+                count_after_add1,
+                ThreadHashList(0, count_after_add1).c_str(),
                 static_cast<unsigned long>(std::hash<std::thread::id>{}(g_registration_thread)));
 
     // 4. Double add without remove.
@@ -157,7 +177,11 @@ int RunTests(const std::string& library_path) {
     std::printf("[worker] waiting 2s for any asynchronous device messages...\n");
     std::fflush(stdout);
     std::this_thread::sleep_for(std::chrono::seconds(2));
+    size_t count_after_wait = g_cb_threads.size();
     std::printf("[worker] total messages observed: %d\n", g_msg_count.load());
+    std::printf("[worker]   messages after 2s wait: %zu; callback thread id hashes=%s\n",
+                count_after_wait,
+                ThreadHashList(0, count_after_wait).c_str());
     std::fflush(stdout);
 
     // 5. Remove then add (OQ-3).
@@ -171,9 +195,14 @@ int RunTests(const std::string& library_path) {
         std::printf("[worker] remove(NULL handle, listener) -> %s (%d)\n", StatusName(status), (int)status);
         Check("remove(NULL handle, listener) == DEADLINE_EXCEEDED", status, OB_SCAN_ERROR_DEADLINE_EXCEEDED);
 
+        size_t count_before_readd = g_cb_threads.size();
         status = lib.obscan_device_management_add_device_msg_listener(dm, &g_listener_a);
         std::printf("[worker] add(handle, listener_a) after remove -> %s (%d)\n", StatusName(status), (int)status);
         Check("add after remove == SUCCESS (OQ-3 cleared slot)", status, OB_SCAN_SUCCESS);
+        size_t count_after_readd = g_cb_threads.size();
+        std::printf("[worker]   messages delivered during re-add: %zu; callback thread id hashes=%s\n",
+                    count_after_readd - count_before_readd,
+                    ThreadHashList(count_before_readd, count_after_readd).c_str());
 
         // Clean up: remove again if registered.
         remove_fn(dm, &g_listener_a);
