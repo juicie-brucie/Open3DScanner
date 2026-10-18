@@ -1,5 +1,5 @@
 // Streams point-cloud frames over a local WebSocket so the web UI
-// (ui/index.html) can render them. Two modes:
+// (ui/index.html) can render them. Three modes:
 //
 //   scan_server [port]
 //       Synthetic, animated sphere — exists so the UI's render/latency
@@ -278,21 +278,21 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
     constexpr size_t kMaxRecordBytes = 1ULL << 30;
     if (!out.is_open()) {
         out.open(g_record_path, std::ios::binary | std::ios::trunc);
-        if (!out) { std::fprintf(stderr, "[worker] cannot open record file: %s\\n", g_record_path.c_str()); g_record_path.clear(); return; }
+        if (!out) { std::fprintf(stderr, "[worker] cannot open record file: %s\n", g_record_path.c_str()); g_record_path.clear(); return; }
     }
     if (!header_written) {
         const char magic[4] = {'O','S','C','R'};
         out.write(magic, 4);
         uint32_t version = 1;
         out.write(reinterpret_cast<const char*>(&version), 4);
-        uint64_t count = 0; // patched conceptually by terminator; count optional
+        uint64_t count = 0; // frame count patched at teardown
         out.write(reinterpret_cast<const char*>(&count), 8);
-        if (!out) { std::fprintf(stderr, "[worker] record header write failed\\n"); g_record_path.clear(); return; }
+        if (!out) { std::fprintf(stderr, "[worker] record header write failed\n"); g_record_path.clear(); return; }
         header_written = true;
         recorded_bytes = 16;
     }
     if (recorded_bytes + frame.size() > kMaxRecordBytes) {
-        std::fprintf(stderr, "[worker] record cap reached; disabling recording\\n");
+        std::fprintf(stderr, "[worker] record cap reached; disabling recording\n");
         out.flush();
         g_record_path.clear();
         return;
@@ -300,7 +300,7 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
     out.write(reinterpret_cast<const char*>(frame.data()), frame.size());
     out.flush();
     if (!out) {
-        std::fprintf(stderr, "[worker] record write failed; disabling recording\\n");
+        std::fprintf(stderr, "[worker] record write failed; disabling recording\n");
         g_record_path.clear();
         return;
     }
@@ -789,6 +789,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     std::vector<uint8_t> pbuf = openscanner::frame_protocol::encode_pose(
                         frame_id++, NowMs(), NowMs(), &pose.m[0][0]);
                     server.BroadcastBinary(pbuf.data(), pbuf.size());
+                    RecordFrame(pbuf);
                 }
             }
 
@@ -1104,32 +1105,65 @@ int RunReplayMode(int argc, char** argv) {
     std::fflush(stdout);
 
     size_t frames = 0;
+    size_t pose_frames = 0;
+    size_t cloud_frames = 0;
     double prev_t = 0;
     bool have_prev = false;
     bool saw_terminator = false;
     while (true) {
         char peek[4];
         in.read(peek, 4);
-        if (in.gcount() == 0) break;
+        if (in.gcount() != 4) {
+            if (in.gcount() == 0) break; // clean EOF
+            std::fprintf(stderr, "[worker] truncated terminator\n"); break;
+        }
         if (std::memcmp(peek, "OSCE", 4) == 0) { saw_terminator = true; break; }
-        if (in.gcount() != 4) { std::fprintf(stderr, "[worker] truncated terminator\n"); break; }
         in.seekg(-4, std::ios::cur);
         char env[32];
         in.read(env, 32);
         if (!in) { std::fprintf(stderr, "[worker] truncated frame header\n"); break; }
         uint32_t payload_len = (unsigned char)env[28] | ((unsigned char)env[29]<<8) |
                                ((unsigned char)env[30]<<16) | ((unsigned char)env[31]<<24);
+        if (payload_len > (64u * 1024 * 1024)) { std::fprintf(stderr, "[worker] replay frame too large\n"); break; }
         size_t frame_len = 32 + payload_len;
         std::vector<uint8_t> frame(frame_len);
         std::memcpy(frame.data(), env, 32);
         if (payload_len > 0) in.read(reinterpret_cast<char*>(frame.data()+32), payload_len);
         if (!in) { std::fprintf(stderr, "[worker] truncated frame payload\n"); break; }
 
-        uint32_t seq=0, count=0; double tc=0, ts=0; const float* xyz=nullptr;
-        if (!openscanner::frame_protocol::decode_cloud_snapshot(frame.data(), frame.size(), &seq, &tc, &ts, &xyz, &count)) {
-            std::fprintf(stderr, "[worker] invalid frame in replay\n");
+        // Validate the V1 envelope (magic/version/type), then decode per
+        // type. Any valid V1 frame is replayed as the live client sees it;
+        // a recording carries pose and cloud frames (and may carry more).
+        uint32_t magic = (unsigned char)env[0] | ((unsigned char)env[1] << 8) |
+                         ((unsigned char)env[2] << 16) | ((unsigned char)env[3] << 24);
+        uint16_t version = (unsigned char)env[4] | ((unsigned char)env[5] << 8);
+        uint16_t type = (unsigned char)env[6] | ((unsigned char)env[7] << 8);
+        if (magic != openscanner::frame_protocol::MAGIC ||
+            version != openscanner::frame_protocol::VERSION) {
+            std::fprintf(stderr, "[worker] invalid envelope in replay\n");
             break;
         }
+        uint64_t tcu = 0;
+        for (int i = 0; i < 8; ++i) tcu |= (uint64_t)(unsigned char)env[12 + i] << (i * 8);
+        double tc = 0;
+        std::memcpy(&tc, &tcu, sizeof(tc));
+        uint32_t seq = 0;
+        if (type == (uint16_t)openscanner::frame_protocol::MessageType::CloudSnapshot) {
+            uint32_t count = 0; double ts = 0; const float* xyz = nullptr;
+            if (!openscanner::frame_protocol::decode_cloud_snapshot(frame.data(), frame.size(), &seq, &tc, &ts, &xyz, &count)) {
+                std::fprintf(stderr, "[worker] invalid cloud frame in replay\n");
+                break;
+            }
+            ++cloud_frames;
+        } else if (type == (uint16_t)openscanner::frame_protocol::MessageType::Pose) {
+            double ts = 0; const double* m = nullptr;
+            if (!openscanner::frame_protocol::decode_pose(frame.data(), frame.size(), &seq, &tc, &ts, &m)) {
+                std::fprintf(stderr, "[worker] invalid pose frame in replay\n");
+                break;
+            }
+            ++pose_frames;
+        }
+        // Other V1 kinds are broadcast as-is (envelope already validated).
 
         if (!have_prev) { prev_t = tc; have_prev = true; }
         else {
@@ -1142,9 +1176,10 @@ int RunReplayMode(int argc, char** argv) {
         ++frames;
     }
     if (saw_terminator) {
-        std::printf("[worker] Replay complete (%zu frames).\n", frames);
+        std::printf("[worker] Replay complete (%zu frames: %zu cloud, %zu pose).\n", frames, cloud_frames, pose_frames);
     } else {
-        std::printf("[worker] Replay incomplete (%zu frames): missing terminator.\n", frames);
+        std::printf("[worker] Replay incomplete (%zu frames: %zu cloud, %zu pose): missing terminator.\n", frames,
+                    cloud_frames, pose_frames);
     }
     std::fflush(stdout);
     std::this_thread::sleep_for(std::chrono::seconds(5));
