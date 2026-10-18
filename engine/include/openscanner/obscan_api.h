@@ -237,6 +237,20 @@ typedef struct ObScanPointColorClouds {
     ObScanColor* colors;    // 0x18
 } ObScanPointColorClouds;
 
+// OBScan.SDK.OBScanCloudBbox — axis-aligned bounds of the published model
+// cloud, filled by obscan_scan_get_model_point_color_clouds. 48 bytes:
+// min/max/center float triples with a 4-byte pad word after each; center is
+// (min+max)/2. [inferred: obscan_common::compute_cloud_bbox @ 0x6ad464 /
+// init_obscan_bbox @ 0x6ad540 — .recon-cache/listings/scan-live-data.plan24.asm]
+typedef struct ObScanCloudBbox {
+    float min[3];           // 0x00
+    uint32_t pad0;          // 0x0c
+    float max[3];           // 0x10
+    uint32_t pad1;          // 0x1c
+    float center[3];        // 0x20
+    uint32_t pad2;          // 0x2c
+} ObScanCloudBbox;
+
 // OBScan.SDK.OBScanTriangle — a face as three vertex indices into a mesh's
 // vertex array.
 typedef struct ObScanTriangle {
@@ -586,6 +600,25 @@ typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, ObScanProgres
 // empty unless something else (the color-cloud getter) has published. See
 // docs/recon/findings/scan-live-data.md §3.
 typedef ObScanStatus (*fn_obscan_scan_get_raw_cloud)(ObScanScanHandle scan, ObScanPointClouds* out_cloud);
+// The call that publishes the model cloud. The fusion pipeline writes into a
+// temp cloud and sets a pending flag; this getter is the only caller of the
+// temp->show swap, so calling it is what makes the published cloud (and
+// therefore get_raw_cloud) advance — and it returns that cloud with
+// per-point colors plus its bbox. Requires the scan step to be 1..9 (1 ready,
+// 2 scanning, 3 paused, 4 stopped, 5/6 post-process, 9 mesh-adjacent; 0 and
+// 10+ rejected) — otherwise OB_SCAN_ERROR_MULTI_CALLED. out_clouds/out_bbox
+// are validated by the wrapper, out_count is not (pass a valid pointer).
+// Buffers are borrowed pointers, same lifetime rules as get_raw_cloud; the
+// release below is a no-op. See docs/recon/findings/scan-live-data.md §3-§5.
+typedef ObScanStatus (*fn_obscan_scan_get_model_point_color_clouds)(ObScanScanHandle scan,
+                                                                    ObScanPointColorClouds* out_clouds,
+                                                                    ObScanCloudBbox* out_bbox,
+                                                                    uint32_t* out_count);
+// Kept for API symmetry: the native release slot is `ret` (nothing to free),
+// so this returns 0 for any valid handle (845283591 for a NULL one — the
+// shared precondition code). The cloud buffers are borrowed; there is no
+// ownership to drop.
+typedef ObScanStatus (*fn_obscan_scan_model_clouds_release)(ObScanScanHandle scan);
 // Only valid while the scan is paused — called during an active scan it
 // fails with OB_SCAN_ERROR_MULTI_CALLED and the native log line "get
 // model mesh must first pause scan !". Confirmed against this
