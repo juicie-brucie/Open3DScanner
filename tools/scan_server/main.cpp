@@ -772,13 +772,26 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
 #endif
     }
 
-    status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/true);
+    // is_block=false returns immediately: the SDK runs the save/serialize
+    // tail on its "default" pool instead of blocking this thread. The
+    // destroys below then refuse (MULTI_CALLED / "must first wait other
+    // process finished") until that tail completes, so poll them instead
+    // of treating the first refusal as a failure.
+    status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/false);
     Report("obscan_scan_stop", status);
 
-    status = lib.obscan_session_destroy(&session);
+    for (int i = 0; i < 3000; ++i) {
+        status = lib.obscan_session_destroy(&session);
+        if (status == OB_SCAN_SUCCESS || status != OB_SCAN_ERROR_MULTI_CALLED) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     Report("obscan_session_destroy", status);
 
-    status = lib.obscan_context_destroy(&context);
+    for (int i = 0; i < 3000; ++i) {
+        status = lib.obscan_context_destroy(&context);
+        if (status == OB_SCAN_SUCCESS || status != OB_SCAN_ERROR_MULTI_CALLED) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     Report("obscan_context_destroy", status);
 
     server.Stop();
@@ -828,10 +841,10 @@ int RunLiveMode(int argc, char** argv) {
     int worker_exit_code = -1;
     std::string crash_reason;
     // Budget: device-connect (<=6s) + frame-ready wait (<=20s) +
-    // session_seconds of streaming + pause/mesh/stop settle (~10s) +
-    // context_destroy. Generous margin past that, same reasoning as
-    // live_capture_test's own timeout.
-    const int timeout_seconds = session_seconds + 120;
+    // session_seconds of streaming + pause/mesh/stop settle + the SDK's
+    // out-of-core serialization tail (is_block=false, polled above; can
+    // run for minutes on a large scan). Generous margin past that.
+    const int timeout_seconds = session_seconds + 300;
     bool worker_ok = openscanner::RunSelfAsWorker(
         {kWorkerFlag, std::to_string(port), library_path, std::to_string(session_seconds)}, &worker_exit_code,
         &crash_reason, timeout_seconds);
