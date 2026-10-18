@@ -232,3 +232,9 @@ _Append dated one-liners: what changed, which agent, and the outcome._
   `docs/recomp/ROADMAP.md`; reconciled #2/#19 against the landed data-process
   record (both `DONE`); OQ-P1…P4 filed as #26–#29; the roadmap's live-path
   decision, the listener-drain row and the G1–G7 goals stay captured there.
+
+- 2026-10-18 — fix: gate hole — a skipped job's check run satisfied the required
+  `verdict` context, so agent-tier PRs could auto-merge without a verdict
+  (proven by #67's fix head `a88d576`). The `verdict` job is renamed
+  `verdict-comment`; the context is the status only. #67's fix head is being
+  read post-merge for the record.
