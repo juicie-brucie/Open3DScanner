@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #if !defined(_WIN32)
 #include <unistd.h>
@@ -29,6 +30,7 @@
 
 #include "openscanner/obscan_api.h"
 #include "openscanner/obscan_loader.h"
+#include "openscanner/worker_process.h"
 
 namespace {
 
@@ -165,12 +167,47 @@ int RunTests(const std::string& library_path) {
 } // namespace
 
 int main(int argc, char** argv) {
-    std::string library_path;
-    if (argc > 1) library_path = argv[1];
-    else library_path = openscanner::ObscanLibrary::FindDefaultLibraryPath();
-    if (library_path.empty()) {
-        std::fprintf(stderr, "No OBScan SDK library found; pass path as argv[1].\n");
+    // Worker mode.
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == kWorkerFlag) {
+            if (i + 1 >= argc) {
+                std::fprintf(stderr, "missing library path after %s\n", kWorkerFlag);
+                return 2;
+            }
+            return RunTests(argv[i + 1]);
+        }
+    }
+
+    // Launcher mode.
+    std::string lib_path;
+    if (argc >= 2) lib_path = argv[1];
+    else lib_path = openscanner::ObscanLibrary::FindDefaultLibraryPath();
+    if (lib_path.empty()) {
+        std::fprintf(stderr, "No OBScan SDK library path given and no default found.\n");
         return 2;
     }
-    return RunTests(library_path);
+
+#if defined(__APPLE__) && defined(VULKAN_DISABLE_INTERPOSE_DYLIB)
+    {
+        size_t slash = lib_path.find_last_of('/');
+        std::string moltenvk_path;
+        if (slash != std::string::npos) moltenvk_path = lib_path.substr(0, slash + 1) + "libMoltenVK.dylib";
+        if (!moltenvk_path.empty()) {
+            std::string insert = moltenvk_path + ":" + VULKAN_DISABLE_INTERPOSE_DYLIB;
+            setenv("DYLD_INSERT_LIBRARIES", insert.c_str(), 1);
+            std::printf("[launcher] DYLD_INSERT_LIBRARIES=%s\n", insert.c_str());
+        }
+    }
+#endif
+
+    std::vector<std::string> args = {kWorkerFlag, lib_path};
+    int exit_code = 0;
+    std::string reason;
+    bool ok = openscanner::RunSelfAsWorker(args, &exit_code, &reason, 180);
+    if (!ok) {
+        std::printf("worker did not exit cleanly: %s\n", reason.c_str());
+        return 1;
+    }
+    std::printf("worker exit code: %d\n", exit_code);
+    return exit_code;
 }
