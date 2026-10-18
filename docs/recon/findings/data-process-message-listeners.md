@@ -471,6 +471,71 @@ reads the step with `ldar` and accepts exactly 1 / 3 / 4 / 5 — *ready / paused
 / post-process* — rejecting everything else (notably **2 = scanning**) with
 "MULTI_CALLED". Full value map: [`scan-live-data.md`](scan-live-data.md) §5.
 
+## 14. The frame and image C API surface (row #34)
+
+*Static half, plan34 pass. All 19 exports in the `obscan_frame_*` /
+`obscan_image_*` block (`0x106f8`–`0x11080`); signatures from the natives'
+mangled names plus the wrappers' argument checks.*
+
+**The wrappers, as a family — three check shapes** (all null rejections return
+`0x32620100`, `OB_SCAN_ERROR_INVALID_ARGUMENT`):
+
+- **out + frame + frame-impl** (`cbz x1; cbz x0; ldr x8,[x0]; cbz`): the frame
+  getters for cloud, bbox, timestamp, id, rate, tracking status, update model,
+  pose;
+- **out + frame only** (no impl check): `get_marker_datas`,
+  `get_marker_distance_advice`, `get_cloud_distance_advice`,
+  `get_reference_rods_data`;
+- **image scalars** (`get_width`/`get_height`/`get_timestamp`) check only the
+  image — the out pointer is not validated; `get_display_image` /
+  `get_depth_display_image` check out + image + impl; `get_distance_advice`
+  checks out + image.
+- The two `release` wrappers warn and return 0 on NULL, else call the native
+  `release_data` (state → 0, drops the impl) and return 0.
+
+**The surface** (name / C signature / what it fills):
+
+| function | C signature | fills |
+| --- | --- | --- |
+| `obscan_frame_get_frame_cloud` | `(frame, ObScanPointClouds** out)` | pointer to the frame's cloud (`{count, points, normals}`-shaped, §12) |
+| `obscan_frame_get_frame_bbox` | `(frame, ObScanCloudBbox* out)` | 48-byte bbox (same struct as the scan family, §4) |
+| `obscan_frame_get_timestamp` | `(frame, int64_t* out)` | timestamp |
+| `obscan_frame_get_frame_id` | `(frame, int32_t* out)` | frame id |
+| `obscan_frame_get_frame_rate` | `(frame, int32_t* out)` | frame rate |
+| `obscan_frame_get_frame_tracking_status` | `(frame, int32_t* out)` | tracking status |
+| `obscan_frame_get_update_model` | `(frame, bool* out)` | update-model flag |
+| `obscan_frame_get_frame_pose` | `(frame, ObScanPose** out)` | pointer to the frame's pose (layout unmapped) |
+| `obscan_frame_get_marker_datas` | `(frame, OBScanMarkers_* out)` | copies 32 bytes from `impl+0x1b0` to out (layout unmapped) |
+| `obscan_frame_get_marker_distance_advice` | `(frame, OBScanSimpDistAdviceArray_* out)` | advice array (layout unmapped) |
+| `obscan_frame_get_cloud_distance_advice` | `(frame, OBScanSimpDistAdviceArray_* out)` | advice array (layout unmapped) |
+| `obscan_frame_get_reference_rods` | `(frame, OBScanReferenceRods_* out)` | rods data (layout unmapped) |
+| `obscan_frame_release` | `(frame)` | releases the frame object |
+| `obscan_image_get_width` | `(image, int32_t* out)` | width |
+| `obscan_image_get_height` | `(image, int32_t* out)` | height |
+| `obscan_image_get_timestamp` | `(image, int64_t* out)` | timestamp |
+| `obscan_image_get_display_image` | `(image, ObScanImageData** out)` | pointer to the display image (layout unmapped) |
+| `obscan_image_get_depth_display_image` | `(image, int32_t index, ObScanImageData** out)` | same, indexed variant |
+| `obscan_image_get_distance_advice` | `(image, OBScanDistanceAdviceInfo_* out)` | distance advice (layout unmapped) |
+| `obscan_image_release` | `(image)` | releases the image object |
+
+**Out-struct status.** Known and declared: `ObScanPointClouds**` (frame cloud),
+`ObScanCloudBbox*`, `int32_t*`, `int64_t*`, `bool*`. Declared with
+forward-declared opaque structs (pointer-to-pointer outs, ABI-correct but not
+yet field-readable): `ObScanPose**`, `ObScanImageData**`. **Not declared** —
+the five direct-out getters whose structs a caller must allocate
+(`OBScanMarkers_` 32 B copy observed, `OBScanSimpDistAdviceArray_` ×2,
+`OBScanReferenceRods_`, `OBScanDistanceAdviceInfo_`) — their layouts are the
+follow-up (**OQ-P5**).
+
+**Lifetime.** Per §12: borrowed, one-shot (a second accessor call on the same
+object → `845283600` `OB_SCAN_ERROR_MULTI_CALLED`; after the SDK's release →
+`845283584` "…released !"), consumed synchronously; call the matching
+`release` once per consumed payload.
+
+**Declared in the header now**: the frame cloud/bbox/scalars/pose/release and
+the image scalars/display-images/release (15 typedefs + `ObScanFrameHandle` /
+`ObScanImageHandle`).
+
 ## Evidence
 
 Raw evidence: `.recon-cache/listings/data-process-listeners.plan2.asm` (wrapper
@@ -516,6 +581,12 @@ raw listings are reproduced here.
   quoted. `+0xe1` is the "scan config paras set" flag gating preview + meshlization
   defaults; `+0x4c8` `{1,3,4,5}` is the preview-legal subset of `OrbbecScanStep`
   (`scan-live-data.md` §5).
+- **OQ-P5** — the five direct-out frame/image struct layouts
+  (`OBScanMarkers_`, `OBScanSimpDistAdviceArray_` ×2, `OBScanReferenceRods_`,
+  `OBScanDistanceAdviceInfo_`): recover sizes/fields so the remaining
+  `obscan_frame_*` / `obscan_image_*` getters can be declared (§14).
+  `OBScanMarkers_` shows a 32-byte copy from `impl+0x1b0` to the out; the rest
+  are unmapped.
 - **inherited OQ-2** (PLAN row #9) — *Resolved* for data & process
   (2026-10-17-plan9): both `__func` vtables' `operator()` invokes are
   byte-identical to the device family's — one load through `[listener+0x00]`

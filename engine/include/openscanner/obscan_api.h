@@ -649,6 +649,44 @@ typedef ObScanStatus (*fn_obscan_scan_get_realtime_model_mesh)(ObScanScanHandle 
 typedef ObScanStatus (*fn_obscan_scan_realtime_model_mesh_release)(ObScanScanHandle scan);
 typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, ObScanModeConfig* out_config);
 
+// ---------------------------------------------------------------------------
+// Frame and image payloads — the read side of the listener live path.
+// `ObScanDataMessage.data` for NEW_{IR,DEPTH,RGB}_IMAGE is an image object and
+// for FRAME_READY a frame object (findings §12); these are the C entry points
+// for consuming them. Both kinds are BORROWED and ONE-SHOT: any accessor call
+// consumes the object (a second call returns OB_SCAN_ERROR_MULTI_CALLED; after
+// the SDK's release it returns OB_SCAN_ERROR_INVALID_ARGUMENT), so read once,
+// copy out, then call the matching release. See
+// docs/recon/findings/data-process-message-listeners.md §12/§14.
+typedef void* ObScanFrameHandle;   // the FRAME_READY payload pointer
+typedef void* ObScanImageHandle;   // the NEW_*_IMAGE payload pointer
+// Pointer-to-pointer outs whose layouts are not yet recovered (findings §14);
+// callers hold the returned pointer opaquely until then.
+typedef struct ObScanPose ObScanPose;
+typedef struct ObScanImageData ObScanImageData;
+
+// Fills *out_cloud with a pointer to the SDK's frame cloud — the same
+// {num_points, points, normals} shape as ObScanPointClouds.
+typedef ObScanStatus (*fn_obscan_frame_get_frame_cloud)(ObScanFrameHandle frame, ObScanPointClouds** out_cloud);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_bbox)(ObScanFrameHandle frame, ObScanCloudBbox* out_bbox);
+typedef ObScanStatus (*fn_obscan_frame_get_timestamp)(ObScanFrameHandle frame, int64_t* out_timestamp);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_id)(ObScanFrameHandle frame, int32_t* out_frame_id);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_rate)(ObScanFrameHandle frame, int32_t* out_frame_rate);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_tracking_status)(ObScanFrameHandle frame, int32_t* out_status);
+typedef ObScanStatus (*fn_obscan_frame_get_update_model)(ObScanFrameHandle frame, bool* out_update_model);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_pose)(ObScanFrameHandle frame, ObScanPose** out_pose);
+// Releases the frame object (native `release_data`: clears its state and drops
+// the impl). Returns 0 for a valid handle.
+typedef ObScanStatus (*fn_obscan_frame_release)(ObScanFrameHandle frame);
+
+typedef ObScanStatus (*fn_obscan_image_get_width)(ObScanImageHandle image, int32_t* out_width);
+typedef ObScanStatus (*fn_obscan_image_get_height)(ObScanImageHandle image, int32_t* out_height);
+typedef ObScanStatus (*fn_obscan_image_get_timestamp)(ObScanImageHandle image, int64_t* out_timestamp);
+typedef ObScanStatus (*fn_obscan_image_get_display_image)(ObScanImageHandle image, ObScanImageData** out_image_data);
+typedef ObScanStatus (*fn_obscan_image_get_depth_display_image)(ObScanImageHandle image, int32_t index, ObScanImageData** out_image_data);
+// Releases the image object (native `release_data`). Returns 0 for a valid handle.
+typedef ObScanStatus (*fn_obscan_image_release)(ObScanImageHandle image);
+
 // OBScanTarget.ConfigCombinedExposureAndLaserCurrent(int value) — a
 // single combined IR-exposure/laser-current slider, range [1, 1000]
 // (OBScanRealTimeConfig.combined_exposure_and_laser_current; ground
