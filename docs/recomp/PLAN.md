@@ -28,6 +28,7 @@ Status: `TODO` · `RECON` · `SPEC-READY` · `BUILD` · `HW` · `DONE` · `BLOCK
 | 17 | `tests/hardware/device_message_listener_test/main.cpp` credits itself with resolving OQ-4 | HW | **test wrong** — it measures only the registration-time delivery. `g_callback_thread` is a single global (`main.cpp:41`) overwritten at `main.cpp:47` by every message, and the thread hash is summarised exactly once (`main.cpp:147-150`), immediately after add #1, so the summary can only ever describe that one synchronous delivery. The run doc's claim that "no thread-hash was logged" for the later connect under-reads its own log: `raw.log:75` does carry `thread=17304887900616587565`. Adding that fact sharpens rather than rescues the conclusion — that hash **equals** the registration-thread hash (`raw.log:26`), so **both** observed deliveries were on `14660842` and **no watcher-thread delivery ever occurred**. Precise OQ-4 status: *confirmed for both synchronous deliveries; the async / watcher-thread case was never exercised.* Fix: record the thread id **per message** and re-summarise after the 2 s window and after the re-add, so OQ-4 can cover delivery from a vendor thread. Reconcile #8's "OQ-4 resolved" note at the same time. **Note above describes the pre-#40 test.** Instrumentation landed in #40 — the per-phase thread lists are recorded, now read under `g_cb_mutex` through `CbCount()`/`ThreadHashList()`. Nothing further is owed in code — OQ-4 is settled by a run, so this row is `HW`. |
 | 18 | OQ-2 §6.1 residuals from the PR #50 verification | TODO | Five LOW items, non-gating, for recon: (1) scope §6.1's "consumes one pointer-sized word … and nothing else" to the delivery path — `remove_device_msg_listener` is still undisassembled (OQ-3); (2) §6.1 "the invoke leaves `x2` untouched" misstates `ldr x2,[x9]; br x2` (conclusion survives — `x2` is the code pointer, not a `data` argument); (3) the `control` row's vtable cell is elided (`0x454d…`) and the tips registration site (`0x5c24d4`) appears only in prose; (4) §2.3 still says "`std::function` manager word at `this+0xb8`" where §2/§6.1 now say `__f_`; (5) range the tips/control `+0x30` invokes — the still-open part of the OQ-2 resolution. |
 | 19 | `data_process_message_listener_test` runs in-process (no worker, interposer or timeout) | HW | Found by the PR #51 verification (item 1): no `RunSelfAsWorker`, no `vulkan_disable_interpose` wiring, no timeout, and it calls `obscan_context_destroy` (`main.cpp:156`) — `worker_process.h` documents that call can crash or hang unbounded. The PreToolUse guard now gates it to `wt-hw` alongside the device test; this row is the remaining half: wire it behind the launcher like `device_message_listener_test`. Builder owns `tests/hardware/`. **Wired** (PR #53, `071438e`): worker + interposer + 180 s timeout, mirroring the device test; `wt-hw` synced and the target rebuilt (launcher strings verified in the binary). Remaining: a hardware run of the test. |
+| 20 | Archived crash reports show the main thread inside `obscan_context_destroy` when the watcher thread faults | TODO | Raised by the #56 verification (observation 2): with the reports now on `main`, all three archived crash reports show the main thread in `OBDeviceManagement::release()` → `~OrbbecDevice` → `stop()` on a mutex while the watcher thread faults. That contradicts row #5's "it never reached `obscan_context_destroy()`" and the crash analysis's line 56; #11/#15's re-run design depends on it. Needs a re-read of the `.ips` files against both claims, then corrections. |
 
 ## Open questions (from recon)
 
@@ -163,7 +164,6 @@ _Append dated one-liners: what changed, which agent, and the outcome._
   pass, findings §6.1) — the superseded round6 status block was dropped. #9 and
   #12 → `DONE`. Nothing else was unmerged: `recon/round5` is subsumed by §6.1,
   and `backup/recon-plan7-2026-10-17` holds only pre-fix wording.
-
 - 2026-10-17 — dispatcher: PR #50 merged on verifier verdict `MERGEABLE`
   (`28a9c7d`) — `recon/round4`'s OQ-2 §6.1 landed, #9/#12 → `DONE`. Redundant
   local branches `recon/round4`/`recon/round5` deleted after byte-check against
@@ -172,11 +172,9 @@ _Append dated one-liners: what changed, which agent, and the outcome._
 - 2026-10-17 — dispatcher: hardware guardrail paths updated `wt-build1` →
   `wt-hw` (`CLAUDE.md`, `.claude/hooks/guard-hw-run.sh`); the old worktree no
   longer exists. Row #18 filed for the OQ-2 §6.1 residuals.
-
 - 2026-10-17 — dispatcher: guard now covers both listener tests
   (`*message_listener_test*`); row #19 filed for the `data_process_message_listener_test`
   launcher wiring (PR #51 verification item 1).
-
 - 2026-10-17 — dispatcher: row #16's lifetime-rule widening landed (recon
   `337b34f`); #16 → `DONE`, #2/#19 → `HW` (implementation complete; the
   data/process test's first hardware run is the next evidence). `wt-hw` synced
