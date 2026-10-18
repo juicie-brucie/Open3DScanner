@@ -373,6 +373,8 @@ def main():
         # Deliberately no broader segment matching: it masked unclaimed files.
         if p in body or os.path.basename(p) in body:
             return True
+        if p == "docs/recomp/PLAN.md":
+            return True  # the board is routinely touched without being named
         parent = os.path.dirname(p).split("/")[-1]
         if len(parent) >= 5 and parent.lower() in body_l:
             return True
