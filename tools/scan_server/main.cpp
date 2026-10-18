@@ -30,6 +30,7 @@
 #include <cstring>
 #include <functional>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
@@ -467,7 +468,8 @@ void Report(const char* step, ObScanStatus status) {
     std::fflush(stdout);
 }
 
-int RunLiveServer(const std::string& library_path, uint16_t port) {
+int RunLiveServer(const std::string& library_path, uint16_t port, const std::string& record_path = "") {
+    g_record_path = record_path;
     std::signal(SIGINT, &OnStopSignal);
     std::signal(SIGTERM, &OnStopSignal);
 
@@ -840,10 +842,10 @@ int RunLiveMode(int argc, char** argv) {
     if (argc > 2) port = static_cast<uint16_t>(std::atoi(argv[2]));
     if (argc > 3) library_path = argv[3];
     if (argc > 4) session_seconds = std::atoi(argv[4]);
+    std::string record_path;
     for (int i = 2; i < argc; ++i) {
         if (std::string(argv[i]) == "--record" && i + 1 < argc) {
-            g_record_path = argv[i+1];
-            setenv("OPENSCANNER_RECORD", g_record_path.c_str(), 1);
+            record_path = argv[i + 1];
         }
     }
     if (library_path.empty()) library_path = openscanner::ObscanLibrary::FindDefaultLibraryPath();
@@ -878,9 +880,10 @@ int RunLiveMode(int argc, char** argv) {
     // out-of-core serialization tail (is_block=false, polled above; can
     // run for minutes on a large scan). Generous margin past that.
     const int timeout_seconds = session_seconds + 300;
+    std::vector<std::string> worker_args = {kWorkerFlag, std::to_string(port), library_path, std::to_string(session_seconds)};
+    if (!record_path.empty()) worker_args.push_back(record_path);
     bool worker_ok = openscanner::RunSelfAsWorker(
-        {kWorkerFlag, std::to_string(port), library_path, std::to_string(session_seconds)}, &worker_exit_code,
-        &crash_reason, timeout_seconds);
+        worker_args, &worker_exit_code, &crash_reason, timeout_seconds);
     if (worker_ok) {
         std::printf("[launcher] Worker exited normally with code %d.\n", worker_exit_code);
         return worker_exit_code;
@@ -941,21 +944,65 @@ int RunReplayMode(int argc, char** argv) {
     return 0;
 }
 
+// Minimal CaptureSource seam (architecture doc §6): both the live and the
+// replay path implement this interface and feed the same V1 framing path.
+class CaptureSource {
+public:
+    virtual ~CaptureSource() = default;
+    virtual int run() = 0;
+};
+
+class ObscanCaptureSource : public CaptureSource {
+public:
+    ObscanCaptureSource(int argc, char** argv) : argc_(argc), argv_(argv) {}
+    int run() override {
+        if (argc_ >= 3 && std::string(argv_[1]) == kWorkerFlag) {
+            uint16_t port = static_cast<uint16_t>(std::atoi(argv_[2]));
+            std::string library_path = argc_ > 3 ? argv_[3] : "";
+            if (argc_ > 4) g_live_session_seconds = std::atoi(argv_[4]);
+            std::string record_path = argc_ > 5 ? argv_[5] : "";
+            return RunLiveServer(library_path, port, record_path);
+        }
+        if (argc_ >= 2 && std::string(argv_[1]) == "--live") {
+            return RunLiveMode(argc_, argv_);
+        }
+        return 0;
+    }
+private:
+    int argc_;
+    char** argv_;
+};
+
+class ReplayCaptureSource : public CaptureSource {
+public:
+    ReplayCaptureSource(int argc, char** argv) : argc_(argc), argv_(argv) {}
+    int run() override {
+        if (argc_ >= 2 && std::string(argv_[1]) == "--replay") {
+            return RunReplayMode(argc_, argv_);
+        }
+        return 0;
+    }
+private:
+    int argc_;
+    char** argv_;
+};
+
 }  // namespace
 
 int main(int argc, char** argv) {
     if (argc >= 3 && std::string(argv[1]) == kWorkerFlag) {
-        uint16_t port = static_cast<uint16_t>(std::atoi(argv[2]));
-        std::string library_path = argc > 3 ? argv[3] : "";
-        if (argc > 4) g_live_session_seconds = std::atoi(argv[4]);
-        return RunLiveServer(library_path, port);
+        std::unique_ptr<CaptureSource> src(new ObscanCaptureSource(argc, argv));
+        return src->run();
     }
 
     if (argc >= 2 && std::string(argv[1]) == "--live") {
-        return RunLiveMode(argc, argv);
+        std::unique_ptr<CaptureSource> src(new ObscanCaptureSource(argc, argv));
+        return src->run();
     }
+
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
-        return RunReplayMode(argc, argv);
+        std::unique_ptr<CaptureSource> src(new ReplayCaptureSource(argc, argv));
+        return src->run();
     }
 
     uint16_t port = argc > 1 ? static_cast<uint16_t>(std::atoi(argv[1])) : 8787;
