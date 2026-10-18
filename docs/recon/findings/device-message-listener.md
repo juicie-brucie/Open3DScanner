@@ -373,7 +373,7 @@ three archived reports]: the main thread was inside `obscan_context_destroy()` �
 `OBDeviceManagement::release()` → `~OrbbecDevice` → `~OrbbecInternalDevice` →
 `OrbbecInternalDevice::stop()`, **blocked on a recursive_mutex** — teardown was
 racing the fault, not absent (row #5's "never reached destroy" premise is
-dropped). No report shows `obscan_context_destroy()` itself crashing; the
+dropped). No report **in this series** shows `obscan_context_destroy()` itself crashing; the
 f4c5f86 plan1 run's destroy returned SUCCESS in 807 ms with worker exit 0.
 
 Still without any static or dynamic reference:

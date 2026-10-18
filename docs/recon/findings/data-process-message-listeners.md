@@ -486,8 +486,10 @@ mangled names plus the wrappers' argument checks.*
 - **out + frame + frame-impl** (`cbz x1; cbz x0; ldr x8,[x0]; cbz`): the frame
   getters for cloud, bbox, timestamp, id, rate, tracking status, update model,
   pose;
-- **out + frame only** (no impl check): `get_marker_datas`,
-  `get_marker_distance_advice`, `get_cloud_distance_advice`,
+- **out + frame only** (no impl check; native names — the exports are
+  `obscan_frame_get_marker_datas`, `obscan_frame_get_marker_distance_advice`,
+  `obscan_frame_get_frame_cloud_distance_advice`, `obscan_frame_get_reference_rods`):
+  `get_marker_datas`, `get_marker_distance_advice`, `get_cloud_distance_advice`,
   `get_reference_rods_data`;
 - **image scalars** (`get_width`/`get_height`/`get_timestamp`) check only the
   image — the out pointer is not validated; `get_display_image` /
@@ -510,7 +512,7 @@ mangled names plus the wrappers' argument checks.*
 | `obscan_frame_get_frame_pose` | `(frame, ObScanPose** out)` | pointer to the frame's pose (layout unmapped) |
 | `obscan_frame_get_marker_datas` | `(frame, ObScanMarkers* out)` | 32-byte marker view (layout §15) |
 | `obscan_frame_get_marker_distance_advice` | `(frame, ObScanSimpDistAdviceArray* out)` | 16-byte advice view (layout §15) |
-| `obscan_frame_get_cloud_distance_advice` | `(frame, ObScanSimpDistAdviceArray* out)` | 16-byte advice view (layout §15) |
+| `obscan_frame_get_frame_cloud_distance_advice` | `(frame, ObScanSimpDistAdviceArray* out)` | 16-byte advice view (layout §15) |
 | `obscan_frame_get_reference_rods` | `(frame, ObScanReferenceRods* out)` | 56-byte rods view (layout §15) |
 | `obscan_frame_release` | `(frame)` | releases the frame object |
 | `obscan_image_get_width` | `(image, int32_t* out)` | width |
@@ -575,8 +577,10 @@ this row (scan family).
 | 0x0c | 4 | padding |
 
 Evidence: both getters copy 16 B (`ldr q0` → `str q0`):
-`get_cloud_distance_advice` (`0x6b2c68`) from `impl+0x298` (`0x6b2ca0`),
-`get_marker_distance_advice` (`0x6b2b98`) from `impl+0x2a8` (`0x6b2bd0`).
+`OBScanFrame_::get_cloud_distance_advice` (`0x6b2c68`, export
+`obscan_frame_get_frame_cloud_distance_advice`) from `impl+0x298`
+(`0x6b2ca0`), `OBScanFrame_::get_marker_distance_advice` (`0x6b2b98`) from
+`impl+0x2a8` (`0x6b2bd0`).
 The impl populate sets `data` = begin of the vector at `impl+0x198`, `count` =
 `(end-begin)/4` for the marker array (`0x6b2ae8`–`0x6b2b00`); the cloud array
 is zeroed on those paths.
@@ -620,7 +624,7 @@ the *same* accessor twice → `0x32620110` (`OB_SCAN_ERROR_MULTI_CALLED`); state
 0 (after the SDK's release) → `0x32620100`. So "one-shot" is **per accessor**,
 not per object — `get_width` then `get_height` both succeed.
 
-| frame accessor | bit | image accessor | bit |
+| frame accessor (native) | bit | image accessor (native) | bit |
 | --- | --- | --- | --- |
 | get_frame_cloud | 1 (0x2) | get_width | 1 (0x2) |
 | get_frame_tracking_status | 2 (0x4) | get_height | 2 (0x4) |

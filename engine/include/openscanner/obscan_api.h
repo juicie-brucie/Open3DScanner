@@ -20,6 +20,7 @@
 // ObScanStatus enum (checked against the vendor's own status-name table).
 
 #include <stdbool.h>
+#include <stddef.h>   /* offsetof, for the ABI guards below */
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -383,10 +384,11 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // obscan_context_destroy() -> OBDeviceManagement::release() ->
 // ~OrbbecDevice -> ~OrbbecInternalDevice -> OrbbecInternalDevice::stop(),
 // blocked on a recursive_mutex. Teardown was racing the fault, not absent —
-// the "never reached destroy" reading is dropped. No run shows
-// obscan_context_destroy() itself crashing: the f4c5f86 run's destroy
+// the "never reached destroy" reading is dropped. No run in this series
+// shows obscan_context_destroy() itself crashing: the f4c5f86 run's destroy
 // returned SUCCESS in 807 ms with the worker exiting 0, so the
-// "destroy/libomp crash" claim is unobserved (not established).
+// "destroy/libomp crash" claim is unobserved in this series (the historical
+// crash is separately documented and lldb-confirmed — README "Known issues").
 // Not established: what leaves device bookkeeping in that NULL state — a
 // pre-existing inconsistency that remove->add merely exposes, or re-entry
 // while the device object re-creates (board #11); and whether stop()'s
@@ -713,6 +715,36 @@ typedef struct ObScanDistanceAdviceInfo {
     int32_t pair_second;    // 0x04  second member
     uint8_t histogram[320]; // 0x08
 } ObScanDistanceAdviceInfo; // 328 bytes
+
+// Compile-time ABI guards (row #36 follow-up): the SDK fills these structs by
+// copying fixed-size blocks, so a size or offset drift is an ABI break, not a
+// style issue. Sizes/offsets are the listing's (findings §15).
+#if defined(__cplusplus)
+#define OBSCAN_ABI_ASSERT(cond, msg) static_assert(cond, msg)
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define OBSCAN_ABI_ASSERT(cond, msg) _Static_assert(cond, msg)
+#else
+#define OBSCAN_ABI_ASSERT(cond, msg) /* pre-C11: no compile-time check available */
+#endif
+OBSCAN_ABI_ASSERT(sizeof(ObScanMarkers) == 32, "ObScanMarkers must be 32 bytes (findings §15)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanMarkers, num_markers) == 0x00 &&
+                  offsetof(ObScanMarkers, markers) == 0x08 &&
+                  offsetof(ObScanMarkers, aux_0) == 0x10 &&
+                  offsetof(ObScanMarkers, aux_1) == 0x18,
+                  "ObScanMarkers offsets (findings §15)");
+OBSCAN_ABI_ASSERT(sizeof(ObScanSimpDistAdviceArray) == 16, "ObScanSimpDistAdviceArray must be 16 bytes (findings §15)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanSimpDistAdviceArray, data) == 0x00 &&
+                  offsetof(ObScanSimpDistAdviceArray, count) == 0x08,
+                  "ObScanSimpDistAdviceArray offsets (findings §15)");
+OBSCAN_ABI_ASSERT(sizeof(ObScanReferenceRods) == 56, "ObScanReferenceRods must be 56 bytes (findings §15)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanReferenceRods, p1) == 0x08 &&
+                  offsetof(ObScanReferenceRods, p6) == 0x30,
+                  "ObScanReferenceRods offsets (findings §15)");
+OBSCAN_ABI_ASSERT(sizeof(ObScanDistanceAdviceInfo) == 328, "ObScanDistanceAdviceInfo must be 328 bytes (findings §15)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanDistanceAdviceInfo, pair_second) == 0x04 &&
+                  offsetof(ObScanDistanceAdviceInfo, histogram) == 0x08,
+                  "ObScanDistanceAdviceInfo offsets (findings §15)");
+#undef OBSCAN_ABI_ASSERT
 
 // Fills *out_cloud with a pointer to the SDK's frame cloud — the same
 // {num_points, points, normals} shape as ObScanPointClouds.
