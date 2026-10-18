@@ -674,7 +674,7 @@ family of setters, including the full mode-config re-apply.*
 | `obscan_scan_reconfig_scan_mode_config` (`0xf148`) | `(scan, const ObScanModeConfig*)` | prints the config, copies it, vtable `+0x78` → `OrbbecScanSpeckle/Laser::reconfig_scan_mode_config(OBScanModeConfig, bool=1)` `0x5cb00`/`0xc41a4` | the stored `OBScanModeConfig` (`dataMgmt+0xa8` via `set_mode_config` `0x702504`) **and** the device (`streamer_set_scan_config`) |
 | `obscan_scan_config_show_data_rotate` (`0xf1f0`) | `(scan, bool)` | `OBScanBase::config_show_data_rotate(bool)` `0x6f7dc8` | a view flag |
 | `obscan_scan_config_light_type` (`0xf268`) | `(scan, ObScanLightType)` | vtable `+0x70` → `…config_light_type(int, bool=1)` `0x6f5c84` | the mode/device |
-| `obscan_scan_config_manaul_remove_plane` (`0xf8cc`) | `(scan, …)` — arg order not fully read | `…config_manaul_remove_plane(bool, OBScanPlane_&, int&)` `0x5c5c0`/`0xc3b18` | the plane-removal tool |
+| `obscan_scan_config_manaul_remove_plane` (`0xf8cc`) | `(scan, const ObScanManualRPConfig_*)` | `…config_manaul_remove_plane(bool, OBScanPlane_&, int&)` `0x5c5c0`/`0xc3b18` | the plane-removal tool |
 
 **Gates and codes (row #58 — the map, verified site by site).**
 
