@@ -237,4 +237,3 @@ Also ready, non-competing: `#40` (recon), `#41` (builder), `#34`/`#35` (recon/bu
   Superseded by rev 2. Half landed (the scan family was opened via `#23`); the other half
   was wrong as written — the queue's most obvious item (`#2`/`#19`) already had a passing
   run on `main`.
-
