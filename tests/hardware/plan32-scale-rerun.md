@@ -69,3 +69,39 @@ The teardown bound (#43, merged) makes the tool issue `obscan_scan_stop` non-blo
 5. **no watchdog fire** — the log contains no `child timed out after` / `force-killed` line. Match that **stable substring**, not a number: the timeout message is built from the configured value (`worker_process.cpp`), and with #43 merged this run's budget is `session_seconds + 300` — **720 s** for the prescribed 300 s session, not the old 420 s.
 
 If a destroy proceeds while the tail is still running, stop the run, keep the log, and report it as a contradiction — do not retry.
+
+## Current run spec — scale + record + follow (V4, #43, V3, #39)
+
+The room must be synced first (`./sync-to-main.sh`): this spec needs V4 (#121), #43's bound
+(#111), #46's poll logging (#118) and the replay (#122/#128).
+
+```
+./ui/watch.sh                                                  # HUD on :8788 — hard-refresh the page
+./build/tools/scan_server/scan_server --live 8787 "" 300 --record /tmp/live-session.oscr
+```
+
+While running, **move the scanner continuously across new geometry** (the usual movement
+requirement) and **toggle follow mode** at least once — it tracks the scanner rather than the
+scan's geometry, and this run is its first exercise.
+
+Record (in `../results/`, one file per run):
+
+- the HUD series — `data fps`, `render fps`, `latency`, count — sampled throughout and
+  **especially at the top end** (at and above 1,000,000);
+- whether **follow mode tracked the scanner** when toggled, and what it did before the first
+  pose arrived;
+- the **full-detail request** after pause (#39) and the page's response;
+- the **teardown**, quoting the poll lines #46 added: an immediate `obscan_scan_stop` return,
+  then each destroy poll (its status — a `MULTI_CALLED`-style refusal if the tail is still
+  running — and how many polls to success), all three teardown lines, exit 0, and no
+  `child timed out after` / `force-killed`;
+- the recording file's path, size and the `N frames: C cloud, P pose` line.
+
+Then **replay it locally** (no device — this is V3's purpose):
+
+```
+./build/tools/scan_server/scan_server --replay /tmp/live-session.oscr 8790
+```
+
+with the HUD pointed at :8790, and record whether the frames replay in order (the pose
+frames included, if the recording carries them).
