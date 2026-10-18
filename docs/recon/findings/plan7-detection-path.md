@@ -183,3 +183,14 @@ has not been observed directly (`f4c5f86` had no Frida) — **OQ-7b.**
   vendor naming inconsistency, not a second mechanism, but the exact
   event-pump thread config belongs to OQ-4 (listener delivery thread), which
   remains open.
+
+## OQ-7d — closed (row #68)
+
+`OQ-7d` (ROADMAP rev 12: "only its parent question, `#52`") is **closed**:
+`#52` is delivered and landed — `ef14646` (the invocation threads and the
+re-entrancy finding) and its follow-up `ad90ef6` (the invoke is
+unsynchronised) — and OQ-7d carried nothing else. The only residue anywhere
+on that line is OQ-4's single hardware observation (a `[cb]` line while a
+device-changed pass fires with the listener installed; the trace spec is in
+device-message-listener.md §4) — a specified one-observation trace, not an
+open question.
