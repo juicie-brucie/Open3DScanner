@@ -557,8 +557,8 @@ dumps: `.recon-cache/listings/frame-image-structs.plan36.asm`.*
 | --- | --- | --- |
 | 0x00 | 4 | `num_markers` |
 | 0x08 | 8 | begin of the 16-byte marker-record array |
-| 0x10 | 8 | per-marker array (element type unmapped) |
-| 0x18 | 8 | per-marker array (element type unmapped) |
+| 0x10 | 8 | per-marker array — the normals (scan-live-data.md §17.3) |
+| 0x18 | 8 | per-marker array — one `f32` radius per marker (§17.3) |
 
 Evidence: `OBScanFrame_::get_marker_datas` (`0x6b2a3c`) copies 32 B
 (`ldp q0,q1,[impl+0x1b0]` → `stp q0,q1,[out]`, `0x6b2b04`); the count comes

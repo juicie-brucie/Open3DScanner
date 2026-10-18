@@ -501,6 +501,21 @@ round-trip (`0x6acca4`/`0x6acf38`), the 16-double NaN loop (`0x6accc8`), the
 Eigen transpose shim (`0x6ace00` ⇒ row-major), and the identity NaN-fallback
 (`0x2cf16a0`).
 
+**Convention (OQ-S7, answered statically)** — the pose is the scanner's pose
+in the world: `p_world = M · p_scanner`, applied **as-is** (never inverted).
+Evidence: `obscan_cloud_transform`'s per-point math (`0x6ad174`–`0x6ad1c0`:
+`out[r] = m[r][0]·x + m[r][1]·y + m[r][2]·z + m[r][3]` — the `m3f::inverse`
+in that function is on the normals path), `OBPointCloud::transform`
+(`0x26e7620`) likewise, the Eigen shim (`0x6ace00`) transposing *storage* only
+(no semantic flip), and a consumer (`0x8d7fd4`) that treats the translation as
+the sensor origin. So the translation column is the scanner origin in the
+world (project units — metres `[inferred]`), and the rotation is a proper
+right-handed rotation whose columns are the scanner axes in world coordinates.
+Residual: the optimizer's own sign convention
+(`OrbbecScanCombination::optimization` `0x56570` → `set_registration_pose`
+`0x56620`) and the world up-axis/units are not statically pinned — one
+`get_global_pose` at a known device pose settles them (OQ-S7).
+
 **Storage + sync.** Global pose at `dataMgmt+0x1b0` (`scan+0x2a0`),
 registration pose at `+0x120` (`scan+0x210`). Getters and setters all take the
 **byte lock at `dataMgmt+0x320`** (`swpab`/`stlrb` — the same guard
@@ -536,33 +551,84 @@ NULL out → `0x32620100`; takes the same `+0x320` byte lock; copies the
 `{count@0x00, markers@0x08, aux1@0x10, aux2@0x18}` view (32 B — layout in
 data-process-message-listeners.md §15); unlocks; returns 0.
 
-**Borrowed, not copied**: the three pointers reference the manager's live
-container (`*(dataMgmt+0x308)`, a `shared_ptr`); no refcount is taken and the
-lock releases *before* return — a concurrent `update_markers_data` (`0x703968`)
-can `clear()`+`reserve()` the arrays under the caller. Read synchronously,
-don't retain. (Contrast `get_markers_data` `0x7039d4`, the owning
-`shared_ptr` variant — **not** what this export uses.)
+**Borrowed, not copied — and the borrow can dangle (OQ-S9, answered).** The
+three pointers reference the manager's live container (`*(dataMgmt+0x308)`, a
+`shared_ptr`); no refcount is taken and the lock releases *before* return. The
+update path (`update_markers_data` `0x703968`, verified in the binary) **swaps
+the whole `shared_ptr` pair** under the same lock — no in-place mutation — and
+the old container returns to the producer's temporary, which frees it on the
+producer thread. A concurrent update during an active scan therefore frees a
+retained view (use-after-free): read synchronously, copy out, don't retain.
+The container is allocated eagerly by the base constructor (`0x701098`), so a
+scan with no markers yet returns `{0, NULL, NULL, NULL}`, not a crash. No
+per-accessor state bit — the getter is repeatable. (Contrast `get_markers_data`
+`0x7039d4`, the owning variant that copies and refcounts — **not** what this
+export uses, and not C-exported.)
 
-**Records**: `free_scan::convert_VKeyPoint_to_OBScanMarkersData` (`0x8aba0`;
-`VKeyPoint` stride 60 B) fills three parallel per-marker arrays —
-`markers`/`aux1` = 16-byte `{3×f32, pad}` records, `aux2` = one `f32` each:
-two 3-D points plus a scalar per marker. Field names are not recovered
-(OQ-S8). No per-accessor state bit — statically repeatable (OQ-S9).
+**Records (OQ-S8, answered).** The three arrays are parallel per-marker arrays
+over `rs_common::VKeyPoint` (60 B): `markers` = 16-byte `{x, y, z, pad}`
+positions (VKeyPoint+0x00), `aux_0` = the same shape — the **normals**
+(VKeyPoint+0x28), `aux_1` = one `f32` — the **radius** (VKeyPoint+0x34).
+Anchored by the vendor's own framework schema string `"##### Dim: 7 (x, y, z,
+normal_x, normal_y, normal_z, radius)"` (`0x6d594c`+0x1b9), the mm→m scaling
+applied to the position and radius only, and the serializers
+(`SerializableMarkerPoints` magic `0x103` persists position + normal + radius +
+state; the local-frame `0x104` also persists `+0x0c..+0x20`; `+0x24` is
+persisted by neither ⇒ padding). Residual (OQ-S8): the `+0x0c..+0x18` ellipse
+coordinate fields and the `+0x1c`/`+0x20` ints (a `-1` sentinel in the stereo
+path) are unmapped — not needed by the exposed arrays; `VKeyPoint+0x38` is a
+`marker_state` bitfield (bit0 deleted, bit1 imported, bit2 hidden — accessors
+`0x6a8dc0`/`0x6a8dd8`/`0x6a8df0`), not exposed through `ObScanMarkers`.
 
-### 17.4 The camera model — FOV only; no C-reachable intrinsics
+### 17.4 The camera model — no C getter, but a decodable session record (OQ-S10)
 
-`ObScanFov` (0 = NORMAL, 1 = WIDE — the vendor's own name/desc tables
-`0x170bec`/`0x170c18`) is already bound, and it is the mode config's
-`scan_fov@0x18` (`ObScanModeConfig`, reachable via `obscan_scan_get_mode_config`
-`0xff5c`). The vendor's richer camera data (`DeviceParameters`,
-`DeCameraIntrinsic_S`, `OBCameraParam`; the `load_camera_params` /
-`init_camera_params` import paths `0x9e074`/`0xa1bd8`/`0xa23fc`;
-`convert_ferret_camera_params` `0xbd672c`) is **not reachable from the C ABI**;
-the only C-reachable parameter path is the opaque device-param blob
-(`obscan_device_management_backup_device_param` `0x117b8` /
-`resume_device_param` `0x11844`), content unparsed. For the viewer's §5
-design: **pose + FOV is everything the pinned ABI supports**; richer
-intrinsics need new analysis (OQ-S10 — analysis-needed, deliberately not run).
+**No C export returns intrinsics or distortion as a value.** The vendor's
+`DeviceParameters` getter (`device::OrbbecDevice::get_device_parameters`,
+`0x1b4bc0`) is internal — its callers are the scan-side save/init paths
+(`OrbbecScanSpeckle`/`OrbbecScanLaser::save_camera_intrins`,
+`…::save_ext_params`, `…::judge_device_params`,
+`TextureScanningContext::init_scanning_params`, …) — and the export surface
+has no getter for it.
+
+**But the ABI does open a path — the session's project cache.** At preview /
+new-scan start the SDK runs `save_camera_intrins` (callers: `preview`,
+`new_scan_preview`, `clear_repreview`, `reconfig_texture_config`,
+`framework_context_to_speckle_context`), which fetches the `DeviceParameters`
+and stores them under the record name **`camera_intrin`** via
+`SerializableDeviceParams` (`0x6e9000`) → `SerializableDeviceParams::to_buffer`
+(`0x6e3874`) → `rs_common::ProjectFileCache::store_serializable` (the read side
+is `OBScanSerialIO::load_device_params_data` `0x6eb98c`, used by the
+project-import paths `0x9e074`/`0xa1bd8`). That cache is the session's
+**`<session output_dir>/resources.obscan` — a SQLite 3 database** (`files` /
+`editDatas` tables; the `-wal`/`-shm` companions are SQLite's). The record is
+the row **`files.name = 'camera_intrin.bat'`** — verified empirically in the
+row #32 clean run's session dir (`length(data) = 210`). A consumer holding the
+session dir (or an export via `obscan_session_export` `0xd088`) can therefore
+read the intrinsics **with any SQLite client**.
+
+**The record's schema is positional, not self-describing.** `to_buffer` packs a
+fixed sequence of **41 fields** (25×f32, 9×i32, 1×u32, 1×u64, 6
+length-prefixed strings) over the `DeviceParameters` struct, each value written
+**big-endian** (`pack_bytes_pod<float>` `0x1a03f4` stores byte 3 first, with a
+bounds check). The colour intrinsics sit in packed positions 11–16 (f32 ×4 at
+`DeviceParameters+0x1c..+0x28`, then 2×i32 at `+0x2c/+0x30`), anchored by
+`device::AbstractDeviceHandle::copyColorParams` (`0x317688`: 4×f32 → `+0x1c`,
+2×int16 → `+0x2c`, Brown distortion 8×f32 → `+0x34/+0x44`); the depth/D2C/
+camera blocks and version strings follow (offsets `+0xa28..+0xb08`).
+
+**The backup/resume blob is not the path — and not decodable here.** The C
+wrapper `obscan_device_management_backup_device_param` (`0x117b8`;
+`(handle, uint8_t** out, uint32_t* len)`) → `OBDeviceManagement` (`0x5c4ce4`,
+gated on the manager's device-present flag `+0x165`) → `OrbbecDevice` →
+`OrbbecInternalDevice::backup_device_param` (`0x1e20dc`), which dispatches to
+the **device handle's own virtual** (`vtable+0x200`, `0x1e2154`) —
+implemented in **libOrbbecSDK**, outside the pinned snapshot. Its content and
+schema cannot be settled from this binary; it stays an unproven candidate
+(settle with the libOrbbecSDK binary or a runtime hexdump of the blob).
+
+Residual (OQ-S10): the byte-exact position→semantic map of all 41 packed
+fields (the colour-intrinsics block is anchored; the identity/version fields
+are not).
 
 ### 17.5 Error taxonomy (all four exports)
 
@@ -572,6 +638,22 @@ intrinsics need new analysis (OQ-S10 — analysis-needed, deliberately not run).
 | NULL out (natives) | `0x32620100` (`OB_SCAN_ERROR_INVALID_ARGUMENT`) |
 | registration gate fails (`confirm_or_cancel_result`) | `0x32620110` (`OB_SCAN_ERROR_MULTI_CALLED`) |
 | success | `0` |
+
+### 17.6 `obscan_get_marker_mesh` — the adjacent, unbound export (OQ-S11)
+
+`0x11ce4` is the export itself (the generator inlined; its only calls are
+malloc/bzero/free, `sincosf` and `std::__throw_length_error`). It builds an
+**n-segment disc/fan** (`2πi/n`, `sincosf`) oriented by a float/vector argument
+block into **two caller buffers** — `out_a` at 36 B per segment (9 `f32`, a
+triangle per segment) and `out_b` at 72 B (18 `f32`) — allocates an internal
+24·n-byte scratch that it frees before returning, and returns `0` (no pointer).
+`n == 0` succeeds silently; `n < 0` throws a C++ `std::length_error` (not an
+ErrCode). The earlier "72-byte vertex mesh with a fixed-resolution primitive"
+reading is superseded. Gap: the float/vector argument block's lane roles are
+not statically derivable — an lldb/dtrace capture of the entry registers
+(`$w0,$x1,$x2,$v0.4s,$v1.4s,$v2.4s`) plus a small-`n` hexdump of both buffers
+settles it. Its caller is unproven: the name is absent from the app's P/Invoke
+tables. It stays undeclared (a separate contract row if wanted).
 
 ## OPEN QUESTIONS
 
@@ -605,26 +687,42 @@ intrinsics need new analysis (OQ-S10 — analysis-needed, deliberately not run).
   (which file it holds) and a size poll of the `.obmc` (a steady growth rate
   is the throughput the budget must cover). A controlled A/B (a wider margin
   vs a smaller model) shows what the tail needs.
-- **OQ-S7** — the pose matrix's convention (§17.1): row-major per the Eigen
-  shim, but the rotation's polarity and whether the pose is world←scanner or
-  scanner←world are `[inferred]`. Settle with a hardware `get_global_pose` call
-  at a known device orientation (compare against the frame pose / the app's
-  view).
-- **OQ-S8** — the marker record's field names (§17.3): two 3-float triples plus
-  a scalar per marker (position? axis? confidence?). Settle by a consumer read
-  or a hardware `{count, first record}` log.
-- **OQ-S9** — the marker borrow's stability (§17.3): the `+0x320` lock covers
-  the copy only; a concurrent marker update can free the arrays. Repeatability
-  is statically yes (no state bit). A hardware double-call plus a mid-scan
-  re-read would confirm.
-- **OQ-S10** — *analysis-needed (serialized by design; do not run without a
-  board row):* richer camera intrinsics (§17.4) — whether
-  `DeviceParameters`/`DeCameraIntrinsic_S` are recoverable from the snapshot
-  and whether any reachable path exposes them. Today only the opaque
-  backup/resume blob is C-reachable.
-- **OQ-S11** — `obscan_get_marker_mesh` (`0x11ce4`): the exact signature/output
-  shape (an int count plus float args and pointers; builds a 72-B-stride
-  vertex mesh). A separate contract row if the marker mesh is wanted.
+- **OQ-S7** — *Narrowed (row #44)*: the pose is the scanner's pose in the
+  world, `p_world = M · p_scanner`, applied as-is (§17.1, verified math +
+  storage shim). What remains is the optimizer's own sign convention
+  (`OrbbecScanCombination::optimization` `0x56570`) and the world up-axis/units
+  — settle with one `get_global_pose` at a known device pose (cross-check the
+  frame pose).
+- **OQ-S8** — *Answered (row #44)*: the three arrays are position
+  (`{x,y,z,pad}`), normals (same shape) and radius (`f32`) per marker,
+  anchored by the vendor's framework schema string (`0x6d594c`) and the
+  serializers (§17.3). Residual: the VKeyPoint fields *not* exposed by
+  `ObScanMarkers` (`+0x0c..+0x20` — ellipse coordinates/ints) stay unmapped;
+  only needed if a consumer wants the raw ellipse data.
+- **OQ-S9** — *Answered (row #44)*: the getter is repeatable, and an update
+  frees a retained view (the whole-container `shared_ptr` swap under the lock;
+  §17.3). Hardware-only residue: whether an update actually interleaves with
+  an app read in practice, and the live cadence — a double-call loop during an
+  active scan (guard page/ASan) would show it.
+- **OQ-S10** — *Answered (the analyzer pass), with residuals*: the pinned C ABI
+  has no intrinsics getter, but the session's project cache is a SQLite DB
+  whose `files` row `camera_intrin.bat` holds the packed `DeviceParameters`
+  record (written at preview/new-scan start; verified in a real session dir,
+  210 B) — readable with any SQLite client, schema positional/big-endian,
+  41 fields with the colour-intrinsics block anchored (§17.4). The
+  backup/resume blob is produced in libOrbbecSDK (out of snapshot) and stays
+  an unproven candidate. Residuals: the byte-exact map of all 41 packed fields
+  (the identity/version fields are not yet named) and the blob's content
+  (needs the libOrbbecSDK binary or a runtime hexdump).
+- **OQ-S11** — *Answered (row #44), one gap*: `obscan_get_marker_mesh`
+  (`0x11ce4`) is `int (int n, float* out_a, float* out_b, <float/vector args>)`
+  — an n-segment disc/fan (`2πi/n` + `sincosf`) into the two caller buffers
+  (`out_a` n×36 B = 9 `f32` triangles, `out_b` n×72 B = 18 `f32`), returns 0,
+  frees its internal scratch; `n < 0` throws `std::length_error` (not an
+  ErrCode). Gap: the float/vector argument block's lane roles are not
+  statically derivable — an entry-register capture + a small-`n` hexdump
+  settles it; its caller is unproven (absent from the app's P/Invoke
+  tables). See §17.6.
 - **OQ-S12** — the pose's publication trigger `obscan_registration_confirm_or_cancel_result`
   (`0xde2c`) is not in our header subset (§17.2): the viewer's `pose` message
   depends on it (the global pose updates per confirm). Declare it in a
@@ -661,3 +759,16 @@ Row #40 (the scanner-POV pose channel): four read-only sweeps over the existing
 snapshot (pose getters, markers, camera model, pose publication) — no analyzer run.
 Targets/addresses as cited in §17; the sweeps' raw read ranges are recorded there and
 in the four draft files (deleted after consolidation, their substance is §17).
+
+Row #44 (the pose/marker residuals): four read-only sweeps over the existing
+snapshot (S7 the pose convention, S8 the marker field names, S9 the borrow
+stability, S11 the marker-mesh signature) — no analyzer run. Targets/addresses as
+cited in §17.1/§17.3/§17.6 and the OQ list; the sweep drafts were folded and
+deleted.
+
+OQ-S10 (the camera intrinsics, the analyzer pass): the write chain was traced in
+the listing (save_camera_intrins -> SerializableDeviceParams::to_buffer ->
+ProjectFileCache::store_serializable) and the record verified in a real session
+cache (`<output_dir>/resources.obscan`, SQLite, `files.name = camera_intrin.bat`,
+210 B) — plus the packer format (0x1a03f4) and the 41-field order (0x6e3874). The
+backup/resume blob's producer is a libOrbbecSDK virtual (out of snapshot).
