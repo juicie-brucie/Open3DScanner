@@ -271,6 +271,105 @@ A/B. A same-build raw-before-color ordering experiment would only show the lag s
 already implied here; if anyone still wants it, it is a tool change (builder), not recon
 or hardware.
 
+<<<<<<< HEAD
+=======
+## 14. The realtime-mesh getter's lifetime rules (row #3)
+
+*Static half, plan3 pass. Native: `OrbbecScanLaser::get_model_mesh` @ `0xc5cc8`
+(wrapper `0xf304` → vtable `+0xf8`); release `OrbbecScanLaser::model_mesh_release`
+@ `0xc5fe8` (wrapper `0xf384` → vtable `+0x100`). Raw excerpts:
+`.recon-cache/listings/scan-live-data.mesh-lifetime.plan3.asm`.*
+
+**When it is valid.** The first instruction pair reads the scan step
+(`scan+0x4c8`, `ldar`) and requires **exactly 3 (paused)** — anything else logs
+"get model mesh must first pause scan !" (`0x42e722b`) and returns `0x32620110`
+(`OB_SCAN_ERROR_MULTI_CALLED`). So: not during scanning (2), not after stop (4),
+not after resume; the mesh must be read **while paused**. (The null-context path
+is also MULTI_CALLED; a NULL out struct is `0x32620100` "the mesh is nullptr !";
+mesh-conversion failures are `0x32620101` `OB_SCAN_ERROR_FATAL`.)
+
+**It is a build, not a copy.** Each call:
+
+1. allocates a **552-byte mesh kernel** (`operator new(0x228)`,
+   `bc102fae::AttribKernel<FinalMeshItems<DefaultTraitsDouble>, TriConnectivity>`),
+   stores it at **`scan+0x9a8`**, and destroys the previous kernel there;
+2. fills it from the laser scan context (`scan+0x7b0` →
+   `LaserScanningContextWrapper::get_cloud_scan_context` →
+   `LaserScanningContextInterface::get_model_mesh` @ `0x95b684`; a second variant
+   is appended when the extern-config word has bit `0x18` set);
+3. converts it into the **`OBScanMeshDatas` cache at `scan+0x9a0`**
+   (`libpp::convert_openmesh_to_obmesh` @ `0x76386c`; `_append` @ `0x763f14`) —
+   allocated once (120 bytes) and **re-filled/overwritten on every call**;
+4. writes the out struct from the cache: `num_vertices@0`, `vertices@8`,
+   `normals@0x10`, `num_triangles@0x18`, `triangles@0x20` — **borrowed pointers
+   into the cache**, no copy, no refcount.
+
+**Repeated calls / invalidation.** Because each call rebuilds the kernel and
+re-fills the datas, the pointers returned by a previous call are invalidated
+(and their memory may be reused). Consume or copy out before the next call.
+
+**Ownership and free points.**
+
+- `obscan_scan_realtime_model_mesh_release` → `model_mesh_release` @ `0xc5fe8`:
+  **frees the datas cache** (`OBScanMeshDatas` destructor + `operator delete`;
+  clears `scan+0x9a0`) and returns 0 — a real release, unlike the cloud
+  release's bare `ret`.
+- The kernel at `scan+0x9a8` is *not* freed by the release: it is freed by the
+  next getter call, by `clear_point_cloud_impl` / `clear_repreview`
+  (`0xcd17c` / `0xc5474` — free and clear `+0x9a8`), or by the scan destructor
+  (`0xc98bc`, which frees both).
+- The datas cache is additionally freed by the scan destructor; `+0x9a0` is
+  created lazily by the first getter call.
+
+**Dynamic trace: not needed** — all rules are instruction-level; the only
+runtime-dependent facts are the mesh contents/counts, which the acceptance run
+already sampled (6112 vertices / 4331 triangles after pause).
+
+## 15. The teardown path and the four RPC client ports (row #4)
+
+*Static half, plan4 pass + the archived runs. Raw excerpts:
+`.recon-cache/listings/scan-live-data.teardown-ports.plan4.asm`. The four ports are
+`libobsensor::pal::RPCClientPort` objects — they live in **libOrbbecSDK** (the scan dylib
+contains no `RPCClientPort` strings); the scan library drives the SDK device that owns
+them.*
+
+**The four ports** (per connected device; acceptance-run log): Depth `10010`, IMU
+`10011`, RGB `10012`, IR `10013` — the IR port serves IR left+right, IMU serves
+accel+gyro.
+
+**What each teardown call releases.**
+
+| call | releases | ports? |
+| --- | --- | --- |
+| `obscan_scan_pause` | scan state only (step → 3, pending-flag clear) | no |
+| `obscan_scan_stop` | the pipeline/streams (`Pipeline destroyed!` during the stop path) | no |
+| `obscan_session_destroy` (`0xc1d8`) | the session object only (`can_destroy_this` guard, `set_this_nullptr`, handle cleared) | no |
+| `obscan_context_destroy` (`0xb61c`) | the context **and the device**: its success path ends in `bl OBDeviceManagement::release()` (`0xb690`) — the **only caller** of `release()` | **yes — all four** |
+
+`OBDeviceManagement::release()` @ `0x5c14d8` clears the device pointer at manager
+`+0x158` and destroys+frees the device (`device::OrbbecDevice::~` @ `0x1b4bbc` →
+releases the internal-device shared_ptr), which tears down the SDK device: sensors and
+all four ports. `pause`/`stop`/`session_destroy` cannot release the ports — none of them
+calls `release()` or `~OrbbecDevice` (the destructor's only callers are `release`,
+`OBDeviceManagement::~`, and `init_device`, which destroys the *previous* device on a
+device re-init).
+
+**Runtime confirmation (no new run needed).** The acceptance run
+(`tests/results/2026-10-17-scan-server-live-acceptance.log`) logs all four
+`rpc client destroyed:` lines (RGB, IR, IMU, Depth) within 1.2 ms at teardown
+(23:35:37.965), then `Context.cpp:89 Context destroyed`, `obscan_context_destroy ->
+OB_SCAN_SUCCESS`, worker exit 0. The same four-line pattern is in the clean-exit
+`live_capture_test` run (`logs/branch_claude-clever-albattani-cebx0e-v2/
+live_capture_test_run2_CLEAN_EXIT_0.log`).
+
+**Does any path leave one open?** Any path that does not reach
+`obscan_context_destroy` — a crash, a bail-out before teardown, a killed process —
+leaves the device and all four ports open until process exit (the loader's threading
+model already relies on this: threads and device state outlive the destroy call in a
+bail-out). On the clean path the stop-path IMU error (`Stop imu stream error:
+std::bad_cast` at 23:35:37.584) did **not** prevent the release.
+
+>>>>>>> 4e6aadd (recon: row #4 — the teardown path releases the four RPC ports at context_destroy)
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
