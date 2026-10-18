@@ -102,6 +102,11 @@ ObscanLibrary::ObscanLibrary(const std::string& library_path) {
     obscan_scan_stop = reinterpret_cast<fn_obscan_scan_stop>(resolve("obscan_scan_stop"));
     obscan_scan_get_raw_cloud =
         reinterpret_cast<fn_obscan_scan_get_raw_cloud>(resolve("obscan_scan_get_raw_cloud"));
+    obscan_scan_get_model_point_color_clouds =
+        reinterpret_cast<fn_obscan_scan_get_model_point_color_clouds>(
+            resolve("obscan_scan_get_model_point_color_clouds"));
+    obscan_scan_model_clouds_release =
+        reinterpret_cast<fn_obscan_scan_model_clouds_release>(resolve("obscan_scan_model_clouds_release"));
     obscan_scan_get_realtime_model_mesh = reinterpret_cast<fn_obscan_scan_get_realtime_model_mesh>(
         resolve("obscan_scan_get_realtime_model_mesh"));
     obscan_scan_get_mode_config =

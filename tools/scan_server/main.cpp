@@ -602,7 +602,9 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             if (toggle_status == OB_SCAN_SUCCESS) hardware_paused = want_paused;
         }
 
-        ObScanPointClouds cloud = {};
+        ObScanPointColorClouds cloud = {};
+        ObScanCloudBbox bbox = {};
+        uint32_t published_count = 0;
         if (!hardware_paused) {
             // No dedicated auto/manual exposure toggle exists in the ABI; the
             // device's own auto-exposure decays a one-time value back toward
@@ -613,7 +615,13 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 lib.obscan_scan_config_combined_exposure_and_laser_current(scan, control.exposure_value.load());
             }
 
-            status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
+            // The color getter is the publish trigger for the model cloud
+            // (see docs/recon/findings/scan-live-data.md §3): calling it
+            // swaps the fusion temp cloud into the published show cloud, so
+            // get_raw_cloud / the UI finally see live points while scanning.
+            // out_count is not validated by the wrapper, so pass a valid
+            // pointer; out_bbox is required non-null.
+            status = lib.obscan_scan_get_model_point_color_clouds(scan, &cloud, &bbox, &published_count);
             if (status == OB_SCAN_SUCCESS) {
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
@@ -631,6 +639,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
                     server.BroadcastBinary(buf.data(), buf.size());
                 }
+                // Release is a no-op in the vendor (native `ret`); call it
+                // for API symmetry per the header. Buffers are borrowed, so
+                // copy out before the next publish.
+                lib.obscan_scan_model_clouds_release(scan);
             }
         }
 
