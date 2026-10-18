@@ -61,7 +61,7 @@ AGENT_PATTERNS = [
     r"^engine/", r"^tools/", r"^mesh/", r"^ui/", r"^scripts/",
     r"^tests/hardware/", r"CMakeLists\.txt$",
     r"^\.github/", r"^\.claude/",
-    r"^docs/recon/",
+    r"^docs/recon/", r"^docs/architecture/",
     r"^tests/results/.*(-correction|analysis)\.md$",
 ]
 
