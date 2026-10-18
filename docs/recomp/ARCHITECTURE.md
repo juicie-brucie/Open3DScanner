@@ -91,6 +91,7 @@ The repo holds only the work products:
 ```
 Open3DScanner/
   .claude/                                  # harness guardrails (dispatch writes)
+  .github/                                  # the CI gate + per-role PR templates
   CLAUDE.md
   engine/include/openscanner/obscan_api.h   # THE CONTRACT (recon writes)
   docs/recon/findings/*.md                  # narrative spec (recon writes)
@@ -154,8 +155,9 @@ Landing is gated mechanically, in two tiers:
   verdict line is ignored (no status, so no merge).
 
 `main`'s branch protection (enabled with this change) requires both statuses and blocks force-pushes. PRs are
-opened with `gh pr merge --auto --merge`, so a PR lands the moment its checks pass. A
-verdict is bound to a SHA: it goes stale automatically when the branch moves, and a
+opened with `gh pr merge --auto --merge`, so a PR lands the moment its checks pass. PR
+bodies follow `.github/PULL_REQUEST_TEMPLATE/<role>.md`; the checker reports changed
+files the body does not mention. A verdict is bound to a SHA: it goes stale automatically when the branch moves, and a
 `NEEDS CHANGE` blocks the merge. The verifier **reports, never acts** — it does not
 merge, push, or edit. The checker is deterministic and runs in CI, and the agent verdict
 comes from a session other than the dispatcher; the GitHub account is shared, so that
@@ -206,7 +208,10 @@ decides when they land.
   `main`, landing through a PR with a merge commit. The gate is mechanical: `verify-pr`
   always, plus a `verdict` status from the verifier's comment on the exact head for
   code. Two `git` clients in one checkout interleave the index, so sessions never share
-  one, and a room is only ever torn down by the user.
+  one, and a room is only ever torn down by the user. Secret scanning and push
+  protection are enabled: a push carrying a detected secret is blocked, and PR bodies
+  and comments are public — never put credentials, keys, tokens, or session exports in
+  the repo, a PR, or a comment.
 - **Hardware seam:** decide whether the Claude Code agent works in this checkout
   (writing only `tests/results/**`) or its own clone.
 - **Vendor binaries:** `.recon-cache/` must be populated before the first
