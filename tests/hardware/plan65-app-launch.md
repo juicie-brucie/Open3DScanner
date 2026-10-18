@@ -46,9 +46,11 @@ build/tools/macos_app/OpenScanner.app/Contents/MacOS/OpenScanner 2>&1 | tee /tmp
    string is in `main.mm`), and stays responsive — no hang, no spinning cursor. Record the
    exit status the alert names.
 3. **Clean exit** — relaunch and let the session end by itself (a clean status-0 exit; the
-   worker takes `--live-worker <port> <library> <seconds>`, so a short session length will do).
-   Expect: **no alert**, and the window title reads "OpenScanner — session ended". Record the
-   title.
+   worker takes `--live-worker <port> <library> <seconds>`, so a short session length will do;
+   Cmd-, sets it once A4 (#192) lands).
+   Expect: **no alert**, and the window title reads "OpenScanner — session ended" — with the
+   session length appended as " (N s)" once A4 (#192) is merged, e.g. "… ended (300 s)".
+   Record the title exactly.
 4. **Graceful quit** — relaunch, wait for the session to start (the page connected), then Quit
    (⌘Q). Expect: SIGTERM to the worker, then the full `pause`/`mesh`/`stop`/`session_destroy`/
    `context_destroy` chain — the tail is ≈ 11 s (≈ 19 s on the 15.6M case) and the app must
