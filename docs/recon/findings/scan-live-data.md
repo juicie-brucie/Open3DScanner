@@ -676,14 +676,25 @@ family of setters, including the full mode-config re-apply.*
 | `obscan_scan_config_light_type` (`0xf268`) | `(scan, ObScanLightType)` | vtable `+0x70` → `…config_light_type(int, bool=1)` `0x6f5c84` | the mode/device |
 | `obscan_scan_config_manaul_remove_plane` (`0xf8cc`) | `(scan, …)` — arg order not fully read | `…config_manaul_remove_plane(bool, OBScanPlane_&, int&)` `0x5c5c0`/`0xc3b18` | the plane-removal tool |
 
-**Gates and codes.** The exposure setters refuse with `0x32620110`
-(`OB_SCAN_ERROR_MULTI_CALLED`) when `[scan+0x3c] == 1` (`0x6f5a1c`; the flag's
-writer is unmapped `[inferred]`), else return the device call's status. The
-mode reconfig stops the device first (unless the mode's `+0x14 == 2`), gates on
-the `OrbbecScanStep` (`scan+0x4c8`, §5) and on the `+0xe1` latch
-(`0x32620105` `OB_SCAN_ERROR_UNSUPPORTED_CONFIGURATION` when unset — the latch
-is set once by the constructor path, §13), with a `0x32620101` default. Treat
-any non-zero as a refusal; the per-gate mapping is residual **OQ-S13**.
+**Gates and codes (row #58 — the map, verified site by site).**
+
+| setter (native) | gate | code |
+| --- | --- | --- |
+| `config_ir_exposure_time` `0x6f5a0c`, `config_color_exposure_time` `0x6f5a78`, `config_depth_range` `0x6f5b00`, `config_ir_gain` `0x6f5bb0` (not exported), `config_laser_current` `0x6f5c10`, `config_combined_*` `0x6f691c` | `[scan+0x3c] == 1` | **`0x32620110`** (`MULTI_CALLED`) — the same gate in all six |
+| `config_show_data_rotate` `0x6f7dc8` | `[scan+0x3c] == 1` | **`0x32620105`** (`UNSUPPORTED_CONFIGURATION`) — a *different* code for the same flag |
+| `config_light_type` — base `0x6f5c84` | (no override for the class) | **`0x32620105`** (a stub; the Laser override `0xc3fa4` does the work and returns `0x32620100` on its one error path) |
+| `config_rgb_fill_light` `0x6fa630` | — (no `+0x3c` gate) | the device call's status; on success also `update_realtime_is_open_rgb_fill_light` (`0x701680`) |
+| `reconfig_scan_mode_config` — Speckle `0x5cb00` | the `OrbbecScanStep` gates (`scan+0x4c8 == 3` + `+0x550 == 2`) | **`0x32620110`** — implemented as `w21 = 0x32620101; … add w21, w21, #0xf` (`0x5cb74`/`0x5cd84`); its other failure paths return **`0x32620101`** (`0x5d0b8`/`0x5d0e4`) |
+| `reconfig_scan_mode_config` — Laser `0xc41a4` | an early gate (`0xc4254`; the sweep attributed it to the `+0xe1` latch `[inferred]`) | **`0x32620105`**; its device-push failures return **`0x32620100`** (`0xc433c`/`0xc43b8`/`0xc43d4`) |
+| the device-manager callees (e.g. `set_ir_exposure_time` `0x5c6400`) | the device-present flag / callback checks | `0` or **`0x32620100`** |
+
+So: the `+0x3c` gate means `0x32620110` for the exposure/depth/laser/combined
+family and `0x32620105` for `show_data_rotate`; the mode reconfig's step gates
+surface as `0x32620110` (Speckle) or `0x32620105` (Laser, early); the
+"not supported by this class" stubs are `0x32620105`; and the device-level
+failures are `0x32620100`/`0x32620101`. The `+0x3c` flag itself stays
+unmapped (its writer is not in the setter paths) — **OQ-S13**. Treat any
+non-zero as a refusal.
 
 ### Creation vs post-creation
 
@@ -785,15 +796,28 @@ effect is reached by `reconfig_scan_mode_config`, which takes the bare
   depends on it (the global pose updates per confirm). Declare it in a
   registration-family row, or document the registration getter as the live
   channel.
-- **OQ-S13** — the config setters' per-gate status mapping (§18): the
-  exposure setters' `+0x3c` gate (who writes the flag, and what it means), and
-  the mode reconfig's full code map (step gate, `+0xe1`, the `0x32620101`
-  default). A hardware sweep (call each setter across the step map and log the
-  status) would settle it; the C-facing rule "non-zero = refusal" is safe
-  meanwhile.
-- **OQ-S14** — `obscan_scan_config_manaul_remove_plane`'s C argument order
-  (§18): the native takes `(bool, OBScanPlane_&, int&)`; the wrapper's arg
-  roles were not fully read.
+- **OQ-S13** — *Answered (row #58), two residues*: the gate→code map is in §18
+  (the `+0x3c` gate → `0x32620110` for the exposure/depth/laser/combined
+  family and `0x32620105` for `show_data_rotate`; the reconfig's step gates →
+  `0x32620110` (Speckle) / `0x32620105` (Laser, early); the base stubs →
+  `0x32620105`; the device failures → `0x32620100`/`0x32620101`). Residues:
+  (a) who writes the `+0x3c` flag and what it means (it is not written in any
+  setter path; a `[scan+0x3c] == 1` state that refuses all six setters —
+  likely "scanning/stopping", `[inferred]`); (b) the exact gate at the Laser
+  reconfig's `0xc4254` (`0x32620105`) — the `+0xe1` attribution is the sweep's
+  `[inferred]`. Both are listing-answerable with a focused pass; neither
+  blocks the C-facing rule (non-zero = refusal).
+- **OQ-S14** — *Answered (row #58)*: the C wrapper (`0xf8cc`) takes
+  `(scan, const ObScanManualRPConfig_*)` — one config pointer — and logs
+  `obscan_scan_config_manaul_remove_plane(%s)` from the config's `+0x4` byte;
+  NULL scan → `0x32620107`; else it tail-calls vtable `+0x58` with
+  `(scan, config->enabled@0x4, &config->plane@0x8, config)` — the native's
+  `(bool, OBScanPlane_&, int&)` (`0x5c5c0`/`0xc3b18`), whose third argument is
+  the config pointer itself (read as the int at `+0x00`, compared `== 2`).
+  So the config's verified prefix is
+  `{ int32_t @0x00; bool enabled @0x04; pad; OBScanPlane_ plane @0x08 }`.
+  Residual: `OBScanPlane_`'s own layout (not recovered here) — the header
+  declaration waits on it.
 
 ## Evidence
 
@@ -843,3 +867,7 @@ Row #55 (the config apply surface): the export table (the `_obscan_scan_config_*
 family), the wrapper region 0xedcc-0xf2f0, the implementation names for the
 value types, and the natives sweep (row55-a draft, folded); `ObScanConfig` vs
 `ObScanModeConfig` from the header + `set_scan_config` 0x6bfbc/0xc8e50.
+
+Row #58 (the config-setter residues): light reads only — the setter natives
+(0x6f5a0c-0x6f5d20), the reconfig pair (0x5cb00/0xc41a4), the device callee
+(0x5c6400), and the plane wrapper/native (0xf8cc/0x5c5c0). No analyzer.
