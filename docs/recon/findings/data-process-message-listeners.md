@@ -134,15 +134,14 @@ both are mandatory by construction.
 - **`send_process_msg(OBScanProcessMessage_)` @ `0x6aa1b8`** — 215-
   instruction body: resolves `OBScanProcessMessageID_name(msg_id)` and logs
   `send process msg id : %s` (label `0x42f7362`), then builds the
-  `{0x454dc60, this}` closure and submits it with
-  `rs_common::thread_pool_enqueue_task(function&, future&)` @ `0x16b2f4`,
-  pushing the closure into the vector at `this+0x90/0x98/0xa0`. Submit
-  failure logs `cannot enqueue task process msg process, perhaps thread pool
-  is down` (`0x42f7379`). **Asynchronous dispatch via the shared thread
-  pool.** Which thread drains it, and whether a drained task with an
-  emptied slot drops or throws like the device family
-  (`std::__1::__throw_bad_function_call`), is **not recovered** — the body
-  contains no direct function probe (`OQ-P1`).
+  the 40-byte closure `{vptr 0x454dc60, this, message}` and submits it with
+  `rs_common::thread_pool_enqueue_task(function&, future&)` @ `0x16b2f4`.
+  Submit failure (`w0` bit0 clear) logs `cannot enqueue task process msg
+  process, perhaps thread pool is down` (`0x42f7379`); the returned
+  `future` is pushed into the vector at `this+0x90/0x98/0xa0` — a
+  **futures registry**, not a task queue (nothing drains it; it is destroyed
+  with the paras). **Asynchronous dispatch via the shared thread pool**; the
+  drain thread and the emptied-slot behavior are answered in §10 (OQ-P1).
 
 `OBScanProcessMessageID_name` is *always* evaluated inside the emitter — so at
 emit time the id passes through the same jump table decoded in §5 below.
@@ -227,10 +226,10 @@ were ranged in the follow-up pass and are byte-identical too — see §6.1 there
   [`device-message-listener.md`](device-message-listener.md) §8.
 - `remove_*` clears the probe word and destroys the function (§2.5) — after
   which a fresh add succeeds. There is no queue, so nothing booked-but-undelivered
-  survives a remove (data path); the process path's queued closures may still
-  be drained after a remove (**OQ-P1**).
+  survives a remove (data path); the process path's queued closures that drain
+  after a remove are dropped by the closure's own probe (§10).
 - Messages emitted with no listener installed are dropped by the emitter
-  itself (data: at emit; process: at drain — `OQ-P1`).
+  itself (data: at emit; process: at drain — §10).
 - Same single-slot, single-registered-listener discipline as the device family.
 
 ## 8. Error codes (these families)
@@ -252,11 +251,67 @@ were ranged in the follow-up pass and are byte-identical too — see §6.1 there
 As in PLAN #1 §9, detection covered `BL`/`B` and `ADRP`+`ADD` forms; nothing
 in this pass relied on an unreferenced symbol.
 
+## 10. Process-family drain: the pool worker, and drop on an emptied slot (OQ-P1, answered)
+
+*Static half, plan26 pass; raw excerpts appended to the plan2 dossier. Addresses from
+the pinned slice.*
+
+**Which thread drains the closure.** `send_process_msg` submits the 40-byte
+`__func<__bind<send_process_msg::$_0>>` closure (`{vptr 0x454dc60, paras, message}`)
+via `rs_common::thread_pool_enqueue_task` @ `0x16b2f4`, which enqueues into the
+**global `rs_common` thread pool** — a `BS::thread_pool<tp::0>` singleton at
+`0x492ac28` (initialized flag `0x492ac30`). The singleton is created by
+`rs_common::thread_pool_create_instance` @ `0x16a5f8` from `ObscanContextBase::C2`
+(`0x6f3f48`) — i.e. **at `obscan_context_create`**, with a thread count computed there
+(16-bit value; derivation not traced) — and destroyed by `OrbbecScanContext::~`
+(`thread_pool_destroy_instance` @ `0x16dfa0`). `create_instance` also makes four
+*named* pools — "default" ×2, "laser" ×1, "blae" ×1, "db_write" ×1 — **not** used by
+this path. The closure's `operator()` therefore runs on **a worker thread of the
+global pool**, asynchronously to the emitter. If the pool is down (before context
+create / after destroy), the submit returns 0 and the message is dropped with the
+warning log. The workers are BS::thread_pool's internal threads; their concrete OS
+identity is a runtime property (below).
+
+**A drained task whose slot was emptied: DROP.** The closure body
+(`__func<…send_process_msg…>::operator()` @ `0x6aa608`, complete):
+
+```
+mov x8, x0                 ; the closure
+ldr x9, [x0, #0x8]         ; capture0 = the paras context
+ldr x0, [x9, #0x88]        ; the process slot's __f_ probe word
+cbz x0, 0x6aa644           ; EMPTY -> skip: silent drop, no call, no throw
+ldr q0, [x8, #0x10] / str q0, [sp]      ; the captured 16-byte message
+ldr x8, [x0] / ldr x8, [x8, #0x30] / blr x8   ; listener(message)
+```
+
+At drain time the closure re-checks the **same probe word
+`remove_process_msg_listener` clears** (`paras+0x88`, `STR XZR`): a task that drains
+after a remove is **silently dropped** — it never reaches
+`std::__1::__throw_bad_function_call`. (Data family: drop-at-emit. Process family:
+drop-at-drain.) The racy window — probe read non-null, then the function destroyed by
+a concurrent remove before the call — is **OQ-P2**, not this question.
+
+**Dynamic trace: not needed to close OQ-P1.** Both halves are settled statically
+(which thread *class* runs the closure; the drop). What static analysis cannot give is
+the concrete OS thread identity of the pool workers — an observation, not a gate; it
+can ride along with row **#31**'s listener instrumentation (log the thread id per
+delivery there). If a dedicated run is still wanted, the precise spec: (a) instrument
+the process-message listener callback to log `pthread_threadid_np` (or the tool's
+thread-hash) per delivery; (b) trigger deliveries — the queue-full condition emits
+`FRAME_BUFFER_FULL` process messages during scanning; (c) observe that the callback
+thread differs from the tool's main thread and from the vendor watcher threads
+(`14660842` / `14660873` in the plan8 run) — i.e., a pool worker. The drop path is not
+externally triggerable in a controlled way (it is an enqueue→remove→drain race); the
+static evidence suffices — do not spend the serialized hardware room on it.
+
 ## Evidence
 
 Raw evidence: `.recon-cache/listings/data-process-listeners.plan2.asm` (wrapper
 bodies, native registration bodies, both name tables, crossing emitters, the
-preview-guard chain, and the address-map bias test), plus
+preview-guard chain, the address-map bias test, and — plan26 pass — the
+process-family drain: closure body @ `0x6aa608`, `thread_pool_enqueue_task` @
+`0x16b2f4`, `thread_pool_create_instance` @ `0x16a5f8` and its caller @ `0x6f3f48`),
+plus
 `.recon-cache/listings/device-msg-listener.monostub-vtable.plan9.asm` for the
 plan9 shard covering this file's data/process `operator()` windows. Export
 cross-checks:
@@ -267,11 +322,11 @@ raw listings are reproduced here.
 
 ## OPEN QUESTIONS
 
-- **OQ-P1** — process-family delivery plumbing: which thread drains the
-  `+0x90/0x98/0xa0` queue, and does a drained task with an empty slot drop the
-  message or throw `bad_function_call` (the body contains no explicit
-  function-validity probe)? Needs the `{0x454dc60, this}` closure decode and
-  thread-pool drain tracing.
+- **OQ-P1** — *Answered* (plan26 pass) → §10. The closures run on a worker of the
+  global `rs_common` thread pool (created at `obscan_context_create`, destroyed with
+  the context); a drained task whose slot was emptied **drops silently** — the
+  closure probes `paras+0x88` itself before calling. No dynamic trace needed; the
+  optional thread-id observation folds into row #31.
 - **OQ-P2** — add/remove/deliver race: no lock evidence anywhere on the
   slot homes or the queue vector; is the pair of probe-clear + function
   destroy atomic as seen by the emitters? Needs a dynamic trace
