@@ -1,0 +1,265 @@
+{"app_name":"device_message_listener_test","timestamp":"2026-10-17 20:01:48.00 -0400","app_version":"","slice_uuid":"403c7b84-faf2-39ac-b858-d6e349ac6bf1","build_version":"","platform":1,"share_with_app_devs":0,"is_first_party":1,"bug_type":"309","os_version":"macOS 27.0.1 (26A434)","roots_installed":0,"incident_id":"7CF152FE-333E-49D8-BBDD-2CD7D2577702","name":"device_message_listener_test"}
+{
+  "uptime" : 1400000,
+  "procRole" : "Unspecified",
+  "version" : 2,
+  "userID" : 501,
+  "deployVersion" : 210,
+  "modelCode" : "iMac21,1",
+  "coalitionID" : 61184,
+  "osVersion" : {
+    "train" : "macOS 27.0.1",
+    "build" : "26A434",
+    "releaseType" : "User"
+  },
+  "captureTime" : "2026-10-17 20:01:47.1653 -0400",
+  "codeSigningMonitor" : 2,
+  "incident" : "7CF152FE-333E-49D8-BBDD-2CD7D2577702",
+  "pid" : 54224,
+  "translated" : false,
+  "cpuType" : "ARM-64",
+  "procLaunch" : "2026-10-17 20:01:43.8169 -0400",
+  "procStartAbsTime" : 34658844072416,
+  "procExitAbsTime" : 34658922397283,
+  "procName" : "device_message_listener_test",
+  "procPath" : "\/Users\/USER\/*\/device_message_listener_test",
+  "parentProc" : "Exited process",
+  "parentPid" : 54223,
+  "coalitionName" : "com.anthropic.claudefordesktop",
+  "crashReporterKey" : "6FF03550-85D0-171B-4492-89F86B95E436",
+  "chargingStatus" : {"externalSourceConnected":true},
+  "developerMode" : 1,
+  "bootProgressRegister" : "0x2f000000",
+  "responsiblePid" : 53783,
+  "responsibleProc" : "claude",
+  "codeSigningID" : "device_message_listener_test",
+  "codeSigningTeamID" : "",
+  "codeSigningFlags" : 570556929,
+  "codeSigningValidationCategory" : 10,
+  "codeSigningTrustLevel" : 4294967295,
+  "codeSigningAuxiliaryInfo" : 0,
+  "instructionByteStream" : {"beforePC":"9E9Cqf8DAZHAA1\/W8wMAquhfwDloAPg24ANA+auKpJTgAxOqLYKklA==","atPC":"CQBA+SABQPknsQAUCABA+QABQPncsAAUAACAUsADX9b\/wwDR9E8BqQ=="},
+  "bootSessionUUID" : "63D0CF1D-B280-474D-BD81-678BCF3DE800",
+  "wakeTime" : 144802,
+  "sleepWakeUUID" : "C564354A-2F22-4233-9B8B-60085C7E7C71",
+  "sip" : "enabled",
+  "vmRegionInfo" : "0 is not in any region.  Bytes before following region: 4295639040\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      UNUSED SPACE AT START\n--->  \n      __TEXT                      1000a4000-1000ac000    [   32K] r-x\/r-x SM=COW  \/Users\/USER\/*\/device_message_listener_test",
+  "exception" : {"codes":"0x0000000000000001, 0x0000000000000000","rawCodes":[1,0],"type":"EXC_BAD_ACCESS","signal":"SIGSEGV","subtype":"KERN_INVALID_ADDRESS at 0x0000000000000000"},
+  "termination" : {"flags":0,"code":11,"namespace":"SIGNAL","indicator":"Segmentation fault: 11","byProc":"exc handler","byPid":54224},
+  "vmregioninfo" : "0 is not in any region.  Bytes before following region: 4295639040\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      UNUSED SPACE AT START\n--->  \n      __TEXT                      1000a4000-1000ac000    [   32K] r-x\/r-x SM=COW  \/Users\/USER\/*\/device_message_listener_test",
+  "extMods" : {"caller":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"system":{"thread_create":16,"thread_set_state":354,"task_for_pid":72},"targeted":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"warnings":0},
+  "faultingThread" : 5,
+  "threads" : [{"id":14882519,"threadState":{"x":[{"value":4},{"value":0},{"value":256},{"value":14882533},{"value":73896},{"value":6171239472},{"value":0},{"value":18446744072367376383},{"value":4302233959},{"value":4302233952},{"value":4302233944},{"value":14882519},{"value":1099511628034},{"value":1099511628290},{"value":14882533},{"value":17592186044416},{"value":301},{"value":8576070880},{"value":0},{"value":4302233920},{"value":1099511628290},{"value":256},{"value":4302233944},{"value":14882519},{"value":4302233952},{"value":6171239760},{"value":4295658612},{"value":521722348128},{"value":4295658409}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6840250236},"cpsr":{"value":1610616832},"fp":{"value":6171239408},"sp":{"value":6171239360},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6839990748},"far":{"value":0}},"queue":"com.apple.main-thread","frames":[{"imageOffset":14812,"symbol":"__psynch_mutexwait","symbolLocation":8,"imageIndex":12},{"imageOffset":16252,"symbol":"_pthread_mutex_firstfit_lock_wait","symbolLocation":84,"imageIndex":13},{"imageOffset":6584,"symbol":"_pthread_mutex_firstfit_lock_slow","symbolLocation":216,"imageIndex":13},{"imageOffset":29400,"symbol":"std::__1::recursive_mutex::lock()","symbolLocation":16,"imageIndex":14},{"imageOffset":1943572,"symbol":"device::OrbbecInternalDevice::stop()","symbolLocation":60,"imageIndex":3},{"imageOffset":1942784,"symbol":"device::OrbbecInternalDevice::~OrbbecInternalDevice()","symbolLocation":40,"imageIndex":3},{"imageOffset":1788688,"symbol":"device::OrbbecDevice::~OrbbecDevice()","symbolLocation":68,"imageIndex":3},{"imageOffset":6034676,"symbol":"OBDeviceManagement::release()","symbolLocation":28,"imageIndex":3},{"imageOffset":46740,"symbol":"obscan_context_destroy","symbolLocation":120,"imageIndex":3},{"symbol":"(anonymous namespace)::RunTests(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&)","inline":true,"imageIndex":2,"imageOffset":9276,"symbolLocation":1936,"sourceLine":224,"sourceFile":"main.cpp"},{"imageOffset":9276,"sourceLine":242,"sourceFile":"main.cpp","symbol":"main","imageIndex":2,"symbolLocation":4344},{"imageOffset":204416,"symbol":"start","symbolLocation":6688,"imageIndex":15}]},{"id":14882520,"frames":[{"imageOffset":17160,"symbol":"__semwait_signal","symbolLocation":8,"imageIndex":12},{"imageOffset":57428,"symbol":"nanosleep","symbolLocation":220,"imageIndex":17},{"imageOffset":36484,"symbol":"std::__1::this_thread::sleep_for(std::__1::chrono::duration<long long, std::__1::ratio<1l, 1000000000l>> const&)","symbolLocation":84,"imageIndex":14},{"imageOffset":1453428,"symbol":"nanolog::NanoLogger::pop()","symbolLocation":128,"imageIndex":3},{"imageOffset":1456804,"symbol":"void* std::__1::__thread_proxy[abi:nqe210106]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, void (nanolog::NanoLogger::*)(), nanolog::NanoLogger*>>(void*)","symbolLocation":72,"imageIndex":3},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":60},{"value":0},{"value":1},{"value":1},{"value":0},{"value":50000},{"value":52},{"value":0},{"value":8546509768,"symbolLocation":0,"symbol":"clock_sem"},{"value":16387},{"value":17},{"value":4294967293},{"value":0},{"value":0},{"value":0},{"value":0},{"value":334},{"value":8576070984},{"value":0},{"value":6171799104},{"value":6171799104},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6838775892},"cpsr":{"value":1610616832},"fp":{"value":6171799088},"sp":{"value":6171799040},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6839993096},"far":{"value":0}}},{"id":14882530,"name":"org.libusb.device-hotplug","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592,"symbolLocation":160,"symbol":"_OBJC_$_INSTANCE_VARIABLES_CITextFeature"},{"value":45092861640704},{"value":0},{"value":45092861640704},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":10499},{"value":0},{"value":18446744073709551569},{"value":12},{"value":0},{"value":4294967295},{"value":2},{"value":45092861640704},{"value":0},{"value":45092861640704},{"value":21592279046},{"value":6177529800},{"value":8589934592,"symbolLocation":160,"symbol":"_OBJC_$_INSTANCE_VARIABLES_CITextFeature"},{"value":18446744073709550527},{"value":4412409862,"symbolLocation":949950,"symbol":"libobsensor::clipNv21Buffer"}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6840056032},"cpsr":{"value":4096},"fp":{"value":6177529648},"sp":{"value":6177529568},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6839979040},"far":{"value":0}},"frames":[{"imageOffset":3104,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":12},{"imageOffset":80096,"symbol":"mach_msg2_internal","symbolLocation":76,"imageIndex":12},{"imageOffset":39464,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":12},{"imageOffset":4012,"symbol":"mach_msg","symbolLocation":24,"imageIndex":12},{"imageOffset":531180,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":160,"imageIndex":18},{"imageOffset":525108,"symbol":"__CFRunLoopRun","symbolLocation":1172,"imageIndex":18},{"imageOffset":1419308,"symbol":"_CFRunLoopRunSpecificWithOptions","symbolLocation":536,"imageIndex":18},{"imageOffset":1017028,"symbol":"CFRunLoopRun","symbolLocation":64,"imageIndex":18},{"imageOffset":5631768,"symbol":"darwin_event_thread_main","symbolLocation":400,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}]},{"id":14882531,"frames":[{"imageOffset":38752,"symbol":"poll","symbolLocation":8,"imageIndex":12},{"imageOffset":5646756,"symbol":"usbi_wait_for_events","symbolLocation":100,"imageIndex":4},{"imageOffset":5614988,"symbol":"handle_events","symbolLocation":168,"imageIndex":4},{"imageOffset":5614008,"symbol":"libusb_handle_events_timeout_completed","symbolLocation":700,"imageIndex":4},{"imageOffset":5616060,"symbol":"libusb_handle_events_completed","symbolLocation":36,"imageIndex":4},{"imageOffset":451848,"symbol":"void* std::__1::__thread_proxy[abi:v15006]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, libobsensor::pal::UsbContext::startEventHandler()::$_0>>(void*)","symbolLocation":76,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":4},{"value":0},{"value":60000},{"value":4411051285},{"value":521722373568},{"value":1},{"value":2},{"value":18446744072367376383},{"value":3652610775787176128},{"value":3652610775787176128},{"value":18446744073709551615},{"value":6178109776},{"value":0},{"value":605},{"value":6718601640607539766},{"value":6718601640607539766},{"value":230},{"value":4306277248},{"value":0},{"value":6178106984},{"value":4302243440},{"value":521722373568},{"value":60000},{"value":1},{"value":4411051264},{"value":0},{"value":0},{"value":4428052216,"symbolLocation":0,"symbol":"usbi_default_context"},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4409272740},"cpsr":{"value":1610616832},"fp":{"value":6178106960},"sp":{"value":6178106864},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840014688},"far":{"value":0}}},{"id":14882532,"frames":[{"imageOffset":17676,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":12},{"imageOffset":29136,"symbol":"_pthread_cond_wait","symbolLocation":980,"imageIndex":13},{"imageOffset":26556,"symbol":"std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&)","symbolLocation":32,"imageIndex":14},{"imageOffset":4261060,"symbol":"libobsensor::UsbDeviceEnumerator::deviceArrivalHandleThreadFunc()","symbolLocation":260,"imageIndex":4},{"imageOffset":4286584,"symbol":"void* std::__1::__thread_proxy[abi:v15006]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, void (libobsensor::UsbDeviceEnumerator::*)(), libobsensor::UsbDeviceEnumerator*>>(void*)","symbolLocation":72,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":260},{"value":0},{"value":0},{"value":0},{"value":0},{"value":160},{"value":0},{"value":0},{"value":6178680152},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":8576070864},{"value":0},{"value":6178680560},{"value":4302254121},{"value":6178681056},{"value":0},{"value":0},{"value":0},{"value":256},{"value":1},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6840263120},"cpsr":{"value":1610616832},"fp":{"value":6178680272},"sp":{"value":6178680128},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6839993612},"far":{"value":0}}},{"triggered":true,"id":14882533,"threadState":{"x":[{"value":0},{"value":521723183632},{"value":1},{"value":2147746483},{"value":0},{"value":0},{"value":0},{"value":18446744072367376383},{"value":6179251576},{"value":1792014971},{"value":255},{"value":0},{"value":2128654520308003},{"value":2111062334261536},{"value":544768},{"value":17592186044416},{"value":6839272660,"symbolLocation":0,"symbol":"std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>::operator=(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&)"},{"value":18446744072367374336},{"value":0},{"value":6179251576},{"value":160},{"value":1},{"value":521720234624},{"value":521723183576},{"value":521723183600},{"value":521720234624},{"value":6179251816},{"value":4302233200},{"value":521723183528}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4605080964},"cpsr":{"value":1610616832},"fp":{"value":6179251680},"sp":{"value":6179251520},"esr":{"value":2449473542,"description":"(Data Abort) byte read Translation fault"},"pc":{"value":4600829532,"matchesCrashFrame":1},"far":{"value":0}},"frames":[{"imageOffset":1791580,"symbol":"device::OrbbecDevice::get_active_device()","symbolLocation":0,"imageIndex":3},{"imageOffset":6043012,"symbol":"OBDeviceManagement::update_device_info(std::__1::list<device::DeviceInfo, std::__1::allocator<device::DeviceInfo>> const&)","symbolLocation":624,"imageIndex":3},{"imageOffset":6041688,"symbol":"OBDeviceManagement::update_camera_status(bool, device::DeviceConnectStatus, std::__1::list<device::DeviceInfo, std::__1::allocator<device::DeviceInfo>>)","symbolLocation":220,"imageIndex":3},{"imageOffset":6053684,"symbol":"std::__1::__function::__func<OBDeviceManagement::bind_device_connect_callback()::$_0, void (bool, device::DeviceConnectStatus, std::__1::list<device::DeviceInfo, std::__1::allocator<device::DeviceInfo>>)>::operator()(bool&&, device::DeviceConnectStatus&&, std::__1::list<device::DeviceInfo, std::__1::allocator<device::DeviceInfo>>&&)","symbolLocation":316,"imageIndex":3},{"imageOffset":1962524,"symbol":"device::OrbbecInternalDevice::deviceConnectedCall(std::__1::shared_ptr<ob::DeviceList>)","symbolLocation":1464,"imageIndex":3},{"imageOffset":1942072,"symbol":"device::OrbbecInternalDevice::deviceChangedCallback(std::__1::shared_ptr<ob::DeviceList>, std::__1::shared_ptr<ob::DeviceList>)","symbolLocation":224,"imageIndex":3},{"imageOffset":1941464,"symbol":"std::__1::__function::__func<device::OrbbecInternalDevice::OrbbecInternalDevice()::$_0, void (std::__1::shared_ptr<ob::DeviceList>, std::__1::shared_ptr<ob::DeviceList>)>::operator()(std::__1::shared_ptr<ob::DeviceList>&&, std::__1::shared_ptr<ob::DeviceList>&&)","symbolLocation":96,"imageIndex":3},{"imageOffset":4624228,"symbol":"std::__1::__function::__func<ob::Context::setDeviceChangedCallback(std::__1::function<void (std::__1::shared_ptr<ob::DeviceList>, std::__1::shared_ptr<ob::DeviceList>)>)::$_0, std::__1::allocator<ob::Context::setDeviceChangedCallback(std::__1::function<void (std::__1::shared_ptr<ob::DeviceList>, std::__1::shared_ptr<ob::DeviceList>)>)::$_0>, void (std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>, std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>)>::operator()(std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>&&, std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>&&)","symbolLocation":416,"imageIndex":4},{"imageOffset":1176236,"symbol":"libobsensor::DeviceManager::onDeviceChanged(std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>, std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>)","symbolLocation":1780,"imageIndex":4},{"imageOffset":1188212,"symbol":"std::__1::__function::__func<libobsensor::DeviceManager::DeviceManager(bool)::$_1, std::__1::allocator<libobsensor::DeviceManager::DeviceManager(bool)::$_1>, void (std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>, std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>)>::operator()(std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>&&, std::__1::vector<std::__1::shared_ptr<libobsensor::DeviceInfo>, std::__1::allocator<std::__1::shared_ptr<libobsensor::DeviceInfo>>>&&)","symbolLocation":336,"imageIndex":4},{"imageOffset":4312332,"symbol":"libobsensor::NetDeviceEnumerator::onPalDeviceChanged(libobsensor::pal::OBDeviceChangedType, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>)","symbolLocation":3832,"imageIndex":4},{"imageOffset":4322908,"symbol":"std::__1::__function::__func<libobsensor::NetDeviceEnumerator::NetDeviceEnumerator(std::__1::shared_ptr<libobsensor::pal::ObPal>)::$_0, std::__1::allocator<libobsensor::NetDeviceEnumerator::NetDeviceEnumerator(std::__1::shared_ptr<libobsensor::pal::ObPal>)::$_0>, bool (libobsensor::pal::OBDeviceChangedType, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>)>::operator()(libobsensor::pal::OBDeviceChangedType&&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&&)","symbolLocation":76,"imageIndex":4},{"imageOffset":641884,"symbol":"void* std::__1::__thread_proxy[abi:v15006]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, libobsensor::pal::NetDeviceWatcher::start(std::__1::function<bool (libobsensor::pal::OBDeviceChangedType, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>)>)::$_1>>(void*)","symbolLocation":1240,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}]},{"id":14882590,"frames":[{"imageOffset":17676,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":12},{"imageOffset":29136,"symbol":"_pthread_cond_wait","symbolLocation":980,"imageIndex":13},{"imageOffset":26708,"symbol":"std::__1::condition_variable::__do_timed_wait(std::__1::unique_lock<std::__1::mutex>&, std::__1::chrono::time_point<std::__1::chrono::system_clock, std::__1::chrono::duration<long long, std::__1::ratio<1l, 1000000000l>>>)","symbolLocation":104,"imageIndex":14},{"imageOffset":838112,"symbol":"void log_intvl_invoke<int&>(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, int&)","symbolLocation":276,"imageIndex":4},{"imageOffset":840688,"symbol":"decltype(std::declval<void (*&)(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, int&)>()(std::declval<std::__1::shared_ptr<ObLogIntvlRecord>&>(), std::declval<unsigned long long&>(), std::declval<spdlog::source_loc&>(), std::declval<spdlog::level::level_enum&>(), std::declval<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&>(), std::declval<int&>())) std::__1::__invoke[abi:v15006]<void (*&)(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, int&), std::__1::shared_ptr<ObLogIntvlRecord>&, unsigned long long&, spdlog::source_loc&, spdlog::level::level_enum&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, int&>(void (*&)(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, int&), std::__1::shared_ptr<ObLogIntvlRecord>&, unsigned long long&, spdlog::source_loc&, spdlog::level::level_enum&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, int&)","symbolLocation":116,"imageIndex":4},{"imageOffset":840276,"symbol":"void* std::__1::__thread_proxy[abi:v15006]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, std::__1::__bind<void (&)(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, int&), std::__1::shared_ptr<ObLogIntvlRecord>&, unsigned long long&, spdlog::source_loc&, spdlog::level::level_enum&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, int&>>>(void*)","symbolLocation":80,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":260},{"value":0},{"value":0},{"value":0},{"value":0},{"value":160},{"value":2},{"value":999999000},{"value":6183267352},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":8576070864},{"value":0},{"value":4302259984},{"value":4302260048},{"value":6183268576},{"value":999999000},{"value":2},{"value":0},{"value":256},{"value":1},{"value":4302260656},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6840263120},"cpsr":{"value":1610616832},"fp":{"value":6183267472},"sp":{"value":6183267328},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6839993612},"far":{"value":0}}},{"id":14882604,"frames":[{"imageOffset":17676,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":12},{"imageOffset":29136,"symbol":"_pthread_cond_wait","symbolLocation":980,"imageIndex":13},{"imageOffset":26708,"symbol":"std::__1::condition_variable::__do_timed_wait(std::__1::unique_lock<std::__1::mutex>&, std::__1::chrono::time_point<std::__1::chrono::system_clock, std::__1::chrono::duration<long long, std::__1::ratio<1l, 1000000000l>>>)","symbolLocation":104,"imageIndex":14},{"imageOffset":828764,"symbol":"void log_intvl_invoke<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&>(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&)","symbolLocation":284,"imageIndex":4},{"imageOffset":833068,"symbol":"decltype(std::declval<void (*&)(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&)>()(std::declval<std::__1::shared_ptr<ObLogIntvlRecord>&>(), std::declval<unsigned long long&>(), std::declval<spdlog::source_loc&>(), std::declval<spdlog::level::level_enum&>(), std::declval<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&>(), std::declval<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&>(), std::declval<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&>(), std::declval<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&>(), std::declval<unsigned int&>())) std::__1::__invoke[abi:v15006]<void (*&)(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&), std::__1::shared_ptr<ObLogIntvlRecord>&, unsigned long long&, spdlog::source_loc&, spdlog::level::level_enum&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&>(void (*&)(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&), std::__1::shared_ptr<ObLogIntvlRecord>&, unsigned long long&, spdlog::source_loc&, spdlog::level::level_enum&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&)","symbolLocation":136,"imageIndex":4},{"imageOffset":832500,"symbol":"void* std::__1::__thread_proxy[abi:v15006]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, std::__1::__bind<void (&)(std::__1::shared_ptr<ObLogIntvlRecord>, unsigned long long, spdlog::source_loc, spdlog::level::level_enum, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&), std::__1::shared_ptr<ObLogIntvlRecord>&, unsigned long long&, spdlog::source_loc&, spdlog::level::level_enum&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>>&, unsigned int&>>>(void*)","symbolLocation":92,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":260},{"value":0},{"value":0},{"value":0},{"value":0},{"value":160},{"value":2},{"value":999999000},{"value":6180400088},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":8576070864},{"value":0},{"value":521719621632},{"value":521719621696},{"value":6180401376},{"value":999999000},{"value":2},{"value":0},{"value":256},{"value":1},{"value":521720218296},{"value":2}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6840263120},"cpsr":{"value":1610616832},"fp":{"value":6180400208},"sp":{"value":6180400064},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6839993612},"far":{"value":0}}},{"id":14882612,"frames":[{"imageOffset":28620,"symbol":"kevent","symbolLocation":8,"imageIndex":12},{"imageOffset":6274148,"symbol":"clmdep_asio::detail::kqueue_reactor::run(bool, clmdep_asio::detail::op_queue<clmdep_asio::detail::task_io_service_operation>&)","symbolLocation":248,"imageIndex":4},{"imageOffset":6273080,"symbol":"clmdep_asio::detail::task_io_service::do_run_one(clmdep_asio::detail::scoped_lock<clmdep_asio::detail::posix_mutex>&, clmdep_asio::detail::task_io_service_thread_info&, std::__1::error_code const&)","symbolLocation":236,"imageIndex":4},{"imageOffset":6272472,"symbol":"clmdep_asio::detail::task_io_service::run(std::__1::error_code&)","symbolLocation":148,"imageIndex":4},{"imageOffset":6286352,"symbol":"void* std::__1::__thread_proxy[abi:v15006]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, rpc::client::client(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, unsigned short)::$_0>>(void*)","symbolLocation":76,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":4},{"value":0},{"value":0},{"value":6180968944},{"value":128},{"value":6180968912},{"value":521721108200},{"value":18446744072367376383},{"value":521719775056},{"value":2},{"value":0},{"value":2},{"value":0},{"value":0},{"value":483328},{"value":17592186044416},{"value":363},{"value":18446744072367374336},{"value":0},{"value":6180974360},{"value":521719774976},{"value":521719775024},{"value":0},{"value":521719792752},{"value":6180974360},{"value":521719792816},{"value":521719792816},{"value":1},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4409900132},"cpsr":{"value":1610616832},"fp":{"value":6180974160},"sp":{"value":6180968864},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840004556},"far":{"value":0}}},{"id":14882614,"frames":[{"imageOffset":17676,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":12},{"imageOffset":29136,"symbol":"_pthread_cond_wait","symbolLocation":980,"imageIndex":13},{"imageOffset":26556,"symbol":"std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&)","symbolLocation":32,"imageIndex":14},{"imageOffset":1331920,"symbol":"void* std::__1::__thread_proxy[abi:v15006]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, libobsensor::HostProtocol::initTranDataFutureThread()::$_0>>(void*)","symbolLocation":168,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":260},{"value":0},{"value":0},{"value":0},{"value":0},{"value":160},{"value":0},{"value":0},{"value":6181547528},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":8576070864},{"value":0},{"value":521720283304},{"value":521720283256},{"value":6181548256},{"value":0},{"value":0},{"value":0},{"value":256},{"value":1},{"value":1},{"value":521720283160}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6840263120},"cpsr":{"value":1610616832},"fp":{"value":6181547648},"sp":{"value":6181547504},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6839993612},"far":{"value":0}}},{"id":14882615,"frames":[{"imageOffset":28620,"symbol":"kevent","symbolLocation":8,"imageIndex":12},{"imageOffset":6274148,"symbol":"clmdep_asio::detail::kqueue_reactor::run(bool, clmdep_asio::detail::op_queue<clmdep_asio::detail::task_io_service_operation>&)","symbolLocation":248,"imageIndex":4},{"imageOffset":6273080,"symbol":"clmdep_asio::detail::task_io_service::do_run_one(clmdep_asio::detail::scoped_lock<clmdep_asio::detail::posix_mutex>&, clmdep_asio::detail::task_io_service_thread_info&, std::__1::error_code const&)","symbolLocation":236,"imageIndex":4},{"imageOffset":6272472,"symbol":"clmdep_asio::detail::task_io_service::run(std::__1::error_code&)","symbolLocation":148,"imageIndex":4},{"imageOffset":6286352,"symbol":"void* std::__1::__thread_proxy[abi:v15006]<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct>>, rpc::client::client(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, unsigned short)::$_0>>(void*)","symbolLocation":76,"imageIndex":4},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":4},{"value":0},{"value":0},{"value":6183836144},{"value":128},{"value":6183836112},{"value":521722573032},{"value":0},{"value":521720545360},{"value":2},{"value":0},{"value":2},{"value":0},{"value":0},{"value":876544},{"value":17592186044416},{"value":363},{"value":18446744072367374336},{"value":0},{"value":6183841560},{"value":521720545280},{"value":521720545328},{"value":0},{"value":521719793264},{"value":6183841560},{"value":521719793328},{"value":521719793328},{"value":1},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4409900132},"cpsr":{"value":1610616832},"fp":{"value":6183841360},"sp":{"value":6183836064},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840004556},"far":{"value":0}}}],
+  "usedImages" : [
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4307959808,
+    "size" : 3473408,
+    "uuid" : "77e6157c-15c6-3652-b604-576bbc47b346",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libMoltenVK.dylib",
+    "name" : "libMoltenVK.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4295786496,
+    "size" : 16384,
+    "uuid" : "d46eed15-7a4b-3b6d-89f2-66f416635201",
+    "path" : "\/Users\/USER\/*\/libvulkan_disable_interpose.dylib",
+    "name" : "libvulkan_disable_interpose.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4295639040,
+    "size" : 32768,
+    "uuid" : "403c7b84-faf2-39ac-b858-d6e349ac6bf1",
+    "path" : "\/Users\/USER\/*\/device_message_listener_test",
+    "name" : "device_message_listener_test"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4599037952,
+    "size" : 72564736,
+    "uuid" : "80192f32-a799-3499-80f4-b932b44e5af8",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/liborbbec_scan.3.5.3.dylib",
+    "name" : "liborbbec_scan.3.5.3.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4403625984,
+    "size" : 7536640,
+    "uuid" : "e59b07ae-2537-33cf-9299-21c2235912b0",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libOrbbecSDK.1.7.1.dylib",
+    "name" : "libOrbbecSDK.1.7.1.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4306780160,
+    "size" : 229376,
+    "uuid" : "99027dae-154d-38bd-b6b4-2e10529c92b3",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libmx6600_depth_engine.2.1.4.5.dylib",
+    "name" : "libmx6600_depth_engine.2.1.4.5.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4296458240,
+    "size" : 163840,
+    "uuid" : "ecde08a1-3b4b-3913-a1fb-05085ab454ef",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libline_laser_param_preprocessing.3.5.0.7.dylib",
+    "name" : "libline_laser_param_preprocessing.3.5.0.7.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4295852032,
+    "size" : 180224,
+    "uuid" : "815c1dc9-8fee-3757-bcaa-bdbb6b1501b2",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libsoc_linelaser_param_processing.3.6.0.4.dylib",
+    "name" : "libsoc_linelaser_param_processing.3.6.0.4.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4296163328,
+    "size" : 180224,
+    "uuid" : "31f68f96-34af-349c-99ea-5ee731a5d4b1",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libsoc_depth_engine.2.2.0.5.dylib",
+    "name" : "libsoc_depth_engine.2.2.0.5.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4381982720,
+    "size" : 606208,
+    "uuid" : "00d1ff67-d8f2-3f52-b04e-b14b1bd95b39",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libomp.dylib",
+    "name" : "libomp.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4300783616,
+    "size" : 114688,
+    "uuid" : "727e416f-f2f2-3b08-988a-af20bf6672ca",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libcreate_distortion_lut.dylib",
+    "name" : "libcreate_distortion_lut.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 4380262400,
+    "CFBundleShortVersionString" : "900.4.2",
+    "CFBundleIdentifier" : "com.apple.iokit.IOUSBLib",
+    "size" : 49152,
+    "uuid" : "ede85c52-7ac2-3666-b06d-6abb74a94f77",
+    "path" : "\/System\/Library\/Extensions\/IOUSBHostFamily.kext\/Contents\/PlugIns\/IOUSBLib.bundle\/Contents\/MacOS\/IOUSBLib",
+    "name" : "IOUSBLib",
+    "CFBundleVersion" : "900.4.2"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6839975936,
+    "size" : 256428,
+    "uuid" : "f63bf418-8f75-34a4-aaf1-8caf2b9b6a05",
+    "path" : "\/usr\/lib\/system\/libsystem_kernel.dylib",
+    "name" : "libsystem_kernel.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6840233984,
+    "size" : 51484,
+    "uuid" : "5a1828c3-cbc2-3b85-bd07-c8ed10021a41",
+    "path" : "\/usr\/lib\/system\/libsystem_pthread.dylib",
+    "name" : "libsystem_pthread.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6839255040,
+    "size" : 610356,
+    "uuid" : "1e9ba4aa-b5da-3cf3-80ac-4b880049573f",
+    "path" : "\/usr\/lib\/libc++.1.dylib",
+    "name" : "libc++.1.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6836035584,
+    "size" : 784100,
+    "uuid" : "d341ddcb-7969-3a9c-8e03-0cf4751398a9",
+    "path" : "\/usr\/lib\/dyld",
+    "name" : "dyld"
+  },
+  {
+    "size" : 0,
+    "source" : "A",
+    "base" : 0,
+    "uuid" : "00000000-0000-0000-0000-000000000000"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6838718464,
+    "size" : 535716,
+    "uuid" : "fba7b23e-aa60-3a90-9aa4-a7a2e0ad63ee",
+    "path" : "\/usr\/lib\/system\/libsystem_c.dylib",
+    "name" : "libsystem_c.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6840520704,
+    "CFBundleShortVersionString" : "6.9",
+    "CFBundleIdentifier" : "com.apple.CoreFoundation",
+    "size" : 4787872,
+    "uuid" : "727e905e-f344-3823-8e13-e7a096388321",
+    "path" : "\/System\/Library\/Frameworks\/CoreFoundation.framework\/Versions\/A\/CoreFoundation",
+    "name" : "CoreFoundation",
+    "CFBundleVersion" : "5027.0.69"
+  }
+],
+  "sharedCache" : {
+  "base" : 6831292416,
+  "size" : 7410368512,
+  "uuid" : "c284a291-b68b-3d0d-a1a0-3f866f87efdc"
+},
+  "vmSummary" : "ReadOnly portion of Libraries: Total=2.2G resident=0K(0%) swapped_out_or_unallocated=2.2G(100%)\nWritable regions: Total=204.8M written=481K(0%) resident=481K(0%) swapped_out=0K(0%) unallocated=204.3M(100%)\n\n                                VIRTUAL   REGION \nREGION TYPE                        SIZE    COUNT (non-coalesced) \n===========                     =======  ======= \nActivity Tracing                   256K        1 \nDeferred Reclaim                  64.0M        1 \nDispatch Continuations            64.0M        1 \nGuard                            385.0G        1 \nMalloc                            45.3M       15 \nMalloc Guard Page                 3616K        4 \nOS Alloc Once                       32K        1 \nStack                             13.4M       13 \nStack Guard                       56.2M       11 \n__AUTH                            2578K      255 \n__AUTH_CONST                      43.9M      451 \n__CTF                               824        1 \n__DATA                            32.7M      472 \n__DATA_CONST                      26.7M      461 \n__DATA_DIRTY                      2569K      397 \n__FONT_DATA                        2352        1 \n__LINKEDIT                         1.6G       13 \n__OBJC_RO                        118.0M        1 \n__OBJC_RW                         2735K        1 \n__TEXT                           652.4M      536 \n__TPRO_CONST                       132K        4 \nmapped file                         80K        1 \npage table in kernel               481K        1 \nshared memory                       48K        2 \n===========                     =======  ======= \nTOTAL                            387.7G     2645 \n",
+  "legacyInfo" : {
+  "threadTriggered" : {
+
+  }
+},
+  "logWritingSignature" : "d39bdfb54cc3c6020f2134fcdab1667fe8796054",
+  "roots_installed" : 0,
+  "bug_type" : "309",
+  "trmStatus" : 8192,
+  "trialInfo" : {
+  "rollouts" : [
+    {
+      "rolloutId" : "645197bf528fbf3c3af54105",
+      "factorPackIds" : [
+        "663e65b4a1526e1ca0e288a1"
+      ],
+      "deploymentId" : 240000002
+    },
+    {
+      "rolloutId" : "67fd77fe1f9da9148f70d6ed",
+      "factorPackIds" : [
+
+      ],
+      "deploymentId" : 240000020
+    }
+  ],
+  "experiments" : [
+
+  ]
+}
+}

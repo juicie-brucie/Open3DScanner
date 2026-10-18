@@ -1,0 +1,59 @@
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_ob_scan_log
+[10/17 20:03:33.225907][info][14885661][Context.cpp:67] Context created with config: default config!
+[10/17 20:03:33.225930][info][14885661][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/17 20:03:33.229246][info][14885661][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/17 20:03:33.229286][info][14885661][DeviceManager.cpp:15] Current found device(s): (0)
+[10/17 20:03:33.229294][info][14885661][Context.cpp:82] EnumerateNetDevice:true
+[10/17 20:03:33.229703][info][14885676][GVCPClient.cpp:325] bind 127.0.0.1:0
+[worker] obscan_context_create() -> OB_SCAN_SUCCESS (0)
+[worker][PASS] add_data(NULL context) == DEADLINE_EXCEEDED
+[worker][PASS] add_process(NULL context) == DEADLINE_EXCEEDED
+[worker][PASS] add_data(NULL listener) == INVALID_ARGUMENT
+[worker][PASS] add_process(NULL listener) == INVALID_ARGUMENT
+[worker][PASS] add_data(listener_a) #1 == SUCCESS
+[worker][PASS] add_process(listener_a) #1 == SUCCESS
+[worker][PASS] double add_data (no remove) == INVALID_ARGUMENT
+[worker][PASS] double add_process (no remove) == INVALID_ARGUMENT
+[worker][PASS] remove_data(listener_a) == SUCCESS
+[worker][PASS] remove_data again (empty) == LISTENER_NOT_FOUND
+[worker][PASS] remove_process(listener_a) == SUCCESS
+[worker][PASS] remove_process again (empty) == LISTENER_NOT_FOUND
+[worker][PASS] add_data after remove == SUCCESS
+[worker][PASS] add_process after remove == SUCCESS
+[worker][PASS] remove_data(NULL context) == DEADLINE_EXCEEDED
+[worker][PASS] remove_process(NULL context) == DEADLINE_EXCEEDED
+[10/17 20:03:33.230145][info][14885676][GVCPClient.cpp:325] bind 0.0.0.0:59012
+[10/17 20:03:33.230195][info][14885676][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/17 20:03:33.230227][info][14885676][GVCPClient.cpp:325] bind 0.0.0.0:59065
+[10/17 20:03:33.230246][info][14885676][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/17 20:03:33.230259][info][14885676][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/17 20:03:33.230283][info][14885676][GVCPClient.cpp:325] bind 0.0.0.0:53461
+[10/17 20:03:33.230298][info][14885676][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/17 20:03:33.230421][error][14885678][GVCPClient.cpp:355] sendto failed with error:49
+[10/17 20:03:33.231059][info][14885678][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/17 20:03:33.231076][info][14885678][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/17 20:03:34.235479][info][14885676][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/17 20:03:34.235556][info][14885676][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/17 20:03:35.240369][info][14885676][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/17 20:03:35.240388][info][14885676][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/17 20:03:35.240395][info][14885676][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/17 20:03:35.240858][info][14885661][Context.cpp:89] Context destroyed
+[10/17 20:03:35.240882][info][14885862][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**1 logs in 1005ms, last: 20:03:35.240188**]
+[10/17 20:03:35.240926][error][14885775][GVCPClient.cpp:355] sendto failed with error:49 [**1 logs in 2010ms, last: 20:03:34.235722**]
+[10/17 20:03:35.240963][info][14885776][GVCPClient.cpp:421] 0, 3, 248, 1 [**1 logs in 2009ms, last: 20:03:34.235989**]
+[10/17 20:03:35.240999][info][14885777][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**1 logs in 2009ms, last: 20:03:34.236004**]
+[vulkan_disable_interpose] intercepted vkGetInstanceProcAddr lookup of a create function
+[vulkan_disable_interpose] blocked vkCreateInstance
+vkCreateInstance failed -3
+[worker] obscan_context_destroy() -> OB_SCAN_SUCCESS (0)
+[worker] g_failures=0
+[launcher] DYLD_INSERT_LIBRARIES=/Applications/CrealityScan.app/Contents/PlugIns/libMoltenVK.dylib:/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/engine/libvulkan_disable_interpose.dylib
+worker exit code: 0
