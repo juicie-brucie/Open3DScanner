@@ -14,16 +14,19 @@ is script-gated or needs an agent verdict):
     agent tier   engine/**, tools/**, mesh/**, ui/**, scripts/**, tests/hardware/**,
                  any CMakeLists.txt, .github/**, .claude/**, docs/recon/**,
                  docs/recomp/{WINDOWS-FORK,FORK-COORDINATION}.md,
-                 tests/results/** addenda (*-correction.md, *-analysis.md)
-    script tier  everything else (run records, raw logs, .ips, PLAN.md,
-                 docs/recomp/** except the two fork documents above, CLAUDE.md,
-                 README.md, ...)
+                 tests/results/** (records, logs, addenda — #21)
+    script tier  everything else (PLAN.md, docs/recomp/** except the two fork
+                 documents above, CLAUDE.md, README.md, ...)
     An empty or unreadable file list is treated as agent tier.
 
 Gating checks
   whitespace      `git diff --check`
   run-records     tests/results/: no existing record modified, deleted or renamed
                   in place (addenda *-correction.md / *-analysis.md excepted)
+  record-provenance
+                  an added tests/results/*.md record must be accompanied, in the
+                  same PR, by an added raw artifact sharing its stem (typically
+                  its .log); addenda/corrections/analyses are exempt.
   plan            PLAN.md row syntax: unique numbers, valid statuses, well-formed.
                   Status moves and new rows are reported, not gated.
   archives        cited `sha256 <hex>` values in changed tests/results/*.md must
@@ -70,7 +73,10 @@ AGENT_PATTERNS = [
     # the Windows-fork charter and coordination file carry rules (the contract
     # pin, the two-writer rule) and deserve a verdict like docs/recon/**.
     r"^docs/recomp/(WINDOWS-FORK|FORK-COORDINATION)\.md$",
-    r"^tests/results/.*(-correction|analysis)\.md$",
+    # Every evidence artifact under tests/results/** — records, logs and addenda —
+    # is agent-tier (#21): the directory is the loop's highest-stakes artifact
+    # class, and an added record auto-merging unreviewed was the hole.
+    r"^tests/results/",
 ]
 
 
@@ -269,6 +275,19 @@ def main():
         "; ".join(bad) if bad else
         (f"{addenda} modified addenda allowed" if addenda else "no modifications"))
 
+    # 2b. added records need a companion raw artifact in the same PR (#21)
+    r = git("diff", "--name-status", f"{base_ref}...{head_ref}", "--", "tests/results/")
+    added_res = [l.split("\t")[-1] for l in r.stdout.splitlines() if l.startswith("A")]
+    records = [p for p in added_res if p.endswith(".md")
+               and not re.search(r"-(correction|analysis|addendum)\.md$", p)]
+    others = [os.path.basename(p) for p in added_res if p not in records]
+    missing = [p for p in records
+               if not any(o.startswith(os.path.basename(p)[:-3]) for o in others)]
+    add("record-provenance", not missing,
+        "; ".join(f"no companion raw artifact in this PR: {p}" for p in missing) if missing
+        else (f"{len(records)} record(s) with companion(s)" if records
+              else "no records added"))
+
     # 3. plan: syntax gated; status moves and new rows reported only
     r = git("diff", "--name-only", f"{base_ref}...{head_ref}", "--", "docs/recomp/PLAN.md")
     if r.stdout.strip():
@@ -460,7 +479,7 @@ def main():
     for name, st, detail in report:
         print(f"| {name} | {st} | {detail.replace('|', '/')} |")
     print()
-    print("Gating checks: whitespace, run-records, plan, archives, hook, ui-js-syntax, build.")
+    print("Gating checks: whitespace, run-records, record-provenance, plan, archives, hook, ui-js-syntax, build.")
     if fails:
         print()
         print(f"**FAILED: {', '.join(fails)}**")
