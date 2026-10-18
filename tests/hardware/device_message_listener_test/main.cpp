@@ -261,6 +261,7 @@ int main(int argc, char** argv) {
             std::string insert = moltenvk_path + ":" + VULKAN_DISABLE_INTERPOSE_DYLIB;
             setenv("DYLD_INSERT_LIBRARIES", insert.c_str(), 1);
             std::printf("[launcher] DYLD_INSERT_LIBRARIES=%s\n", insert.c_str());
+        std::fflush(stdout); // banner must precede worker output when piped
         }
     }
 #endif
