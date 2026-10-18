@@ -659,7 +659,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             // The color getter is the publish trigger for the model cloud
             // (see docs/recon/findings/scan-live-data.md §3): calling it
             // swaps the fusion temp cloud into the published show cloud, so
-            // get_raw_cloud / the UI finally see live points while scanning.
+            // the UI finally see live points while scanning.
             // out_count is not validated by the wrapper, so pass a valid
             // pointer; out_bbox is required non-null.
             status = lib.obscan_scan_get_model_point_color_clouds(scan, &cloud, &bbox, &published_count);

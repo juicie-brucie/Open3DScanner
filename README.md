@@ -313,14 +313,16 @@ using it:
   pause.
 - Ctrl+C triggers a graceful `obscan_scan_pause`/`stop`/`destroy`
   teardown instead of killing the process — **always use Ctrl+C (or let
-  the bounded session length finish on its own) rather than `pkill`/
-  `kill -9`**, which skips that teardown and has left this hardware
-  needing a physical power cycle to recover (confirmed twice).
-- If you must kill it, prefer Ctrl+C first; if the launcher is already
-  dead, kill the worker by PID (its command line is
-  `scan_server --live-worker ...`, so `pkill -f "scan_server --live"`
-  never matches it), accepting that teardown is then skipped and the
-  hardware may need a power cycle. Then kill the launcher.
+  the bounded session length finish on its own) rather than `kill -9`**,
+  which skips that teardown and has left this hardware needing a physical
+  power cycle to recover (confirmed twice). (`pkill`/`kill` without
+  `-9` only send SIGTERM, which the worker handles gracefully.)
+- If you must kill it, note that `pkill -f "scan_server --live"` also
+  matches the worker — the pattern is a substring of
+  `--live-worker` — so it stays alive rather than dying instantly: it is
+  signalled and runs its graceful teardown, which can take seconds or
+  hang in `context_destroy`. `kill <worker-pid>` (SIGTERM) still gives
+  that teardown; only `kill -9` skips it and risks the power cycle.
 
 Swapping in real frames changes the frame producer, not the transport or
 the UI.
