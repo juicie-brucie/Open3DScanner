@@ -213,7 +213,7 @@ for process, both ending `ldr x2,[x9]; mov x0,x8; br x2` with
 `x9 = capture0 = listener`) — one load through `[listener+0x00]`, so the
 per-family shape question is settled for these two families — see §6.1 of
 [`device-message-listener.md`](device-message-listener.md). Tips and control
-remain analogy-only (**[inferred]**; noted as a follow-up there).
+were ranged in the follow-up pass and are byte-identical too — see §6.1 there.
 
 ## 7. Lifetime rules
 
