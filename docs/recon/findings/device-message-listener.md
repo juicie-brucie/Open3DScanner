@@ -343,6 +343,39 @@ DEVICE_CONNECT (crash.ips frame #12:
 the connect callback that runs both immediately at registration (§2) and
 again from the NetDeviceWatcher thread.
 
+**Reproduction count** [hw-confirmed: the five 2026-10-17 runs] — the
+connect-callback SIGSEGV is not a one-off; the precondition is the OQ-3
+remove/re-add sequence. Five crash reports on this binary and worktree carry
+the same signature (`EXC_BAD_ACCESS`/SIGSEGV at `0x0`, faulting thread 5 = the
+NetDeviceWatcher/GVCP thread), and every raw log shows the same sequence: a
+`[worker][cb] DEVICE_CONNECT` delivery → `add(handle, listener_a) after
+remove -> OB_SCAN_SUCCESS` (the re-add) → `ObException.cpp:5 "already
+created"` → SIGSEGV. Named as the archive names them:
+
+| report | run | the record's own words |
+| --- | --- | --- |
+| `2026-10-17-plan8-device-message-listener.crash.ips` | 16:54 | first crash; the analysis file reads its stack |
+| `2026-10-17-device-message-listener-test.crash.ips` | 19:21 | same signature; that report's own destroy/libomp attribution was corrected by the main-thread re-read |
+| `2026-10-17-device-message-listener-test-run2.crash.ips` | 20:01 | "reproduced for the second time today on this exact binary and worktree" |
+| `2026-10-17-device-message-listener-test-run3.crash.ips` | 22:41 | "reproduces, for a third time (plan8 run, run2, run3)" |
+| `2026-10-17-device-message-listener-test-run4.crash.ips` | 22:45 | "Controlled re-run (fourth run of this binary today)" |
+
+So treat it as deterministic-ish under the OQ-3 remove/re-add sequence
+(run3's wording). The single-registration flow (`f4c5f86`, the 2026-10-16
+plan1 run) neither supports nor contradicts this: its record says it "only
+covers what that tool happens to exercise: a single registration, never a
+remove or a second add" — it never exercised the remove/re-add path and
+predates all five observations.
+
+**Main-thread state at the fault** [hw-confirmed:
+`2026-10-17-crash-reports-main-thread-teardown-correction.md` — identical in all
+three archived reports]: the main thread was inside `obscan_context_destroy()` →
+`OBDeviceManagement::release()` → `~OrbbecDevice` → `~OrbbecInternalDevice` →
+`OrbbecInternalDevice::stop()`, **blocked on a recursive_mutex** — teardown was
+racing the fault, not absent (row #5's "never reached destroy" premise is
+dropped). No report **in this series** shows `obscan_context_destroy()` itself crashing; the
+f4c5f86 plan1 run's destroy returned SUCCESS in 807 ms with worker exit 0.
+
 Still without any static or dynamic reference:
 `OBDeviceManagement::send_device_msg(int)` and
 `OBDeviceManagement::init_device_msg(int)` have no direct `BL`/`B` caller and
@@ -401,6 +434,65 @@ no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
   construction. A listener-less with-device run is still unobserved (OQ-7b
   there).
 
+## 10. The NULL-state cause of the connect-callback SIGSEGV (row #11)
+
+*Static half, plan11 pass, against the four-run crash signature (plan8 + run2/run3/run4,
+identical stacks). The `.ips` `symbolLocation` fields pin the faulting instruction;
+frame data from `2026-10-17-device-message-listener-test-run4.crash.ips`.*
+
+**Which pointer is NULL: `OBDeviceManagement+0x158` — the manager's device pointer.**
+The faulting frame is `device::OrbbecDevice::get_active_device()` at
+**`symbolLocation: 0`** — its *first* instruction (`ldr x9,[x0]` @ `0x1b565c`), i.e. it
+was called with `this == NULL`. Its caller is `OBDeviceManagement::update_device_info`
+at `symbolLocation: 624` — the return site of `bl get_active_device` (`0x5c3580`),
+whose argument was loaded one instruction earlier:
+
+```
+5c3574: ldr x0, [x27, #0x158]     ; x27 = the OBDeviceManagement instance
+5c3580: bl  device::OrbbecDevice::get_active_device
+```
+
+So the NULL is the manager's device pointer at `+0x158` — the same field
+`OBDeviceManagement::release()` clears (`str xzr,[x8,#0x158]`, `0x5c14ec`) before it
+destroys the device (the row #4 teardown map). By the time the watcher's device-info
+update ran, the pointer had been cleared.
+
+**The destroy path takes no lock on that field; the watcher path takes a different
+one.** `update_device_info` locks the manager's `std::mutex` at `+0x100` for its whole
+body (`0x5c333c`), so its read of `+0x158` happens under that mutex. But:
+
+- `release()` takes **no lock at all** — load, clear `+0x158`, call `~OrbbecDevice`
+  (`0x5c14dc`–`0x5c14f0`);
+- the block the main thread hits (`.ips`, all four reports) is inside
+  `~OrbbecInternalDevice` → `stop()` (`0x1da7d8`), which locks the **internal
+  device's `recursive_mutex` at `+0xf8`** (`0x1da80c`, stub `0x2ad7af0`) — a different
+  object and a different lock class.
+
+So the two paths share **no lock**: the destroy path can clear `+0x158` while the
+watcher's `update_device_info` holds `+0x100` and is about to read it. That is the
+race, mechanically — and it answers row #20's open question: `stop()`'s mutex is
+**not** the one `update_device_info` takes. [static lock map; the fault's `this == NULL`
+is `[hw-confirmed: the four .ips reports]`]
+
+**Why a trailing device-changed event is in flight at teardown.** The watcher is a
+periodic GVCP discovery poll: each poll that sees the enumerated set change drives
+`onDeviceChanged → … → the bound callback`. The remove→re-add churn (#15's
+remove-side race) leaves that set flapping (create → destroy → create, with the SDK's
+own `Trying to create a device that you've already created!`), so further polls fire
+device-changed events after the test's sequence has completed — run4 logs exactly such
+an event (`22:45:47.318622`) *after* check 5c returned SUCCESS, racing the main
+thread's entry into `obscan_context_destroy()`. **[inferred from the run log + the
+frame chain; the SDK-side change detection lives in libOrbbecSDK's `DeviceManager`]**
+
+**Can the caller avoid it?** The caller controls the *trigger*, not the race — the
+unsynchronized clear is vendor-side. The churn that manufactures the trailing events
+comes from the remove/re-add dance while the watcher is live, so: **do not remove and
+re-add the listener around live watcher activity** (register once and keep it; this
+project's tools now hold the listeners as process-lifetime statics and never call
+`remove_*`), and if a remove is ever needed, let the device churn settle (well over a
+poll interval) before `obscan_context_destroy()`. Teardown in a disposable worker
+process remains the backstop.
+
 ## Evidence
 
 Raw listings for this pass (disassembly, symbol tables, decoded tables) are in
@@ -421,4 +513,16 @@ created/destroyed/created timeline and both thread ids: registerer/deliverer
 `14660842`, NetDeviceWatcher/faulting thread `14660873`),
 `2026-10-17-plan8-device-message-listener.crash.ips` (the faulting stack), and
 the reconcile analysis
-`2026-10-17-plan8-device-message-listener-crash-analysis.md`.
+`2026-10-17-plan8-device-message-listener-crash-analysis.md`; and
+`2026-10-17-device-message-listener-test-run4.crash.ips` (run4's `.ips` — identical
+stack; its `symbolLocation` fields pin the faulting instruction — §10). The five
+crash reports of the series (§9): `2026-10-17-plan8-device-message-listener.crash.ips`,
+`2026-10-17-device-message-listener-test.crash.ips`,
+`2026-10-17-device-message-listener-test-run2.crash.ips`,
+`2026-10-17-device-message-listener-test-run3.crash.ips`,
+`2026-10-17-device-message-listener-test-run4.crash.ips`. Plus the
+main-thread re-read `2026-10-17-crash-reports-main-thread-teardown-correction.md`
+(the three archived `.ips` reports' main-thread stacks) and the single-registration
+run `2026-10-16-plan1-device-message-listener.md` (destroy SUCCESS, 807 ms, exit 0 —
+it never exercised remove/re-add, so it neither supports nor contradicts the
+crash claims; §9).

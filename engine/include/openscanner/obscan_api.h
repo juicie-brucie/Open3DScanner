@@ -20,6 +20,7 @@
 // ObScanStatus enum (checked against the vendor's own status-name table).
 
 #include <stdbool.h>
+#include <stddef.h>   /* offsetof, for the ABI guards below */
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -353,27 +354,46 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // itself (findings §4). A DISCONNECT after a CONNECT is a real unplug.
 //
 // Known hazard — rewritten from the PLAN #8 crash analysis
-// (tests/results/2026-10-17-plan8-device-message-listener-crash-analysis.md).
-// Established [hw-confirmed: that crash report + the run's raw.log]:
+// (tests/results/2026-10-17-plan8-device-message-listener-crash-analysis.md;
+// main-thread re-read:
+// tests/results/2026-10-17-crash-reports-main-thread-teardown-correction.md).
+// Observed [hw-confirmed: 2026-10-17 — five crash reports + their raw logs]:
 // (1) The fault site is inside the vendor SDK, strictly upstream of
 // send_device_msg — update_camera_status -> update_device_info ->
 // get_active_device() (device::OrbbecDevice) — on the vendor's
 // NetDeviceWatcher (GVCP) thread: crash.ips frame #12 is
 // libobsensor::pal::NetDeviceWatcher::start(...)::$_1, and the only images
 // on the stack are liborbbec_scan / libOrbbecSDK / libsystem_pthread.
-// (2) The temporal adjacency is real and is the fact that #11's re-run must
-// reproduce: a DEVICE_CONNECT delivery to the caller's callback completed on
-// the worker thread, add-after-remove returned SUCCESS, and ~60 ms later
-// that NetDeviceWatcher thread logged ObException.cpp:5 "Trying to create a
-// device that you've already created!" and the process SIGSEGV'd. So the
-// crash follows a connect callback by ~60 ms — but as a separate
-// NetDeviceWatcher-initiated device-changed pass on a different thread, not
-// a post-return continuation of the registration call, and NOT the same
-// class as the obscan_context_destroy()/libomp crash (different thread, no
-// such frames). Not established: what leaves device bookkeeping in that
-// NULL state — a pre-existing inconsistency that remove->add merely
-// exposes, or re-entry while the device object re-creates; board #11 exists
-// to settle that. Until #11 rules, run anything that registers this
+// (2) The conditions it was observed under — and it reproduces under them:
+// an add-after-remove (re-add) of this listener, a DEVICE_CONNECT delivery
+// to the caller's callback completing on the worker thread, add returning
+// SUCCESS, then ~60 ms later that NetDeviceWatcher thread logging
+// ObException.cpp:5 "Trying to create a device that you've already created!"
+// and the process SIGSEGV'ing — a separate NetDeviceWatcher-initiated
+// device-changed pass on a different thread, not a post-return continuation
+// of the registration call. Five crash reports on this binary and worktree
+// carry that sequence — plan8 16:54; the 19:21 test run; run2 20:01 ("the
+// second reproduction of the identical crash signature today"); run3 22:41
+// ("for a third time (plan8 run, run2, run3)"); run4 22:45 — so treat it as
+// deterministic-ish under the OQ-3 remove/re-add sequence, not as general
+// connect-callback fragility. The f4c5f86 plan1 run (2026-10-16; "a single
+// registration, never a remove or a second add") neither supports nor
+// contradicts this: it never exercised the path, and predates all five.
+// (3) Main-thread state at the fault [hw-confirmed: the correction record —
+// identical in all three archived reports]: the main thread was inside
+// obscan_context_destroy() -> OBDeviceManagement::release() ->
+// ~OrbbecDevice -> ~OrbbecInternalDevice -> OrbbecInternalDevice::stop(),
+// blocked on a recursive_mutex. Teardown was racing the fault, not absent —
+// the "never reached destroy" reading is dropped. No run in this series
+// shows obscan_context_destroy() itself crashing: the f4c5f86 run's destroy
+// returned SUCCESS in 807 ms with the worker exiting 0, so the
+// "destroy/libomp crash" claim is unobserved in this series (the historical
+// crash is separately documented and lldb-confirmed — README "Known issues").
+// Not established: what leaves device bookkeeping in that NULL state — a
+// pre-existing inconsistency that remove->add merely exposes, or re-entry
+// while the device object re-creates (board #11); and whether stop()'s
+// mutex is the one get_active_device()/update_device_info() take (open in
+// the correction record). Until #11 rules, run anything that registers this
 // listener inside a disposable worker process (see worker_process.h) — for
 // the unproven NetDeviceWatcher threading around remove->add, not for
 // callback-run fragility.
@@ -636,6 +656,126 @@ typedef ObScanStatus (*fn_obscan_scan_get_realtime_model_mesh)(ObScanScanHandle 
 // call); not a no-op, unlike the cloud release.
 typedef ObScanStatus (*fn_obscan_scan_realtime_model_mesh_release)(ObScanScanHandle scan);
 typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, ObScanModeConfig* out_config);
+
+// ---------------------------------------------------------------------------
+// Frame and image payloads — the read side of the listener live path.
+// `ObScanDataMessage.data` for NEW_{IR,DEPTH,RGB}_IMAGE is an image object and
+// for FRAME_READY a frame object (findings §12); these are the C entry points
+// for consuming them. Both kinds are BORROWED and ONE-SHOT PER ACCESSOR: each
+// accessor consumes itself (calling the same accessor twice returns
+// OB_SCAN_ERROR_MULTI_CALLED; after the SDK's release every accessor returns
+// OB_SCAN_ERROR_INVALID_ARGUMENT), so read once, copy out, then call the
+// matching release. Per-accessor state bits: findings §15. See
+// docs/recon/findings/data-process-message-listeners.md §12/§14/§15.
+typedef void* ObScanFrameHandle;   // the FRAME_READY payload pointer
+typedef void* ObScanImageHandle;   // the NEW_*_IMAGE payload pointer
+// Pointer-to-pointer outs whose layouts are not yet recovered (findings §14);
+// callers hold the returned pointer opaquely until then.
+typedef struct ObScanPose ObScanPose;
+typedef struct ObScanImageData ObScanImageData;
+
+// The direct-out structs (row #36). These are CALLER-ALLOCATED: put one on
+// your stack, pass &out, and the SDK fills it in. Layouts from the listing;
+// see docs/recon/findings/data-process-message-listeners.md §15.
+// Marker records: also filled by the scan family's obscan_scan_get_markers.
+// Elements are 16-byte records; their internals are unmapped (findings §15).
+typedef struct ObScanMarkers {
+    uint32_t num_markers;   // 0x00
+    const void* markers;    // 0x08  begin of the 16-byte marker records
+    const void* aux_0;      // 0x10  per-marker array (element type unmapped)
+    const void* aux_1;      // 0x18  per-marker array (element type unmapped)
+} ObScanMarkers;            // 32 bytes
+
+// A {data, count} view over a 4-byte-element advice array; each of the two
+// frame advice getters fills one of these.
+typedef struct ObScanSimpDistAdviceArray {
+    const void* data;       // 0x00  4-byte-element advice entries
+    uint32_t count;         // 0x08
+    uint32_t _reserved;     // 0x0c
+} ObScanSimpDistAdviceArray; // 16 bytes
+
+// The reference-rods view: a count plus six pointer-sized fields sourced from
+// the frame's rods data (their meanings are unmapped, findings §15).
+typedef struct ObScanReferenceRods {
+    uint32_t count;         // 0x00
+    uint32_t _reserved;     // 0x04
+    const void* p1;         // 0x08
+    const void* p2;         // 0x10
+    const void* p3;         // 0x18
+    const void* p4;         // 0x20
+    const void* p5;         // 0x28
+    const void* p6;         // 0x30
+} ObScanReferenceRods;      // 56 bytes
+
+// The depth image's distance advice: the SDK's (int, int) pair plus a 320-bin
+// u8 histogram (findings §15). The color image's getter is a stub returning
+// OB_SCAN_ERROR_INVALID_ARGUMENT; only the depth image carries advice.
+typedef struct ObScanDistanceAdviceInfo {
+    int32_t pair_first;     // 0x00  first member of the SDK's (int, int) pair
+    int32_t pair_second;    // 0x04  second member
+    uint8_t histogram[320]; // 0x08
+} ObScanDistanceAdviceInfo; // 328 bytes
+
+// Compile-time ABI guards (row #36 follow-up): the SDK fills these structs by
+// copying fixed-size blocks, so a size or offset drift is an ABI break, not a
+// style issue. Sizes/offsets are the listing's (findings §15).
+#if defined(__cplusplus)
+#define OBSCAN_ABI_ASSERT(cond, msg) static_assert(cond, msg)
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define OBSCAN_ABI_ASSERT(cond, msg) _Static_assert(cond, msg)
+#else
+#define OBSCAN_ABI_ASSERT(cond, msg) /* pre-C11: no compile-time check available */
+#endif
+OBSCAN_ABI_ASSERT(sizeof(ObScanMarkers) == 32, "ObScanMarkers must be 32 bytes (findings §15)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanMarkers, num_markers) == 0x00 &&
+                  offsetof(ObScanMarkers, markers) == 0x08 &&
+                  offsetof(ObScanMarkers, aux_0) == 0x10 &&
+                  offsetof(ObScanMarkers, aux_1) == 0x18,
+                  "ObScanMarkers offsets (findings §15)");
+OBSCAN_ABI_ASSERT(sizeof(ObScanSimpDistAdviceArray) == 16, "ObScanSimpDistAdviceArray must be 16 bytes (findings §15)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanSimpDistAdviceArray, data) == 0x00 &&
+                  offsetof(ObScanSimpDistAdviceArray, count) == 0x08,
+                  "ObScanSimpDistAdviceArray offsets (findings §15)");
+OBSCAN_ABI_ASSERT(sizeof(ObScanReferenceRods) == 56, "ObScanReferenceRods must be 56 bytes (findings §15)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanReferenceRods, p1) == 0x08 &&
+                  offsetof(ObScanReferenceRods, p6) == 0x30,
+                  "ObScanReferenceRods offsets (findings §15)");
+OBSCAN_ABI_ASSERT(sizeof(ObScanDistanceAdviceInfo) == 328, "ObScanDistanceAdviceInfo must be 328 bytes (findings §15)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanDistanceAdviceInfo, pair_second) == 0x04 &&
+                  offsetof(ObScanDistanceAdviceInfo, histogram) == 0x08,
+                  "ObScanDistanceAdviceInfo offsets (findings §15)");
+#undef OBSCAN_ABI_ASSERT
+
+// Fills *out_cloud with a pointer to the SDK's frame cloud — the same
+// {num_points, points, normals} shape as ObScanPointClouds.
+typedef ObScanStatus (*fn_obscan_frame_get_frame_cloud)(ObScanFrameHandle frame, ObScanPointClouds** out_cloud);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_bbox)(ObScanFrameHandle frame, ObScanCloudBbox* out_bbox);
+typedef ObScanStatus (*fn_obscan_frame_get_timestamp)(ObScanFrameHandle frame, int64_t* out_timestamp);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_id)(ObScanFrameHandle frame, int32_t* out_frame_id);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_rate)(ObScanFrameHandle frame, int32_t* out_frame_rate);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_tracking_status)(ObScanFrameHandle frame, int32_t* out_status);
+typedef ObScanStatus (*fn_obscan_frame_get_update_model)(ObScanFrameHandle frame, bool* out_update_model);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_pose)(ObScanFrameHandle frame, ObScanPose** out_pose);
+// Releases the frame object (native `release_data`: clears its state and drops
+// the impl). Returns 0 for a valid handle.
+typedef ObScanStatus (*fn_obscan_frame_release)(ObScanFrameHandle frame);
+
+typedef ObScanStatus (*fn_obscan_image_get_width)(ObScanImageHandle image, int32_t* out_width);
+typedef ObScanStatus (*fn_obscan_image_get_height)(ObScanImageHandle image, int32_t* out_height);
+typedef ObScanStatus (*fn_obscan_image_get_timestamp)(ObScanImageHandle image, int64_t* out_timestamp);
+typedef ObScanStatus (*fn_obscan_image_get_display_image)(ObScanImageHandle image, ObScanImageData** out_image_data);
+typedef ObScanStatus (*fn_obscan_image_get_depth_display_image)(ObScanImageHandle image, int32_t index, ObScanImageData** out_image_data);
+// Releases the image object (native `release_data`). Returns 0 for a valid handle.
+typedef ObScanStatus (*fn_obscan_image_release)(ObScanImageHandle image);
+
+// The five direct-out getters (row #36): each fills a CALLER-ALLOCATED struct
+// (layouts above). NULL out or handle -> OB_SCAN_ERROR_INVALID_ARGUMENT; the
+// marker/advice/rods four do not validate the frame's impl.
+typedef ObScanStatus (*fn_obscan_frame_get_marker_datas)(ObScanFrameHandle frame, ObScanMarkers* out_markers);
+typedef ObScanStatus (*fn_obscan_frame_get_marker_distance_advice)(ObScanFrameHandle frame, ObScanSimpDistAdviceArray* out_advice);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_cloud_distance_advice)(ObScanFrameHandle frame, ObScanSimpDistAdviceArray* out_advice);
+typedef ObScanStatus (*fn_obscan_frame_get_reference_rods)(ObScanFrameHandle frame, ObScanReferenceRods* out_rods);
+typedef ObScanStatus (*fn_obscan_image_get_distance_advice)(ObScanImageHandle image, ObScanDistanceAdviceInfo* out_advice);
 
 // OBScanTarget.ConfigCombinedExposureAndLaserCurrent(int value) — a
 // single combined IR-exposure/laser-current slider, range [1, 1000]
