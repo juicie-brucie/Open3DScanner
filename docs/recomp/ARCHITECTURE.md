@@ -54,7 +54,7 @@ explicitly — otherwise fan-out would run on recon's `#max` model, which is bac
 | `recon` | header + `docs/recon` | allow | allow | `recon-sweep`, `verifier` |
 | `builder` | src dirs; **deny header** | **deny** | **deny** | `verifier` only |
 | `recon-sweep` | `docs/recon` only | allow | **deny** | — |
-| `verifier` | **deny all** | **deny** | **deny** | — |
+| `verifier` | **deny all** (PR comments are not edits) | **deny** | **deny** | — |
 
 Three rules carry the design:
 
@@ -143,15 +143,17 @@ Landing is gated mechanically, in two tiers:
   is in this tier, `verdict-gate` sets `verdict=success` automatically. No agent pass.
 - **Agent tier** (`engine/**`, `tools/**`, `tests/hardware/**`, `mesh/**`, `ui/**`,
   `scripts/**`, CMake, `.github/**`, `.claude/**`, `docs/recon/**`, and
-  `tests/results/**` addenda): CI runs the **trusted copy of the script from `main`**
-  (so a PR cannot edit the gate that judges it), then an `openscanner/verifier` session
-  adjudicates what the script cannot — semantics vs the header, prose vs evidence,
+  `tests/results/**` addenda): CI runs the **trusted copy of the script from `main`**;
+  workflow files are themselves agent-tier, so a PR that edits `.github/**` is reviewed
+  rather than trusted, and the `auto-verdict` job runs via `pull_request_target` from
+  the base branch (it checks out `main` and runs no PR code), so it cannot be edited by
+  the PR it judges. Then an `openscanner/verifier` session adjudicates what the script cannot — semantics vs the header, prose vs evidence,
   overclaiming — and posts exactly one comment: `VERDICT: MERGEABLE @ <head-sha>` or
   `VERDICT: NEEDS CHANGE @ <head-sha>`. `verdict-gate` turns an anchored verdict line
   naming the current head into the `verdict` status; a comment with more than one
   verdict line is ignored (no status, so no merge).
 
-`main`'s branch protection requires both statuses and blocks force-pushes. PRs are
+`main`'s branch protection (enabled with this change) requires both statuses and blocks force-pushes. PRs are
 opened with `gh pr merge --auto --merge`, so a PR lands the moment its checks pass. A
 verdict is bound to a SHA: it goes stale automatically when the branch moves, and a
 `NEEDS CHANGE` blocks the merge. The verifier **reports, never acts** — it does not

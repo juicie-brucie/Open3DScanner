@@ -255,7 +255,7 @@ def main():
         "; ".join(bad) if bad else
         (f"{addenda} modified addenda allowed" if addenda else "no modifications"))
 
-    # 3. plan syntax + status moves (moves reported, syntax gated)
+    # 3. plan: syntax gated; status moves and new rows reported only
     r = git("diff", "--name-only", f"{base_ref}...{head_ref}", "--", "docs/recomp/PLAN.md")
     if r.stdout.strip():
         head_plan = git("show", f"{head_ref}:docs/recomp/PLAN.md").stdout
@@ -368,14 +368,14 @@ def main():
     body_l = body.lower()
 
     def mentioned(p):
+        # Full path, basename, or the immediate parent directory name (so
+        # "tests/hardware/<name>/main.cpp" counts when the body names <name>).
+        # Deliberately no broader segment matching: it masked unclaimed files.
         if p in body or os.path.basename(p) in body:
             return True
-        if p == "docs/recomp/PLAN.md":
+        parent = os.path.dirname(p).split("/")[-1]
+        if len(parent) >= 5 and parent.lower() in body_l:
             return True
-        for seg in p.split("/"):
-            seg = re.sub(r"\.[a-z0-9]+$", "", seg)
-            if len(seg) >= 5 and seg.lower() in body_l:
-                return True
         return False
 
     unmentioned = [p for p in changed if not mentioned(p)]

@@ -1,7 +1,10 @@
 name: verdict-gate
 
 on:
-  pull_request:
+  # pull_request_target, not pull_request: the auto-verdict job must run from
+  # the base branch's copy of this workflow, so a PR cannot edit the gate that
+  # judges it. It checks out `main` and runs no PR code.
+  pull_request_target:
     types: [opened, synchronize, reopened]
   issue_comment:
     types: [created]
@@ -13,7 +16,7 @@ permissions:
 
 jobs:
   auto-verdict:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,22 +57,20 @@ jobs:
             OWNER|MEMBER|COLLABORATOR) ;;
             *) echo "ignoring comment from association: $ASSOC"; exit 0 ;;
           esac
-          # Exactly one VERDICT occurrence, anchored on its own line. A quoted
-          # example or a retraction elsewhere in the comment makes it inert
-          # (no status -> no merge), never a false success.
-          n=$(printf '%s\n' "$BODY" | grep -c 'VERDICT:' || true)
+          # Exactly one anchored verdict line. Prose mentions of "VERDICT:"
+          # do not count; a quoted example or a retraction in addition to the
+          # real line makes the comment inert (no status -> no merge), never a
+          # false success. Trailing whitespace / CRLF is tolerated.
+          n=$(printf '%s\n' "$BODY" | grep -c -E '^VERDICT: (MERGEABLE|NEEDS CHANGE) @ [0-9a-f]{40}[[:space:]]*$' || true)
           if [ "$n" -ne 1 ]; then
-            echo "found $n VERDICT occurrences - ignoring"
+            echo "found $n anchored verdict lines - ignoring"
             exit 0
           fi
-          line=$(printf '%s\n' "$BODY" | grep -m1 -E '^VERDICT: (MERGEABLE|NEEDS CHANGE) @ [0-9a-f]{40}$' || true)
-          if [ -z "$line" ]; then
-            echo "no anchored verdict line - ignoring"
-            exit 0
-          fi
+          line=$(printf '%s\n' "$BODY" | grep -m1 -E '^VERDICT: (MERGEABLE|NEEDS CHANGE) @ [0-9a-f]{40}[[:space:]]*$')
           verdict=${line#VERDICT: }
           verdict=${verdict%% @*}
           sha=${line##*@ }
+          sha=${sha%%[[:space:]]*}
           head=$(gh api "${{ github.event.issue.pull_request.url }}" --jq .head.sha)
           if [ "$sha" != "$head" ]; then
             echo "verdict names $sha but head is $head - stale, ignoring"
