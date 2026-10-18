@@ -65,6 +65,12 @@ Mirror the parent's mechanics, so an operator switching machines keeps one menta
 
 - **One worktree per role, one session per worktree.** A room belongs to the session in it;
   never share a checkout, never tear down someone else's room.
+- **A room is a worktree — or a clone where the platform's detector is broken.** When the
+  platform's repo detector misreports linked worktrees as non-repos (OpenCode 2.0.32 on
+  Windows reads *every* tree, including a plain clone, as `Is directory a git repo: no`),
+  a room may be a full clone instead; the reason is named here so the exception cannot
+  quietly become the default. One session per room holds either way, and each clone keeps
+  `origin` = its own repo, `upstream` = the other repo, and its submodule pins.
 - **Branches: `<role>/<thing>`** — `recon/win-plan1`, `build/win-loader`, `hw/win-plan2`,
   `dispatch/land-win-recon1`.
 - **Every change lands through a PR with a merge commit.** Never commit to `main`; never

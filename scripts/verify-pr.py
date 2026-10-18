@@ -4,6 +4,7 @@
 Usage:
     scripts/verify-pr.py <pr-number> [--build] [--no-build]
     scripts/verify-pr.py --tier <pr-number>      # print: script | agent
+    scripts/verify-pr.py --selftest              # assert the tier table (CI runs this)
 
 Works on git refs (no checkout required): fetches `refs/pull/<n>/head` and the
 PR's base branch, then checks the diff. Exit 0 = all gating checks passed;
@@ -14,16 +15,20 @@ is script-gated or needs an agent verdict):
     agent tier   engine/**, tools/**, mesh/**, ui/**, scripts/**, tests/hardware/**,
                  any CMakeLists.txt, .github/**, .claude/**, docs/recon/**,
                  docs/recomp/{WINDOWS-FORK,FORK-COORDINATION}.md,
-                 tests/results/** addenda (*-correction.md, *-analysis.md)
-    script tier  everything else (run records, raw logs, .ips, PLAN.md,
-                 docs/recomp/** except the two fork documents above, CLAUDE.md,
-                 README.md, ...)
-    An empty or unreadable file list is treated as agent tier.
+                 tests/results/** (records, logs, addenda — #21)
+    script tier  everything else (PLAN.md, docs/recomp/** except the two fork
+                 documents above, CLAUDE.md, README.md, ...)
+    An empty or unreadable file list is treated as agent tier. The list is
+    pinned by `--selftest`; edit the table and the patterns together.
 
 Gating checks
   whitespace      `git diff --check`
   run-records     tests/results/: no existing record modified, deleted or renamed
-                  in place (addenda *-correction.md / *-analysis.md excepted)
+                  in place (addenda *-correction.md / *-analysis.md / *-addendum.md excepted)
+  record-provenance
+                  an added tests/results/*.md record must be accompanied, in the
+                  same PR, by an added raw artifact sharing its stem (typically
+                  its .log, non-.md); addenda/corrections/analyses are exempt.
   plan            PLAN.md row syntax: unique numbers, valid statuses, well-formed.
                   Status moves and new rows are reported, not gated.
   archives        cited `sha256 <hex>` values in changed tests/results/*.md must
@@ -70,12 +75,65 @@ AGENT_PATTERNS = [
     # the Windows-fork charter and coordination file carry rules (the contract
     # pin, the two-writer rule) and deserve a verdict like docs/recon/**.
     r"^docs/recomp/(WINDOWS-FORK|FORK-COORDINATION)\.md$",
-    r"^tests/results/.*(-correction|analysis)\.md$",
+    # Every evidence artifact under tests/results/** — records, logs and addenda —
+    # is agent-tier (#21): the directory is the loop's highest-stakes artifact
+    # class, and an added record auto-merging unreviewed was the hole.
+    r"^tests/results/",
 ]
 
 
 def is_agent_tier(path):
     return any(re.search(p, path) for p in AGENT_PATTERNS)
+
+
+# The tier list is load-bearing: a path that should be agent-tier returning
+# `script` lets auto-verdict post success and the PR merges judged by nothing.
+# This table pins the list; CI runs `--selftest` before trusting a tier
+# (verify.yml: base and PR copies; verdict-gate.yml: before the tier decision).
+# Edit the table and the patterns together — a mismatch fails the run.
+TIER_CASES = [
+    ("engine/src/ws_broadcast_server.cpp", "agent"),
+    ("engine/include/openscanner/obscan_api.h", "agent"),
+    ("tools/scan_server/main.cpp", "agent"),
+    ("mesh/src/kernel.cpp", "agent"),
+    ("ui/app.js", "agent"),
+    ("scripts/verify-pr.py", "agent"),
+    ("tests/hardware/plan56-stall-and-v5-visual.md", "agent"),
+    ("docs/recon/findings/scan-live-data.md", "agent"),
+    ("docs/architecture/scan-viewer.md", "agent"),
+    ("docs/recomp/WINDOWS-FORK.md", "agent"),
+    ("docs/recomp/FORK-COORDINATION.md", "agent"),
+    ("tests/results/2026-10-18-run.md", "agent"),
+    ("tests/results/2026-10-18-run.log", "agent"),
+    ("tests/results/2026-10-18-run.ips", "agent"),
+    ("tests/results/2026-10-18-old-addendum.md", "agent"),
+    (".github/workflows/verify.yml", "agent"),
+    (".claude/hooks/guard-hw-run.sh", "agent"),
+    ("CMakeLists.txt", "agent"),
+    ("docs/recomp/PLAN.md", "script"),
+    ("docs/recomp/ROADMAP.md", "script"),
+    ("docs/recomp/log/2026-10-18-entry.md", "script"),
+    ("CLAUDE.md", "script"),
+    ("README.md", "script"),
+    ("docs/research/plane-removal-reverse-engineering.md", "script"),
+    ("docs/tooling/rea-ghidra-setup.md", "script"),
+]
+
+
+def selftest():
+    bad = []
+    for path, want in TIER_CASES:
+        got = tier_of([path])
+        if got != want:
+            bad.append(f"{path}: want {want}, got {got}")
+    if tier_of([]) != "agent":
+        bad.append("empty list: want agent (unknown -> require a verdict)")
+    if tier_of(["docs/recomp/PLAN.md", "ui/app.js"]) != "agent":
+        bad.append("mixed list: want agent (one agent path makes the PR agent)")
+    for b in bad:
+        print("SELFTEST FAIL:", b)
+    print(f"tier selftest: {len(TIER_CASES) + 2} cases, {'FAIL' if bad else 'ok'}")
+    return 1 if bad else 0
 
 
 def sh(args, **kw):
@@ -183,6 +241,10 @@ def main():
     build_flag = "--build" in argv
     no_build = "--no-build" in argv
     tier_mode = "--tier" in argv
+    self_test = "--selftest" in argv
+    if self_test:
+        return selftest()
+
     nums = [a for a in argv if a.isdigit()]
     if not nums:
         print(__doc__)
@@ -257,7 +319,8 @@ def main():
     for line in r.stdout.splitlines():
         st, path = line.split("\t")[0], line.split("\t")[-1]
         bn = os.path.basename(path)
-        is_addendum = bn.endswith("-correction.md") or bn.endswith("-analysis.md")
+        is_addendum = (bn.endswith("-correction.md") or bn.endswith("-analysis.md")
+                       or bn.endswith("-addendum.md"))
         if st.startswith("M"):
             if is_addendum:
                 addenda += 1
@@ -268,6 +331,20 @@ def main():
     add("run-records", not bad,
         "; ".join(bad) if bad else
         (f"{addenda} modified addenda allowed" if addenda else "no modifications"))
+
+    # 2b. added records need a companion raw artifact in the same PR (#21)
+    r = git("diff", "--name-status", f"{base_ref}...{head_ref}", "--", "tests/results/")
+    added_res = [l.split("\t")[-1] for l in r.stdout.splitlines() if l.startswith("A")]
+    records = [p for p in added_res if p.endswith(".md")
+               and not re.search(r"-(correction|analysis|addendum)\.md$", p)]
+    others = [os.path.basename(p) for p in added_res
+              if p not in records and not p.endswith(".md")]
+    missing = [p for p in records
+               if not any(o.startswith(os.path.basename(p)[:-3]) for o in others)]
+    add("record-provenance", not missing,
+        "; ".join(f"no companion raw artifact in this PR: {p}" for p in missing) if missing
+        else (f"{len(records)} record(s) with companion(s)" if records
+              else "no records added"))
 
     # 3. plan: syntax gated; status moves and new rows reported only
     r = git("diff", "--name-only", f"{base_ref}...{head_ref}", "--", "docs/recomp/PLAN.md")
@@ -460,7 +537,7 @@ def main():
     for name, st, detail in report:
         print(f"| {name} | {st} | {detail.replace('|', '/')} |")
     print()
-    print("Gating checks: whitespace, run-records, plan, archives, hook, ui-js-syntax, build.")
+    print("Gating checks: whitespace, run-records, record-provenance, plan, archives, hook, ui-js-syntax, build.")
     if fails:
         print()
         print(f"**FAILED: {', '.join(fails)}**")
