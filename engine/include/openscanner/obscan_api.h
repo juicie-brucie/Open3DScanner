@@ -219,9 +219,10 @@ typedef struct ObScanColor {
 
 // OBScan.SDK.OBScanPointClouds — the raw live/accumulated point cloud for a
 // scan. `points` and `normals` are vendor-owned buffers of `num_points`
-// entries each; lifetime/ownership (who frees them, and when they become
-// invalid relative to the next SDK call) is not yet confirmed — treat as
-// read-only and copy out immediately after the call that returns it.
+// entries each, returned as borrowed pointers (no copy, no refcount bump;
+// obscan_scan_release_raw_cloud is a no-op) — copy out immediately; the next
+// cloud publish/clear can move or empty them. See
+// docs/recon/findings/scan-live-data.md §2.
 typedef struct ObScanPointClouds {
     uint32_t num_points;    // 0x00
     ObScanPoint* points;    // 0x08
@@ -580,6 +581,10 @@ typedef ObScanStatus (*fn_obscan_scan_pause)(ObScanScanHandle scan);
 // typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, bool is_block, ObScanStatusCallback status_callback);  // WRONG — kept here as a record of the dead end, do not resurrect.
 typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, ObScanProgressCallback progress_callback,
                                              ObScanStatusCallback status_callback, bool is_block);
+// Returns the last *published* model cloud. The getter itself does not
+// trigger the SDK's temp->show publish, so during an active scan it stays
+// empty unless something else (the color-cloud getter) has published. See
+// docs/recon/findings/scan-live-data.md §3.
 typedef ObScanStatus (*fn_obscan_scan_get_raw_cloud)(ObScanScanHandle scan, ObScanPointClouds* out_cloud);
 // Only valid while the scan is paused — called during an active scan it
 // fails with OB_SCAN_ERROR_MULTI_CALLED and the native log line "get
