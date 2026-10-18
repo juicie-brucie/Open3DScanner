@@ -54,6 +54,20 @@
 
 namespace {
 
+// UI directory served on the same port as the WebSocket. Checked relative
+// to the cwd and the usual build-dir depths so the tool works from build/.
+std::string FindUiDir() {
+    const char* candidates[] = {"ui", "../ui", "../../ui"};
+    for (const char* c : candidates) {
+        std::string index = std::string(c) + "/index.html";
+        if (FILE* f = std::fopen(index.c_str(), "rb")) {
+            std::fclose(f);
+            return c;
+        }
+    }
+    return "ui";
+}
+
 std::string g_record_path;
 uint64_t g_recorded_frame_count = 0;
 constexpr int kPointGridSize = 48;        // kPointGridSize^2 points on a sphere.
@@ -310,6 +324,7 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
 
 void RunSyntheticServer(uint16_t port) {
     openscanner::WsBroadcastServer server;
+    server.SetStaticRoot(FindUiDir());
     ControlState control;
     control.scanning = true;  // Streams immediately, as before, if no UI ever sends a command.
 
@@ -708,6 +723,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     control.fov_wide = (scan_config.mode_config.scan_fov == OB_SCAN_FOV_WIDE);
 
     openscanner::WsBroadcastServer server;
+    server.SetStaticRoot(FindUiDir());
     server.SetTextMessageHandler([&control, &server](const std::string& msg) {
         HandleControlMessage(msg, &control);
         if (control.finish_requested.load()) g_stop_requested = 1;
@@ -1102,6 +1118,7 @@ int RunReplayMode(int argc, char** argv) {
     }
 
     openscanner::WsBroadcastServer server;
+    server.SetStaticRoot(FindUiDir());
     if (!server.Start(port)) {
         std::fprintf(stderr, "[worker] Failed to start WebSocket server on port %u\n", port);
         return 1;
