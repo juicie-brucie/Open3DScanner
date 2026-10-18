@@ -29,6 +29,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <fstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -44,6 +45,7 @@
 
 namespace {
 
+std::string g_record_path;
 constexpr int kPointGridSize = 48;        // kPointGridSize^2 points on a sphere.
 constexpr double kFrameIntervalMs = 1000.0 / 30.0;  // ~30 Hz.
 
@@ -258,6 +260,12 @@ std::vector<uint8_t> BuildFrame(uint32_t frame_id, double capture_timestamp_ms, 
                                                              xyz == nullptr ? nullptr : xyz, point_count);
 }
 
+static void RecordFrame(const std::vector<uint8_t>& frame) {
+    if (g_record_path.empty()) return;
+    static std::ofstream out(g_record_path, std::ios::binary | std::ios::app);
+    if (out) out.write(reinterpret_cast<const char*>(frame.data()), frame.size());
+}
+
 void RunSyntheticServer(uint16_t port) {
     openscanner::WsBroadcastServer server;
     ControlState control;
@@ -310,6 +318,7 @@ void RunSyntheticServer(uint16_t port) {
                            static_cast<uint32_t>(frame_points.size()));
             if (server.ConnectedClientCount() > 0) {
                 server.BroadcastBinary(buf.data(), buf.size());
+            RecordFrame(buf);
             }
         }
 
@@ -680,12 +689,14 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                     }
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
                     server.BroadcastBinary(buf.data(), buf.size());
+            RecordFrame(buf);
                     ++g_cloud_frames_broadcast;
                 } else {
                     // Broadcast an empty frame too, so the UI's data-fps/HUD
                     // reflects a real, live connection rather than going idle.
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
                     server.BroadcastBinary(buf.data(), buf.size());
+            RecordFrame(buf);
                     ++g_cloud_frames_broadcast;
                 }
                 // Release is a no-op in the vendor (native `ret`); call it
@@ -735,6 +746,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             }
             std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), preview_count);
             server.BroadcastBinary(buf.data(), buf.size());
+            RecordFrame(buf);
             ++g_cloud_frames_broadcast;
             std::printf("[worker] Broadcast final reconstructed mesh preview (%u of %u points).\n",
                         preview_count, mesh.num_vertices);
@@ -756,6 +768,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 }
                 std::vector<uint8_t> cbuf = BuildFrame(frame_id++, NowMs(), cxyz.data(), cnt);
                 server.BroadcastBinary(cbuf.data(), cbuf.size());
+                RecordFrame(cbuf);
                 ++g_full_detail_chunks_broadcast;
             }
             server.BroadcastText("{\"type\":\"full_mesh_done\"}");
@@ -827,6 +840,12 @@ int RunLiveMode(int argc, char** argv) {
     if (argc > 2) port = static_cast<uint16_t>(std::atoi(argv[2]));
     if (argc > 3) library_path = argv[3];
     if (argc > 4) session_seconds = std::atoi(argv[4]);
+    for (int i = 2; i < argc; ++i) {
+        if (std::string(argv[i]) == "--record" && i + 1 < argc) {
+            g_record_path = argv[i+1];
+            setenv("OPENSCANNER_RECORD", g_record_path.c_str(), 1);
+        }
+    }
     if (library_path.empty()) library_path = openscanner::ObscanLibrary::FindDefaultLibraryPath();
     if (library_path.empty()) {
         std::fprintf(stderr, "No OBScan SDK library found. Pass the path explicitly: scan_server --live <port> <path>\n");
@@ -870,6 +889,58 @@ int RunLiveMode(int argc, char** argv) {
     return 2;
 }
 
+int RunReplayMode(int argc, char** argv) {
+    if (argc < 3) {
+        std::fprintf(stderr, "Usage: scan_server --replay <file> [port]\n");
+        return 1;
+    }
+    const char* path = argv[2];
+    uint16_t port = argc > 3 ? static_cast<uint16_t>(std::atoi(argv[3])) : 8787;
+
+    std::ifstream in(path, std::ios::binary);
+    if (!in) {
+        std::fprintf(stderr, "Cannot open replay file: %s\n", path);
+        return 1;
+    }
+    std::vector<uint8_t> data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+
+    openscanner::WsBroadcastServer server;
+    if (!server.Start(port)) {
+        std::fprintf(stderr, "[worker] Failed to start WebSocket server on port %u\n", port);
+        return 1;
+    }
+    std::printf("[worker] Replaying %s on ws://0.0.0.0:%u\n", path, port);
+    std::fflush(stdout);
+
+    size_t pos = 0;
+    double first_t = 0, prev_t = 0;
+    bool have_prev = false;
+    while (pos + 32 <= data.size()) {
+        // read payload_len at offset 28 (little-endian)
+        uint32_t payload_len = data[pos+28] | (data[pos+29]<<8) | (data[pos+30]<<16) | (data[pos+31]<<24);
+        size_t frame_len = 32 + payload_len;
+        if (frame_len > data.size() - pos) break;
+        // t_capture at offset 12 (f64 LE)
+        uint64_t tu = 0;
+        for (int i = 0; i < 8; ++i) tu |= (uint64_t)data[pos+12+i] << (i*8);
+        double t; std::memcpy(&t, &tu, sizeof(t));
+        if (!have_prev) { first_t = t; prev_t = t; have_prev = true; }
+        else {
+            double dt = t - prev_t;
+            if (dt > 0 && dt < 10000) std::this_thread::sleep_for(std::chrono::milliseconds((int)dt));
+            prev_t = t;
+        }
+        server.BroadcastBinary(data.data() + pos, frame_len);
+        pos += frame_len;
+    }
+    std::printf("[worker] Replay complete (%zu bytes).\n", pos);
+    std::fflush(stdout);
+    // keep server alive briefly
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    server.Stop();
+    return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -882,6 +953,9 @@ int main(int argc, char** argv) {
 
     if (argc >= 2 && std::string(argv[1]) == "--live") {
         return RunLiveMode(argc, argv);
+    }
+    if (argc >= 2 && std::string(argv[1]) == "--replay") {
+        return RunReplayMode(argc, argv);
     }
 
     uint16_t port = argc > 1 ? static_cast<uint16_t>(std::atoi(argv[1])) : 8787;
