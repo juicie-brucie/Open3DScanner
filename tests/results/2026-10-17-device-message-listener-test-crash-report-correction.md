@@ -13,6 +13,6 @@ report for this run.
 - Archived as: [`2026-10-17-device-message-listener-test.crash.ips`](./2026-10-17-device-message-listener-test.crash.ips) (sha256 `7122283d4dfb229bb4d77709480cc681653e3e0107e9448cd813fe0c42f7d2bf`)
 
 The session did not collect it — the hw-test instructions did not yet require
-checking `DiagnosticReports`; `.claude/agents/hw-test.md` rule 11 now does. The
-record's other conclusions stand unchanged; only the "no crash report exists"
-reading is corrected.
+checking `DiagnosticReports`; `.claude/agents/hw-test.md` rule 11 now does. This
+correction only adds the archival fact — the record's crash conclusions were
+reached without this report and are not re-assessed here.

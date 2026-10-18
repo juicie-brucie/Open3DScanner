@@ -187,3 +187,7 @@ _Append dated one-liners: what changed, which agent, and the outcome._
   `~/Library/Logs/DiagnosticReports/` are archived into `tests/results/`, with
   dated corrections to the two records that said none existed; hw-test rule 11
   now requires the check on every non-clean exit.
+- 2026-10-17 — repair: PR #55 was merged by the operator while its verification
+  was still in flight; the verifier's verdict (`NEEDS CHANGE` — the corrections
+  overclaimed) landed after the merge. Fixed forward: both corrections reworded;
+  rule 11 extended to reports found after the record was written.
