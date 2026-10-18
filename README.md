@@ -304,16 +304,25 @@ end-to-end on real hardware 2026-10-16: the UI connects and streams at
 so far) broadcasts and renders once per session, and the worker tears down
 cleanly (`exit code 0`, no power cycle). Two things worth knowing before
 using it:
-- `obscan_scan_get_raw_cloud` has never been observed to return nonzero
-  points *during* active scanning on this hardware (see "Known issues"),
-  so expect the live per-tick frames to show 0 points — the one frame
-  with real data is the final `obscan_scan_get_realtime_model_mesh`
-  snapshot broadcast right after pause, at the end of the session.
+- The live per-tick frames now come from
+  `obscan_scan_get_model_point_color_clouds`, which publishes the model
+  cloud while scanning, so they can carry points during the scan. The
+  per-tick payload is decimated to a fixed budget so the UI stays live at
+  high accumulated point counts. The final
+  `obscan_scan_get_realtime_model_mesh` snapshot is still broadcast after
+  pause.
 - Ctrl+C triggers a graceful `obscan_scan_pause`/`stop`/`destroy`
   teardown instead of killing the process — **always use Ctrl+C (or let
-  the bounded session length finish on its own) rather than `pkill`/
-  `kill -9`**, which skips that teardown and has left this hardware
-  needing a physical power cycle to recover (confirmed twice).
+  the bounded session length finish on its own) rather than `kill -9`**,
+  which skips that teardown and has left this hardware needing a physical
+  power cycle to recover (confirmed twice). (`pkill`/`kill` without
+  `-9` only send SIGTERM, which the worker handles gracefully.)
+- If you must kill it, note that `pkill -f "scan_server --live"` also
+  matches the worker — the pattern is a substring of
+  `--live-worker` — so it stays alive rather than dying instantly: it is
+  signalled and runs its graceful teardown, which can take seconds or
+  hang in `context_destroy`. `kill <worker-pid>` (SIGTERM) still gives
+  that teardown; only `kill -9` skips it and risks the power cycle.
 
 Swapping in real frames changes the frame producer, not the transport or
 the UI.

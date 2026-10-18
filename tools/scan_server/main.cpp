@@ -10,18 +10,13 @@
 //       scanner (same context/session/scan lifecycle as
 //       tools/live_capture_test) and broadcasts whatever it gets back.
 //
-//       Known limitation, carried over from live_capture_test's own
-//       findings (see README.md "Known issues" and
-//       logs/exposure_sweep_new_setup_20261016/): obscan_scan_get_raw_cloud
-//       has never been observed to return nonzero points *during* active
-//       scanning, regardless of config — so the live per-frame broadcast
-//       will likely show 0 points throughout the scan. The only call that
-//       has ever produced real data is obscan_scan_get_realtime_model_mesh,
-//       and only once the scan is paused. This mode broadcasts raw_cloud
-//       continuously while scanning (so the UI's "connected and streaming"
-//       state is real even if empty), then does one final pause ->
-//       get_realtime_model_mesh -> broadcast before tearing down, so the
-//       UI gets to show real captured geometry at least once per session.
+//       Live frames now come from obscan_scan_get_model_point_color_clouds,
+//       which publishes the model cloud while scanning, so they can carry
+//       points during the scan; the per-tick payload is decimated to a
+//       fixed budget so the UI stays live at high accumulated point counts.
+//       The final pause -> get_realtime_model_mesh snapshot is still
+//       broadcast before teardown, so the UI shows full captured geometry
+//       at least once per session.
 
 #include <algorithm>
 #include <atomic>
@@ -356,7 +351,7 @@ constexpr int kWantStableFrames = 10;
 // same teardown that's required a physical power cycle to recover from
 // in the past. Let it finish on its own; don't pkill it.
 int g_live_session_seconds = 300;
-constexpr int kLiveTickIntervalMs = 100;  // ~10Hz raw_cloud polling.
+constexpr int kLiveTickIntervalMs = 100;  // ~10Hz live-frame polling.
 
 std::atomic<bool> g_got_connect_message{false};
 std::atomic<int> g_frame_ready_count{0};
@@ -600,10 +595,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     } else {
         std::printf("[worker] Streaming live scan frames on ws://0.0.0.0:%u (open ui/index.html)\n", port);
         std::printf(
-            "[worker] Note: each tick now calls obscan_scan_get_model_point_color_clouds, which publishes the\n"
-            "[worker] model cloud, so live frames should be nonzero during scanning. obscan_scan_get_raw_cloud\n"
-            "[worker] only reflects the last publish and is logged alongside for contrast; the final pause ->\n"
-            "[worker] get_realtime_model_mesh snapshot is still broadcast at the end of this session.\n");
+            "[worker] Note: each tick calls obscan_scan_get_model_point_color_clouds, which publishes the\n"
+            "[worker] model cloud, so live frames can carry points during scanning. The per-tick payload is\n"
+            "[worker] decimated to a fixed budget so the UI stays live at high accumulated point counts. The\n"
+            "[worker] final pause -> get_realtime_model_mesh snapshot is still broadcast at the end.\n");
     }
     std::fflush(stdout);
 
@@ -649,7 +644,6 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
         }
 
         ObScanPointColorClouds cloud = {};
-        ObScanPointClouds raw_cloud = {};
         ObScanCloudBbox bbox = {};
         uint32_t published_count = 0;
         if (!hardware_paused) {
@@ -665,20 +659,30 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             // The color getter is the publish trigger for the model cloud
             // (see docs/recon/findings/scan-live-data.md §3): calling it
             // swaps the fusion temp cloud into the published show cloud, so
-            // get_raw_cloud / the UI finally see live points while scanning.
+            // the UI finally see live points while scanning.
             // out_count is not validated by the wrapper, so pass a valid
             // pointer; out_bbox is required non-null.
             status = lib.obscan_scan_get_model_point_color_clouds(scan, &cloud, &bbox, &published_count);
             if (status == OB_SCAN_SUCCESS) {
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
-                    std::vector<float> xyz(static_cast<size_t>(cloud.num_points) * 3);
-                    for (uint32_t i = 0; i < cloud.num_points; ++i) {
-                        xyz[i * 3 + 0] = cloud.points[i].x;
-                        xyz[i * 3 + 1] = cloud.points[i].y;
-                        xyz[i * 3 + 2] = cloud.points[i].z;
+                    // Bound the per-tick cost: broadcast a fixed-size sample
+                    // instead of copying/broadcasting the whole accumulated
+                    // cloud every tick (O(points) -> O(kLiveBroadcastPointBudget)).
+                    constexpr uint32_t kLiveBroadcastPointBudget = 20000;
+                    uint32_t stride = 1;
+                    uint32_t broadcast_count = cloud.num_points;
+                    if (broadcast_count > kLiveBroadcastPointBudget) {
+                        stride = (broadcast_count + kLiveBroadcastPointBudget - 1) / kLiveBroadcastPointBudget;
+                        broadcast_count = (cloud.num_points + stride - 1) / stride;
                     }
-                    std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), cloud.num_points);
+                    std::vector<float> xyz(static_cast<size_t>(broadcast_count) * 3);
+                    for (uint32_t i = 0, src = 0; i < broadcast_count; ++i, src += stride) {
+                        xyz[i * 3 + 0] = cloud.points[src].x;
+                        xyz[i * 3 + 1] = cloud.points[src].y;
+                        xyz[i * 3 + 2] = cloud.points[src].z;
+                    }
+                    std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
                     server.BroadcastBinary(buf.data(), buf.size());
                 } else {
                     // Broadcast an empty frame too, so the UI's data-fps/HUD
@@ -691,17 +695,14 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 // copy out before the next publish.
                 lib.obscan_scan_model_clouds_release(scan);
             }
-            // Raw getter never publishes; reading it after the color getter
-            // shows the last published cloud, demonstrating the mechanism.
-            lib.obscan_scan_get_raw_cloud(scan, &raw_cloud);
         }
 
         if (tick % 10 == 0) {  // ~every 1s
             server.BroadcastText(BuildStatusJson("live", control, /*fov_controllable=*/false));
         }
         if (tick % 50 == 0) {  // ~every 5s
-            std::printf("[worker] tick %d/%d: color_cloud num_points=%u raw_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
-                        tick, total_ticks, cloud.num_points, raw_cloud.num_points, max_points_seen, server.ConnectedClientCount(),
+            std::printf("[worker] tick %d/%d: color_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
+                        tick, total_ticks, cloud.num_points, max_points_seen, server.ConnectedClientCount(),
                         hardware_paused ? 1 : 0);
             std::fflush(stdout);
         }
