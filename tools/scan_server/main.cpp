@@ -587,6 +587,11 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     g_record_path = record_path;
     std::signal(SIGINT, &OnStopSignal);
     std::signal(SIGTERM, &OnStopSignal);
+#if defined(SIGPIPE)
+    // A stalled/reset client must not take down the server; SendAll also
+    // returns false on failure so the socket is pruned.
+    std::signal(SIGPIPE, SIG_IGN);
+#endif
 
     std::printf("[worker] Loading OBScan SDK from: %s\n", library_path.c_str());
     std::printf("[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown\n");
