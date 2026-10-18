@@ -95,9 +95,11 @@ inline bool decode_cloud_snapshot(const uint8_t* data, size_t len, uint32_t* out
     *out_t_server = get_f64(20);
     uint32_t payload_len = get_u32(28);
     if (payload_len < 4) return false;
-    if (28 + 4 + payload_len - 4 > len) return false; // payload_len includes count
+    // Frame is 32-byte envelope + payload_len bytes. Check in 64-bit so
+    // neither truncation nor uint32 wraparound can pass a hostile frame.
+    if (static_cast<uint64_t>(32) + payload_len > len) return false;
     uint32_t count = get_u32(32);
-    if (4 + count * 3 * 4 != payload_len) return false;
+    if (static_cast<uint64_t>(4) + static_cast<uint64_t>(count) * 12ULL != payload_len) return false;
     *out_count = count;
     *out_xyz = reinterpret_cast<const float*>(data + 36);
     return true;
