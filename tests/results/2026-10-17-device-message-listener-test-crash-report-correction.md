@@ -15,4 +15,5 @@ report for this run.
 The session did not collect it — the hw-test instructions did not yet require
 checking `DiagnosticReports`; `.claude/agents/hw-test.md` rule 11 now does. This
 correction only adds the archival fact — the record's crash conclusions were
-reached without this report and are not re-assessed here.
+reached without this report and are not re-assessed here. See the plan8 crash
+analysis cited by the record, which retracts its libomp attribution.
