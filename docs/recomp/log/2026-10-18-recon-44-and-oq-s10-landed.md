@@ -1,0 +1,1 @@
+- 2026-10-18 — recon: row #44's residuals and OQ-S10's answer landed (PR #119); #44 → `DONE`.
