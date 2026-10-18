@@ -181,7 +181,6 @@ _Append dated one-liners: what changed, which agent, and the outcome._
   `337b34f`); #16 → `DONE`, #2/#19 → `HW` (implementation complete; the
   data/process test's first hardware run is the next evidence). `wt-hw` synced
   to main and the target rebuilt.
-
 - 2026-10-17 — dispatcher: crash-report gap closed — the two
   `device_message_listener_test` crash reports left in
   `~/Library/Logs/DiagnosticReports/` are archived into `tests/results/`, with
