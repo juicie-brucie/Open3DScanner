@@ -27,14 +27,15 @@ make a test pass.
    it and stop.
 9. Do not power-cycle, unplug, or replug the device. Ask.
 10. Exit code 2 means skipped (no SDK dylib). That is not a pass.
-
 11. **Crash reports are part of the record.** If a run exits non-cleanly (signal
     or otherwise), macOS writes a crash report to
     `~/Library/Logs/DiagnosticReports/<binary-name>-<date>-<time>.ips` (it can
     take a few seconds to appear). Copy it into `tests/results/` as
     `<record-slug>.crash.ips`, next to the record, and reference it from the
     record. Never write "no crash report was captured" without first checking
-    that directory for the run's time window.
+    that directory for the run's time window. If a report is found only after the
+    record was written, add a dated `<record-slug>-crash-report-correction.md`
+    naming the record and the archived file; never edit the record in place.
 
 ## Evidence
 
