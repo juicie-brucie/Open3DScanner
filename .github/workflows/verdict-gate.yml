@@ -42,7 +42,13 @@ jobs:
             -f state=success -f context=verdict -f description="docs/artifacts - script-gated"
           echo "tier=script - verdict set to success"
 
-  verdict:
+  # NOTE: this job must NOT be named `verdict`. Branch protection requires a
+  # `verdict` context, and a *skipped* job's check run satisfies a required
+  # context — so a job named `verdict` (skipped on pull_request_target runs)
+  # let agent-tier PRs auto-merge with no verdict (proven by PR #67). The
+  # required `verdict` context is the commit status set by `auto-verdict`
+  # (script tier) or by a verdict comment (agent tier).
+  verdict-comment:
     if: github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, 'VERDICT:')
     runs-on: ubuntu-latest
     steps:
