@@ -13,6 +13,13 @@
 #   --base URL       API base (default: auto-detect the listening opencode port)
 #   -h, --help       this text
 #
+# NOTE (dispatcher usage): this process exits only when EVERY item has settled, and
+# the dispatcher's wake-up is tied to this command finishing — so one watcher over
+# several items delays every wake to the slowest one. Launch ONE watcher per item
+# (separate backgrounded calls) so each completion wakes you independently; use a
+# multi-item invocation only when you genuinely want the whole set to settle before
+# acting (e.g. a final round summary).
+#
 # Sessions: blocks on POST /api/experimental/session/<id>/wait (204 when the
 # session goes idle; blocks while it runs), then confirms a message landed after
 # the watch began. A session that is idle at watch start and produces no new
@@ -36,7 +43,7 @@ while [ $# -gt 0 ]; do
     --interval) INTERVAL="$2"; shift 2 ;;
     --grace)    GRACE="$2";    shift 2 ;;
     --base)     BASE="$2";     shift 2 ;;
-    -h|--help)  sed -n '2,26p' "$0"; exit 0 ;;
+    -h|--help)  awk 'NR==1{next} /^#/{print; next} {exit}' "$0"; exit 0 ;;
     --*)        echo "watch-sessions: unknown option: $1" >&2; exit 2 ;;
     *)          ITEMS+=("$1"); shift ;;
   esac
