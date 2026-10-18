@@ -580,20 +580,55 @@ path) are unmapped — not needed by the exposed arrays; `VKeyPoint+0x38` is a
 `marker_state` bitfield (bit0 deleted, bit1 imported, bit2 hidden — accessors
 `0x6a8dc0`/`0x6a8dd8`/`0x6a8df0`), not exposed through `ObScanMarkers`.
 
-### 17.4 The camera model — FOV only; no C-reachable intrinsics
+### 17.4 The camera model — no C getter, but a decodable session record (OQ-S10)
 
-`ObScanFov` (0 = NORMAL, 1 = WIDE — the vendor's own name/desc tables
-`0x170bec`/`0x170c18`) is already bound, and it is the mode config's
-`scan_fov@0x18` (`ObScanModeConfig`, reachable via `obscan_scan_get_mode_config`
-`0xff5c`). The vendor's richer camera data (`DeviceParameters`,
-`DeCameraIntrinsic_S`, `OBCameraParam`; the `load_camera_params` /
-`init_camera_params` import paths `0x9e074`/`0xa1bd8`/`0xa23fc`;
-`convert_ferret_camera_params` `0xbd672c`) is **not reachable from the C ABI**;
-the only C-reachable parameter path is the opaque device-param blob
-(`obscan_device_management_backup_device_param` `0x117b8` /
-`resume_device_param` `0x11844`), content unparsed. For the viewer's §5
-design: **pose + FOV is everything the pinned ABI supports**; richer
-intrinsics need new analysis (OQ-S10 — analysis-needed, deliberately not run).
+**No C export returns intrinsics or distortion as a value.** The vendor's
+`DeviceParameters` getter (`device::OrbbecDevice::get_device_parameters`,
+`0x1b4bc0`) is internal — its callers are the scan-side save/init paths
+(`OrbbecScanSpeckle`/`OrbbecScanLaser::save_camera_intrins`,
+`…::save_ext_params`, `…::judge_device_params`,
+`TextureScanningContext::init_scanning_params`, …) — and the export surface
+has no getter for it.
+
+**But the ABI does open a path — the session's project cache.** At preview /
+new-scan start the SDK runs `save_camera_intrins` (callers: `preview`,
+`new_scan_preview`, `clear_repreview`, `reconfig_texture_config`,
+`framework_context_to_speckle_context`), which fetches the `DeviceParameters`
+and stores them under the record name **`camera_intrin`** via
+`SerializableDeviceParams` (`0x6e9000`) → `SerializableDeviceParams::to_buffer`
+(`0x6e3874`) → `rs_common::ProjectFileCache::store_serializable` (the read side
+is `OBScanSerialIO::load_device_params_data` `0x6eb98c`, used by the
+project-import paths `0x9e074`/`0xa1bd8`). That cache is the session's
+**`<session output_dir>/resources.obscan` — a SQLite 3 database** (`files` /
+`editDatas` tables; the `-wal`/`-shm` companions are SQLite's). The record is
+the row **`files.name = 'camera_intrin.bat'`** — verified empirically in the
+row #32 clean run's session dir (`length(data) = 210`). A consumer holding the
+session dir (or an export via `obscan_session_export` `0xd088`) can therefore
+read the intrinsics **with any SQLite client**.
+
+**The record's schema is positional, not self-describing.** `to_buffer` packs a
+fixed sequence of **41 fields** (25×f32, 9×i32, 1×u32, 1×u64, 6
+length-prefixed strings) over the `DeviceParameters` struct, each value written
+**big-endian** (`pack_bytes_pod<float>` `0x1a03f4` stores byte 3 first, with a
+bounds check). The colour intrinsics sit in packed positions 11–16 (f32 ×4 at
+`DeviceParameters+0x1c..+0x28`, then 2×i32 at `+0x2c/+0x30`), anchored by
+`device::AbstractDeviceHandle::copyColorParams` (`0x317688`: 4×f32 → `+0x1c`,
+2×int16 → `+0x2c`, Brown distortion 8×f32 → `+0x34/+0x44`); the depth/D2C/
+camera blocks and version strings follow (offsets `+0xa28..+0xb08`).
+
+**The backup/resume blob is not the path — and not decodable here.** The C
+wrapper `obscan_device_management_backup_device_param` (`0x117b8`;
+`(handle, uint8_t** out, uint32_t* len)`) → `OBDeviceManagement` (`0x5c4ce4`,
+gated on the manager's device-present flag `+0x165`) → `OrbbecDevice` →
+`OrbbecInternalDevice::backup_device_param` (`0x1e20dc`), which dispatches to
+the **device handle's own virtual** (`vtable+0x200`, `0x1e2154`) —
+implemented in **libOrbbecSDK**, outside the pinned snapshot. Its content and
+schema cannot be settled from this binary; it stays an unproven candidate
+(settle with the libOrbbecSDK binary or a runtime hexdump of the blob).
+
+Residual (OQ-S10): the byte-exact position→semantic map of all 41 packed
+fields (the colour-intrinsics block is anchored; the identity/version fields
+are not).
 
 ### 17.5 Error taxonomy (all four exports)
 
@@ -669,11 +704,16 @@ tables. It stays undeclared (a separate contract row if wanted).
   §17.3). Hardware-only residue: whether an update actually interleaves with
   an app read in practice, and the live cadence — a double-call loop during an
   active scan (guard page/ASan) would show it.
-- **OQ-S10** — *analysis-needed (serialized by design; do not run without a
-  board row):* richer camera intrinsics (§17.4) — whether
-  `DeviceParameters`/`DeCameraIntrinsic_S` are recoverable from the snapshot
-  and whether any reachable path exposes them. Today only the opaque
-  backup/resume blob is C-reachable.
+- **OQ-S10** — *Answered (the analyzer pass), with residuals*: the pinned C ABI
+  has no intrinsics getter, but the session's project cache is a SQLite DB
+  whose `files` row `camera_intrin.bat` holds the packed `DeviceParameters`
+  record (written at preview/new-scan start; verified in a real session dir,
+  210 B) — readable with any SQLite client, schema positional/big-endian,
+  41 fields with the colour-intrinsics block anchored (§17.4). The
+  backup/resume blob is produced in libOrbbecSDK (out of snapshot) and stays
+  an unproven candidate. Residuals: the byte-exact map of all 41 packed fields
+  (the identity/version fields are not yet named) and the blob's content
+  (needs the libOrbbecSDK binary or a runtime hexdump).
 - **OQ-S11** — *Answered (row #44), one gap*: `obscan_get_marker_mesh`
   (`0x11ce4`) is `int (int n, float* out_a, float* out_b, <float/vector args>)`
   — an n-segment disc/fan (`2πi/n` + `sincosf`) into the two caller buffers
@@ -725,3 +765,10 @@ snapshot (S7 the pose convention, S8 the marker field names, S9 the borrow
 stability, S11 the marker-mesh signature) — no analyzer run. Targets/addresses as
 cited in §17.1/§17.3/§17.6 and the OQ list; the sweep drafts were folded and
 deleted.
+
+OQ-S10 (the camera intrinsics, the analyzer pass): the write chain was traced in
+the listing (save_camera_intrins -> SerializableDeviceParams::to_buffer ->
+ProjectFileCache::store_serializable) and the record verified in a real session
+cache (`<output_dir>/resources.obscan`, SQLite, `files.name = camera_intrin.bat`,
+210 B) — plus the packer format (0x1a03f4) and the 41-field order (0x6e3874). The
+backup/resume blob's producer is a libOrbbecSDK virtual (out of snapshot).
