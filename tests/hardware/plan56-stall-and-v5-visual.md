@@ -54,6 +54,12 @@ instead of dying. This procedure re-runs the identical stall against the fix.
    reach the WebGL2 path. If instead the page shows "Neither WebGPU nor WebGL2 is
    available", that is a **FAIL** of the rejection path: record it, and continue with the
    stall test. Record the `backend` line after this step.
+   **Then restore the room before the stall.** A relaunch drops **both** tabs, and a
+   page with no renderer never connects — so: if the flag was toggled, restore it
+   (`chrome://flags` → WebGPU → Default, relaunch), then reopen **both** tabs (tab B
+   with its forced `?backend=webgl2` URL) and confirm both are live before step 3. Left
+   disabled, the flag would make later sessions' default tabs read `webgl2` and
+   silently degrade the visual.
 3. Let both stream a few seconds. Optional sanity: toggle follow once in tab A.
 4. **Stall tab A** with the same busy loop the rerun used — 3 s blocking the main JS thread
    (the rerun's route: the browser tooling's `javascript_tool`, or the tab's own console):
