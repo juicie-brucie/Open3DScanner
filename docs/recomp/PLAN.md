@@ -30,6 +30,7 @@ Status: `TODO` · `RECON` · `SPEC-READY` · `BUILD` · `HW` · `DONE` · `BLOCK
 | 19 | `data_process_message_listener_test` runs in-process (no worker, interposer or timeout) | HW | Found by the PR #51 verification (item 1): no `RunSelfAsWorker`, no `vulkan_disable_interpose` wiring, no timeout, and it calls `obscan_context_destroy` (`main.cpp:156`) — `worker_process.h` documents that call can crash or hang unbounded. The PreToolUse guard now gates it to `wt-hw` alongside the device test; this row is the remaining half: wire it behind the launcher like `device_message_listener_test`. Builder owns `tests/hardware/`. **Wired** (PR #53, `071438e`): worker + interposer + 180 s timeout, mirroring the device test; `wt-hw` synced and the target rebuilt (launcher strings verified in the binary). Remaining: a hardware run of the test. |
 | 20 | Archived crash reports show the main thread inside `obscan_context_destroy` when the watcher thread faults | TODO | Raised by the #56 verification (observation 2): with the reports now on `main`, all three archived crash reports show the main thread in `OBDeviceManagement::release()` → `~OrbbecDevice` → `stop()` on a mutex while the watcher thread faults. That contradicts row #5's "it never reached `obscan_context_destroy()`" and the crash analysis's line 56; #11/#15's re-run design depends on it. Needs a re-read of the `.ips` files against both claims, then corrections. |
 | 21 | New run records and raw logs under `tests/results/**` are script-tier, so a fabricated record would auto-merge | TODO | Raised by the #58 verification (M4 residual): `run-records` guards modification, deletion and renaming of existing records, but an added record is script-tier — `verdict-gate` auto-sets `verdict` with no judgment pass. Records are the highest-stakes artifact class; decide between moving added records/logs to the agent tier or adding a provenance check (e.g. a required companion raw log whose command line matches the record). |
+| 22 | Launcher banners were printed without flushing, so piped captures showed them late | DONE | Found by the PR #53 verification (finding 3) and re-flagged in every hardware record's banner check: the `[launcher]` banners used `printf` with no `fflush`, so the worker's flushed lines preceded them in piped output. Fixed in PR #62 for both hardware tests, `live_capture_test` and `smoke_test` (the `Running …` banners too); the banner check should now pass literally on the next hardware run. |
 
 ## Open questions (from recon)
 
@@ -200,3 +201,7 @@ _Append dated one-liners: what changed, which agent, and the outcome._
 
 - 2026-10-17 — recon: row #18 applied (plan18 pass) — five §6.1/§2.3 corrections,
   tips/control `+0x30` invokes ranged byte-identical, OQ-3 answered; #18 → `DONE`.
+
+- 2026-10-17 — build: launcher banners now flush before worker output (PR #62) —
+  fixes the banner-position anomaly every hardware record had to explain;
+  #22 → `DONE`.
