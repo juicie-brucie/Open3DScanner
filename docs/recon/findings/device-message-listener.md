@@ -177,6 +177,15 @@ must be thread-safe regardless. Two adjacent hazards stand: a callback that
 removes and frees its own listener while the invoke body is mid-call
 (§6.1/§8), and the re-add window the crash series exposed (#5/#11).
 
+**No serialisation.** The invoke path takes **no lock**: `send_device_msg(OBScanMessage)`
+(`0x5c5304`) reads the listener slot at `+0xb8` and `blr`s the `__func` slot
+`+0x30` (`0x5c5420`–`0x5c5434`) with no `swpab`/`stlrb`/`lдaxr`/mutex anywhere in
+the function (verified in the binary) — so concurrent invocations from different
+threads are possible and nothing queues them; the only ordering guarantee is
+the caller's own (the synchronous add-time delivery). A listener must be
+thread-safe on its own. `[inferred: static read; no run has yet exercised two
+threads at once]`
+
 **Trace that would close the watcher half (if wanted):** run
 `device_message_listener_test` with the listener installed and cause a
 device-changed pass (unplug/replug, or wait for the watcher's poll) while the
@@ -458,8 +467,10 @@ no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
   (`send_need_calib_msg` from `read_depth_point_cloud`), and the upgrade
   callbacks (§4). Re-entrancy: **yes** — the add-time delivery is synchronous
   inside `add`, so calling add (or remove→add) from inside the callback
-  re-enters it nested. The single observation that closes the watcher half is
-  the trace in §4.
+  re-enters it nested; and the invoke is unsynchronised (no lock on the slot
+  read or the call — verified), so concurrent invocations are possible and
+  unqueued. The single observation that closes the watcher half is the trace
+  in §4.
 - **OQ-5** — *Resolved (row #47)*: the tips / control / calib `*_name` tables
   are decoded (§11) — tips 5 entries (`0x126202xx`), control 35 (`0x147002xx`
   plus a bare `0`), calib-message 9 (`0x147001xx` plus a bare `0`), plus the
