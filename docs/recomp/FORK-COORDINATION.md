@@ -26,7 +26,7 @@ diverging.
 | Repo | Parent commit | `obscan_api.h` sha256 | Checked in CI |
 | --- | --- | --- | --- |
 | `Open3DScanner` (parent) | `main` (self) | regenerated per commit | n/a |
-| `Open3DScanner-Win64` (fork) | _(unset)_ | _(unset)_ | not yet wired |
+| `Open3DScanner-Win64` (fork) | `dac0e7dedd6674335d7b4abb4e65f9efd540ccbc` | `e6946c5e3110f179d4ac090e2c371d145bd108e2b068557f0ca56bbecd09018c` | not yet wired |
 
 ## 3. Platform registry
 
@@ -65,3 +65,11 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
   parent at `dac0e7d`; its copy of this file carries its `[win]` entry, and both copies' §4 now
   carry the room-hygiene rule. The §2 pin row for the fork stays unset until the fork wires its
   check.
+- `[mac]` 2026-10-18 — contract pin set: `obscan_api.h` @ `dac0e7d` = 52547 B, sha256
+  `e6946c5e3110f179d4ac090e2c371d145bd108e2b068557f0ca56bbecd09018c`. The Windows lane
+  computed the same value independently; both agreed to the byte. The fork's CI check is
+  still to wire.
+- `[mac]` 2026-10-18 — boundary note: everything the parent's side has written in the fork is the
+  **operator-directed bootstrap** (creation, seed, `[win]` entry, pin row, bootstrap note).
+  From here the parent's dispatcher writes only the parent's repo; cross-repo changes arrive
+  as requests over the coordination channel.
