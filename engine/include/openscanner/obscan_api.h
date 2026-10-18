@@ -653,17 +653,60 @@ typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, Ob
 // Frame and image payloads — the read side of the listener live path.
 // `ObScanDataMessage.data` for NEW_{IR,DEPTH,RGB}_IMAGE is an image object and
 // for FRAME_READY a frame object (findings §12); these are the C entry points
-// for consuming them. Both kinds are BORROWED and ONE-SHOT: any accessor call
-// consumes the object (a second call returns OB_SCAN_ERROR_MULTI_CALLED; after
-// the SDK's release it returns OB_SCAN_ERROR_INVALID_ARGUMENT), so read once,
-// copy out, then call the matching release. See
-// docs/recon/findings/data-process-message-listeners.md §12/§14.
+// for consuming them. Both kinds are BORROWED and ONE-SHOT PER ACCESSOR: each
+// accessor consumes itself (calling the same accessor twice returns
+// OB_SCAN_ERROR_MULTI_CALLED; after the SDK's release every accessor returns
+// OB_SCAN_ERROR_INVALID_ARGUMENT), so read once, copy out, then call the
+// matching release. Per-accessor state bits: findings §15. See
+// docs/recon/findings/data-process-message-listeners.md §12/§14/§15.
 typedef void* ObScanFrameHandle;   // the FRAME_READY payload pointer
 typedef void* ObScanImageHandle;   // the NEW_*_IMAGE payload pointer
 // Pointer-to-pointer outs whose layouts are not yet recovered (findings §14);
 // callers hold the returned pointer opaquely until then.
 typedef struct ObScanPose ObScanPose;
 typedef struct ObScanImageData ObScanImageData;
+
+// The direct-out structs (row #36). These are CALLER-ALLOCATED: put one on
+// your stack, pass &out, and the SDK fills it in. Layouts from the listing;
+// see docs/recon/findings/data-process-message-listeners.md §15.
+// Marker records: also filled by the scan family's obscan_scan_get_markers.
+// Elements are 16-byte records; their internals are unmapped (findings §15).
+typedef struct ObScanMarkers {
+    uint32_t num_markers;   // 0x00
+    const void* markers;    // 0x08  begin of the 16-byte marker records
+    const void* aux_0;      // 0x10  per-marker array (element type unmapped)
+    const void* aux_1;      // 0x18  per-marker array (element type unmapped)
+} ObScanMarkers;            // 32 bytes
+
+// A {data, count} view over a 4-byte-element advice array; each of the two
+// frame advice getters fills one of these.
+typedef struct ObScanSimpDistAdviceArray {
+    const void* data;       // 0x00  4-byte-element advice entries
+    uint32_t count;         // 0x08
+    uint32_t _reserved;     // 0x0c
+} ObScanSimpDistAdviceArray; // 16 bytes
+
+// The reference-rods view: a count plus six pointer-sized fields sourced from
+// the frame's rods data (their meanings are unmapped, findings §15).
+typedef struct ObScanReferenceRods {
+    uint32_t count;         // 0x00
+    uint32_t _reserved;     // 0x04
+    const void* p1;         // 0x08
+    const void* p2;         // 0x10
+    const void* p3;         // 0x18
+    const void* p4;         // 0x20
+    const void* p5;         // 0x28
+    const void* p6;         // 0x30
+} ObScanReferenceRods;      // 56 bytes
+
+// The depth image's distance advice: the SDK's (int, int) pair plus a 320-bin
+// u8 histogram (findings §15). The color image's getter is a stub returning
+// OB_SCAN_ERROR_INVALID_ARGUMENT; only the depth image carries advice.
+typedef struct ObScanDistanceAdviceInfo {
+    int32_t pair_first;     // 0x00  first member of the SDK's (int, int) pair
+    int32_t pair_second;    // 0x04  second member
+    uint8_t histogram[320]; // 0x08
+} ObScanDistanceAdviceInfo; // 328 bytes
 
 // Fills *out_cloud with a pointer to the SDK's frame cloud — the same
 // {num_points, points, normals} shape as ObScanPointClouds.
@@ -686,6 +729,15 @@ typedef ObScanStatus (*fn_obscan_image_get_display_image)(ObScanImageHandle imag
 typedef ObScanStatus (*fn_obscan_image_get_depth_display_image)(ObScanImageHandle image, int32_t index, ObScanImageData** out_image_data);
 // Releases the image object (native `release_data`). Returns 0 for a valid handle.
 typedef ObScanStatus (*fn_obscan_image_release)(ObScanImageHandle image);
+
+// The five direct-out getters (row #36): each fills a CALLER-ALLOCATED struct
+// (layouts above). NULL out or handle -> OB_SCAN_ERROR_INVALID_ARGUMENT; the
+// marker/advice/rods four do not validate the frame's impl.
+typedef ObScanStatus (*fn_obscan_frame_get_marker_datas)(ObScanFrameHandle frame, ObScanMarkers* out_markers);
+typedef ObScanStatus (*fn_obscan_frame_get_marker_distance_advice)(ObScanFrameHandle frame, ObScanSimpDistAdviceArray* out_advice);
+typedef ObScanStatus (*fn_obscan_frame_get_frame_cloud_distance_advice)(ObScanFrameHandle frame, ObScanSimpDistAdviceArray* out_advice);
+typedef ObScanStatus (*fn_obscan_frame_get_reference_rods)(ObScanFrameHandle frame, ObScanReferenceRods* out_rods);
+typedef ObScanStatus (*fn_obscan_image_get_distance_advice)(ObScanImageHandle image, ObScanDistanceAdviceInfo* out_advice);
 
 // OBScanTarget.ConfigCombinedExposureAndLaserCurrent(int value) — a
 // single combined IR-exposure/laser-current slider, range [1, 1000]

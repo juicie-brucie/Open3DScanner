@@ -436,6 +436,9 @@ call one image getter (e.g. `obscan_image_get_width`) and log; expect per-frame 
 `> 0` and the one-shot behaviour (`MULTI_CALLED` on a second call). This is optional
 confirmation — the semantics above do not depend on it.
 
+> **Refined (row #36)**: "one-shot" here is per accessor, not per object —
+> the per-accessor state bits are in §15.
+
 ## 13. The preview-gate labels, the `+0xe1` config flag, the `+0x4c8` states (OQ-P4, answered)
 
 *Static half, plan29 pass; raw excerpts appended to the plan2 dossier.*
@@ -473,7 +476,7 @@ reads the step with `ldar` and accepts exactly 1 / 3 / 4 / 5 — *ready / paused
 
 ## 14. The frame and image C API surface (row #34)
 
-*Static half, plan34 pass. All 19 exports in the `obscan_frame_*` /
+*Static half, plan34 pass. All 20 exports in the `obscan_frame_*` /
 `obscan_image_*` block (`0x106f8`–`0x11080`); signatures from the natives'
 mangled names plus the wrappers' argument checks.*
 
@@ -505,36 +508,141 @@ mangled names plus the wrappers' argument checks.*
 | `obscan_frame_get_frame_tracking_status` | `(frame, int32_t* out)` | tracking status |
 | `obscan_frame_get_update_model` | `(frame, bool* out)` | update-model flag |
 | `obscan_frame_get_frame_pose` | `(frame, ObScanPose** out)` | pointer to the frame's pose (layout unmapped) |
-| `obscan_frame_get_marker_datas` | `(frame, OBScanMarkers_* out)` | copies 32 bytes from `impl+0x1b0` to out (layout unmapped) |
-| `obscan_frame_get_marker_distance_advice` | `(frame, OBScanSimpDistAdviceArray_* out)` | advice array (layout unmapped) |
-| `obscan_frame_get_cloud_distance_advice` | `(frame, OBScanSimpDistAdviceArray_* out)` | advice array (layout unmapped) |
-| `obscan_frame_get_reference_rods` | `(frame, OBScanReferenceRods_* out)` | rods data (layout unmapped) |
+| `obscan_frame_get_marker_datas` | `(frame, ObScanMarkers* out)` | 32-byte marker view (layout §15) |
+| `obscan_frame_get_marker_distance_advice` | `(frame, ObScanSimpDistAdviceArray* out)` | 16-byte advice view (layout §15) |
+| `obscan_frame_get_cloud_distance_advice` | `(frame, ObScanSimpDistAdviceArray* out)` | 16-byte advice view (layout §15) |
+| `obscan_frame_get_reference_rods` | `(frame, ObScanReferenceRods* out)` | 56-byte rods view (layout §15) |
 | `obscan_frame_release` | `(frame)` | releases the frame object |
 | `obscan_image_get_width` | `(image, int32_t* out)` | width |
 | `obscan_image_get_height` | `(image, int32_t* out)` | height |
 | `obscan_image_get_timestamp` | `(image, int64_t* out)` | timestamp |
 | `obscan_image_get_display_image` | `(image, ObScanImageData** out)` | pointer to the display image (layout unmapped) |
 | `obscan_image_get_depth_display_image` | `(image, int32_t index, ObScanImageData** out)` | same, indexed variant |
-| `obscan_image_get_distance_advice` | `(image, OBScanDistanceAdviceInfo_* out)` | distance advice (layout unmapped) |
+| `obscan_image_get_distance_advice` | `(image, ObScanDistanceAdviceInfo* out)` | 328-byte advice (layout §15) |
 | `obscan_image_release` | `(image)` | releases the image object |
 
 **Out-struct status.** Known and declared: `ObScanPointClouds**` (frame cloud),
 `ObScanCloudBbox*`, `int32_t*`, `int64_t*`, `bool*`. Declared with
 forward-declared opaque structs (pointer-to-pointer outs, ABI-correct but not
-yet field-readable): `ObScanPose**`, `ObScanImageData**`. **Not declared** —
-the five direct-out getters whose structs a caller must allocate
-(`OBScanMarkers_` 32 B copy observed, `OBScanSimpDistAdviceArray_` ×2,
-`OBScanReferenceRods_`, `OBScanDistanceAdviceInfo_`) — their layouts are the
-follow-up (**OQ-P5**).
+yet field-readable): `ObScanPose**`, `ObScanImageData**`. **Deferred in #34,
+declared in §15** — the five direct-out getters whose structs a caller must
+allocate (`OBScanMarkers_` 32 B, `OBScanSimpDistAdviceArray_` ×2,
+`OBScanReferenceRods_` 56 B, `OBScanDistanceAdviceInfo_` 328 B) — their
+layouts were the follow-up (**OQ-P5**), recovered and declared in §15.
 
-**Lifetime.** Per §12: borrowed, one-shot (a second accessor call on the same
-object → `845283600` `OB_SCAN_ERROR_MULTI_CALLED`; after the SDK's release →
+**Lifetime.** Per §12: borrowed, one-shot per accessor (calling the *same*
+accessor twice on the same object → `845283600` `OB_SCAN_ERROR_MULTI_CALLED`;
+after the SDK's release →
 `845283584` "…released !"), consumed synchronously; call the matching
 `release` once per consumed payload.
 
 **Declared in the header now**: the frame cloud/bbox/scalars/pose/release and
-the image scalars/display-images/release (15 typedefs + `ObScanFrameHandle` /
-`ObScanImageHandle`).
+the image scalars/display-images/release (20 typedefs + `ObScanFrameHandle` /
+`ObScanImageHandle`; §15 adds the five direct-out getters and the four
+structs).
+
+## 15. The five direct-out struct layouts (row #36, OQ-P5 resolved)
+
+*Static half, plan36 pass. The five getters whose out-structs a caller must
+allocate. Each fills by copying a fixed-size block out of the frame/image
+impl (`ldp`/`stp` or `memcpy`), so the block width is the struct's size. Raw
+dumps: `.recon-cache/listings/frame-image-structs.plan36.asm`.*
+
+### ObScanMarkers — 32 bytes
+
+| off | size | field |
+| --- | --- | --- |
+| 0x00 | 4 | `num_markers` |
+| 0x08 | 8 | begin of the 16-byte marker-record array |
+| 0x10 | 8 | per-marker array (element type unmapped) |
+| 0x18 | 8 | per-marker array (element type unmapped) |
+
+Evidence: `OBScanFrame_::get_marker_datas` (`0x6b2a3c`) copies 32 B
+(`ldp q0,q1,[impl+0x1b0]` → `stp q0,q1,[out]`, `0x6b2b04`); the count comes
+from a 16-byte-record vector (`(end-begin)/16`, `0x6b2a74`). Cross-check:
+`OBScanDataManagement::get_markers` (`0x703044`) fills the same shape
+{count = /16, begin, [container+0x18], [container+0x30]}; the scan family's
+`obscan_scan_get_markers` (`0x105b0`, direct-out, tail-calls
+`OBScanBase::get_markers` `0x6f91f0`) is now declarable too — not declared in
+this row (scan family).
+
+### ObScanSimpDistAdviceArray — 16 bytes
+
+| off | size | field |
+| --- | --- | --- |
+| 0x00 | 8 | `data` — 4-byte-element advice entries |
+| 0x08 | 4 | `count` |
+| 0x0c | 4 | padding |
+
+Evidence: both getters copy 16 B (`ldr q0` → `str q0`):
+`get_cloud_distance_advice` (`0x6b2c68`) from `impl+0x298` (`0x6b2ca0`),
+`get_marker_distance_advice` (`0x6b2b98`) from `impl+0x2a8` (`0x6b2bd0`).
+The impl populate sets `data` = begin of the vector at `impl+0x198`, `count` =
+`(end-begin)/4` for the marker array (`0x6b2ae8`–`0x6b2b00`); the cloud array
+is zeroed on those paths.
+
+### ObScanReferenceRods — 56 bytes
+
+| off | size | field |
+| --- | --- | --- |
+| 0x00 | 4 | `count` (the rods data's own size) |
+| 0x04 | 4 | padding |
+| 0x08–0x30 | 6×8 | six pointer-sized fields from the rods records |
+
+Evidence: `get_reference_rods_data` (`0x6b2d38`) copies 56 B
+(`ldp q0,q1,[impl+0x260]`, `ldr q2,[impl+0x280]`, `ldr x8,[impl+0x290]` →
+`str q0,[out]`, `stp q1,q2,[out+0x10]`, `str x8,[out+0x30]`, `0x6b2e00`);
+`impl+0x260` = {`count` = `OBScanReferenceRodsData::size()`, then six 8-byte
+fields copied from the 0x18-stride records at `impl+0x1d0`…`0x248`.
+
+### ObScanDistanceAdviceInfo — 328 bytes
+
+| off | size | field |
+| --- | --- | --- |
+| 0x00 | 4 | first member of the SDK's `(int, int)` pair |
+| 0x04 | 4 | second member |
+| 0x08 | 320 | `uint8_t histogram[320]` |
+
+Evidence: `OBScanDepthImage::get_distance_advice` (`0x6b1938`) memcpys
+`0x148` = 328 B from `this+0xe8` to the out. The block's producer,
+`_convert_dist_advice(std::pair<int,int>, const std::vector<uint8_t>&)`
+(`0x8d2544`), stores the 8-byte pair at `+0x00`, then copies the vector's
+320 bytes to `+0x08`–`0x148`. `TextureScanningContext::calculateHist`
+(`0x892a54`) builds it: `free_scan::scan_distance_advice` → `std::pair<int,int>`,
+`free_scan::scan_distance_hist` → `std::vector<uint8_t>`, `_convert_dist_advice`
+→ `memcpy(out, converted, 0x148)`. The color image's override (`0x6b0e70`) is
+a stub returning `0x32620100`; only the depth image carries advice.
+
+### The per-accessor one-shot bits (refines §12)
+
+Each accessor sets its own bit in the object's `uint16 state@0x10`; calling
+the *same* accessor twice → `0x32620110` (`OB_SCAN_ERROR_MULTI_CALLED`); state
+0 (after the SDK's release) → `0x32620100`. So "one-shot" is **per accessor**,
+not per object — `get_width` then `get_height` both succeed.
+
+| frame accessor | bit | image accessor | bit |
+| --- | --- | --- | --- |
+| get_frame_cloud | 1 (0x2) | get_width | 1 (0x2) |
+| get_frame_tracking_status | 2 (0x4) | get_height | 2 (0x4) |
+| get_update_model | 3 (0x8) | get_timestamp | 3 (0x8) |
+| get_frame_pose | 4 (0x10) | get_display_image | 4 (0x10) |
+| get_timestamp | 5 (0x20) | get_display_image(int) | 5 (0x20) |
+| get_frame_id | 6 (0x40) | get_distance_advice | 6 (0x40) |
+| get_frame_bbox | 7 (0x80) | | |
+| get_marker_datas | 8 (0x100) | | |
+| get_frame_rate | 9 (0x200) | | |
+| get_reference_rods_data | 10 (0x400) | | |
+| get_cloud_distance_advice | 11 (0x800) | | |
+| get_marker_distance_advice | 12 (0x1000) | | |
+
+The 12 frame accessors occupy bits 1–12 and the image accessors bits 1–6, with
+no gaps [observed from each function's `tbnz`/`orr` pair]. One quirk: the image
+distance-advice accessor rewrites the state to 1 when its impl call fails
+(`0x6b36b0`), clearing the consumed bits — a failed call is retryable.
+
+**Residuals**: the element records' internals (16-byte marker records, 4-byte
+advice entries) and the six rods fields' meanings are unmapped; the pointer
+fields are declared `const void*` until a consumer needs them.
 
 ## Evidence
 
@@ -581,12 +689,11 @@ raw listings are reproduced here.
   quoted. `+0xe1` is the "scan config paras set" flag gating preview + meshlization
   defaults; `+0x4c8` `{1,3,4,5}` is the preview-legal subset of `OrbbecScanStep`
   (`scan-live-data.md` §5).
-- **OQ-P5** — the five direct-out frame/image struct layouts
-  (`OBScanMarkers_`, `OBScanSimpDistAdviceArray_` ×2, `OBScanReferenceRods_`,
-  `OBScanDistanceAdviceInfo_`): recover sizes/fields so the remaining
-  `obscan_frame_*` / `obscan_image_*` getters can be declared (§14).
-  `OBScanMarkers_` shows a 32-byte copy from `impl+0x1b0` to the out; the rest
-  are unmapped.
+- **OQ-P5** — *Resolved (row #36)*: the five direct-out struct layouts are
+  recovered and declared — `ObScanMarkers` 32 B, `ObScanSimpDistAdviceArray`
+  16 B, `ObScanReferenceRods` 56 B, `ObScanDistanceAdviceInfo` 328 B (§15).
+  Residuals: the element records' internals (16-byte marker records, 4-byte
+  advice entries) and the six rods fields' meanings remain unmapped (§15).
 - **inherited OQ-2** (PLAN row #9) — *Resolved* for data & process
   (2026-10-17-plan9): both `__func` vtables' `operator()` invokes are
   byte-identical to the device family's — one load through `[listener+0x00]`
