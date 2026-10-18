@@ -419,9 +419,12 @@ no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
   NetDeviceWatcher (GVCP) thread (`14660873`) executes the same emitter but
   never invoked the listener in the recorded run — it faulted upstream of
   `send_device_msg` (§9). The re-entrancy half stays open → **#11**.
-- **OQ-5** — The `tips` / `control` / `data` / `process` / `calib` families use
-  the same `*_name` jump-table shape and are decodable by the same method; not
-  decoded in this pass. Worth doing for PLAN #2 and PLAN #3.
+- **OQ-5** — *Resolved (row #47)*: the tips / control / calib `*_name` tables
+  are decoded (§11) — tips 5 entries (`0x126202xx`), control 35 (`0x147002xx`
+  plus a bare `0`), calib-message 9 (`0x147001xx` plus a bare `0`), plus the
+  calib-state (3) and `OBCalibStatus` (18) bonus tables. The data / process
+  families were already named (data-process-message-listeners.md §5). The
+  three named families are now declared in the header.
 - **OQ-6** — Is the opaque `ObScanDeviceManagementHandle` literally an
   `OBDeviceManagement*`? The wrapper passes it straight through as `this`, and
   the member offsets used (`0xb8`, `0x158`, `0xa0`) match that object, but the
@@ -492,6 +495,103 @@ project's tools now hold the listeners as process-lifetime statics and never cal
 `remove_*`), and if a remove is ever needed, let the device churn settle (well over a
 poll interval) before `obscan_context_destroy()`. Teardown in a disposable worker
 process remains the backstop.
+
+## 11. The tips / control / calib vocabularies (OQ-5, resolved)
+
+*Static half, plan47 pass. Decoded by the same method as §7 — the vendor's own
+`*_name` lookup functions — from the pinned snapshot; no analyzer run. All
+three dispatch shapes end in a string pointer; an unknown id returns the shared
+`"UNKNOWN"` string at `0x42dfae9`.*
+
+### `OBScanDeviceTipsMessageID_name` @ `0x171444` — pointer array
+
+Bounds check `(id − 0x12620200) ≤ 4`, then `ldr` from the name table at
+`0x4545850` (desc table `0x4545878`).
+
+| id | hex | name |
+| --- | --- | --- |
+| `308412928` | `0x12620200` | `OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INCREASE_EXPOSURE_TIME` |
+| `308412929` | `0x12620201` | `OB_SCAN_MESSAGE_ID_DEVICE_TIPS_DECREASE_EXPOSURE_TIME` |
+| `308412930` | `0x12620202` | `OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INFRARED_MODE_WITH_FILTER_OUTDOORS` |
+| `308412931` | `0x12620203` | `OB_SCAN_MESSAGE_ID_DEVICE_TIPS_BLUE_LINE_LASER_MODE_WITHOUT_FILTER` |
+| `308412932` | `0x12620204` | `OB_SCAN_MESSAGE_ID_DEVICE_TIPS_INFRARED_MARKER_MODE_WITHOUT_FILTER` |
+
+Descs: "tips increase exposure time", "tips decrease exposure time", "tips
+infrared mode with filter outdoors", "tips blue line laser mode without
+filter", "tips infrared marker mode without filter".
+
+### `OBScanControlMessageID_name` @ `0x1715f4` — byte-indexed jump table
+
+`(id − 0x14700200) ≤ 0x22` indexes a 35-byte offset table at `0x2ce96f8`
+(`target = 0x171620 + byte·4`). The named entries (the id gaps name as
+"UNKNOWN" and are reserved):
+
+| id | hex | name (`OB_SCAN_MESSAGE_ID_` prefix) |
+| --- | --- | --- |
+| `0` | `0x00000000` | `RAPTOR_MIDDLE_BUTTON_SHORT_PRESS` |
+| `342884864` | `0x14700200` | `RAPTOR_MIDDLE_BUTTON_LONG_PRESS` |
+| `342884865` | `0x14700201` | `RAPTOR_UP_BUTTON_SHORT_PRESS` |
+| `342884866` | `0x14700202` | `RAPTOR_UP_BUTTON_LONG_PRESS` |
+| `342884867` | `0x14700203` | `RAPTOR_DOWN_BUTTON_SHORT_PRESS` |
+| `342884868` | `0x14700204` | `RAPTOR_DOWN_BUTTON_LONG_PRESS` |
+| `342884869` | `0x14700205` | `RAPTOR_LEFT_BUTTON_SHORT_PRESS` |
+| `342884870` | `0x14700206` | `RAPTOR_LEFT_BUTTON_LONG_PRESS` |
+| `342884871` | `0x14700207` | `RAPTOR_RIGHT_BUTTON_SHORT_PRESS` |
+| `342884872` | `0x14700208` | `RAPTOR_RIGHT_BUTTON_LONG_PRESS` |
+| `342884873` | `0x14700209` | `OTTER_ON_OFF_BUTTON_SHORT_PRESS` |
+| `342884880` | `0x14700210` | `OTTER_ON_OFF_BUTTON_LONG_PRESS` |
+| `342884881` | `0x14700211` | `OTTER_EXPOSURE_PLUS_BUTTON_SHORT_PRESS` |
+| `342884882` | `0x14700212` | `OTTER_EXPOSURE_PLUS_BUTTON_LONG_PRESS` |
+| `342884883` | `0x14700213` | `OTTER_EXPOSURE_SUBTRACT_BUTTON_SHORT_PRESS` |
+| `342884884` | `0x14700214` | `OTTER_EXPOSURE_SUBTRACT_BUTTON_LONG_PRESS` |
+| `342884885` | `0x14700215` | `WIFI_CONTROLLER_REMAINING_BATTERY` |
+| `342884886` | `0x14700216` | `WIFI_CONTROLLER_DOUBLE_CLICK` |
+| `342884887` | `0x14700217` | `RAPTOR_MIDDLE_BUTTON_DOUBLE_CLICK` |
+| `342884888` | `0x14700218` | `RAPTOR_UP_BUTTON_DOUBLE_CLICK` |
+| `342884889` | `0x14700219` | `RAPTOR_DOWN_BUTTON_DOUBLE_CLICK` |
+| `342884896` | `0x14700220` | `RAPTOR_LEFT_BUTTON_DOUBLE_CLICK` |
+| `342884897` | `0x14700221` | `RAPTOR_RIGHT_BUTTON_DOUBLE_CLICK` |
+| `342884898` | `0x14700222` | `FPGA_UPGRADE_PROGRESS_STATE` |
+
+### `OBScanCalibMessageID_name` @ `0x1720c4` — comparison tree
+
+| id | hex | name (`OB_SCAN_MESSAGE_ID_` prefix) |
+| --- | --- | --- |
+| `0` | `0x00000000` | `CALIB_SUCCESS` |
+| `342884608` | `0x14700100` | `CALIB_FAILED` |
+| `342884609` | `0x14700101` | `CAPTURE_QR_CODE_SUCCESS` |
+| `342884610` | `0x14700102` | `CAPTURE_QR_CODE_FAILED` |
+| `342884611` | `0x14700103` | `CALIB_DEVICE_REBOOT_FAILED` |
+| `342884612` | `0x14700104` | `CALIB_DEVICE_REBOOT_SUCCESS` |
+| `342884613` | `0x14700105` | `CAPTURE_QR_CODE_UNMATCH_CALIB_BOARD` |
+| `342884614` | `0x14700106` | `CALIB_UNMATCH_CALIB_BOARD` |
+| `342884615` | `0x14700107` | `CALIB_MV_OPTICAL_FILTER` |
+
+### Bonus tables (same pass)
+
+`OBScanCalibStateID_name` @ `0x171c0c` (csel chain; descs @ `0x171c58`):
+`OB_SCAN_CALIB_STATE_ID_NO_DETECT_CALIB_BOARD` = `0` ("no detect calib
+board"), `..._QUALIFIED_DATA` = `342885121` (`0x14700301`, "qualified data"),
+`..._UNQUALIFIED_DATA` = `342885122` (`0x14700302`, "unqualified data").
+
+`OBCalibStatus_name` @ `0x171ca4` (comparison tree; desc not decoded):
+`OB_CALIB_SUCCESS` = 5000, `OB_CALIB_ERROR_KILLED` = 5001,
+`..._NO_LASER_PARAMS_CALCED` = 5002, `..._LASER_PARAMS_UNQUALIFIED` = 5003,
+`..._INITIAL_LASER_PARAMS_UNQUALIFIED` = 5004,
+`..._3DLINES_TO_CALC_INITIAL_LASER_PARAMS_NOT_ENOUGPH` = 5005,
+`..._PL_LASER_FAILED` = 5006, `..._CL_060_LASER_FAILED` = 5007,
+`..._CL_120_LASER_FAILED` = 5008, `..._SGL_LASER_FAILED` = 5009,
+`..._CAM_LINE_LASER_FAILED` = 6001, `..._CAM_SPOT_FAILED` = 6002,
+`..._OUT_OF_MEMORY` = 6003, `..._LINE_TRANS_FAILED` = 7001,
+`..._SPOT_TRANS_FAILED` = 7002, `..._LINE_PARAMS_DOWNLOAD_FAILED` = 7003,
+`..._SPOT_PARAMS_DOWNLOAD_FAILED` = 7004, `..._CALIB_SCORE_BAD` = 8001.
+
+**Family encoding** (extends §7): the `0x1262` prefix covers the device family
+(`0x126201xx`) and the tips sub-family (`0x126202xx`); the `0x1470` prefix
+covers calib-message (`0x147001xx`), control (`0x147002xx`) and calib-state
+(`0x147003xx`). The control ids also carry a bare `0` (middle-button short
+press), as does the calib family (`CALIB_SUCCESS`). [observed across the five
+decodes]
 
 ## Evidence
 
