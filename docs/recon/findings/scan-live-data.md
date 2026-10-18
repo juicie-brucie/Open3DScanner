@@ -48,11 +48,25 @@ obscan_scan_get_raw_cloud (C wrapper)          @ 0x103f8
   is a **no-op stub** (logs, returns `0`; `0x32620107` on a null handle). The
   buffers can be moved or emptied by the next publish/clear (§3) — copy out
   immediately after the call.
-- Guard asymmetry, observed: the writers (`update_model_cloud` @ `0x703828`,
-  `update_model_cloud_with_bbox` @ `0x703894`) and `get_model_cloud_ptr` take a
-  byte lock at `+0x2e0`, while `get_raw_cloud` takes `+0x320` — the guard shared
-  by the mesh/marker paths. Both touch the same shared_ptr. Whether that is a
-  coarser content lock or a vendor race is not settled here (**OQ-S3**).
+- **Guard asymmetry — answered (row #67): a vendor race, not a coarse lock.**
+  The model-cloud slot (`dataMgmt+0x2e8`/`+0x2f0`) has its own byte lock at
+  `dataMgmt+0x2e0`, and the vendor's whole internal model-cloud family uses it
+  coherently: `get_model_cloud` (`0x703934`), `get_model_cloud_ptr`
+  (`0x7038e8`), `update_model_cloud` (`0x70383c`, the two-store swap of
+  `+0x2e8`/`+0x2f0`) and `update_model_cloud_with_bbox` (`0x703898`). The
+  **C-facing `get_raw_cloud` takes the class-wide `+0x320` instead**
+  (`0x702f50`) — so it does *not* exclude the writers: none of the 13
+  `update_model_cloud` callers holds `+0x320` before the call
+  (`get_realtime_fusion_model`, the import paths,
+  `update_realtime_scan_result_with_index`, the three `save_model_clouds`, the
+  four `remove_plane_cut_model`s). A concurrent publish can therefore be
+  observed **torn** by `get_raw_cloud` (new pointer with the old control
+  block), or free the old cloud under the reader's borrowed pointers — the
+  same hazard class as the markers' borrow (OQ-S9). **Mitigation (already the
+  rule): copy out immediately; never retain the borrowed pointers.** Watch
+  signature if it ever surfaces in hardware: a `num_points` that disagrees
+  with the copied points, or a fault in the copy loop while a
+  plane-cut/optimize/fusion publish is running.
 
 ## 3. The gate — why the count is 0 during an active scan
 
@@ -825,8 +839,13 @@ block confirms the Raptor Pro / fw 1.5.7 / sn `CR0886100SN`.
   `get_raw_cloud` return data after pause *without* the color getter)? `pause`
   clears `+0x4fa` in one branch; no publisher call found in its prologue — not
   exhaustively traced.
-- **OQ-S3** — The `+0x2e0` vs `+0x320` guard asymmetry (§2): intentional coarse
-  lock or a vendor race? Both paths touch the same shared_ptr.
+- **OQ-S3** — *Retired (row #67)*: the `+0x2e0` vs `+0x320` asymmetry is a
+  vendor race, not a coarse lock — the model-cloud slot's dedicated lock
+  (`+0x2e0`, used coherently by the internal family: `get_model_cloud`,
+  `get_model_cloud_ptr`, both writers) is not the one the C-facing
+  `get_raw_cloud` takes (`+0x320`), and no writer's caller holds the coarse
+  lock. §2 carries the sites and the watch signature; our copy-out rule is the
+  mitigation.
 - **OQ-S4** — The marker-framework `+0x4fa` users (`judge_need_swap_fixed_model`,
   `get_realtime_fusion_model`) — trace when the marker path is specced.
 - **OQ-S5** — *Actionable, hardware:* does polling the color getter
@@ -973,3 +992,8 @@ Row #64 (the voxel sizes): the app-side primary evidence re-read — the
 operator\u2019s CScan project files `scanParamConfig.dat` / `scanDataConfig.dat`
 (JSON) plus the captured copies under the verify worktree\u2019s
 `logs/creality_scan_comparison*`. Light reads; no analyzer.
+
+Row #67 (OQ-S3): both lock sites read statically — the model-cloud family
+(0x7038e4/0x703930/0x703828/0x703894, all +0x2e0) vs the C-facing reader
+(0x702f4c, +0x320), plus the 13 update_model_cloud callers' lock state. Light
+reads; no analyzer.
