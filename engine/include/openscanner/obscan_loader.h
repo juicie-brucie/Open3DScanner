@@ -69,6 +69,8 @@ public:
     fn_obscan_scan_pause obscan_scan_pause = nullptr;
     fn_obscan_scan_stop obscan_scan_stop = nullptr;
     fn_obscan_scan_get_raw_cloud obscan_scan_get_raw_cloud = nullptr;
+    fn_obscan_scan_get_global_pose obscan_scan_get_global_pose = nullptr;
+    fn_obscan_scan_get_registration_pose obscan_scan_get_registration_pose = nullptr;
     fn_obscan_scan_get_model_point_color_clouds obscan_scan_get_model_point_color_clouds = nullptr;
     fn_obscan_scan_model_clouds_release obscan_scan_model_clouds_release = nullptr;
     fn_obscan_scan_get_realtime_model_mesh obscan_scan_get_realtime_model_mesh = nullptr;

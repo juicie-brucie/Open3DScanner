@@ -119,6 +119,8 @@
   let lastFrameId = -1;
   let framesReceived = 0;
   let bytesReceived = 0;
+  let cameraMode = "orbit"; // "follow" tracks the scanner pose
+  let scannerPose = null;
   // Client backpressure: at most one received frame may be pending render
   // at a time; later arrivals are dropped instead of queuing unboundedly.
   let framePending = false;
@@ -178,7 +180,7 @@
     }
     const rms = Math.sqrt(sumSq / count);
     const radius = Math.max(rms * 2.0, 0.001);  // ~2 sigma covers the dense cluster.
-    viewCenter = [cx, cy, cz];
+    if (cameraMode !== "follow") viewCenter = [cx, cy, cz];
     viewRadius = radius;
     // Distance needed to fit `radius` within the vertical half-FOV, plus
     // headroom so the cloud isn't touching the viewport edges.
@@ -254,9 +256,18 @@
         return;
       }
 
+      const poseFrame = FrameProtocol.decodePose(buf);
+      if (poseFrame) {
+        scannerPose = poseFrame.translation;
+        if (cameraMode === "follow") viewCenter = scannerPose.slice();
+        return;
+      }
+
       if (framePending) return; // drop live frame: renderer is behind
       bytesReceived += buf.byteLength;
       framePending = true;
+      const frame = FrameProtocol.decodeCloudSnapshot(buf);
+      if (!frame) return;
       const frameId = frame.seq;
       const captureTimestampMs = frame.tCapture;
       const count = frame.count;
@@ -285,6 +296,12 @@
 
   const btnStartPause = document.getElementById("btn-start-pause");
   const btnFinish = document.getElementById("btn-finish");
+  const btnCameraMode = document.getElementById("btn-camera-mode");
+  if (btnCameraMode) btnCameraMode.addEventListener("click", () => {
+    cameraMode = cameraMode === "follow" ? "orbit" : "follow";
+    btnCameraMode.textContent = "Camera: " + cameraMode;
+    if (cameraMode === "follow" && scannerPose) viewCenter = scannerPose.slice();
+  });
   const autoExposureCheckbox = document.getElementById("auto-exposure");
   const exposureSlider = document.getElementById("exposure");
   const exposureValueLabel = document.getElementById("exposure-value");

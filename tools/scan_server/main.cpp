@@ -726,6 +726,20 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 lib.obscan_scan_config_combined_exposure_and_laser_current(scan, control.exposure_value.load());
             }
 
+            // Pose: use the registration pose, which is the live solve that
+            // follows the scanner during a scan (the global pose only updates
+            // when a registration result is confirmed). Broadcast it as a
+            // pose message so the page can follow the scanner POV.
+            {
+                ObScanPose pose = {};
+                ObScanStatus pose_status = lib.obscan_scan_get_registration_pose(scan, &pose);
+                if (pose_status == OB_SCAN_SUCCESS) {
+                    std::vector<uint8_t> pbuf = openscanner::frame_protocol::encode_pose(
+                        frame_id++, NowMs(), NowMs(), &pose.m[0][0]);
+                    server.BroadcastBinary(pbuf.data(), pbuf.size());
+                }
+            }
+
             // The color getter is the publish trigger for the model cloud
             // (see docs/recon/findings/scan-live-data.md §3): calling it
             // swaps the fusion temp cloud into the published show cloud, so

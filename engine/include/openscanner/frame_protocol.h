@@ -105,5 +105,57 @@ inline bool decode_cloud_snapshot(const uint8_t* data, size_t len, uint32_t* out
     return true;
 }
 
+// Encode a pose message (16 doubles, row-major 4x4).
+inline std::vector<uint8_t> encode_pose(uint32_t seq, double t_capture, double t_server, const double* m) {
+    std::vector<uint8_t> buf;
+    buf.reserve(32 + 16 * 8);
+    auto put_u32 = [&buf](uint32_t v) {
+        buf.push_back(v & 0xff); buf.push_back((v >> 8) & 0xff);
+        buf.push_back((v >> 16) & 0xff); buf.push_back((v >> 24) & 0xff);
+    };
+    auto put_u16 = [&buf](uint16_t v) {
+        buf.push_back(v & 0xff); buf.push_back((v >> 8) & 0xff);
+    };
+    auto put_f64 = [&buf](double v) {
+        uint64_t u; std::memcpy(&u, &v, sizeof(u));
+        for (int i = 0; i < 8; ++i) buf.push_back((u >> (i * 8)) & 0xff);
+    };
+    put_u32(MAGIC);
+    put_u16(VERSION);
+    put_u16(static_cast<uint16_t>(MessageType::Pose));
+    put_u32(seq);
+    put_f64(t_capture);
+    put_f64(t_server);
+    put_u32(16 * 8);
+    for (int i = 0; i < 16; ++i) put_f64(m[i]);
+    return buf;
+}
+
+inline bool decode_pose(const uint8_t* data, size_t len, uint32_t* out_seq, double* out_t_capture,
+                        double* out_t_server, const double** out_matrix) {
+    if (len < 32 + 16 * 8) return false;
+    auto get_u32 = [&](size_t off) {
+        return (uint32_t)data[off] | ((uint32_t)data[off + 1] << 8) |
+               ((uint32_t)data[off + 2] << 16) | ((uint32_t)data[off + 3] << 24);
+    };
+    auto get_u16 = [&](size_t off) { return (uint16_t)(data[off] | (data[off + 1] << 8)); };
+    auto get_f64 = [&](size_t off) {
+        uint64_t u = 0;
+        for (int i = 0; i < 8; ++i) u |= (uint64_t)data[off + i] << (i * 8);
+        double v; std::memcpy(&v, &u, sizeof(v)); return v;
+    };
+    if (get_u32(0) != MAGIC) return false;
+    if (get_u16(4) != VERSION) return false;
+    if (get_u16(6) != static_cast<uint16_t>(MessageType::Pose)) return false;
+    *out_seq = get_u32(8);
+    *out_t_capture = get_f64(12);
+    *out_t_server = get_f64(20);
+    uint32_t payload_len = get_u32(28);
+    if (payload_len != 16 * 8) return false;
+    if (static_cast<uint64_t>(32) + payload_len > len) return false;
+    *out_matrix = reinterpret_cast<const double*>(data + 32);
+    return true;
+}
+
 } // namespace frame_protocol
 } // namespace openscanner
