@@ -555,9 +555,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     } else {
         std::printf("[worker] Streaming live scan frames on ws://0.0.0.0:%u (open ui/index.html)\n", port);
         std::printf(
-            "[worker] Note: obscan_scan_get_raw_cloud has never been observed to return nonzero points while\n"
-            "[worker] actively scanning on this hardware (see README.md). Expect 0 points per live frame until\n"
-            "[worker] the final pause -> get_realtime_model_mesh snapshot broadcast at the end of this session.\n");
+            "[worker] Note: each tick now calls obscan_scan_get_model_point_color_clouds, which publishes the\n"
+            "[worker] model cloud, so live frames should be nonzero during scanning. obscan_scan_get_raw_cloud\n"
+            "[worker] only reflects the last publish and is logged alongside for contrast; the final pause ->\n"
+            "[worker] get_realtime_model_mesh snapshot is still broadcast at the end of this session.\n");
     }
     std::fflush(stdout);
 
@@ -603,6 +604,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
         }
 
         ObScanPointColorClouds cloud = {};
+        ObScanPointClouds raw_cloud = {};
         ObScanCloudBbox bbox = {};
         uint32_t published_count = 0;
         if (!hardware_paused) {
@@ -644,14 +646,17 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 // copy out before the next publish.
                 lib.obscan_scan_model_clouds_release(scan);
             }
+            // Raw getter never publishes; reading it after the color getter
+            // shows the last published cloud, demonstrating the mechanism.
+            lib.obscan_scan_get_raw_cloud(scan, &raw_cloud);
         }
 
         if (tick % 10 == 0) {  // ~every 1s
             server.BroadcastText(BuildStatusJson("live", control, /*fov_controllable=*/false));
         }
         if (tick % 50 == 0) {  // ~every 5s
-            std::printf("[worker] tick %d/%d: raw_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
-                        tick, total_ticks, cloud.num_points, max_points_seen, server.ConnectedClientCount(),
+            std::printf("[worker] tick %d/%d: color_cloud num_points=%u raw_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
+                        tick, total_ticks, cloud.num_points, raw_cloud.num_points, max_points_seen, server.ConnectedClientCount(),
                         hardware_paused ? 1 : 0);
             std::fflush(stdout);
         }
