@@ -422,8 +422,10 @@ typedef enum ObScanDeviceMessageID {
 typedef struct ObScanDeviceMessage {
     int32_t msg_id;  // 0x00 — ObScanDeviceMessageID.
     int32_t _pad;    // 0x04 — alignment padding to 8-byte boundary for `data`.
-    void* data;      // 0x08 — payload; meaning is per-emitter (see findings OQ-1).
-                     //        NULL on the initial DISCONNECT.
+    void* data;      // 0x08 — payload; per-emitter, and NOT a device list
+                     //        (findings §12): CONNECT (id 0) carries the address
+                     //        of the manager's 1-byte "is support rescan" flag;
+                     //        DISCONNECT and every other emitter on file pass NULL.
 } ObScanDeviceMessage;
 
 typedef void (*ObScanDeviceMessageDelegate)(ObScanDeviceMessage msg);
