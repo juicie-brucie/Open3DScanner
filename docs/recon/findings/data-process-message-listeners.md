@@ -100,14 +100,19 @@ obscan_scan_preview                       0xf608   NULL scan → 0x32620107
 
 The join point is `OBScanBase::judge_can_preview` @ `0x6fa674`:
 
-- gate A: `[this+0xe1]` bit0 must be set, else
-  `0x32620110` (`845283600`, `OB_SCAN_ERROR_MULTI_CALLED`);
+- gate A: `[this+0xe1]` bit0 — the **"scan config paras set"** flag (§13) —
+  must be set, else `0x32620110` (`845283600`, `OB_SCAN_ERROR_MULTI_CALLED`)
+  with "should first set config paras !" (`0x42fad9c`);
 - gate B: state word at `[this+0x4c8]` read with **LDAR** must be in
-  `{1, 3, 4, 5}`, else `OB_SCAN_ERROR_MULTI_CALLED`;
+  `{1, 3, 4, 5}` — the `OrbbecScanStep` values *ready / paused / stopped /
+  post-process* (map: [`scan-live-data.md`](scan-live-data.md) §5) — else
+  `OB_SCAN_ERROR_MULTI_CALLED` with "multi called in preview !" (`0x42fadc7`);
 - device/cfg checks (helpers `0x702ee4 / 0x70288 / 0x5c1010 / 0x5c49cc`) whose
-  log labels sit at `0x42fa0dec / 0x42fa0e5a` — **not recovered** (the
-  `0x42fa0xxx` string page is unmapped in both the Ghidra view and the file:
-  see **OQ-P4**);
+  log labels are **recovered** (§13): `0x42fadec` ("marker framework in stop
+  step support continue scan !", an info), `0x42fae22` ("the scan proj cannot
+  support continue scan !"), `0x42fae5a` ("%s not found in preview !", the
+  listener-miss label) — the earlier `0x42fa0xxx` addresses were malformed
+  (extra hex digit; the real labels are `adrp 0x42fa000` + small offsets);
 - finally it loads the paras object at `[this+0x448]` and calls
   `obscan_common::OBScanParasContext::judge_is_exist_listener` @ `0x6aa6b8`,
   which requires **both** slots — data probe `+0x68` and process probe
@@ -431,6 +436,41 @@ call one image getter (e.g. `obscan_image_get_width`) and log; expect per-frame 
 `> 0` and the one-shot behaviour (`MULTI_CALLED` on a second call). This is optional
 confirmation — the semantics above do not depend on it.
 
+## 13. The preview-gate labels, the `+0xe1` config flag, the `+0x4c8` states (OQ-P4, answered)
+
+*Static half, plan29 pass; raw excerpts appended to the plan2 dossier.*
+
+**(1) There is no unmapped `0x42fa0xxx` page — the addresses were malformed.** The gate's
+labels are `adrp x3, 0x42fa000` + small `add` offsets, i.e. `0x42fa…`, not `0x42fa0…`:
+the recorded forms had an extra hex digit and landed at ≈1.12e9, beyond every segment
+(the image ends ≈`0x6150000`) — which is exactly why neither the Ghidra view nor the file
+dump could map them. Identity mapping was never in question. The labels, recovered:
+
+| address | text |
+| --- | --- |
+| `0x42fad9c` | "should first set config paras !" (gate A fail) |
+| `0x42fadc7` | "multi called in preview !" (gate B fail) |
+| `0x42fadec` | "marker framework in stop step support continue scan !" (info) |
+| `0x42fae22` | "the scan proj cannot support continue scan !" (extern-config fail) |
+| `0x42fae5a` | "%s not found in preview !" (listener-miss; the family name fills `%s`) |
+
+(Cluster neighbour: `0x42fae87` "cannot enqueue task after stop process, perhaps thread
+pool is down" — a second enqueue-failure label, noted.)
+
+**(2) `+0xe1` = the "scan config paras set" flag** — a byte on the scan object
+(`OBScanBase`). Writers store **1**: `set_scan_config` (both classes — `0xc9250` /
+`0x6c578`, after a successful apply), `import_proj` (`0xd254c` / `0x7463c`),
+`load_mode_config_from_db` (`0x76428`). Readers: `judge_can_preview` gate A (must be set
+— else "should first set config paras !" + `MULTI_CALLED`),
+`get_default_meshlization_config` (`0xd2780` / `0x5e914`), and `set_scan_config`'s own
+entry check. Semantics: **preview and the meshlization defaults require a scan config to
+have been applied first.**
+
+**(3) `+0x4c8` `{1,3,4,5}` = the preview-legal subset of `OrbbecScanStep`.** The gate
+reads the step with `ldar` and accepts exactly 1 / 3 / 4 / 5 — *ready / paused / stopped
+/ post-process* — rejecting everything else (notably **2 = scanning**) with
+"MULTI_CALLED". Full value map: [`scan-live-data.md`](scan-live-data.md) §5.
+
 ## Evidence
 
 Raw evidence: `.recon-cache/listings/data-process-listeners.plan2.asm` (wrapper
@@ -441,7 +481,8 @@ process-family drain: closure body @ `0x6aa608`, `thread_pool_enqueue_task` @
 plan27 pass — the slot-home synchronization read: the four registration bodies, both
 emitters, and the pool's mutex/condvar stubs; plan28 pass — the payload semantics: the
 four stream emitters, the ring push impl, both payload-object ctors, the one-shot
-accessors, and the frame-cloud path),
+accessors, and the frame-cloud path; plan29 pass — the label-address correction and
+the recovered strings, the `+0xe1` writer/reader sites, and the `+0x4c8` gate reads),
 plus
 `.recon-cache/listings/device-msg-listener.monostub-vtable.plan9.asm` for the
 plan9 shard covering this file's data/process `operator()` windows. Export
@@ -469,12 +510,12 @@ raw listings are reproduced here.
   ring-kept; `FRAME_READY` yields a per-frame cloud via `obscan_frame_get_frame_cloud` —
   the `scan-live-data.md` §6 revisit trigger has fired (decision re-take recommended).
   The frame C API is not yet in our header subset (follow-up row).
-- **OQ-P4** — the `0x42fa0xxx` log-label page is double-unmapped (absent from
-  the Ghidra view and from the file at that bias, despite proving
-  identity-mapping earlier on the `UNKNOWN` string @ `0x42dfae9`): recover
-  those labels if possible; also follow the `[+0xe1]` enable flag and the
-  `[+0x4c8]` state machine (`{1,3,4,5}` membership) and the `[+0xe1]` enable flag for exact preview
-  lifecycle semantics.
+- **OQ-P4** — *Answered* (plan29 pass) → §13. There is no unmapped page: the
+  `0x42fa0xxx` forms were malformed addresses (extra hex digit); the real labels
+  (`0x42fad9c`/`0x42fadc7`/`0x42fadec`/`0x42fae22`/`0x42fae5a`) are recovered and
+  quoted. `+0xe1` is the "scan config paras set" flag gating preview + meshlization
+  defaults; `+0x4c8` `{1,3,4,5}` is the preview-legal subset of `OrbbecScanStep`
+  (`scan-live-data.md` §5).
 - **inherited OQ-2** (PLAN row #9) — *Resolved* for data & process
   (2026-10-17-plan9): both `__func` vtables' `operator()` invokes are
   byte-identical to the device family's — one load through `[listener+0x00]`
