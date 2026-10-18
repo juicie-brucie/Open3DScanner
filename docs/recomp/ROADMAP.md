@@ -9,11 +9,10 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-18 (rev 8 — refresh pass. Re-read against the board at
-`7c33178`; removes the stale loop-state claims rev 7 carried (rows `#3`/`#4`, `#26`–`#30`,
-`#38` are all `DONE`), separates the **landed** decimation from the **forward** protocol
-design, and re-stages the architecture doc with explicit move boundaries. rev 7 added the
-viewer family; rev 6/5/4/3/2/1 are superseded — see **Superseded plans**)._
+_Last planned: 2026-10-18 (rev 9 — adds the Windows fork workstream; its charter and the fork-coordination file are
+**landed** at `docs/recomp/WINDOWS-FORK.md` and `docs/recomp/FORK-COORDINATION.md`. rev 8 was the refresh pass; its architecture-doc staging
+block has landed and moved to `docs/architecture/scan-viewer.md`. rev 7 added the viewer
+family; rev 6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
@@ -173,6 +172,36 @@ slots to `OBScanDataManagement`, while current recon homes the data-management s
 at `scan+0xf0` on `OBScanBase` ([`findings/scan-live-data.md`](../recon/findings/scan-live-data.md) §1).
 Same object, possibly a re-homing — verify, don't assume.
 
+## Windows fork — a second workstream, captured 2026-10-18
+
+The operator is standing up a Windows dev environment for a Windows port. The repo is
+**`Open3DScanner-Win64`** — standalone, *not* a GitHub fork relationship; the parent stays the
+pinned upstream. Charter: `docs/recomp/WINDOWS-FORK.md`; coordination:
+`docs/recomp/FORK-COORDINATION.md` — both landed.
+
+**The gate is a question, not a task:** does Creality ship a Windows build with the same
+`obscan_*` surface? If not, this is not a port at all — it is the Orbbec-SDK path in
+`README.md`'s "Possible future direction". Everything else waits on that answer, so **no rows
+are proposed this round**; the gate is an operator answer, not dispatchable work.
+
+Already true, from the tree: the loader is **`#ifdef`-split** (`LoadLibraryA` /
+`GetProcAddress` / `GetLastError` vs `dlopen`) and `engine/CMakeLists.txt` has a `WIN32`
+branch — the engine is closer than it looks. Not true: `tools/` and `tests/hardware/` are
+`if(APPLE)` throughout, the hardware guardrail is a bash hook that will not fire on Windows,
+and every recon artifact is macOS arm64 — so the ABI must be recovered again, not
+reinterpreted.
+
+**The one rule that matters:** `obscan_api.h` is single-sourced in the parent. Platform
+differences go into it as `#ifdef`-guarded declarations with a Windows findings doc beside the
+macOS ones. A second header in a second repo is a second contract, and two contracts drift —
+the exact failure the one-home rule exists to prevent.
+
+**The channel already exists.** `scripts/remote-opencode.sh` (parent, PR #150) addresses a
+second machine's OpenCode server through the desktop app's server list; the Windows box is
+registered as `Windows11` and answers (OpenCode 2.0.32, verified 2026-10-18). The charter's §5
+names it as the coordination channel, and the fork's copy of the coordination file is seeded
+with its first `[win]` entry at repo-creation time.
+
 ## Risks
 
 1. ~~The live path is unbounded in the cloud size~~ — **retired by `#32`**, and the
@@ -237,3 +266,11 @@ Also ready, non-competing: `#40` (recon), `#41` (builder), `#34`/`#35` (recon/bu
   Superseded by rev 2. Half landed (the scan family was opened via `#23`); the other half
   was wrong as written — the queue's most obvious item (`#2`/`#19`) already had a passing
   run on `main`.
+
+---
+
+# Windows fork drafts — landed
+
+`WINDOWS-FORK.md` and `FORK-COORDINATION.md` were landed as
+`docs/recomp/WINDOWS-FORK.md` and `docs/recomp/FORK-COORDINATION.md`; the staged text was
+removed so each document keeps one home.
