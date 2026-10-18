@@ -96,6 +96,7 @@ Open3DScanner/
   docs/recon/findings/*.md                  # narrative spec (recon writes)
   docs/recomp/PLAN.md                       # task board (you own)
   docs/recomp/ARCHITECTURE.md               # this file
+  scripts/verify-pr.py                      # deterministic PR checks (CI + verifier)
   tests/hardware/*                          # test programs (builder)
   tests/results/*                           # observed behavior (hardware agent)
   .recon-cache/                             # vendor bins + REA snapshots (gitignored)
@@ -134,13 +135,25 @@ Two review gates, deliberately different kinds:
 - **verifier** — static, cheap, automated: "does the code disagree with the header?"
 - **hardware** — empirical, manual: "does the header disagree with the real device?"
 
-Landing is gated on the first of those. **Nothing merges without a verdict from
-someone other than the dispatcher** — a verifier session, or the user, reports
-`MERGEABLE` or `NEEDS CHANGE` against the exact head commit, by SHA. Reading the diff
-yourself is participation, not verification. A verdict goes stale the moment the branch
-moves; a `NEEDS CHANGE` verdict is fixed on the branch, never merged with a follow-up;
-and the verifier **reports, never acts** — it does not merge, push, or edit, so a
-verifier session running `gh pr merge` is a merge by proxy, not a verified one.
+Landing is gated mechanically, in two tiers:
+
+- **Docs and artifacts** (`docs/**`, `tests/results/**`, `CLAUDE.md`, `.claude/**`,
+  `.github/**`): the verdict is the deterministic check `scripts/verify-pr.py`, run by
+  CI as the `verify-pr` status. No agent pass; green means mergeable.
+- **Code** (`engine/**`, `tools/**`, `tests/**`, `mesh/**`, `ui/**`, `scripts/**`,
+  CMake): the script runs first, then an `openscanner/verifier` session adjudicates what
+  the script cannot — semantics vs the header, prose vs evidence, overclaiming — and
+  posts exactly one comment: `VERDICT: MERGEABLE @ <head-sha>` or
+  `VERDICT: NEEDS CHANGE @ <head-sha>`. The `verdict-gate` workflow turns the newest
+  verdict for the current head into the `verdict` status.
+
+`main` is protected: both statuses are required and force-pushes are blocked. PRs are
+opened with `gh pr merge --auto --merge`, so a PR lands the moment its checks pass. A
+verdict is bound to a SHA, so it goes stale automatically when the branch moves — a
+`NEEDS CHANGE` verdict blocks the merge and is fixed on the branch. The verifier
+**reports, never acts**: it does not merge, push, or edit, and the dispatcher never
+self-certifies — the script is deterministic and runs in CI, and the agent verdict
+comes from a session other than the dispatcher.
 
 ## Claude Pro's place
 
@@ -183,10 +196,10 @@ start the next round.
 ## Open items
 
 - **Git discipline:** settled — one worktree per role, each on its own branch off
-  `main`, landing through a PR with a merge commit that carries a verifier verdict on
-  its exact head commit, recorded on the PR by SHA. Two `git` clients in one checkout
-  interleave the index, so sessions never share one, and a room is only ever torn down
-  by the user.
+  `main`, landing through a PR with a merge commit. The gate is mechanical: `verify-pr`
+  always, plus a `verdict` status from the verifier's comment on the exact head for
+  code. Two `git` clients in one checkout interleave the index, so sessions never share
+  one, and a room is only ever torn down by the user.
 - **Hardware seam:** decide whether the Claude Code agent works in this checkout
   (writing only `tests/results/**`) or its own clone.
 - **Vendor binaries:** `.recon-cache/` must be populated before the first

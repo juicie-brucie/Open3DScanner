@@ -1,0 +1,42 @@
+name: verdict-gate
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+jobs:
+  verdict:
+    if: github.event.issue.pull_request && contains(github.event.comment.body, 'VERDICT:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set verdict status for the current head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ github.event.comment.body }}
+          ASSOC: ${{ github.event.comment.author_association }}
+        run: |
+          set -euo pipefail
+          case "$ASSOC" in
+            OWNER|MEMBER|COLLABORATOR) ;;
+            *) echo "ignoring comment from association: $ASSOC"; exit 0 ;;
+          esac
+          if [[ "$BODY" =~ VERDICT:[[:space:]]*(MERGEABLE|NEEDS[[:space:]]CHANGE)[[:space:]]*@[[:space:]]*([0-9a-f]{40}) ]]; then
+            verdict="${BASH_REMATCH[1]}"
+            sha="${BASH_REMATCH[2]}"
+          else
+            echo "no verdict pattern in comment"; exit 0
+          fi
+          head=$(gh api "${{ github.event.issue.pull_request.url }}" --jq .head.sha)
+          if [ "$sha" != "$head" ]; then
+            echo "verdict names $sha but head is $head - stale, ignoring"
+            exit 0
+          fi
+          if [ "$verdict" = "MERGEABLE" ]; then state=success; else state=failure; fi
+          gh api -X POST "repos/${{ github.repository }}/statuses/$sha" \
+            -f state="$state" -f context=verdict \
+            -f description="verifier: ${verdict// /_}"

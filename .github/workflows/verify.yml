@@ -1,0 +1,33 @@
+name: verify-pr
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  verify-pr:
+    name: verify-pr
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Cache build tree
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: build-${{ hashFiles('**/CMakeLists.txt', 'engine/**', 'tools/**', 'tests/**', 'mesh/**', 'ui/**') }}
+          restore-keys: |
+            build-
+
+      - name: Run deterministic checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/verify-pr.py ${{ github.event.pull_request.number }}

@@ -188,3 +188,8 @@ _Append dated one-liners: what changed, which agent, and the outcome._
   was still in flight; the verifier's verdict (`NEEDS CHANGE` — the corrections
   overclaimed) landed after the merge. Fixed forward: both corrections reworded;
   rule 11 extended to reports found after the record was written.
+- 2026-10-17 — dispatcher: verification rebuilt — `scripts/verify-pr.py`
+  (build, records-in-place, plan syntax, archival hashes, hook probes) + CI
+  `verify-pr` status + verdict comments gated by `verdict-gate`; `main`
+  protected with required checks and auto-merge. Docs/artifacts PRs are
+  script-gated; code PRs keep an agent verdict.
