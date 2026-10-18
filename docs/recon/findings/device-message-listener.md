@@ -179,7 +179,7 @@ removes and frees its own listener while the invoke body is mid-call
 
 **No serialisation.** The invoke path takes **no lock**: `send_device_msg(OBScanMessage)`
 (`0x5c5304`) reads the listener slot at `+0xb8` and `blr`s the `__func` slot
-`+0x30` (`0x5c5420`–`0x5c5434`) with no `swpab`/`stlrb`/`lдaxr`/mutex anywhere in
+`+0x30` (`0x5c5420`–`0x5c5434`) with no `swpab`/`stlrb`/`ldaxr`/mutex anywhere in
 the function (verified in the binary) — so concurrent invocations from different
 threads are possible and nothing queues them; the only ordering guarantee is
 the caller's own (the synchronous add-time delivery). A listener must be
