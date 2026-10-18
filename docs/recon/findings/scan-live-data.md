@@ -376,7 +376,8 @@ std::bad_cast` at 23:35:37.584) did **not** prevent the release.
 ## 16. The stop path's tail — the model save and the .obmc serialization (row #37)
 
 *Static half, plan37 pass. What `obscan_scan_stop` runs after the pipeline is
-destroyed, and where the 2026-10-18 scale run's teardown stalled.*
+destroyed, and why the 2026-10-18 scale run's teardown did not fit its
+watchdog budget.*
 
 **Call shape.** The tool calls
 `obscan_scan_stop(scan, progress_cb, status_cb, /*is_block=*/true)`
@@ -425,7 +426,7 @@ first, returning `0x32620110` on timeout.)
 **Both runs execute every step** — the pose print is in the clean run too
 (its raw log line 4524), straight through to `obscan_scan_stop -> OB_SCAN_SUCCESS`.
 
-**Scale — the model save is linear and completes; the stall is after it.**
+**Scale — the model save is linear and completes; the tail is what ran out of budget.**
 The runs' `result/model.ply` under the tool's fixed
 `/tmp/openscanner_live_server_session/<session>/` output dir:
 
@@ -434,27 +435,41 @@ The runs' `result/model.ply` under the tool's fixed
 | clean (01:22) | 225,637 | 6,318,058 | 222 + 6,317,836 ✓ | yes | 01:22:45 |
 | rerun (01:47) | 11,398,756 | 319,165,392 | 224 + 319,165,168 ✓ | yes | 01:47:41 |
 
-So the model write **finished** ~12 s into the rerun's stop — it is not the
-hang. The last file activity is `temp/mainLOMCache.obmc` at **01:47:43**, then
-no logs, prints, or writes for ~6m46s until the launcher's 420 s watchdog
-killed the worker (`EXIT_CODE=2`). The stall sits in the post-save tail — the
-out-of-core serialization (step 4) is the prime suspect. **OQ-S6** carries the
-trace spec.
+So the model write **finished** ~12 s into the rerun's stop — the save is not
+the problem. The stop's tail then continued into the out-of-core serialization
+(step 4), and that is where the run ended: `temp/mainLOMCache.obmc`'s last
+write is **01:47:43** — the same second the process exited — so the
+serialization was **cut off mid-tail** by the launcher's watchdog, not a stall
+after the save. The watchdog is `session_seconds + 120` = **420 s measured
+from `fork()`** (`engine/src/worker_process.cpp`: the parent enters its 100 ms
+poll loop immediately after the fork and `SIGKILL`s on expiry; the run's
+record states the same 420 s figure). The run's arithmetic: fork ~01:40:33;
+the live loop ~332 s; the pause → 15.5M-vertex mesh → broadcast → stop
+preamble the next ~75–85 s (pipeline destroyed 01:47:29); leaving the stop
+tail only **~14 s** — enough for the model save (~12 s) but not for the
+`.obmc` serialization behind it. **The tail did not fit the budget.** **OQ-S6**
+carries the trace spec.
 
 **Can the tool avoid or bound it?**
 - The tail is the SDK's, not something the tool holds: the mesh the tool
   broadcast is a borrowed snapshot it copies out (§14) — holding or dropping
   it changes nothing. The saved model cloud is the SDK's own (11.4M vertices
   here vs the clean run's 225K — ~50×).
-- `session_config.output_dir` gates only the `model.ply` write (empty dir →
-  the writer fails fast, "save_dir is false") — and that write is not the
-  hang, so config avoidance does not dodge it.
-- The blocking call is what leaves the tool hostage: the watchdog fires while
-  the tool is inside `obscan_scan_stop`. A build-side bound is `is_block=false`
-  (returns immediately; the work continues on the `"default"` pool) followed
-  by polling the destroys — they refuse (`MULTI_CALLED` / "must first wait
-  other process finished") until the tail completes — or a larger teardown
-  watchdog. Nothing tool-side skips the SDK's tail.
+- The binding constraint is the **budget**, not a stall: the watchdog's 420 s
+  starts at `fork()`, so the tool's own phases spend it first — here ~332 s of
+  live loop (32 s over nominal: the ticks averaged ~0.11 s) plus the ~75–85 s
+  preamble (pause → 15.5M-vertex mesh extraction → 15.5M-point broadcast → the
+  fixed 0.5 s + 5 s waits) left only ~14 s of the 120 s teardown allowance.
+  Ending the live loop early, trimming the preamble, or widening the margin
+  each buys the tail budget.
+- `session_config.output_dir` gates the `model.ply` write (empty dir → the
+  writer fails fast, "save_dir is false"). That write was ~12 s of the tail's
+  ~14 s, so skipping it buys real budget — but the `.obmc` serialization behind
+  it is unconditional.
+- `is_block=false` returns immediately (the work continues on the `"default"`
+  pool), but the destroys then refuse (`MULTI_CALLED` / "must first wait other
+  process finished") until the tail completes and the watchdog still fires —
+  it buys responsiveness, not exit. Nothing tool-side skips the SDK's tail.
 
 ## 17. The scanner-POV pose channel (row #40)
 
@@ -576,18 +591,20 @@ intrinsics need new analysis (OQ-S10 — analysis-needed, deliberately not run).
   (`obscan_scan_get_model_point_color_clouds`) once per tick make `get_raw_cloud`
   (or the color call itself) return live points during an active scan? Do not
   assume until a run shows it — this is the direct test of §3's mechanism.
-- **OQ-S6** — *Actionable, hardware:* where exactly the stop tail stalls at
-  scale (§16). The model save completes (both runs' `model.ply` files are
-  complete, 28 B/vertex); the last activity is `temp/mainLOMCache.obmc` at
-  01:47:43, then silence until the 420 s watchdog. Dynamic trace: reproduce the
-  scale run and, during the hang, `sample <worker-pid> 30` (or
-  `lldb -p <pid> -o 'thread backtrace all'`) — the stop thread's stack names
-  the function (expect `OutOfCoreSerializableLaserOnlineFusionOpt::to_buffer`
-  or a wait in the stop impl); plus `lsof -p` (which file it holds), a size
-  poll of the `.obmc` (growing = slow, flat = stuck), and `footprint -p`
-  (the session's cache is 385 MB here vs 704 MB in the clean run). A
-  controlled A/B (same duration, two mesh sizes; or a repeat run) separates
-  "slow tail" from "deadlock".
+- **OQ-S6** — *Actionable, hardware:* the stop tail does not fit the watchdog
+  budget at scale (§16). The model save completes (both runs' `model.ply` are
+  complete, 28 B/vertex); the out-of-core `.obmc` serialization was still
+  running when the 420 s watchdog (`session_seconds + 120`, measured from
+  `fork()`) fired — its last write is the same second the process exited, i.e.
+  cut off mid-tail, not a post-save stall. Dynamic trace: reproduce the scale
+  run and time the phases (live loop / pause → mesh → broadcast / stop
+  preamble / tail) against the 420 s budget; if the tail still overruns,
+  `sample <worker-pid> 30` (or `lldb -p <pid> -o 'thread backtrace all'`)
+  during it names the function (expect
+  `OutOfCoreSerializableLaserOnlineFusionOpt::to_buffer`); plus `lsof -p`
+  (which file it holds) and a size poll of the `.obmc` (a steady growth rate
+  is the throughput the budget must cover). A controlled A/B (a wider margin
+  vs a smaller model) shows what the tail needs.
 - **OQ-S7** — the pose matrix's convention (§17.1): row-major per the Eigen
   shim, but the rotation's polarity and whether the pose is world←scanner or
   scanner←world are `[inferred]`. Settle with a hardware `get_global_pose` call

@@ -619,7 +619,8 @@ typedef ObScanStatus (*fn_obscan_scan_pause)(ObScanScanHandle scan);
 // rotate pose, writes <output_dir>/result/model.ply (28 B/vertex) and
 // serializes the out-of-core fusion cache (temp/*.obmc) — so the call blocks
 // for all of it, and its duration scales with the session's data. A large
-// session's teardown tail is not bounded by this call's return path; see
+// session's teardown tail can outrun a fixed watchdog budget (row #37's run:
+// ~14 s left of 420 s, cut off mid-tail); see
 // docs/recon/findings/scan-live-data.md §16.
 // typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, bool is_block, ObScanStatusCallback status_callback);  // WRONG — kept here as a record of the dead end, do not resurrect.
 typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, ObScanProgressCallback progress_callback,
