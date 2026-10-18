@@ -1105,6 +1105,8 @@ int RunReplayMode(int argc, char** argv) {
     std::fflush(stdout);
 
     size_t frames = 0;
+    size_t pose_frames = 0;
+    size_t cloud_frames = 0;
     double prev_t = 0;
     bool have_prev = false;
     bool saw_terminator = false;
@@ -1129,11 +1131,39 @@ int RunReplayMode(int argc, char** argv) {
         if (payload_len > 0) in.read(reinterpret_cast<char*>(frame.data()+32), payload_len);
         if (!in) { std::fprintf(stderr, "[worker] truncated frame payload\n"); break; }
 
-        uint32_t seq=0, count=0; double tc=0, ts=0; const float* xyz=nullptr;
-        if (!openscanner::frame_protocol::decode_cloud_snapshot(frame.data(), frame.size(), &seq, &tc, &ts, &xyz, &count)) {
-            std::fprintf(stderr, "[worker] invalid frame in replay\n");
+        // Validate the V1 envelope (magic/version/type), then decode per
+        // type. Any valid V1 frame is replayed as the live client sees it;
+        // a recording carries pose and cloud frames (and may carry more).
+        uint32_t magic = (unsigned char)env[0] | ((unsigned char)env[1] << 8) |
+                         ((unsigned char)env[2] << 16) | ((unsigned char)env[3] << 24);
+        uint16_t version = (unsigned char)env[4] | ((unsigned char)env[5] << 8);
+        uint16_t type = (unsigned char)env[6] | ((unsigned char)env[7] << 8);
+        if (magic != openscanner::frame_protocol::MAGIC ||
+            version != openscanner::frame_protocol::VERSION) {
+            std::fprintf(stderr, "[worker] invalid envelope in replay\n");
             break;
         }
+        uint64_t tcu = 0;
+        for (int i = 0; i < 8; ++i) tcu |= (uint64_t)(unsigned char)env[12 + i] << (i * 8);
+        double tc = 0;
+        std::memcpy(&tc, &tcu, sizeof(tc));
+        uint32_t seq = 0;
+        if (type == (uint16_t)openscanner::frame_protocol::MessageType::CloudSnapshot) {
+            uint32_t count = 0; double ts = 0; const float* xyz = nullptr;
+            if (!openscanner::frame_protocol::decode_cloud_snapshot(frame.data(), frame.size(), &seq, &tc, &ts, &xyz, &count)) {
+                std::fprintf(stderr, "[worker] invalid cloud frame in replay\n");
+                break;
+            }
+            ++cloud_frames;
+        } else if (type == (uint16_t)openscanner::frame_protocol::MessageType::Pose) {
+            double ts = 0; const double* m = nullptr;
+            if (!openscanner::frame_protocol::decode_pose(frame.data(), frame.size(), &seq, &tc, &ts, &m)) {
+                std::fprintf(stderr, "[worker] invalid pose frame in replay\n");
+                break;
+            }
+            ++pose_frames;
+        }
+        // Other V1 kinds are broadcast as-is (envelope already validated).
 
         if (!have_prev) { prev_t = tc; have_prev = true; }
         else {
@@ -1146,9 +1176,10 @@ int RunReplayMode(int argc, char** argv) {
         ++frames;
     }
     if (saw_terminator) {
-        std::printf("[worker] Replay complete (%zu frames).\n", frames);
+        std::printf("[worker] Replay complete (%zu frames: %zu cloud, %zu pose).\n", frames, cloud_frames, pose_frames);
     } else {
-        std::printf("[worker] Replay incomplete (%zu frames): missing terminator.\n", frames);
+        std::printf("[worker] Replay incomplete (%zu frames: %zu cloud, %zu pose): missing terminator.\n", frames,
+                    cloud_frames, pose_frames);
     }
     std::fflush(stdout);
     std::this_thread::sleep_for(std::chrono::seconds(5));
