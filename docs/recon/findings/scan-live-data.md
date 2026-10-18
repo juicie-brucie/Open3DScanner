@@ -159,7 +159,8 @@ our own run (`logs/exposure_sweep_new_setup_20261016/native_scan_log.txt`).
   `obscan_context_add_data_msg_listener`, `add_process_msg_listener`, control, device,
   tips — all in the same second). The corpus did not cite this; it is the strongest
   single support for "the listener is the app's channel".
-- The four cloud getters appear in **two bursts only** — at scan creation
+- The four getters the corpus names appear in **two bursts only** (the log contains
+  exactly one cloud *getter* — `obscan_scan_get_raw_clouds`, called in both bursts) — at scan creation
   (02:48:15.15) and once mid-session (02:49:00.73, inside a UI state-refresh sequence
   ending in `obscan_scan_plane_remove(false)`). Not "exactly once" — but the thrust
   holds: **no per-frame polling**.
@@ -175,11 +176,15 @@ our own run (`logs/exposure_sweep_new_setup_20261016/native_scan_log.txt`).
 **§1.5 "our tooling drives the SDK differently" — confirmed in part, corrected in part.**
 
 - Confirmed: we register the data listener (03:06:48) and never consume its payloads;
-  our runs emit `mframe queue is full` (907 in the exposure-sweep run) and the app's log
-  has **zero** `mframe` warnings. That is the corpus's sharpest claim and it holds.
-- Corrected: "a `frame queue is full` warning the real app never emits" is true only for
-  `mframe` — the app's own log carries **5,196** queue-full warnings (2,598 `mdepth` +
-  2,598 `mir`). The queues overflow in the vendor app too.
+  our runs emit `frame queue is full` (907 in the exposure-sweep run) and the app's log
+  has **zero** `frame` warnings. (The `m` in `mframe`/`mdepth`/`mir` is the SGR
+  terminator of the preceding escape — the messages are `frame`, `depth`, `ir`.) That is the corpus's sharpest claim and it holds.
+- Corrected: "a `frame queue is full` warning the real app never emits" is true only for the
+  `frame` queue — the app's own log carries **5,196** queue-full warnings (2,598 `depth` +
+  2,598 `ir`). Our own counts are `frame` 907, `depth` 1,062, `ir` 1,062 — 3,031 in
+  total, independently reproducing the corpus's "about 3,000 in a 30-second run" — and
+  the distinction is the `frame` queue only (907 against the app's 0), not queue-full
+  warnings in general. The queues overflow in the vendor app too.
 - Corrected/tension: the causal story ("we never drain → the queues fill") is not
   established and sits in tension with the same corpus's §1.1 ("queue is full = the
   paused state, not backpressure"). Timings fit neither cleanly: our warnings start
