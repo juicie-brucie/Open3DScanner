@@ -20,9 +20,12 @@
 // Usage:
 //   smoke_test [path-to-liborbbec_scan.dylib-or-lib_orbbec_scan.dll]
 //
-// Exit codes: 0 clean run, 1 launch/setup failure (incl. no dylib),
-// 3 recovered from the known obscan_context_destroy() vendor crash
-// (distinct from the hardware room's rule-10 exit 2 "skipped, no dylib").
+// Exit codes: 0 clean run, 1 other launch failure, 2 skipped (no dylib —
+// matches the hardware room's rule 10), 3 recovered from the known
+// obscan_context_destroy() vendor crash.
+//
+// The device-count probe is deliberately fixed (7 samples x 500 ms); a
+// deterministic series is worth more to a record than a tunable knob.
 
 #include <chrono>
 #include <cstdio>
@@ -159,7 +162,8 @@ int main(int argc, char** argv) {
         std::fprintf(stderr,
                       "No OBScan SDK library found. Pass the path to liborbbec_scan.dylib / "
                       "lib_orbbec_scan.dll explicitly (from an existing CrealityScan install).\n");
-        return 1;
+        std::printf("[launcher] Exit code 2 = skipped (no dylib).\n");
+        return 2;
     }
 
     std::printf("[launcher] Running SDK session in a worker process...\n");
