@@ -32,6 +32,8 @@ Gating checks
   hook            .claude/hooks/guard-hw-run.sh is executable, and the head hook
                   satisfies the guard invariants (must-block / must-allow cases
                   below). A base-vs-head probe matrix diff is reported.
+  ui-js-syntax    changed ui/*.js files must parse (`node --check`) — the
+                  #54 class: a parse error kills the whole page.
   build           cmake configure + build + ctest -LE hardware; runs only when
                   the working tree is the PR head or --build is passed (CI runs
                   it from the head checkout).
@@ -204,7 +206,10 @@ def main():
         return 2
     head_ref = "HEAD"
     if git("rev-parse", "HEAD").stdout.strip() != head_sha:
-        if git("fetch", "-q", "origin", f"pull/{pr}/head:refs/verify/pr-{pr}").returncode != 0:
+        # --force: an earlier read may have created this ref, and a rebased or
+        # amended head makes the update non-fast-forward (which used to fail
+        # as a misleading "ENV: fetch of refs/pull/... failed").
+        if git("fetch", "-q", "--force", "origin", f"pull/{pr}/head:refs/verify/pr-{pr}").returncode != 0:
             print(f"ENV: fetch of refs/pull/{pr}/head failed")
             return 2
         head_ref = f"refs/verify/pr-{pr}"
@@ -367,6 +372,34 @@ def main():
     else:
         report.append(("header", "INFO", "unchanged"))
 
+    # 6b. UI JavaScript parse check — the #54 class: a duplicate binding in
+    # ui/app.js killed the whole page, and nothing in this gate parsed the
+    # page's scripts. Changed ui/*.js must parse (node; module-or-script per
+    # the file's own import/export usage).
+    js_files = [p for p in changed if re.match(r"^ui/.*\.js$", p)]
+    if not js_files:
+        report.append(("ui-js-syntax", "INFO", "no ui JS changed"))
+    elif sh(["which", "node"]).returncode != 0:
+        report.append(("ui-js-syntax", "INFO", "node not found on PATH — skipped (CI covers)"))
+    else:
+        js_bad, js_checked = [], 0
+        for p in js_files:
+            if git("cat-file", "-e", f"{head_ref}:{p}").returncode != 0:
+                continue  # deleted in this PR
+            content = git_bytes("show", f"{head_ref}:{p}")
+            esm = bool(re.search(rb"(?m)^\s*(import|export)\b", content))
+            tmp = os.path.join(tempfile.gettempdir(),
+                               f"verify-pr-{pr}-{os.path.basename(p)}{'.mjs' if esm else '.js'}")
+            with open(tmp, "wb") as fh:
+                fh.write(content)
+            r = sh(["node", "--check", tmp])
+            js_checked += 1
+            if r.returncode != 0:
+                first = (r.stderr.strip().splitlines() or ["parse failed"])[0]
+                js_bad.append(f"{p}: {first[:160]}")
+        add("ui-js-syntax", not js_bad,
+            "; ".join(js_bad) if js_bad else f"{js_checked} file(s) parse")
+
     # 7. inventory vs PR body
     body_l = body.lower()
 
@@ -421,7 +454,7 @@ def main():
     for name, st, detail in report:
         print(f"| {name} | {st} | {detail.replace('|', '/')} |")
     print()
-    print("Gating checks: whitespace, run-records, plan, archives, hook, build.")
+    print("Gating checks: whitespace, run-records, plan, archives, hook, ui-js-syntax, build.")
     if fails:
         print()
         print(f"**FAILED: {', '.join(fails)}**")
