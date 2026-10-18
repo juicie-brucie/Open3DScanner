@@ -649,7 +649,6 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
         }
 
         ObScanPointColorClouds cloud = {};
-        ObScanPointClouds raw_cloud = {};
         ObScanCloudBbox bbox = {};
         uint32_t published_count = 0;
         if (!hardware_paused) {
@@ -672,13 +671,23 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             if (status == OB_SCAN_SUCCESS) {
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
-                    std::vector<float> xyz(static_cast<size_t>(cloud.num_points) * 3);
-                    for (uint32_t i = 0; i < cloud.num_points; ++i) {
-                        xyz[i * 3 + 0] = cloud.points[i].x;
-                        xyz[i * 3 + 1] = cloud.points[i].y;
-                        xyz[i * 3 + 2] = cloud.points[i].z;
+                    // Bound the per-tick cost: broadcast a fixed-size sample
+                    // instead of copying/broadcasting the whole accumulated
+                    // cloud every tick (O(points) -> O(kLiveBroadcastPointBudget)).
+                    constexpr uint32_t kLiveBroadcastPointBudget = 20000;
+                    uint32_t stride = 1;
+                    uint32_t broadcast_count = cloud.num_points;
+                    if (broadcast_count > kLiveBroadcastPointBudget) {
+                        stride = (broadcast_count + kLiveBroadcastPointBudget - 1) / kLiveBroadcastPointBudget;
+                        broadcast_count = (cloud.num_points + stride - 1) / stride;
                     }
-                    std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), cloud.num_points);
+                    std::vector<float> xyz(static_cast<size_t>(broadcast_count) * 3);
+                    for (uint32_t i = 0, src = 0; i < broadcast_count; ++i, src += stride) {
+                        xyz[i * 3 + 0] = cloud.points[src].x;
+                        xyz[i * 3 + 1] = cloud.points[src].y;
+                        xyz[i * 3 + 2] = cloud.points[src].z;
+                    }
+                    std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
                     server.BroadcastBinary(buf.data(), buf.size());
                 } else {
                     // Broadcast an empty frame too, so the UI's data-fps/HUD
@@ -691,17 +700,14 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 // copy out before the next publish.
                 lib.obscan_scan_model_clouds_release(scan);
             }
-            // Raw getter never publishes; reading it after the color getter
-            // shows the last published cloud, demonstrating the mechanism.
-            lib.obscan_scan_get_raw_cloud(scan, &raw_cloud);
         }
 
         if (tick % 10 == 0) {  // ~every 1s
             server.BroadcastText(BuildStatusJson("live", control, /*fov_controllable=*/false));
         }
         if (tick % 50 == 0) {  // ~every 5s
-            std::printf("[worker] tick %d/%d: color_cloud num_points=%u raw_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
-                        tick, total_ticks, cloud.num_points, raw_cloud.num_points, max_points_seen, server.ConnectedClientCount(),
+            std::printf("[worker] tick %d/%d: color_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
+                        tick, total_ticks, cloud.num_points, max_points_seen, server.ConnectedClientCount(),
                         hardware_paused ? 1 : 0);
             std::fflush(stdout);
         }
