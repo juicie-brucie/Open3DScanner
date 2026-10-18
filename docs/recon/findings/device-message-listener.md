@@ -343,6 +343,15 @@ DEVICE_CONNECT (crash.ips frame #12:
 the connect callback that runs both immediately at registration (§2) and
 again from the NetDeviceWatcher thread.
 
+**Main-thread state at the fault** [hw-confirmed:
+`2026-10-17-crash-reports-main-thread-teardown-correction.md` — identical in all
+three archived reports]: the main thread was inside `obscan_context_destroy()` →
+`OBDeviceManagement::release()` → `~OrbbecDevice` → `~OrbbecInternalDevice` →
+`OrbbecInternalDevice::stop()`, **blocked on a recursive_mutex** — teardown was
+racing the fault, not absent (row #5's "never reached destroy" premise is
+dropped). No report shows `obscan_context_destroy()` itself crashing; the
+f4c5f86 plan1 run's destroy returned SUCCESS in 807 ms with worker exit 0.
+
 Still without any static or dynamic reference:
 `OBDeviceManagement::send_device_msg(int)` and
 `OBDeviceManagement::init_device_msg(int)` have no direct `BL`/`B` caller and
@@ -421,4 +430,8 @@ created/destroyed/created timeline and both thread ids: registerer/deliverer
 `14660842`, NetDeviceWatcher/faulting thread `14660873`),
 `2026-10-17-plan8-device-message-listener.crash.ips` (the faulting stack), and
 the reconcile analysis
-`2026-10-17-plan8-device-message-listener-crash-analysis.md`.
+`2026-10-17-plan8-device-message-listener-crash-analysis.md`. Plus the
+main-thread re-read `2026-10-17-crash-reports-main-thread-teardown-correction.md`
+(the three archived `.ips` reports' main-thread stacks) and the contradicting
+clean run `2026-10-16-plan1-device-message-listener.md` (destroy SUCCESS,
+807 ms, exit 0).
