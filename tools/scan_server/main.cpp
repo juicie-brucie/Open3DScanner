@@ -395,8 +395,14 @@ const char* DataMessageName(int32_t msg_id) {
 
 const char* ProcessMessageName(int32_t msg_id) {
     switch (msg_id) {
+        case OB_SCAN_MESSAGE_ID_FRAME_BUFFER_FULL: return "FRAME_BUFFER_FULL";
+        case OB_SCAN_MESSAGE_ID_MAX_FRAMES_REACHED: return "MAX_FRAMES_REACHED";
+        case OB_SCAN_MESSAGE_ID_DETECT_FACE: return "DETECT_FACE";
+        case OB_SCAN_MESSAGE_ID_SCANNING_FAILED: return "SCANNING_FAILED";
+        case OB_SCAN_MESSAGE_ID_OPTIMIZATION_TO_MESH_NEED_CHANGE_VOXEL_SIZE:
+            return "OPTIMIZATION_TO_MESH_NEED_CHANGE_VOXEL_SIZE";
         case OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR: return "PASTED_MARKERS_TOO_REGULAR";
-        default: return nullptr; // unknown until OQ-P3 names it
+        default: return nullptr; // not in the header's process-id table
     }
 }
 
@@ -409,8 +415,8 @@ void OnDataMessage(ObScanDataMessage msg) {
         std::printf("[worker][data] msg_id=%d data=%p thread=%lu\n", msg.msg_id, msg.data,
                     static_cast<unsigned long>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
     }
-    // Unknown ids are expected until OQ-P3 names them; the header's id table
-    // is the contract, so do not invent names here.
+    // Any id not in the header's table is logged numerically (do not
+    // invent names); the header's id table is the contract.
     std::fflush(stdout);
     if (msg.msg_id == OB_SCAN_MESSAGE_ID_FRAME_READY) {
         ++g_frame_ready_count;
