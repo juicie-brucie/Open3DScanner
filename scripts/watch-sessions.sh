@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
     --interval) INTERVAL="$2"; shift 2 ;;
     --grace)    GRACE="$2";    shift 2 ;;
     --base)     BASE="$2";     shift 2 ;;
-    -h|--help)  sed -n '2,26p' "$0"; exit 0 ;;
+    -h|--help)  awk 'NR==1{next} /^#/{print; next} {exit}' "$0"; exit 0 ;;
     --*)        echo "watch-sessions: unknown option: $1" >&2; exit 2 ;;
     *)          ITEMS+=("$1"); shift ;;
   esac
