@@ -9,95 +9,111 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-17 (rev 6 — the live path landed, so the objective moves to scaling
-it, and the operator's manual `#25` rerun is handed to the dispatcher. rev 5 captured the
-research goals G1–G7; rev 4 the reconciliation; rev 3 the corpus; rev 2/rev 1 superseded —
-see **Superseded plans**)._
+_Last planned: 2026-10-18 (rev 8 — refresh pass. Re-read against the board at
+`7c33178`; removes the stale loop-state claims rev 7 carried (rows `#3`/`#4`, `#26`–`#30`,
+`#38` are all `DONE`), separates the **landed** decimation from the **forward** protocol
+design, and re-stages the architecture doc with explicit move boundaries. rev 7 added the
+viewer family; rev 6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
-**Keep the live view live as the cloud grows.**
+**Give the interface a shape: land the viewer's frame protocol (`V1`) — which currently has
+no board row.**
 
-The premise is proven: `#25` is `DONE` and OQ-S5 is resolved — live points publish during
-active scanning (`tests/results/2026-10-17-scan-server-live-acceptance.md`) and the
-live-path decision landed ([`findings/scan-live-data.md`](../recon/findings/scan-live-data.md) §6).
-The next failure is **latency**, and the operator's manual rerun (below) found it. Bound
-the per-tick cost so the view stays live as a scan progresses, and settle `#30` — which
-may share a root cause.
+The live path works and now holds at scale (`#25` → `#32` → `#38` → `#39`). What the app
+lacks is a *shape*: the wire format is positions-only, unversioned and pose-free, so
+scanner-POV following and a second client are both impossible today. `V1`
+(`frame_protocol.h` + a codec on each end) is the foundation every other viewer row needs.
 
-## Dispatcher handoff — operator's manual `#25` rerun (2026-10-17)
+**First action for the dispatcher: file the `V1` row.** Rev 7 proposed three rows and the
+dispatcher filed them (`#39`, `#40`, `#41`) — but not the foundation itself, so the
+objective's own row is missing. `V4`'s blocker (`#40`) is already filed and needs no
+further planning.
 
-The operator reran `#25` read-only and watched it live. The report lives **outside the
-repo** (`~/Downloads/plan25-manual-rerun-2026-10-17.txt`) and is **not committed**. It
-independently confirms OQ-S5's premise — live points accumulate and a mesh builds as the
-scanner moves — and adds two observations the official record does **not** carry:
+## Viewer family (V1–V5) — the interface, captured 2026-10-18
 
-1. **Latency scales with accumulated geometry, unbounded.** The HUD's `latency` went from
-   `~1.8 ms` at `points=11,958` (frame #113) to **`339.7 ms`** at `points=1,630,136`
-   (frame #505), with `data` fps falling to **0.0** while `render` held **60.1 fps**. The
-   live path is O(points) per tick with no cap, and points grow without bound during a
-   scan — so the view stalls exactly as the user keeps working. The acceptance run sampled
-   only up to 883 points, so it never entered this regime.
-   - **Possible link to `#30`:** if `scan_server` polls both getters per tick and both
-     return the same large buffer (which is what `#30`'s lockstep shows), that is duplicated
-     work on the same path. A hypothesis, not a finding — for the role that can measure.
-2. **`pkill -f "scan_server --live"` does not stop the worker.** It kills the launcher; the
-   `scan_server --live-worker …` child survives, holds the port and the device, and must be
-   killed by PID. A leaked worker is a **second SDK user**, which this loop treats as a hard
-   error. README's teardown guidance covers Ctrl+C, not this path.
+The UI is still a proof of concept: `ui/app.js`, a dependency-free WebGL2 `gl.POINTS`
+viewer with no camera interaction and no pose. The target is a robust interface that renders
+the active scan, follows the scanner's point of view, and maps cleanly onto Windows, Linux
+and macOS. Full architecture: `docs/architecture/scan-viewer.md` (**staged at the end of
+this file**; boundaries below). The V-labels are the planner's.
 
-**Proposed:** land the report as a run record under `tests/results/**` (dispatcher, per the
-`live-scan-manual-test` precedent), and file one row per observation. The latency row should
-carry the acceptance criteria, since "the view stays live" is the whole point of `#25`.
+| # | Goal | Board row | State |
+| --- | --- | --- | --- |
+| **V1** | `frame_protocol.h` + a codec on each end — versioned envelope, typed messages; today's wire shape becomes v1 | **none — file it** | **the objective**; nothing blocks it |
+| **V2** | A point budget on the wire, plus client backpressure | `#32`, `#38` (budget) · `#41` (backpressure) | **budget landed**; backpressure open |
+| **V3** | `ReplayCaptureSource` + one recorded session, so the viewer develops without the scanner | none | unfiled; needs V1 |
+| **V4** | `pose` message + the `follow` camera mode (scanner POV) | `#40` (recon) | filed; needs V1 |
+| **V5** | WebGPU renderer + orbit controls, WebGL2 fallback; optional thin native shell | none | unfiled; needs V1–V3 |
+
+**Landed vs forward — do not read one as the other.** `#32` shipped a **fixed 20,000-point
+*stride* sample per tick**, and `#38` capped the final-mesh frame; `#39` adds the on-demand
+full-detail path. That is the *budget* half of V2, and it is **done**. The protocol rules in
+the architecture doc — **voxel** decimation, delta encoding, quantization, and backpressure
+— are a **forward design** layered on top; only backpressure is rowed (`#41`). The doc marks
+which is which.
+
+Device-layer portability is a separate, harder thread: the seam (`CaptureSource`) can be
+built now, but the device layer only becomes OS-agnostic when the capture source moves off
+OBScan to the Orbbec SDK — see `README.md`'s "Possible future direction" and **G7**.
+
+## Dispatcher handoff — operator's manual `#25` rerun (2026-10-17) — **CLOSED**
+
+Kept for provenance only. The rerun landed as
+`tests/results/2026-10-17-plan25-manual-rerun.md`; both observations it raised were filed and
+are `DONE` (`#32` the live-view stall, `#33` the `pkill`/worker linger — the latter was a
+README-guidance defect, not a leak). Its follow-on chain ran to completion too: `#38` capped
+the final-mesh frame and `#39` (in flight, PR #95) restores a full-detail path. The teardown
+*hang* it exposed is still open as `#37`.
 
 ## Critical path
 
 ```
-latency / scale (operator's rerun) ─► profile the per-tick cost ─► bound it ─► hardware re-run
-        └─ likely shares a root cause with #30 (both getters polled per tick)
+V1 (frame protocol — UNFILED, the objective) ─┬─► V4 (pose + follow POV; blocker #40 is filed)
+                                              ├─► V3 (replay source) ─► V5 (WebGPU client)
+                                              └─► V2 backpressure (#41; the budget half landed as #32/#38)
 
-#11 (HW — now UNBLOCKED, #20 is DONE) ─► #5 (narrow or drop "reproducibly")
-
-#26 #27 #28 #29 (RECON) ─► the listener channel; #28 is the live-path decision's revisit trigger
-#30 (RECON) ─► get_raw_cloud's native body, and the raw∥color lockstep
-
-#3, #4 (TODO, no spec) ─► scan family        G1–G7 (captured) ─► downstream backlog
+#39 (full-detail path, PR #95) ─► the viewer's final-model path
+#34 (frame API) · #35 (loader release) ─► the listener live path
+#36 · #37 (RECON) ─► scale / teardown        #11 (HW — unblocked, #20 DONE) ─► #5
+#7 (BUILD) ─► OQ-7b/c/d                      #23 (SPEC-READY) ─► the wider scan surface
 ```
 
 Ranked by what it frees, not by board order:
 
-1. **Live-path scaling (new).** The operator's stated focus is capturing and writing scan
-   data from the hardware, and this is the first thing that breaks in real use. It gates
-   nothing on the board yet — which is why it needs a row.
-2. **`#30`.** Cheap, and plausibly entangled with (1): both are about what the per-tick
-   path does with the cloud.
-3. **`#11` → `#5`.** Now **unblocked** — `#20` is `DONE`, so the `.ips` re-read that gated
-   the re-run's design has landed. `#15` fixed the target (the remove-side race). `#11` is
-   a real `SIGSEGV` on a feature the board already marks `DONE`, and it needs the
+1. **`V1`.** It is the objective, it has no row, and every other viewer row waits on it.
+   Filing it is the cheapest action available.
+2. **`#39`.** In flight (PR #95) and user-visible: the final model on screen is currently a
+   20k preview. Its row is the live edge of the viewer family.
+3. **`#40`.** Filed and blocking `V4`; recon-only, so it does not compete for the hardware
+   room.
+4. **`#11` → `#5`.** Unblocked (`#20` is `DONE`; `#15` fixed the target to the remove-side
+   race). A real `SIGSEGV` on a feature the board marks `DONE`, and it needs the
    **serialized** hardware room.
-4. **`#26`–`#29` (RECON).** The listener channel and the preview lifecycle; `#28` is the
-   revisit trigger for the live-path decision.
-5. **`#3`, `#4`.** `TODO` with no spec; the rest of the scan family.
+5. **`#34` → `#35`.** The listener live path's prerequisites.
+6. **`#36`, `#37`, `#7`, `#23`.** Recon/analysis backlog.
 
 ## Ready now
 
 | Row | Role | What it needs |
 | --- | --- | --- |
-| latency / scale (new) | dispatcher → builder/analyze | Land the operator's report as a record, then profile the per-tick path under load. |
-| worker teardown (new) | builder | Make the launcher terminate its worker (or document the two-step stop); a leaked worker is a second SDK user. |
+| `V1` (unfiled) | dispatcher | File the row; then builder owns `frame_protocol.h` + codecs. |
+| `#39` | builder | In flight (PR #95). The on-demand full-detail path. |
+| `#40` | recon | V4's blocker: spec `get_global_pose`/`get_markers`. One target, one session. |
+| `#41` | builder | V2's remainder: client backpressure on the frame stream. |
 | `#11` | hardware | Unblocked: `#20` is `DONE`. The controlled remove-side-race re-run. |
-| `#30` | recon | `get_raw_cloud`'s native body vs. the raw∥color lockstep; isolated run polling only `get_raw_cloud`. |
-| `#26`, `#27`, `#28`, `#29` | recon | The adopted OQ rows; one target each (Risk 6). |
-| `#7` | recon / build | OQ-7b/c/d follow-ups ([`findings/plan7-detection-path.md`](../recon/findings/plan7-detection-path.md)); OQ-7b is a hardware observation. |
-| `#23` | recon | `SPEC-READY`; its follow-ups are `#24` (done), `#30`, and the wider scan surface. |
+| `#34`, `#35` | recon / build | The frame API in the header subset; the unresolved `realtime_model_mesh_release`. |
+| `#36`, `#37` | recon | OQ-P5 (the five direct-out getters' layouts); the large-mesh teardown hang. |
+| `#7` | recon / build | OQ-7b/c/d follow-ups ([`findings/plan7-detection-path.md`](../recon/findings/plan7-detection-path.md)). |
+| `#23` | recon | `SPEC-READY`; its follow-ups have been spun out into their own rows. |
 
 ## Blocked, and on what
 
 | Row | Blocked on |
 | --- | --- |
 | `#5` | `#11`. A `[hw-contradicted]` tag is cleared by a run, not by argument. |
-| the listener live path | `#28` (OQ-P3): if `FRAME_READY`'s `data` carries a consumable cloud, the live-path decision is re-taken. |
-| `#3`, `#4` | Recon capacity — both are `TODO` with no spec. Do **not** fold them into a recon row that is already carrying a target (Risk 6). |
+| the listener live path | `#34` (the frame API in the header subset) then `#35`. |
+| `V3`, `V4`, `V5` | `V1`. |
 | `#21` | A **user decision** on tiering added run records. |
 | G1–G5, G7 | Being picked up; each needs its own row, and a recon row before any build row. |
 
@@ -106,16 +122,19 @@ Ranked by what it frees, not by board order:
 An OQ with no task row is unowned work — the spec claims that lean on it are load-bearing
 on nothing. Current state:
 
-- **Adopted since rev 5:** OQ-P1 → `#26`, OQ-P2 → `#27`, OQ-P3 → `#28`, OQ-P4 → `#29`.
-  OQ-S1 answered under `#24`; OQ-S5 resolved under `#25`.
-- **OQ-S2** (does pause/stop publish temp→show?) — **still orphaned.** Decides whether the
-  per-tick poll is the only publish path; overlaps the latency work, so adopt it there.
+- **All four PLAN #2 OQs are closed out** — OQ-P1…P4 were adopted as `#26`–`#29`, which have
+  all landed. OQ-S1 was answered under `#24`; OQ-S5 resolved under `#25`.
+- **OQ-S2** (does pause/stop publish temp→show?) — **still orphaned.** The `V1` protocol
+  work touches the same publish path, so adopt it there rather than as a separate row.
 - **OQ-S3** (`+0x2e0` vs `+0x320` lock asymmetry) — **still orphaned**, low priority. The
-  latency work may touch the same guards, so re-check before rowing separately.
+  landed decimation (`#32`) already sits on this path; re-check before rowing separately.
 - **OQ-1** — the `[inferred]` residual sits under `#1` (`DONE`). **Flag on `#1`** or it is lost.
 - **OQ-5** (`tips`/`control`/`calib` `*_name` jump tables) — **still orphaned**; propose a recon row.
 - **OQ-6** — accepted as-is by decision. Correct to leave unrowed.
 - **OQ-7b** — what `#12`'s `get_device_num()` note waits on. **Adopt as a hardware row.**
+
+Not an OQ, but the same failure mode: **`V1` is the round's objective and has no row.** An
+objective with no row is unowned work with extra steps.
 
 ## Goals carried forward from the research corpus (captured once)
 
@@ -129,11 +148,11 @@ are tracked and not lost. The dispatcher files the rows; the G-labels are the pl
 | # | Goal | Origin | Needs first | Horizon |
 | --- | --- | --- | --- | --- |
 | **G1** | Live plane removal for **resource management** (cut data per frame during capture), not a post-scan cosmetic cut — the user's own "it does not work at all" complaint | `plane-removal-reverse-engineering.md` §5 | a recon row to adopt the ABI + decision-fn finding, **or** a build-only RANSAC/signed-distance path that skips vendor logic | after capture |
-| **G2** | Coverage heatmap: replace the one-scalar "insufficient data" verdict with a spatial under-covered set painted on the live cloud | `scan-quality-and-coverage…` §5.2; `pipeline-quality-assessment.md` §3.3 | header-subset additions (`get_global_pose`, `get_markers`) → recon then build | after capture |
+| **G2** | Coverage heatmap: replace the one-scalar "insufficient data" verdict with a spatial under-covered set painted on the live cloud | `scan-quality-and-coverage…` §5.2; `pipeline-quality-assessment.md` §3.3 | header-subset additions (`get_global_pose`, `get_markers`) — **overlaps `#40`** | after capture |
 | **G3** | Owned tracking (marker detection + bundle adjustment) with per-pose rejection reasons surfaced | `pipeline-quality-assessment.md` §3.4 | G2's feedback layer to display them | medium–large |
 | **G4** | Own denoising + fusion pipeline (outlier removal → PCA normals → bilateral/RIMLS → WLOP; ICP → pose-graph with loop closure → Poisson/BPA), Open3D as the MIT anchor | `point-cloud-denoising-and-fusion.md` §1–2 | a fusion feature actually being planned | long |
 | **G5** | Fusion-accuracy evaluation harness (unidirectional MSD/RMS/min–max, non-parametric stats, repeatability across runs) | `point-cloud-denoising-and-fusion.md` §3 | G4, or any fusion change worth measuring | with G4 |
-| **G6** | Fix our own SDK usage: drain the data listener, align voxel sizes | `pipeline-quality-assessment.md` §3.1 | **half open** — the live-path decision kept the listener registered and unconsumed (findings §6); the voxel-size half is untouched | **now** |
+| **G6** | Fix our own SDK usage: drain the data listener, align voxel sizes | `pipeline-quality-assessment.md` §3.1 | **half open** — the listener is still registered and unconsumed (findings §6); `#31` added instrumentation, not a consumer. The voxel-size half has no row. | open |
 | **G7** | Keep laser extraction + calibration behind the SDK until the "drop OBScan entirely" decision | `pipeline-quality-assessment.md` §3.5 | that decision (README, "Possible future direction") | standing |
 
 Two design constraints from the corpus bind any row above: keep capture decoupled from
@@ -156,29 +175,24 @@ Same object, possibly a re-homing — verify, don't assume.
 
 ## Risks
 
-1. **The live path is unbounded in the cloud size — new, and live.** See the handoff above.
-   Cost if it lands: the live view stalls as a scan progresses, which is the opposite of
-   what `#25` was landed to fix. Cheapest retirement: a profile of the per-tick path
-   (getter / double-poll / serialization / broadcast), then a cap.
-2. **A leaked worker is a second SDK user.** The operator's rerun shows `pkill` on the
-   launcher leaves the `--live-worker` child holding the port and the device. Cost: two SDK
-   users on one device — the loop's hardest error — and a blocked next run. Cheapest
-   retirement: launcher-side termination propagation, or a documented two-step stop.
+1. ~~The live path is unbounded in the cloud size~~ — **retired by `#32`**, and the
+   follow-on chain (`#38`, `#39`) is closed or in flight. Kept for the record only.
+2. ~~A leaked worker is a second SDK user~~ — **retired by `#33`** (a README-guidance
+   defect). The teardown *hang* it exposed is still open as `#37`.
 3. **Evidence provenance (`#21`).** Added records and logs under `tests/results/**` are
    script-tier, so a fabricated or mis-transcribed record auto-merges with no judgment
-   pass. Two manual reruns now sit **outside** the repo entirely (the earlier live-scan
-   test, and this one) — the class of evidence that most needs a home. Cheapest retirement:
-   the user decision on tiering; interim, land each manual report as a record.
+   pass. Manual reruns keep arriving from outside the repo — the class of evidence that
+   most needs a home. Cheapest retirement: the user decision on tiering; interim, land each
+   manual report as a record.
 4. **A second evidence corpus outside the gate.** `logs/**` is tracked and is the evidence
    base for `pipeline-quality-assessment.md` §1, but it is neither `tests/results/**` nor
    `docs/recon/**`, so the `run-records` check and the tier rules do not reach it. Cheapest
    retirement: a **user decision** on whether `logs/**` stays (and under what discipline).
-5. **One serialized hardware resource.** `#11`, the latency re-run, and OQ-7b all queue
-   behind one manual session. Batch per session, cheapest-first; never spend the room on
-   `#11` before its design is settled (`#20` did that).
-6. **Recon step budget.** `recon` is capped at `steps: 40`, one board row per session —
-   `#26`–`#29` are each a session, and a `#24`-style order that also asks for `#3`/`#4`
-   context comes back empty.
+5. **One serialized hardware resource.** `#11` and OQ-7b queue behind one manual session
+   (the scale re-runs are done). Batch per session, cheapest-first.
+6. **Recon step budget.** `recon` is capped at `steps: 40`, one board row per session.
+   `#36`, `#37` and `#40` are each a session; an order that also asks for adjacent context
+   comes back empty.
 7. **Verification debt.** Spec claims tagged `[inferred]` that code already depends on:
    OQ-S2/S3, OQ-1's residual, and the tips/control rows `#9` left `[inferred]`.
 
@@ -186,29 +200,35 @@ Same object, possibly a re-homing — verify, don't assume.
 
 For the dispatcher to expand — not dispatches in themselves.
 
-1. **Land the operator's rerun** → dispatcher: commit the report as a run record under
-   `tests/results/**` (per the `live-scan-manual-test` precedent), then file the two rows
-   (latency/scale, worker teardown).
-2. **Profile the per-tick path** → builder/analyze: measure where the 340 ms goes at ~1.6M
-   points — the getter, the double-poll (`#30`), the serialization, or the broadcast — and
-   report a number per stage. **Wall:** builder reads its own source; the getters' native
-   bodies are recon's, not builder's.
-3. **Bound the per-tick cost** → builder (after 2): cap or decimate the broadcast, or move
-   to a delta/frame channel, so the view stays live as the cloud grows. Acceptance: the
-   operator's regime, re-run.
+1. **File `V1`** → dispatcher: the objective has no row. `frame_protocol.h` + a codec on
+   each end; today's wire shape becomes v1. **Wall:** builder edits `engine/src`, `tools/`,
+   `ui/`; denied the header.
+2. **Land the staged architecture doc** → dispatcher: move the staged block into
+   `docs/architecture/scan-viewer.md` (boundaries in the staging header below), delete the
+   block from this file, and PR it. `docs/architecture/**` is agent-tier → needs a verifier
+   verdict.
+3. **`#39`** → builder: finish the on-demand full-detail path (in flight, PR #95).
 4. **`#11`** → hardware: the controlled remove-side-race re-run; archive raw log and crash
-   report per the record rules. Now unblocked. **Wall:** hardware writes only `tests/results/**`.
-5. **`#26`–`#29`** → recon, one session each: the adopted OQ rows. `#28` is the live-path
-   decision's revisit trigger.
+   report per the record rules. Unblocked. **Wall:** hardware writes only `tests/results/**`.
 
-Also ready, non-competing (no hardware): `#30` → recon; `#7` follow-ups → recon/build.
+Also ready, non-competing: `#40` (recon), `#41` (builder), `#34`/`#35` (recon/build),
+`#36`/`#37` (recon), `#7` follow-ups (recon/build).
 
 ## Superseded plans
 
+- **2026-10-18 rev 7 → rev 8 — refresh pass, no objective change.** Rev 7's objective
+  (`V1`) stands; what changed is that rev 7 restated loop state instead of pointing at it,
+  and the loop moved under it. Rows `#3`/`#4`, `#26`–`#30`, `#38` were described as open
+  while the board had them `DONE`; the landed decimation (`#32`) was described as pending
+  alongside the forward protocol design. Rev 8 points at the rows and separates the two.
+  Reversal reason: a verifier read of PR #97, not a change of direction.
+- **2026-10-18 rev 6 → rev 7 — objective change.** rev 6's aim was "keep the live view live
+  as the cloud grows"; `#32` (and `#38`) landed that, and the operator opened a new
+  direction — the viewer architecture — so rev 7 moved the aim to the viewer's foundation
+  (`V1`). Reversal reason: the objective was achieved and a new input arrived.
 - **2026-10-17 rev 5 → rev 6 — objective change.** rev 5's aim was "make the live view
-  stream real points"; `#25` landed and OQ-S5 is resolved, so rev 6 moves the aim to
-  *scaling* it. Reversal reason: the objective was achieved, and a new input (the
-  operator's rerun) named the next failure.
+  stream real points"; `#25` landed and OQ-S5 is resolved, so rev 6 moved the aim to
+  *scaling* it.
 - **2026-10-17 rev 2 — "Close the scan family's live-data loop: `#24` → `#25` → OQ-S5."**
   Superseded by rev 3, and now fully landed. rev 2 treated `#25`'s getter-publish path as
   the settled answer; the research corpus recorded a second, vendor-chosen live path, so
