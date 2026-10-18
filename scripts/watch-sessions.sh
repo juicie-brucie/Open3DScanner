@@ -13,6 +13,13 @@
 #   --base URL       API base (default: auto-detect the listening opencode port)
 #   -h, --help       this text
 #
+# NOTE (dispatcher usage): this process exits only when EVERY item has settled, and
+# the dispatcher's wake-up is tied to this command finishing — so one watcher over
+# several items delays every wake to the slowest one. Launch ONE watcher per item
+# (separate backgrounded calls) so each completion wakes you independently; use a
+# multi-item invocation only when you genuinely want the whole set to settle before
+# acting (e.g. a final round summary).
+#
 # Sessions: blocks on POST /api/experimental/session/<id>/wait (204 when the
 # session goes idle; blocks while it runs), then confirms a message landed after
 # the watch began. A session that is idle at watch start and produces no new
