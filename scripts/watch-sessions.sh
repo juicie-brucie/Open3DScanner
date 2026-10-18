@@ -112,7 +112,10 @@ watch_session() {
     resp=$(api "$BASE/api/session/$id/message?limit=1")
     last_time=$(printf '%s' "$resp" | jq -r '.data[-1].time.created // 0' 2>/dev/null)
     last_type=$(printf '%s' "$resp" | jq -r '.data[-1].type // "?"' 2>/dev/null)
-    if [ "$last_time" -gt "$baseline" ] 2>/dev/null; then
+    # A "user" message is the dispatcher's own prompt arriving — it must not count as
+    # the agent completing (it would fire the watch the moment we dispatch, and exit
+    # having never watched the turn). Only agent-side records end a turn.
+    if [ "$last_time" -gt "$baseline" ] 2>/dev/null && [ "$last_type" != "user" ]; then
       printf '[session] %s: done (new %s message at %s) — %s\n' \
         "$id" "$last_type" "$last_time" "$(session_line "$id")" > "$out"
       return 0
