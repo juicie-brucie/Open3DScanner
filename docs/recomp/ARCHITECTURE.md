@@ -197,7 +197,8 @@ session B — agent: openscanner/builder    /openscanner/build <item>
 
 Then, after a hardware run: `/openscanner/reconcile`. And any time:
 `/openscanner/verify <item>`. The dispatcher session runs `/openscanner/dispatch` to
-start the next round.
+start the next round. PRs are opened with `gh pr merge --auto --merge`; the gate above
+decides when they land.
 
 ## Open items
 
