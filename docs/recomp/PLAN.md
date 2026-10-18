@@ -83,7 +83,7 @@ sha256 `184d92a8…c017ec`; spec in
   emptied slot at drain time. Runnable as a follow-up dynamic trace. → **#26**
 - **OQ-P2** — No lock evidence on the slot homes / queue vector: is
   add/remove/deliver racy? Needs a second-thread add/remove/re-add trace while
-  frames flow.
+  frames flow. → **#27**
 - **OQ-P3** — `data` payload semantics per emitter (device-family OQ-1
   counterpart): `send_data_msg` passes the pointer opaque; per-stage payloads
   unmapped. → **#28**
