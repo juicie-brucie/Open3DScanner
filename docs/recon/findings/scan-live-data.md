@@ -456,6 +456,108 @@ trace spec.
   other process finished") until the tail completes — or a larger teardown
   watchdog. Nothing tool-side skips the SDK's tail.
 
+## 17. The scanner-POV pose channel (row #40)
+
+*Static half, plan40 pass — four read-only sweeps over the existing snapshot
+(the pose getters, the markers getter, the camera model, the pose's
+publication); no new analysis. Every claim here is `[inferred]` (static-only):
+no hardware run has exercised these getters yet.*
+
+### 17.1 The pose getters — `obscan_scan_get_global_pose` / `_get_registration_pose`
+
+| export | wrapper | native chain |
+| --- | --- | --- |
+| `obscan_scan_get_global_pose` | `0x10308` | `OBScanBase::get_global_pose(OBScanPose_*)` `0x6f90e8` → `this+0xf0` → `OBScanDataManagement::get_global_pose()` `0x703568` |
+| `obscan_scan_get_registration_pose` | `0x10380` | `OBScanBase::get_registration_pose(OBScanPose_*)` `0x6f9164` → `OBScanDataManagement::get_registration_pose()` `0x7035d8` |
+
+Both take `(scan, ObScanPose* out)` — a **caller-allocated 128-byte copy**
+(contrast the frame payload's `obscan_frame_get_frame_pose`, whose
+`ObScanPose**` returns a *borrowed* impl pointer, one-shot, bit 4). The
+wrappers log a banner, reject only a NULL scan → `0x32620107` ("the
+OBScanHandle is nullptr !"), and tail-call; the natives reject a NULL out →
+`0x32620100` ("the global_pose is nullptr !"), copy through a stack temporary
+and return 0. **No step gate** — both work in any `OrbbecScanStep`.
+
+**`ObScanPose_` = 128 bytes, sixteen `double`, row-major 4×4.** `m[r][c]` at
+`(4r+c)*8`; the translation column is `0x18`/`0x38`/`0x58`; the bottom row is
+`[0,0,0,1]` for an isometry. Evidence: the 128-B copies in the getters and
+setters (`0x703568`, `0x7035a0`, `0x6f90e8`), the `Isometry3d`↔`OBScanPose_`
+round-trip (`0x6acca4`/`0x6acf38`), the 16-double NaN loop (`0x6accc8`), the
+Eigen transpose shim (`0x6ace00` ⇒ row-major), and the identity NaN-fallback
+(`0x2cf16a0`).
+
+**Storage + sync.** Global pose at `dataMgmt+0x1b0` (`scan+0x2a0`),
+registration pose at `+0x120` (`scan+0x210`). Getters and setters all take the
+**byte lock at `dataMgmt+0x320`** (`swpab`/`stlrb` — the same guard
+`get_raw_cloud` uses), so pose reads are mutually exclusive with writes — not
+the family's unsynchronized listener pattern (§11).
+
+**Lifetime**: a value copy into the caller's struct — repeatable, no release,
+nothing borrowed.
+
+### 17.2 Publication — event-driven, not per frame
+
+The **global** pose has exactly one writer chain:
+`obscan_registration_confirm_or_cancel_result(reg, bool)` (`0xde2c`) →
+`OBScanRegistration::confirm_or_cancel_result` (`0x55334`) →
+`resolve_registration_result(bool)` (`0x553fc`) — the sole caller of
+`OBScanBase::set_global_pose` (`0x6f7f38` → `OBScanDataManagement::set_global_pose`
+`0x703530`) — writing the scan's *registration* pose as the new global pose.
+Gated on the registration step (`ldar reg+0x50 == 3`, pending set non-empty),
+`thread_is_idle`, and the project-step window: **once per confirm/cancel, not
+per frame**. The *registration* pose is written by
+`OBScanRegistration::auto_regist_func`/`point_pair_regist_func` as the solves
+run — so for a live scanner-POV feed the registration getter is the fresher
+channel, and the global pose changes only when a result is confirmed. The scan
+pose appears in **no listener payload**; the only per-frame pose is the frame
+payload's (`FRAME_READY` → `obscan_frame_get_frame_pose`).
+
+### 17.3 The markers getter — `obscan_scan_get_markers`
+
+`(scan, ObScanMarkers* out)`: wrapper `0x105b0` (NULL scan only →
+`0x32620107`) → `OBScanBase::get_markers` `0x6f91f0` (a 2-instruction
+forwarder, `this+0xf0`) → `OBScanDataManagement::get_markers` `0x703044`:
+NULL out → `0x32620100`; takes the same `+0x320` byte lock; copies the
+`{count@0x00, markers@0x08, aux1@0x10, aux2@0x18}` view (32 B — layout in
+data-process-message-listeners.md §15); unlocks; returns 0.
+
+**Borrowed, not copied**: the three pointers reference the manager's live
+container (`*(dataMgmt+0x308)`, a `shared_ptr`); no refcount is taken and the
+lock releases *before* return — a concurrent `update_markers_data` (`0x703968`)
+can `clear()`+`reserve()` the arrays under the caller. Read synchronously,
+don't retain. (Contrast `get_markers_data` `0x7039d4`, the owning
+`shared_ptr` variant — **not** what this export uses.)
+
+**Records**: `free_scan::convert_VKeyPoint_to_OBScanMarkersData` (`0x8aba0`;
+`VKeyPoint` stride 60 B) fills three parallel per-marker arrays —
+`markers`/`aux1` = 16-byte `{3×f32, pad}` records, `aux2` = one `f32` each:
+two 3-D points plus a scalar per marker. Field names are not recovered
+(OQ-S8). No per-accessor state bit — statically repeatable (OQ-S9).
+
+### 17.4 The camera model — FOV only; no C-reachable intrinsics
+
+`ObScanFov` (0 = NORMAL, 1 = WIDE — the vendor's own name/desc tables
+`0x170bec`/`0x170c18`) is already bound, and it is the mode config's
+`scan_fov@0x18` (`ObScanModeConfig`, reachable via `obscan_scan_get_mode_config`
+`0xff5c`). The vendor's richer camera data (`DeviceParameters`,
+`DeCameraIntrinsic_S`, `OBCameraParam`; the `load_camera_params` /
+`init_camera_params` import paths `0x9e074`/`0xa1bd8`/`0xa23fc`;
+`convert_ferret_camera_params` `0xbd672c`) is **not reachable from the C ABI**;
+the only C-reachable parameter path is the opaque device-param blob
+(`obscan_device_management_backup_device_param` `0x117b8` /
+`resume_device_param` `0x11844`), content unparsed. For the viewer's §5
+design: **pose + FOV is everything the pinned ABI supports**; richer
+intrinsics need new analysis (OQ-S10 — analysis-needed, deliberately not run).
+
+### 17.5 Error taxonomy (all four exports)
+
+| condition | code |
+| --- | --- |
+| NULL scan/registration handle (wrappers) | `0x32620107` (`OB_SCAN_ERROR_DEADLINE_EXCEEDED` — the family's generic null-handle code) |
+| NULL out (natives) | `0x32620100` (`OB_SCAN_ERROR_INVALID_ARGUMENT`) |
+| registration gate fails (`confirm_or_cancel_result`) | `0x32620110` (`OB_SCAN_ERROR_MULTI_CALLED`) |
+| success | `0` |
+
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
@@ -486,6 +588,31 @@ trace spec.
   (the session's cache is 385 MB here vs 704 MB in the clean run). A
   controlled A/B (same duration, two mesh sizes; or a repeat run) separates
   "slow tail" from "deadlock".
+- **OQ-S7** — the pose matrix's convention (§17.1): row-major per the Eigen
+  shim, but the rotation's polarity and whether the pose is world←scanner or
+  scanner←world are `[inferred]`. Settle with a hardware `get_global_pose` call
+  at a known device orientation (compare against the frame pose / the app's
+  view).
+- **OQ-S8** — the marker record's field names (§17.3): two 3-float triples plus
+  a scalar per marker (position? axis? confidence?). Settle by a consumer read
+  or a hardware `{count, first record}` log.
+- **OQ-S9** — the marker borrow's stability (§17.3): the `+0x320` lock covers
+  the copy only; a concurrent marker update can free the arrays. Repeatability
+  is statically yes (no state bit). A hardware double-call plus a mid-scan
+  re-read would confirm.
+- **OQ-S10** — *analysis-needed (serialized by design; do not run without a
+  board row):* richer camera intrinsics (§17.4) — whether
+  `DeviceParameters`/`DeCameraIntrinsic_S` are recoverable from the snapshot
+  and whether any reachable path exposes them. Today only the opaque
+  backup/resume blob is C-reachable.
+- **OQ-S11** — `obscan_get_marker_mesh` (`0x11ce4`): the exact signature/output
+  shape (an int count plus float args and pointers; builds a 72-B-stride
+  vertex mesh). A separate contract row if the marker mesh is wanted.
+- **OQ-S12** — the pose's publication trigger `obscan_registration_confirm_or_cancel_result`
+  (`0xde2c`) is not in our header subset (§17.2): the viewer's `pose` message
+  depends on it (the global pose updates per confirm). Declare it in a
+  registration-family row, or document the registration getter as the live
+  channel.
 
 ## Evidence
 
@@ -512,3 +639,8 @@ artifacts under `/tmp/openscanner_live_server_session/` — `sjNH28m_…/result/
 (319,165,392 B, complete, mtime 01:47:41) and `sjNH28m_…/temp/mainLOMCache.obmc`
 (385,871,872 B, mtime 01:47:43) vs the clean run's `s40lAcB_…/result/model.ply`
 (6,318,058 B, complete) and `s40lAcB_…/temp/mainLOMCache.obmc` (704,504,982 B).
+
+Row #40 (the scanner-POV pose channel): four read-only sweeps over the existing
+snapshot (pose getters, markers, camera model, pose publication) — no analyzer run.
+Targets/addresses as cited in §17; the sweeps' raw read ranges are recorded there and
+in the four draft files (deleted after consolidation, their substance is §17).

@@ -676,9 +676,17 @@ typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, Ob
 // docs/recon/findings/data-process-message-listeners.md §12/§14/§15.
 typedef void* ObScanFrameHandle;   // the FRAME_READY payload pointer
 typedef void* ObScanImageHandle;   // the NEW_*_IMAGE payload pointer
-// Pointer-to-pointer outs whose layouts are not yet recovered (findings §14);
+// The scanner pose — the scan pose getters' out (row #40) and the frame
+// payload's pose. A caller-allocated 128-byte value: sixteen doubles,
+// row-major 4x4 (m[r][c] at (4r+c)*8; the translation column is
+// m[0][3]/m[1][3]/m[2][3]; bottom row [0,0,0,1] for an isometry). The scan
+// getters COPY it (repeatable, no release); the frame getter returns a
+// borrowed pointer (one-shot). See docs/recon/findings/scan-live-data.md §17.
+typedef struct ObScanPose {
+    double m[4][4];
+} ObScanPose;                       // 128 bytes
+// Pointer-to-pointer out whose layout is not yet recovered (findings §14);
 // callers hold the returned pointer opaquely until then.
-typedef struct ObScanPose ObScanPose;
 typedef struct ObScanImageData ObScanImageData;
 
 // The direct-out structs (row #36). These are CALLER-ALLOCATED: put one on
@@ -751,7 +759,25 @@ OBSCAN_ABI_ASSERT(sizeof(ObScanDistanceAdviceInfo) == 328, "ObScanDistanceAdvice
 OBSCAN_ABI_ASSERT(offsetof(ObScanDistanceAdviceInfo, pair_second) == 0x04 &&
                   offsetof(ObScanDistanceAdviceInfo, histogram) == 0x08,
                   "ObScanDistanceAdviceInfo offsets (findings §15)");
+OBSCAN_ABI_ASSERT(sizeof(ObScanPose) == 128, "ObScanPose must be 128 bytes (findings §17)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanPose, m[0][3]) == 0x18 &&
+                  offsetof(ObScanPose, m[1][3]) == 0x38 &&
+                  offsetof(ObScanPose, m[2][3]) == 0x58,
+                  "ObScanPose translation column offsets (findings §17)");
 #undef OBSCAN_ABI_ASSERT
+
+// ---------------------------------------------------------------------------
+// The scanner-POV channel (row #40): the pose and marker getters.
+// Both pose getters are CALLER-ALLOCATED 128-byte copies (repeatable, no
+// release). The markers getter fills a BORROWED 32-byte view (layout §15 in
+// data-process-message-listeners.md — read synchronously, do not retain).
+// NULL scan -> OB_SCAN_ERROR_DEADLINE_EXCEEDED (845283591); NULL out ->
+// OB_SCAN_ERROR_INVALID_ARGUMENT (845283584). The global pose updates only
+// when a registration result is confirmed; the registration pose is the live
+// solve. See docs/recon/findings/scan-live-data.md §17.
+typedef ObScanStatus (*fn_obscan_scan_get_global_pose)(ObScanScanHandle scan, ObScanPose* out_pose);
+typedef ObScanStatus (*fn_obscan_scan_get_registration_pose)(ObScanScanHandle scan, ObScanPose* out_pose);
+typedef ObScanStatus (*fn_obscan_scan_get_markers)(ObScanScanHandle scan, ObScanMarkers* out_markers);
 
 // Fills *out_cloud with a pointer to the SDK's frame cloud — the same
 // {num_points, points, normals} shape as ObScanPointClouds.
