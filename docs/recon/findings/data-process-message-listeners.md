@@ -509,7 +509,7 @@ mangled names plus the wrappers' argument checks.*
 | `obscan_frame_get_frame_rate` | `(frame, int32_t* out)` | frame rate |
 | `obscan_frame_get_frame_tracking_status` | `(frame, int32_t* out)` | tracking status |
 | `obscan_frame_get_update_model` | `(frame, bool* out)` | update-model flag |
-| `obscan_frame_get_frame_pose` | `(frame, ObScanPose** out)` | pointer to the frame's pose (layout unmapped) |
+| `obscan_frame_get_frame_pose` | `(frame, ObScanPose** out)` | borrowed pointer to the frame's 128-byte pose (layout: scan-live-data.md §17; one-shot, bit 4) |
 | `obscan_frame_get_marker_datas` | `(frame, ObScanMarkers* out)` | 32-byte marker view (layout §15) |
 | `obscan_frame_get_marker_distance_advice` | `(frame, ObScanSimpDistAdviceArray* out)` | 16-byte advice view (layout §15) |
 | `obscan_frame_get_frame_cloud_distance_advice` | `(frame, ObScanSimpDistAdviceArray* out)` | 16-byte advice view (layout §15) |
@@ -526,7 +526,8 @@ mangled names plus the wrappers' argument checks.*
 **Out-struct status.** Known and declared: `ObScanPointClouds**` (frame cloud),
 `ObScanCloudBbox*`, `int32_t*`, `int64_t*`, `bool*`. Declared with
 forward-declared opaque structs (pointer-to-pointer outs, ABI-correct but not
-yet field-readable): `ObScanPose**`, `ObScanImageData**`. **Deferred in #34,
+yet field-readable): `ObScanImageData**` (`ObScanPose` is now defined — row #40,
+scan-live-data.md §17). **Deferred in #34,
 declared in §15** — the five direct-out getters whose structs a caller must
 allocate (`OBScanMarkers_` 32 B, `OBScanSimpDistAdviceArray_` ×2,
 `OBScanReferenceRods_` 56 B, `OBScanDistanceAdviceInfo_` 328 B) — their
