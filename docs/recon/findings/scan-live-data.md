@@ -271,6 +271,64 @@ A/B. A same-build raw-before-color ordering experiment would only show the lag s
 already implied here; if anyone still wants it, it is a tool change (builder), not recon
 or hardware.
 
+## 14. The realtime-mesh getter's lifetime rules (row #3)
+
+*Static half, plan3 pass. Native: `OrbbecScanLaser::get_model_mesh` @ `0xc5cc8`
+(wrapper `0xf304` → vtable `+0xf8`); release `OrbbecScanLaser::model_mesh_release`
+@ `0xc5fe8` (wrapper `0xf384` → vtable `+0x100`). Raw excerpts:
+`.recon-cache/listings/scan-live-data.mesh-lifetime.plan3.asm`.*
+
+**When it is valid.** The first instruction pair reads the scan step
+(`scan+0x4c8`, `ldar`) and requires **exactly 3 (paused)** — anything else logs
+"get model mesh must first pause scan !" (`0x42e722b`) and returns `0x32620110`
+(`OB_SCAN_ERROR_MULTI_CALLED`). So: not during scanning (2), not after stop (4),
+not after resume; the mesh must be read **while paused**. A NULL **scan handle**
+is the wrapper's `0x32620107` (`OB_SCAN_ERROR_DEADLINE_EXCEEDED`), per the
+universal handle rule (`obscan_api.h`). The native's "the laser scan context is
+nullptr" branch (`0x42e71d6`) is a **different** check — the internal context
+obtained from `scan+0x7b0` via `get_cloud_scan_context()`, reachable only with
+step == 3 — and returns MULTI_CALLED. A NULL out struct is `0x32620100` "the mesh
+is nullptr !"; mesh-conversion failures are `0x32620101`
+`OB_SCAN_ERROR_FATAL`. **[inferred: static writer/gate map; not exercised
+per-step on hardware]**
+
+**It is a build, not a copy.** Each call:
+
+1. allocates a **552-byte mesh kernel** (`operator new(0x228)`,
+   `bc102fae::AttribKernel<FinalMeshItems<DefaultTraitsDouble>, TriConnectivity>`),
+   stores it at **`scan+0x9a8`**, and destroys the previous kernel there;
+2. fills it from the laser scan context (`scan+0x7b0` →
+   `LaserScanningContextWrapper::get_cloud_scan_context` →
+   `LaserScanningContextInterface::get_model_mesh` @ `0x95b684`; a second variant
+   is appended when the extern-config word has bit `0x18` set);
+3. converts it into the **`OBScanMeshDatas` cache at `scan+0x9a0`**
+   (`libpp::convert_openmesh_to_obmesh` @ `0x76386c`; `_append` @ `0x763f14`) —
+   allocated once (120 bytes) and **re-filled/overwritten on every call**;
+4. writes the out struct from the cache: `num_vertices@0`, `vertices@8`,
+   `normals@0x10`, `num_triangles@0x18`, `triangles@0x20` — **borrowed pointers
+   into the cache**, no copy, no refcount.
+
+**Repeated calls / invalidation.** Because each call rebuilds the kernel and
+re-fills the datas, the pointers returned by a previous call are invalidated
+(and their memory may be reused). Consume or copy out before the next call.
+
+**Ownership and free points.**
+
+- `obscan_scan_realtime_model_mesh_release` → `model_mesh_release` @ `0xc5fe8`:
+  **frees the datas cache** (`OBScanMeshDatas` destructor + `operator delete`;
+  clears `scan+0x9a0`) and returns 0 — a real release, unlike the cloud
+  release's bare `ret`.
+- The kernel at `scan+0x9a8` is *not* freed by the release: it is freed by the
+  next getter call, by `clear_point_cloud_impl` / `clear_repreview`
+  (`0xcd17c` / `0xc5474` — free and clear `+0x9a8`), or by the scan destructor
+  (`0xc98bc`, which frees both).
+- The datas cache is additionally freed by the scan destructor; `+0x9a0` is
+  created lazily by the first getter call.
+
+**Dynamic trace: not needed** — all rules are instruction-level; the only
+runtime-dependent facts are the mesh contents/counts, which the acceptance run
+already sampled (6112 vertices / 4331 triangles after pause).
+
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
