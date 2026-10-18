@@ -732,7 +732,7 @@ family of setters, including the full mode-config re-apply.*
 | setter (native) | gate | code |
 | --- | --- | --- |
 | `config_ir_exposure_time` `0x6f5a0c`, `config_color_exposure_time` `0x6f5a78`, `config_depth_range` `0x6f5b00`, `config_ir_gain` `0x6f5bb0` (not exported), `config_laser_current` `0x6f5c10`, `config_combined_*` `0x6f691c` | `[scan+0x3c] == 1` — **a vestigial gate (row #68): the only writers are the constructor's zero-stores (`0x6f5e50`/`0x6f63ac`); nothing sets it to 1, so this refusal is statically unreachable** | **`0x32620110`** (`MULTI_CALLED`) — the same gate in all six |
-| `config_show_data_rotate` `0x6f7dc8` | `[scan+0x3c] == 1` | **`0x32620105`** (`UNSUPPORTED_CONFIGURATION`) — a *different* code for the same flag |
+| `config_show_data_rotate` `0x6f7dc8` | `[scan+0x3c] == 1` — the same vestigial flag (row #68): never 1, so this path is unreachable too | **`0x32620105`** (`UNSUPPORTED_CONFIGURATION`) — a *different* code for the same flag |
 | `config_light_type` — base `0x6f5c84` | (no override for the class) | **`0x32620105`** (a stub; the Laser override `0xc3fa4` does the work and returns `0x32620100` on its one error path) |
 | `config_rgb_fill_light` `0x6fa630` | — (no `+0x3c` gate) | the device call's status; on success also `update_realtime_is_open_rgb_fill_light` (`0x701680`) |
 | `reconfig_scan_mode_config` — Speckle `0x5cb00` | the `OrbbecScanStep` gates (`scan+0x4c8 == 3` + `+0x550 == 2`) | **`0x32620110`** — implemented as `w21 = 0x32620101; … add w21, w21, #0xf` (`0x5cb74`/`0x5cd84`); its other failure paths return **`0x32620101`** (`0x5d0b8`/`0x5d0e4`) |
@@ -743,9 +743,12 @@ So: the `+0x3c` gate means `0x32620110` for the exposure/depth/laser/combined
 family and `0x32620105` for `show_data_rotate`; the mode reconfig's step gates
 surface as `0x32620110` (Speckle) or `0x32620105` (Laser, early); the
 "not supported by this class" stubs are `0x32620105`; and the device-level
-failures are `0x32620100`/`0x32620101`. The `+0x3c` flag itself stays
-unmapped (its writer is not in the setter paths) — **OQ-S13**. Treat any
-non-zero as a refusal.
+failures are `0x32620100`/`0x32620101`. The `+0x3c` flag is **answered (row
+#68)**: its only writers are the constructor's zero-stores — nothing sets it
+to 1 — so both of its gates (`0x32620110` for the six, `0x32620105` for
+`show_data_rotate`) are statically unreachable; a refusal ever coming back
+from them is the signal of an external/wider-store writer (**OQ-S13**,
+answered — see the OQ list). Treat any non-zero as a refusal.
 
 ### Creation vs post-creation
 
@@ -908,7 +911,7 @@ block confirms the Raptor Pro / fw 1.5.7 / sn `CR0886100SN`.
   (`session_create_registration`, the trigger, `registration_destroy`) is now
   declared in the header; the runners' signatures remain a follow-up if the
   viewer must *run* registrations.
-- **OQ-S13** — *Answered (row #58), two residues*: the gate→code map is in §18
+- **OQ-S13** — *Answered (rows #58/#68)*: the gate→code map is in §18
   (the `+0x3c` gate → `0x32620110` for the exposure/depth/laser/combined
   family and `0x32620105` for `show_data_rotate`; the reconfig's step gates →
   `0x32620110` (Speckle) / `0x32620105` (Laser, early); the base stubs →
@@ -931,8 +934,9 @@ block confirms the Raptor Pro / fw 1.5.7 / sn `CR0886100SN`.
   the config pointer itself (read as the int at `+0x00`, compared `== 2`).
   So the config's verified prefix is
   `{ int32_t @0x00; bool enabled @0x04; pad; OBScanPlane_ plane @0x08 }`.
-  Residual: `OBScanPlane_`'s own layout (not recovered here) — the header
-  declaration waits on it.
+  Residual: none — `OBScanPlane_`'s layout was recovered in row #59
+  (`4 × float32` = the plane equation, 16 bytes) and is declared in the header
+  (`ObScanPlane` + its ABI guard); see `plane-removal.md` §4.
 
 ## Evidence
 
