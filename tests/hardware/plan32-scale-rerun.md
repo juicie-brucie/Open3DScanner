@@ -66,6 +66,6 @@ The teardown bound (#43, merged) makes the tool issue `obscan_scan_stop` non-blo
 2. `obscan_session_destroy` / `obscan_context_destroy` returning `MULTI_CALLED` (or the "must first wait other process finished" refusal) **while the tail runs**, then `OB_SCAN_SUCCESS`;
 3. all three teardown lines present (`stop`, `session_destroy`, `context_destroy`);
 4. `[launcher] Worker exited normally with code 0`;
-5. **no watchdog fire** ("child timed out after 420s and was force-killed" absent).
+5. **no watchdog fire** — the log contains no `child timed out after` / `force-killed` line. Match that **stable substring**, not a number: the timeout message is built from the configured value (`worker_process.cpp`), and with #43 merged this run's budget is `session_seconds + 300` — **720 s** for the prescribed 300 s session, not the old 420 s.
 
 If a destroy proceeds while the tail is still running, stop the run, keep the log, and report it as a contradiction — do not retry.
