@@ -240,21 +240,26 @@
         return;
       }
       const buf = event.data;
-      if (framePending) return; // drop: renderer is behind
-      bytesReceived += buf.byteLength;
       const frame = FrameProtocol.decodeCloudSnapshot(buf);
       if (!frame) return;
+
+      // Full-detail chunks are a bounded sequence, not latest-wins live
+      // frames: never drop them, even when the renderer is behind. Their
+      // accumulator is already bounded by the declared total.
+      if (fullMeshAccum) {
+        fullMeshAccum.set(frame.positions, fullMeshReceived * 3);
+        fullMeshReceived += frame.count;
+        framesReceived++;
+        bytesReceived += buf.byteLength;
+        return;
+      }
+
+      if (framePending) return; // drop live frame: renderer is behind
+      bytesReceived += buf.byteLength;
       framePending = true;
       const frameId = frame.seq;
       const captureTimestampMs = frame.tCapture;
       const count = frame.count;
-
-      if (fullMeshAccum) {
-        fullMeshAccum.set(frame.positions, fullMeshReceived * 3);
-        fullMeshReceived += count;
-        framesReceived++;
-        return;
-      }
 
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, frame.positions, gl.DYNAMIC_DRAW);

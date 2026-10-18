@@ -280,9 +280,11 @@ struct WsBroadcastServer::Impl {
                 continue;
             }
             // Backpressure: bound how long a broadcast may block on a
-            // slow/stalled client. SendAll returns early on timeout and the
-            // reader thread prunes the client, so one slow renderer cannot
-            // make the server (or itself) queue unboundedly.
+            // slow/stalled client. SendAll returns early on timeout, aborting
+            // that frame for this client; the client then sees a truncated/
+            // failed frame (and typically a closed connection), while the
+            // server keeps broadcasting to the others. The reader thread only
+            // prunes the client later, when it notices the dead socket.
 #if defined(_WIN32)
             DWORD snd_timeout = 100;
             setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&snd_timeout), sizeof(snd_timeout));
