@@ -31,10 +31,16 @@ device::OrbbecInternalDevice::~OrbbecInternalDevice()
 device::OrbbecDevice::~OrbbecDevice()
 OBDeviceManagement::release()
 obscan_context_destroy
-(anonymous namespace)::RunTests(...)   [main.cpp:185, inlined]
-main                                    [main.cpp:203]
+(anonymous namespace)::RunTests(...)   [main.cpp:185 plan8 / :224 later builds, inlined]
+main                                    [main.cpp:203 plan8 / :242 later builds]
 start
 ```
+
+The two bracketed source lines differ by build revision — they moved between
+the plan8 build and the later builds (where the source has
+`obscan_context_destroy` at 224 and `main`'s `return RunTests(...)` at 242).
+The frames and symbols themselves are byte-identical across all three reports
+(compared in full).
 
 So at the moment of the fault, the main thread was inside `obscan_context_destroy()`
 → `OBDeviceManagement::release()` → `~OrbbecDevice` → `~OrbbecInternalDevice` →
