@@ -555,9 +555,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     } else {
         std::printf("[worker] Streaming live scan frames on ws://0.0.0.0:%u (open ui/index.html)\n", port);
         std::printf(
-            "[worker] Note: obscan_scan_get_raw_cloud has never been observed to return nonzero points while\n"
-            "[worker] actively scanning on this hardware (see README.md). Expect 0 points per live frame until\n"
-            "[worker] the final pause -> get_realtime_model_mesh snapshot broadcast at the end of this session.\n");
+            "[worker] Note: each tick now calls obscan_scan_get_model_point_color_clouds, which publishes the\n"
+            "[worker] model cloud, so live frames should be nonzero during scanning. obscan_scan_get_raw_cloud\n"
+            "[worker] only reflects the last publish and is logged alongside for contrast; the final pause ->\n"
+            "[worker] get_realtime_model_mesh snapshot is still broadcast at the end of this session.\n");
     }
     std::fflush(stdout);
 
@@ -602,7 +603,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             if (toggle_status == OB_SCAN_SUCCESS) hardware_paused = want_paused;
         }
 
-        ObScanPointClouds cloud = {};
+        ObScanPointColorClouds cloud = {};
+        ObScanPointClouds raw_cloud = {};
+        ObScanCloudBbox bbox = {};
+        uint32_t published_count = 0;
         if (!hardware_paused) {
             // No dedicated auto/manual exposure toggle exists in the ABI; the
             // device's own auto-exposure decays a one-time value back toward
@@ -613,7 +617,13 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 lib.obscan_scan_config_combined_exposure_and_laser_current(scan, control.exposure_value.load());
             }
 
-            status = lib.obscan_scan_get_raw_cloud(scan, &cloud);
+            // The color getter is the publish trigger for the model cloud
+            // (see docs/recon/findings/scan-live-data.md §3): calling it
+            // swaps the fusion temp cloud into the published show cloud, so
+            // get_raw_cloud / the UI finally see live points while scanning.
+            // out_count is not validated by the wrapper, so pass a valid
+            // pointer; out_bbox is required non-null.
+            status = lib.obscan_scan_get_model_point_color_clouds(scan, &cloud, &bbox, &published_count);
             if (status == OB_SCAN_SUCCESS) {
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
@@ -631,15 +641,22 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
                     server.BroadcastBinary(buf.data(), buf.size());
                 }
+                // Release is a no-op in the vendor (native `ret`); call it
+                // for API symmetry per the header. Buffers are borrowed, so
+                // copy out before the next publish.
+                lib.obscan_scan_model_clouds_release(scan);
             }
+            // Raw getter never publishes; reading it after the color getter
+            // shows the last published cloud, demonstrating the mechanism.
+            lib.obscan_scan_get_raw_cloud(scan, &raw_cloud);
         }
 
         if (tick % 10 == 0) {  // ~every 1s
             server.BroadcastText(BuildStatusJson("live", control, /*fov_controllable=*/false));
         }
         if (tick % 50 == 0) {  // ~every 5s
-            std::printf("[worker] tick %d/%d: raw_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
-                        tick, total_ticks, cloud.num_points, max_points_seen, server.ConnectedClientCount(),
+            std::printf("[worker] tick %d/%d: color_cloud num_points=%u raw_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
+                        tick, total_ticks, cloud.num_points, raw_cloud.num_points, max_points_seen, server.ConnectedClientCount(),
                         hardware_paused ? 1 : 0);
             std::fflush(stdout);
         }
