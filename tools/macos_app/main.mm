@@ -1,21 +1,127 @@
-// Programmatic macOS shell for the OpenScanner viewer (row A2).
+// Programmatic macOS shell for the OpenScanner viewer (rows A2 + A3).
 // No storyboard, no asset catalog: an NSWindow + WKWebView pointed at the
-// scan_server origin (A1 serves ui/ on the same port as the WebSocket).
-// The vendor dylib is deliberately NOT bundled; the server resolves the
-// installed scanner app itself and reports a missing SDK via its own
-// dialog/status path.
+// worker's origin (A1 serves ui/ on the same port as the WebSocket).
+// The app spawns and supervises the capture worker, and quitting sends it
+// SIGTERM so the worker runs its graceful pause/stop/destroy teardown.
+// The vendor dylib is deliberately NOT bundled; the worker resolves the
+// installed scanner app itself and reports a missing SDK.
 
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 
+#include <csignal>
 #include <cstdlib>
+#include <string>
 
-@interface OpenScannerAppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate>
+@interface OpenScannerAppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate>
 @property(nonatomic, strong) NSWindow* window;
 @property(nonatomic, strong) WKWebView* webView;
+@property(nonatomic, strong) NSTask* worker;
+@property(nonatomic, assign) BOOL quitting;
+@property(nonatomic, assign) NSInteger retryCount;
+@property(nonatomic, copy) NSURL* pageURL;
 @end
 
 @implementation OpenScannerAppDelegate
+
+- (NSString*)resolveLibraryPath {
+    const char* env = std::getenv("OPENSCANNER_LIBRARY");
+    if (env != nullptr && env[0] != '\0') return [NSString stringWithUTF8String:env];
+    NSArray<NSString*>* candidates = @[
+        @"/Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib",
+    ];
+    for (NSString* c in candidates) {
+        if ([[NSFileManager defaultManager] fileExistsAtPath:c]) return c;
+    }
+    return @"";
+}
+
+- (NSString*)resolveWorkerPath {
+    NSString* bundled = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"scan_server"];
+    if ([[NSFileManager defaultManager] isExecutableFileAtPath:bundled]) return bundled;
+    const char* env = std::getenv("OPENSCANNER_SCAN_SERVER");
+    if (env != nullptr && env[0] != '\0') return [NSString stringWithUTF8String:env];
+    return @"";
+}
+
+// The worker's listener is only up after SDK/device bring-up (seconds), so a
+// cold launch's first load is refused. Retry with backoff until the origin
+// answers instead of leaving WebKit's error page up.
+- (void)retryPageLoadSoon {
+    if (self.pageURL == nil) return;
+    if (self.retryCount >= 40) return;  // ~2 min of retries
+    NSInteger attempt = self.retryCount++;
+    double delay = MIN(0.25 * (attempt + 1), 2.0);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+    });
+}
+
+- (void)webView:(WKWebView*)webView didFailProvisionalNavigation:(WKNavigation*)navigation withError:(NSError*)error {
+    (void)webView; (void)navigation; (void)error;
+    [self retryPageLoadSoon];
+}
+
+- (void)webView:(WKWebView*)webView didFinishNavigation:(WKNavigation*)navigation {
+    (void)webView; (void)navigation;
+    self.retryCount = 0;
+}
+
+- (void)startWorker {
+    NSString* workerPath = [self resolveWorkerPath];
+    if (workerPath.length == 0) {
+        [self surfaceError:@"scan_server not found in the app bundle or OPENSCANNER_SCAN_SERVER."];
+        return;
+    }
+    NSString* library = [self resolveLibraryPath];
+    if (library.length == 0) {
+        [self surfaceError:@"CrealityScan's liborbbec_scan.dylib was not found. Install CrealityScan "
+                           @"or set OPENSCANNER_LIBRARY."];
+        return;
+    }
+    const char* port_env = std::getenv("OPENSCANNER_PORT");
+    NSString* port = port_env != nullptr ? [NSString stringWithUTF8String:port_env] : @"8787";
+    NSString* seconds = @"300";
+
+    self.worker = [[NSTask alloc] init];
+    self.worker.launchPath = workerPath;
+    self.worker.arguments = @[@"--live-worker", port, library, seconds];
+    __weak OpenScannerAppDelegate* weakSelf = self;
+    self.worker.terminationHandler = ^(NSTask* task) {
+        // NSTask fires this off the main thread; every AppKit call below
+        // must hop back to the main queue.
+        int status = task.terminationStatus;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            OpenScannerAppDelegate* self = weakSelf;
+            if (self == nil) return;
+            if (self.quitting) {
+                [NSApp replyToApplicationShouldTerminate:YES];
+            } else if (status == 0) {
+                // A designed session end (bounded session length) is a clean
+                // exit, not a crash.
+                self.window.title = @"OpenScanner — session ended";
+            } else {
+                [self surfaceError:[NSString stringWithFormat:@"Capture worker exited unexpectedly (status %d).",
+                                                              status]];
+            }
+        });
+    };
+    @try {
+        [self.worker launch];
+    } @catch (NSException* e) {
+        [self surfaceError:[NSString stringWithFormat:@"Could not start the capture worker: %@", e.reason]];
+    }
+}
+
+- (void)surfaceError:(NSString*)message {
+    self.window.title = @"OpenScanner — worker not running";
+    NSAlert* alert = [[NSAlert alloc] init];
+    alert.messageText = @"OpenScanner";
+    alert.informativeText = message;
+    [alert addButtonWithTitle:@"OK"];
+    [alert runModal];
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
     (void)notification;
@@ -31,16 +137,33 @@
     WKWebViewConfiguration* config = [[WKWebViewConfiguration alloc] init];
     self.webView = [[WKWebView alloc] initWithFrame:frame configuration:config];
     self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    self.webView.navigationDelegate = self;
     self.window.contentView = self.webView;
 
     const char* port_env = std::getenv("OPENSCANNER_PORT");
     NSString* port = port_env != nullptr ? [NSString stringWithUTF8String:port_env] : @"8787";
-    NSURL* url = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%@/", port]];
-    [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    self.pageURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%@/", port]];
+    self.retryCount = 0;
 
     [self.window center];
     [self.window makeKeyAndOrderFront:nil];
     [NSApp activateIgnoringOtherApps:YES];
+
+    // Spawn first; the navigation retries until the listener answers.
+    [self startWorker];
+    [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
+    (void)sender;
+    // Quit = graceful teardown: SIGTERM makes the worker break its loop and
+    // run pause -> mesh -> stop -> session_destroy -> context_destroy.
+    if (self.worker != nil && self.worker.running) {
+        self.quitting = YES;
+        kill(self.worker.processIdentifier, SIGTERM);
+        return NSTerminateLater;
+    }
+    return NSTerminateNow;
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
