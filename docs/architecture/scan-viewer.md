@@ -1,11 +1,17 @@
 # Scan viewer architecture — active-scan rendering and scanner POV
 
-OpenScanner's current UI is a proof of concept: `ui/app.js`, a dependency-free WebGL2
-`gl.POINTS` viewer that renders whatever `tools/scan_server` broadcasts. It has no camera
-interaction, no pose, and no transport budget — it renders the whole cloud every tick.
-This doc lays out the architecture for a robust interface that renders the active scan,
-follows the scanner's point of view, and maps cleanly onto Windows, Linux and macOS.
-Mobile is out of scope for now; a streamed viewfinder is noted where it falls out for free.
+OpenScanner's UI is a proof of concept: `ui/app.js`, a dependency-free WebGL2 `gl.POINTS`
+viewer that renders whatever `tools/scan_server` broadcasts. It has no camera interaction
+and no pose. This doc lays out the architecture for a robust interface that renders the
+active scan, follows the scanner's point of view, and maps cleanly onto Windows, Linux and
+macOS. Mobile is out of scope for now; a streamed viewfinder is noted where it falls out for
+free.
+
+**Read this against the board.** The *budget* half of the transport is already landed: a
+fixed 20,000-point **stride** sample per tick (`#32`) and a capped final-mesh frame
+(`#38`). The protocol rules in §4 — **voxel** decimation, delta encoding, quantization,
+backpressure — are a **forward design**, not a description of what ships today; only
+backpressure has a row (`#41`).
 
 ## 1. Shape: three tiers, one protocol
 
@@ -48,14 +54,15 @@ rendering is ever needed.
 
 ## 4. The frame protocol
 
-Today one binary message is the entire cloud:
+Today's wire format carries a cloud as
 
 ```
 frameId(u32) | captureTs(f64) | count(u32) | xyz f32[count*3]
 ```
 
-positions only, no pose, no version, no budget — and O(points) per tick. This is the
-transport behind the measured ~340 ms at ~1.6M points.
+— positions only, no version, no message type, no pose. What the server sends has already
+been bounded (`#32`'s fixed stride sample); what is missing is the *shape*: versioning,
+message types, pose, delta, backpressure.
 
 **Decision: a versioned, typed, binary protocol.**
 
@@ -71,22 +78,23 @@ Envelope: `magic | version | type | seq | t_capture | t_server | payload_len`
 | `mesh` | the post-pause reconstructed mesh |
 | `error` | typed failure |
 
-Cloud payload rules:
+**Forward design — the rules below are the target, not the current state.**
 
-- **server-side point budget** — voxel-decimate to N points before sending. This is the
-  fix for the latency finding, and the **server** owns the budget, not the client.
+- **server-side point budget** — voxel-decimate to N points before sending. A coarser
+  **stride** sample already ships (`#32`); the voxel rule is the upgrade, and the **server**
+  owns the budget, not the client.
 - **delta encoding** where the cloud only grows.
 - **quantization** (fixed-point relative to a bounding box) to cut bytes 2–4×.
 - **backpressure** — the client advertises a budget; the server drops or decimates rather
-  than queueing.
+  than queueing. Row `#41` owns this half.
 
 ## 5. Following the scanner's point of view
 
 Two pieces are missing today:
 
 - **A pose channel.** The contract binds neither `obscan_scan_get_global_pose` nor
-  `obscan_scan_get_markers`; the research corpus records the real app calling both. A recon
-  row specs them, then the protocol carries a `pose` message.
+  `obscan_scan_get_markers`; the research corpus records the real app calling both. Board row
+  `#40` specs them, then the protocol carries a `pose` message.
 - **A camera model.** `ObScanFov` (Normal/Wide) is already a two-position status value and
   serves as the intrinsic FOV; the pose is the extrinsic.
 
@@ -116,7 +124,7 @@ Implementations:
 
 **`ReplayCaptureSource` is the highest-leverage piece here**: it lets the viewer be built
 and regression-tested without the scanner and without the serialized hardware room, which
-is currently the loop's scarcest resource.
+is the loop's scarcest resource.
 
 ## 7. Portability, honestly
 
@@ -165,18 +173,20 @@ ui/
 
 ## 10. First increment
 
-1. `frame_protocol.h` + a codec on both ends; today's wire shape becomes v1.
+1. `frame_protocol.h` + a codec on both ends; today's wire shape becomes v1. **(`V1` —
+   unfiled; the objective.)**
 2. `ReplayCaptureSource` + one recorded session.
-3. `pose` message + the `follow` camera mode.
-4. Server-side decimation to a point budget (retires the latency finding).
+3. `pose` message + the `follow` camera mode (blocked on `#40`).
+4. ~~Server-side decimation to a point budget~~ — the *stride* budget landed as `#32`; the
+   protocol's voxel/quantization rule and `#41`'s backpressure are the remainder.
 5. Client: WebGPU renderer + orbit controls, WebGL2 fallback.
 
 ## Open questions
 
 - Does `obscan_scan_get_global_pose` return the scanner pose or the model pose, and in
-  which coordinate frame? (recon)
+  which coordinate frame? (row `#40`)
 - Is the live cloud already in world frame or scanner frame? This decides the follow-POV
-  transform. (recon)
+  transform.
 - Are live normals needed, or positions only? (payload size)
 - Mobile: the web client on the phone, or server-side render + video? The web client is far
   cheaper and reuses everything.
