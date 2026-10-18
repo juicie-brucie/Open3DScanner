@@ -12,17 +12,43 @@
   const wsUrl = "ws://" + host + ":" + port + "/";
 
   const hud = document.getElementById("hud");
-  const canvas = document.getElementById("gl");
+  let canvas = document.getElementById("gl");
   const backendParam = params.get("backend"); // "webgpu" | "webgl2" | null (auto)
   let renderer = null;
 
   // Renderer selection: WebGPU when available (and not forced off), else the
   // WebGL2 fallback. Both implement the same interface (see ui/render/).
+  // Every path fails softly: a rejected adapter/device or a pipeline
+  // validation error falls through to WebGL2, and a canvas claimed by
+  // WebGPU is replaced so the fallback can bind a fresh one.
   async function initRenderer() {
     if (backendParam !== "webgl2") {
-      renderer = await window.createWebGPURenderer(canvas);
+      try {
+        renderer = await window.createWebGPURenderer(canvas);
+      } catch (e) {
+        console.warn("WebGPU init failed; falling back to WebGL2:", e);
+        renderer = null;
+      }
+      if (!renderer) {
+        // A canvas that already returned a WebGPU context cannot also
+        // return a WebGL2 one; swap in a fresh element.
+        let probe = null;
+        try { probe = canvas.getContext("webgl2"); } catch (e) { probe = null; }
+        if (!probe) {
+          const fresh = canvas.cloneNode(false);
+          canvas.parentNode.replaceChild(fresh, canvas);
+          canvas = fresh;
+        }
+      }
     }
-    if (!renderer) renderer = window.createWebGL2Renderer(canvas);
+    if (!renderer) {
+      try {
+        renderer = window.createWebGL2Renderer(canvas);
+      } catch (e) {
+        console.warn("WebGL2 init failed:", e);
+        renderer = null;
+      }
+    }
     if (!renderer) {
       hud.textContent = "Neither WebGPU nor WebGL2 is available in this browser.";
       return false;
@@ -236,6 +262,9 @@
     if (!ok) return;
     resize();
     connect();
+  }).catch((e) => {
+    console.error("renderer init threw:", e);
+    hud.textContent = "Renderer init failed: " + e;
   });
 
   // --- Scan controls (start/pause/finish, exposure, FOV) -------------------
@@ -385,6 +414,7 @@
     const scanState = latestStatus ? latestStatus.state : "--";
     const scanMode = latestStatus ? latestStatus.mode : "--";
     hud.innerHTML =
+      '<span class="label">backend</span>  <span class="value">' + (renderer ? renderer.name : "--") + "</span>\n" +
       '<span class="label">status</span>  <span class="value">' + connectionState + "</span>\n" +
       '<span class="label">scan</span>    <span class="value">' + scanState + " (" + scanMode + ")</span>\n" +
       '<span class="label">latency</span>  <span class="' + latencyClass + '">' + latencyText + "</span>\n" +

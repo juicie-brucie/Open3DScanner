@@ -5,13 +5,13 @@
 
   async function createWebGPURenderer(canvas) {
     if (!navigator.gpu) return null;
+    // Do every fallible device step before claiming the canvas with
+    // getContext("webgpu"): a failure must leave the canvas free for the
+    // WebGL2 fallback (a canvas cannot switch context types).
     const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) return null;
     const device = await adapter.requestDevice();
-    const context = canvas.getContext("webgpu");
-    if (!context) return null;
     const format = navigator.gpu.getPreferredCanvasFormat();
-    context.configure({ device, format, alphaMode: "opaque" });
 
     const shader = device.createShaderModule({
       code: `
@@ -21,6 +21,9 @@
         @vertex fn vs(@location(0) a_position: vec3<f32>) -> VSOut {
           var out: VSOut;
           out.pos = u.matrix * vec4<f32>(a_position, 1.0);
+          // WebGPU clip space is z in [0,1]; the shared WebGL-style
+          // perspective maps to [-1,1]. Remap so nothing is silently culled.
+          out.pos.z = out.pos.z * 0.5 + out.pos.w * 0.5;
           out.depth = a_position.z;
           return out;
         }
@@ -48,6 +51,11 @@
       layout: pipeline.getBindGroupLayout(0),
       entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
     });
+
+    // Canvas is claimed only now, after every other fallible step.
+    const context = canvas.getContext("webgpu");
+    if (!context) return null;
+    context.configure({ device, format, alphaMode: "opaque" });
 
     let vertexBuffer = null;
     let vertexCapacity = 0;
