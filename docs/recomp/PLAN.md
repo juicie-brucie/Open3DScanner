@@ -31,6 +31,7 @@ Status: `TODO` · `RECON` · `SPEC-READY` · `BUILD` · `HW` · `DONE` · `BLOCK
 | 20 | Archived crash reports show the main thread inside `obscan_context_destroy` when the watcher thread faults | TODO | Raised by the #56 verification (observation 2): with the reports now on `main`, all three archived crash reports show the main thread in `OBDeviceManagement::release()` → `~OrbbecDevice` → `stop()` on a mutex while the watcher thread faults. That contradicts row #5's "it never reached `obscan_context_destroy()`" and the crash analysis's line 56; #11/#15's re-run design depends on it. Needs a re-read of the `.ips` files against both claims, then corrections. |
 | 21 | New run records and raw logs under `tests/results/**` are script-tier, so a fabricated record would auto-merge | TODO | Raised by the #58 verification (M4 residual): `run-records` guards modification, deletion and renaming of existing records, but an added record is script-tier — `verdict-gate` auto-sets `verdict` with no judgment pass. Records are the highest-stakes artifact class; decide between moving added records/logs to the agent tier or adding a provenance check (e.g. a required companion raw log whose command line matches the record). |
 | 22 | Launcher banners were printed without flushing, so piped captures showed them late | DONE | Found by the PR #53 verification (finding 3) and re-flagged in every hardware record's banner check: the `[launcher]` banners used `printf` with no `fflush`, so the worker's flushed lines preceded them in piped output. Fixed in PR #62 for both hardware tests, `live_capture_test` and `smoke_test` (the `Running …` banners too); the banner check should now pass literally on the next hardware run. |
+| 23 | Live per-frame data: `obscan_scan_get_raw_cloud` returns 0 points during an active scan — map its native implementation | RECON | Raised from Claude's manual run (`tests/results/2026-10-17-live-scan-manual-test.md`): 0 points on all 3000 ticks; the only geometry is the post-pause `get_realtime_model_mesh` snapshot (5845 pts / 4167 tris). README's "never observed nonzero … regardless of config" is an observation about our usage, not a recovered fact — the vendor app streams live. Map `obscan_scan_get_raw_cloud`'s native body: what it reads, what gates the count (buffer / ready flag / mode / pause), and where that state is written from. Deliverable: the first findings doc for the scan family. Follow-ups: the scan API surface beyond the header subset; config/mode flags; the `data` payloads (OQ-1/OQ-P3) as a possible frame channel. |
 
 ## Open questions (from recon)
 
@@ -205,3 +206,7 @@ _Append dated one-liners: what changed, which agent, and the outcome._
 - 2026-10-17 — build: launcher banners now flush before worker output (PR #62) —
   fixes the banner-position anomaly every hardware record had to explain;
   #22 → `DONE`.
+
+- 2026-10-17 — dispatcher: Claude's ad hoc live-scan run landed as a record
+  (`tests/results/2026-10-17-live-scan-manual-test.md`); row #23 filed for the
+  live per-frame path (`obscan_scan_get_raw_cloud` = 0 points during scanning).
