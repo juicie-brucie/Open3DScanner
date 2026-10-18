@@ -21,7 +21,10 @@ field of view.
 
 1. In the hardware room (`Open3DScanner-wt-hw`, branch `hw/next`): `./sync-to-main.sh` — it
    refuses if a run is active, fast-forwards to `origin/main`, and rebuilds.
-2. No other SDK user: `ps aux | grep -iE "scan_server|_message_listener_test"` must be empty.
+2. No other SDK user (rule 7): `ps aux | grep -iE "scan_server|live_capture_test|smoke_test|_message_listener_test|obscan" | grep -v grep`
+   — read the output rather than testing it for emptiness. It should show nothing but this run's own launcher/worker; anything else
+   attached to the SDK is a second user and must be stopped first. (`grep -v grep` matters: without it the pipeline matches its own
+   argv, and the pattern covers the loader's users — `scan_server`, `live_capture_test`, `smoke_test` — not just `scan_server`.)
 3. Serve the UI so the HUD can be read: `ui/watch.sh` (serves `ui/` on :8788; the page connects to
    `ws://127.0.0.1:8787`). Keep it visible — the HUD's `data fps` / `render fps` / `latency` and
    point count are the evidence the bar is about.
