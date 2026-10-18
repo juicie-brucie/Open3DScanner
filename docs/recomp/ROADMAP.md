@@ -9,8 +9,8 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-18 (rev 9 — adds the Windows fork workstream and stages its charter
-plus the fork-coordination file. rev 8 was the refresh pass; its architecture-doc staging
+_Last planned: 2026-10-18 (rev 9 — adds the Windows fork workstream; its charter and the fork-coordination file are
+**landed** at `docs/recomp/WINDOWS-FORK.md` and `docs/recomp/FORK-COORDINATION.md`. rev 8 was the refresh pass; its architecture-doc staging
 block has landed and moved to `docs/architecture/scan-viewer.md`. rev 7 added the viewer
 family; rev 6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
