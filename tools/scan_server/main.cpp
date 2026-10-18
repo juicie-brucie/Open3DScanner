@@ -33,6 +33,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -382,13 +383,57 @@ void OnDeviceMessage(ObScanDeviceMessage msg) {
     }
 }
 
+const char* DataMessageName(int32_t msg_id) {
+    switch (msg_id) {
+        case OB_SCAN_MESSAGE_ID_NEW_RGB_IMAGE: return "NEW_RGB_IMAGE";
+        case OB_SCAN_MESSAGE_ID_NEW_DEPTH_IMAGE: return "NEW_DEPTH_IMAGE";
+        case OB_SCAN_MESSAGE_ID_NEW_IR_IMAGE: return "NEW_IR_IMAGE";
+        case OB_SCAN_MESSAGE_ID_FRAME_READY: return "FRAME_READY";
+        default: return nullptr; // unknown until OQ-P3 names it
+    }
+}
+
+const char* ProcessMessageName(int32_t msg_id) {
+    switch (msg_id) {
+        case OB_SCAN_MESSAGE_ID_FRAME_BUFFER_FULL: return "FRAME_BUFFER_FULL";
+        case OB_SCAN_MESSAGE_ID_MAX_FRAMES_REACHED: return "MAX_FRAMES_REACHED";
+        case OB_SCAN_MESSAGE_ID_DETECT_FACE: return "DETECT_FACE";
+        case OB_SCAN_MESSAGE_ID_SCANNING_FAILED: return "SCANNING_FAILED";
+        case OB_SCAN_MESSAGE_ID_OPTIMIZATION_TO_MESH_NEED_CHANGE_VOXEL_SIZE:
+            return "OPTIMIZATION_TO_MESH_NEED_CHANGE_VOXEL_SIZE";
+        case OB_SCAN_MESSAGE_ID_PASTED_MARKERS_TOO_REGULAR: return "PASTED_MARKERS_TOO_REGULAR";
+        default: return nullptr; // not in the header's process-id table
+    }
+}
+
 void OnDataMessage(ObScanDataMessage msg) {
+    const char* name = DataMessageName(msg.msg_id);
+    if (name != nullptr) {
+        std::printf("[worker][data] msg_id=%d (%s) data=%p thread=%lu\n", msg.msg_id, name, msg.data,
+                    static_cast<unsigned long>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
+    } else {
+        std::printf("[worker][data] msg_id=%d data=%p thread=%lu\n", msg.msg_id, msg.data,
+                    static_cast<unsigned long>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
+    }
+    // Any id not in the header's table is logged numerically (do not
+    // invent names); the header's id table is the contract.
+    std::fflush(stdout);
     if (msg.msg_id == OB_SCAN_MESSAGE_ID_FRAME_READY) {
         ++g_frame_ready_count;
     }
 }
 
-void OnProcessMessage(ObScanProcessMessage) {}
+void OnProcessMessage(ObScanProcessMessage msg) {
+    const char* name = ProcessMessageName(msg.msg_id);
+    if (name != nullptr) {
+        std::printf("[worker][process] msg_id=%d (%s) data=%p thread=%lu\n", msg.msg_id, name, msg.data,
+                    static_cast<unsigned long>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
+    } else {
+        std::printf("[worker][process] msg_id=%d data=%p thread=%lu\n", msg.msg_id, msg.data,
+                    static_cast<unsigned long>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
+    }
+    std::fflush(stdout);
+}
 void OnPreviewStatus(ObScanStatus) {}
 
 // The vendor SDK keeps the listener pointers it's given and calls them from
