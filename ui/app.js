@@ -242,12 +242,16 @@
         return;
       }
       const buf = event.data;
+      const poseFrame = FrameProtocol.decodePose(buf);
+      if (poseFrame) {
+        scannerPose = poseFrame.translation;
+        if (cameraMode === "follow") viewCenter = scannerPose.slice();
+        return;
+      }
+      // One decode, then branch: full-detail chunks are a bounded sequence
+      // (never dropped), live ticks are latest-wins.
       const frame = FrameProtocol.decodeCloudSnapshot(buf);
       if (!frame) return;
-
-      // Full-detail chunks are a bounded sequence, not latest-wins live
-      // frames: never drop them, even when the renderer is behind. Their
-      // accumulator is already bounded by the declared total.
       if (fullMeshAccum) {
         fullMeshAccum.set(frame.positions, fullMeshReceived * 3);
         fullMeshReceived += frame.count;
@@ -256,18 +260,9 @@
         return;
       }
 
-      const poseFrame = FrameProtocol.decodePose(buf);
-      if (poseFrame) {
-        scannerPose = poseFrame.translation;
-        if (cameraMode === "follow") viewCenter = scannerPose.slice();
-        return;
-      }
-
       if (framePending) return; // drop live frame: renderer is behind
       bytesReceived += buf.byteLength;
       framePending = true;
-      const frame = FrameProtocol.decodeCloudSnapshot(buf);
-      if (!frame) return;
       const frameId = frame.seq;
       const captureTimestampMs = frame.tCapture;
       const count = frame.count;
