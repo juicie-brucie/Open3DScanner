@@ -228,6 +228,9 @@ were ranged in the follow-up pass and are byte-identical too — see §6.1 there
   which a fresh add succeeds. There is no queue, so nothing booked-but-undelivered
   survives a remove (data path); the process path's queued closures that drain
   after a remove are dropped by the closure's own probe (§10).
+- **No synchronization on the slots** (§11): the probe check, the install swap, the
+  clear and the destroy are all plain accesses — a `remove_*` must not race live
+  delivery.
 - Messages emitted with no listener installed are dropped by the emitter
   itself (data: at emit; process: at drain — §10).
 - Same single-slot, single-registered-listener discipline as the device family.
@@ -304,13 +307,74 @@ thread differs from the tool's main thread and from the vendor watcher threads
 externally triggerable in a controlled way (it is an enqueue→remove→drain race); the
 static evidence suffices — do not spend the serialized hardware room on it.
 
+## 11. Slot-home and queue synchronization: no lock on the slots (OQ-P2)
+
+*Static half, plan27 pass; raw excerpts appended to the plan2 dossier. Instruction-level read
+of the four registration entry points, both emitters, and the pool's internals.*
+
+**What is guarded.** The **pool's task queue** is properly locked:
+`BS::thread_pool<tp::0>::detach_task` (@ `0x16b3d4`) takes `std::mutex::lock`/`unlock`
+(stubs `0x2ad7d48`/`0x2ad7d54`) around the deque push, and `…::worker` (@ `0x16b0xx`) takes
+the same mutex plus `condition_variable::wait`/`notify_all`. The task hand-off itself is
+thread-safe.
+
+**What is not guarded: everything else.** The slot homes and the paras futures vector use
+plain loads/stores — no mutex, no atomics, no acquire/release, in any of the six operations:
+
+| op | address | probe access | install/clear | lock |
+| --- | --- | --- | --- | --- |
+| `add_data_msg_listener` | `0x1b690` | `ldr x9,[paras+0x68]` (plain) | `__value_func::swap` into `paras+0x50` | none |
+| `remove_data_msg_listener` | `0x1b9dc` | `ldr x0,[paras+0x68]` (plain) | `str xzr,[paras+0x68]` **then** destroy (`+0x20` inline / `+0x28` heap) | none |
+| `send_data_msg` | `0x6a9fcc` | `ldr x0,[paras+0x68]` (plain) | — (calls via `[x0]`+`0x30`) | none |
+| `add_process_msg_listener` | `0x1ba68` | `ldr x9,[paras+0x88]` (plain) | swap into `paras+0x70` | none |
+| `remove_process_msg_listener` | `0x1bdb4` | `ldr x0,[paras+0x88]` (plain) | `str xzr,[paras+0x88]` **then** destroy | none |
+| process closure (drain, §10) | `0x6aa608` | `ldr x0,[paras+0x88]` (plain) | — | none |
+
+A region-wide scan for `mutex`/atomics across the paras class (`0x6a9000–0x6ab000`) and the
+registration methods (`0x1b600–0x1bf00`) finds **no** synchronization at all (the only hit is
+an unrelated `mutex::try_lock` in `read_specify_format_data`). The C wrappers
+(`0xbb04`/`0xbb7c`/`0xbbf4`/`0xbc6c`) only log and tail-branch. The paras futures vector
+(`+0x90/0x98/0xa0`) push in `send_process_msg` is likewise plain.
+
+**The racy windows (by construction).**
+
+1. **deliver vs remove** — the window deferred from §10: deliver loads the probe (non-null),
+   remove clears it and destroys the function, deliver calls through the stale `__f_`. Heap
+   case: the `__func` is `operator delete`d → use-after-free. Inline case: `destroy()` is a
+   no-op but the home buffer is reused by a later `add`'s swap → call through a half-swapped
+   object. Both families share the shape (data: at emit; process: at drain).
+2. **add vs deliver** — the install is a swap of the home; a deliver holding the old `__f_`
+   can execute against the object as it is swapped out.
+3. **add vs add / add vs remove** — the probe check is check-then-act: two concurrent adds
+   both pass "not set"; an add racing a remove can install into a slot being cleared.
+4. **emitter vs emitter on the futures vector** — two concurrent `send_process_msg` calls race
+   the vector push (and its capacity growth) with no lock. Reachability depends on the vendor
+   emitting process messages from more than one thread — unobserved. **[inferred]**
+
+**Conclusion for callers: there is no lock to rely on.** A `remove_*` must not race live
+delivery; this project's own usage (listeners as process-lifetime statics, no `remove_*`
+call) never enters these windows. The spec must not promise thread-safety for add/remove
+against delivery.
+
+**Dynamic trace: not needed to close OQ-P2** — the static answer is complete (no locks; the
+windows exist by construction) and the actionable guidance does not depend on observing a
+crash. If a stress confirmation is ever wanted, the precise spec: (a) in a hardware run,
+spawn a second thread hammering `add → remove → re-add` on both families while a scan is
+active and frames flow; (b) callbacks do a short busy-loop to widen the deliver window;
+(c) watch for a crash (`.ips`) or a corrupted delivery; (d) additionally log the emitter
+thread id in the data/process callbacks to settle window 4's reachability. A negative result
+proves little (the window is a handful of instructions); do not spend the serialized room on
+it without a specific suspicion.
+
 ## Evidence
 
 Raw evidence: `.recon-cache/listings/data-process-listeners.plan2.asm` (wrapper
 bodies, native registration bodies, both name tables, crossing emitters, the
 preview-guard chain, the address-map bias test, and — plan26 pass — the
 process-family drain: closure body @ `0x6aa608`, `thread_pool_enqueue_task` @
-`0x16b2f4`, `thread_pool_create_instance` @ `0x16a5f8` and its caller @ `0x6f3f48`),
+`0x16b2f4`, `thread_pool_create_instance` @ `0x16a5f8` and its caller @ `0x6f3f48`;
+plan27 pass — the slot-home synchronization read: the four registration bodies, both
+emitters, and the pool's mutex/condvar stubs),
 plus
 `.recon-cache/listings/device-msg-listener.monostub-vtable.plan9.asm` for the
 plan9 shard covering this file's data/process `operator()` windows. Export
@@ -327,10 +391,12 @@ raw listings are reproduced here.
   the context); a drained task whose slot was emptied **drops silently** — the
   closure probes `paras+0x88` itself before calling. No dynamic trace needed; the
   optional thread-id observation folds into row #31.
-- **OQ-P2** — add/remove/deliver race: no lock evidence anywhere on the
-  slot homes or the queue vector; is the pair of probe-clear + function
-  destroy atomic as seen by the emitters? Needs a dynamic trace
-  (add/remove/re-add from a second thread while frames flow).
+- **OQ-P2** — *Answered* (plan27 pass) → §11. No lock guards the slot homes or the
+  paras futures vector — all six operations use plain `ldr`/`str` (the pool's own queue
+  is `std::mutex`-guarded; the slots are not). The deliver-vs-remove window (probe read
+  → clear+destroy → call through stale `__f_`) is real by construction; a `remove_*`
+  must not race live delivery. No dynamic trace needed to close; a stress spec is
+  recorded in §11 if ever wanted.
 - **OQ-P3** — `data` payload semantics per emitter (same shape as the device
   family's **OQ-1**): `send_data_msg` passes the message through with an
   opaque `data` pointer; who dereferences it is unknown; do not
