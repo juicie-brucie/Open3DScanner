@@ -19,6 +19,7 @@ artifact: the only thing both sides agree on, and the thing a human reviews.
 | Agent | Mode | Writes | Model |
 | --- | --- | --- | --- |
 | `openscanner/dispatch` | primary | `docs/recomp/**`, `.claude/**` | `opencode/nemotron-3-ultra-free` |
+| `openscanner/planner` | primary | `docs/recomp/ROADMAP.md` | `opencode/nemotron-3-ultra-free` |
 | `openscanner/recon` | primary | `obscan_api.h`, `docs/recon/**` | `opencode/glm-5.3-flash-free#max` |
 | `openscanner/builder` | primary | `engine/src`, `mesh`, `ui`, `tools` | `opencode/beam-free#high` |
 | `openscanner/recon-sweep` | subagent | `docs/recon/findings/**` (draft) | `opencode/deepseek-v4.1-flash-free#low` |
@@ -33,6 +34,11 @@ Error costs are asymmetric, so model spend follows the cost, not the job title:
   reaches every agent the round dispatches at once. It also has to hold the board, the
   specs and several long reports at the same time → a 1M-context model, picked for
   deliberation over speed.
+- **Planning errors (planner)** are one step further upstream still: the plan is what the
+  round is built from, so a wrong critical path spends a whole round on the wrong target.
+  Same long-context tier as dispatch, for the same reason — it holds the board, the specs
+  and the run records at once — but a separate session, because deciding the work and
+  running it are different jobs.
 - **Spec errors (recon)** are invisible and propagate into every downstream artifact.
   Highest cost → strongest model with the deepest reasoning variant.
 - **Verification errors (verifier)** let bugs through silently. Second highest cost,
@@ -51,6 +57,7 @@ explicitly — otherwise fan-out would run on recon's `#max` model, which is bac
 | | `edit` | `read .recon-cache` | `rea_*` | may launch |
 | --- | --- | --- | --- | --- |
 | `dispatch` | `docs/recomp` + `.claude` | **deny** | **deny** | `verifier` only |
+| `planner` | `docs/recomp/ROADMAP.md` | **deny** | **deny** | `verifier` only |
 | `recon` | header + `docs/recon` | allow | allow | `recon-sweep`, `verifier` |
 | `builder` | src dirs; **deny header** | **deny** | **deny** | `verifier` only |
 | `recon-sweep` | `docs/recon` only | allow | **deny** | — |
@@ -74,6 +81,12 @@ round but cannot touch vendor code, the header, or product source. Its `edit` re
 the board and the harness guardrails — so nothing about who is coordinating the work
 widens the wall around `engine/src/`.
 
+The planner keeps the identical wall: it sequences the work, so it has even less reason
+than the dispatcher to see the vendor's code, and a plan that leaned on vendor access
+would be unexecutable by the roles the walls bind anyway. Its only `edit` reach is the
+roadmap; it proposes board moves and the dispatcher applies them, so the queue keeps one
+writer.
+
 ## Where things live
 
 Agent and command definitions are **global**, not in this repo, so the repo stays
@@ -82,8 +95,8 @@ clean and the definitions sit next to the `rea` MCP server they depend on:
 ```
 ~/.config/opencode/
   opencode.json                       # rea MCP server
-  agents/openscanner/{dispatch,recon,builder,recon-sweep,verifier}.md
-  commands/openscanner/{dispatch,recon,build,reconcile,verify}.md
+  agents/openscanner/{dispatch,planner,recon,builder,recon-sweep,verifier}.md
+  commands/openscanner/{dispatch,plan,recon,build,reconcile,verify}.md
 ```
 
 The repo holds only the work products:
@@ -95,7 +108,8 @@ Open3DScanner/
   CLAUDE.md
   engine/include/openscanner/obscan_api.h   # THE CONTRACT (recon writes)
   docs/recon/findings/*.md                  # narrative spec (recon writes)
-  docs/recomp/PLAN.md                       # task board (you own)
+  docs/recomp/PLAN.md                       # task board (dispatch)
+  docs/recomp/ROADMAP.md                    # critical path + round objective (planner)
   docs/recomp/ARCHITECTURE.md               # this file
   scripts/verify-pr.py                      # deterministic PR checks (CI + verifier)
   tests/hardware/*                          # test programs (builder)
@@ -130,6 +144,12 @@ Open3DScanner/
 
 The dispatcher (`openscanner/dispatch`) runs this loop one round at a time: it hands
 each role its next row, keeps the board honest, and lands what the round produces.
+
+The planner (`openscanner/planner`) decides what the round is *for*. It owns the critical
+path and the risk register in `docs/recomp/ROADMAP.md` — what comes next, in what order,
+what must be true first, and which open questions have no task row — and proposes the row
+moves the dispatcher applies. Dispatcher executes; planner sequences. Neither one writes
+the other's file.
 
 Two review gates, deliberately different kinds:
 
@@ -174,7 +194,10 @@ Claude Pro is therefore a human-attended, out-of-band resource:
 | Hardware testing on the scanner box | Claude Code |
 | Contract review (the human checkpoint) | claude.ai |
 | Periodic cross-family verification | claude.ai |
-| Strategy, planning, spec synthesis | claude.ai |
+| Off-loop strategy and spec synthesis | claude.ai |
+
+In-loop planning and sequencing belong to `openscanner/planner` (see **Where things
+live**); claude.ai is for strategy that is deliberately kept out of the loop.
 
 **The rule that keeps it clean-room:** Claude Pro may sit on the **recon side** of
 the wall, never the **builder side**. Analyzing decompiled output, reviewing a spec,
@@ -192,6 +215,7 @@ Start a **new** session per role (an agent is fixed per session), each in its ow
 worktree — two `git` clients in one checkout will interleave the index:
 
 ```
+session P — agent: openscanner/planner   /openscanner/plan
 session D — agent: openscanner/dispatch   /openscanner/dispatch
 session A — agent: openscanner/recon      /openscanner/recon <target>
 session B — agent: openscanner/builder    /openscanner/build <item>
@@ -199,8 +223,9 @@ session B — agent: openscanner/builder    /openscanner/build <item>
 
 Then, after a hardware run: `/openscanner/reconcile`. And any time:
 `/openscanner/verify <item>`. The dispatcher session runs `/openscanner/dispatch` to
-start the next round. PRs are opened with `gh pr merge --auto --merge`; the gate above
-decides when they land.
+start the next round; the planner session runs `/openscanner/plan` before it when the
+queue needs re-sequencing rather than just draining. PRs are opened with
+`gh pr merge --auto --merge`; the gate above decides when they land.
 
 ## Open items
 
