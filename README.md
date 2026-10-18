@@ -425,28 +425,28 @@ conflating them would hide exactly the number that matters here. No CSS
 transitions or animation beyond the point cloud itself, per the brief:
 simple UI, limited animation, latency as the priority metric.
 
-Run it (two processes, both from the repo root):
+Run it (one process, from the repo root):
 
 ```bash
-./build/tools/scan_server/scan_server        # starts streaming on :8787
-python3 -m http.server 8788 --directory ui   # or any static file server
+./build/tools/scan_server/scan_server        # serves ui/ and streams on :8787
 ```
 
-Then open `http://127.0.0.1:8788/index.html` in a browser. (Opening
-`ui/index.html` directly as a `file://` URL does not reliably run its
-script in every environment — serve it over HTTP instead.) Pass
+Then open `http://127.0.0.1:8787/` in a browser. The WebSocket and the
+UI share that one origin and port; no external static server is needed.
+(Opening `ui/index.html` directly as a `file://` URL does not reliably run
+its script in every environment — use the served origin instead.) Pass
 `?port=1234` in the URL if the server isn't on the default 8787.
 
-A plain static file server like `python3 -m http.server` sends no
-cache-control headers, so a browser can silently keep serving a stale
-cached `app.js` (and even a stale `index.html`) across reloads and new
-tabs, with edits appearing to have no effect — this cost real debugging
-time on 2026-10-16 (traced the "fix" through several iterations before
-realizing none of them had ever actually loaded). `index.html` now loads
-`app.js` with a cache-busting `?t=<timestamp>` query param for this
-reason; if a change to `index.html` itself still doesn't seem to apply,
-append a throwaway query param to the page URL too (e.g. `&cb=1`), or
-hard-reload/open a fresh tab.
+The built-in static server (like the plain `python3 -m http.server` it
+replaced) sends no cache-control headers, so a browser can silently keep
+serving a stale cached `app.js` (and even a stale `index.html`) across
+reloads and new tabs, with edits appearing to have no effect — this cost
+real debugging time on 2026-10-16 (traced the "fix" through several
+iterations before realizing none of them had ever actually loaded).
+`index.html` loads `app.js` with a cache-busting `?t=<timestamp>` query
+param for this reason; if a change to `index.html` itself still doesn't
+seem to apply, append a throwaway query param to the page URL too (e.g.
+`&cb=1`), or hard-reload/open a fresh tab.
 
 To reach it from another machine on the LAN, use the host's address
 instead of `127.0.0.1` for both the page and the WebSocket, e.g.
