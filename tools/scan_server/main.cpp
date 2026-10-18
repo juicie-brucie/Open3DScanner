@@ -37,6 +37,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#include "openscanner/frame_protocol.h"
 #include "openscanner/obscan_loader.h"
 #include "openscanner/ws_broadcast_server.h"
 #include "openscanner/worker_process.h"
@@ -253,17 +254,8 @@ std::string BuildStatusJson(const char* mode, const ControlState& state, bool fo
 // u32 point_count, then point_count * (f32 x, f32 y, f32 z).
 std::vector<uint8_t> BuildFrame(uint32_t frame_id, double capture_timestamp_ms, const float* xyz,
                                  uint32_t point_count) {
-    std::vector<uint8_t> buf;
-    buf.reserve(4 + 8 + 4 + static_cast<size_t>(point_count) * 3 * 4);
-    AppendU32(&buf, frame_id);
-    AppendF64(&buf, capture_timestamp_ms);
-    AppendU32(&buf, point_count);
-    for (uint32_t i = 0; i < point_count; ++i) {
-        AppendF32(&buf, xyz[i * 3 + 0]);
-        AppendF32(&buf, xyz[i * 3 + 1]);
-        AppendF32(&buf, xyz[i * 3 + 2]);
-    }
-    return buf;
+    return openscanner::frame_protocol::encode_cloud_snapshot(frame_id, capture_timestamp_ms, NowMs(),
+                                                             xyz == nullptr ? nullptr : xyz, point_count);
 }
 
 void RunSyntheticServer(uint16_t port) {

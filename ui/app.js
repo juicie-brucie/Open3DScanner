@@ -238,23 +238,22 @@
       }
       const buf = event.data;
       bytesReceived += buf.byteLength;
-      const view = new DataView(buf);
-      const frameId = view.getUint32(0, true);
-      const captureTimestampMs = view.getFloat64(4, true);
-      const count = view.getUint32(12, true);
+      const frame = FrameProtocol.decodeCloudSnapshot(buf);
+      if (!frame) return;
+      const frameId = frame.seq;
+      const captureTimestampMs = frame.tCapture;
+      const count = frame.count;
 
       if (fullMeshAccum) {
-        const positions = new Float32Array(buf, 16, count * 3);
-        fullMeshAccum.set(positions, fullMeshReceived * 3);
+        fullMeshAccum.set(frame.positions, fullMeshReceived * 3);
         fullMeshReceived += count;
         framesReceived++;
         return;
       }
 
-      const positions = new Float32Array(buf, 16, count * 3);
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, positions, gl.DYNAMIC_DRAW);
-      updateViewFit(positions, count);
+      gl.bufferData(gl.ARRAY_BUFFER, frame.positions, gl.DYNAMIC_DRAW);
+      updateViewFit(frame.positions, count);
       pointCount = count;
       lastFrameId = frameId;
       framesReceived++;
