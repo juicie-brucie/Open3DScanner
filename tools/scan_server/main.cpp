@@ -39,6 +39,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#include "openscanner/capture_source.h"
 #include "openscanner/frame_protocol.h"
 #include "openscanner/obscan_loader.h"
 #include "openscanner/ws_broadcast_server.h"
@@ -263,8 +264,39 @@ std::vector<uint8_t> BuildFrame(uint32_t frame_id, double capture_timestamp_ms, 
 
 static void RecordFrame(const std::vector<uint8_t>& frame) {
     if (g_record_path.empty()) return;
-    static std::ofstream out(g_record_path, std::ios::binary | std::ios::app);
-    if (out) out.write(reinterpret_cast<const char*>(frame.data()), frame.size());
+    static std::ofstream out;
+    static bool header_written = false;
+    static size_t recorded_bytes = 0;
+    constexpr size_t kMaxRecordBytes = 1ULL << 30;
+    if (!out.is_open()) {
+        out.open(g_record_path, std::ios::binary | std::ios::trunc);
+        if (!out) { std::fprintf(stderr, "[worker] cannot open record file: %s\\n", g_record_path.c_str()); g_record_path.clear(); return; }
+    }
+    if (!header_written) {
+        const char magic[4] = {'O','S','C','R'};
+        out.write(magic, 4);
+        uint32_t version = 1;
+        out.write(reinterpret_cast<const char*>(&version), 4);
+        uint64_t count = 0; // patched conceptually by terminator; count optional
+        out.write(reinterpret_cast<const char*>(&count), 8);
+        if (!out) { std::fprintf(stderr, "[worker] record header write failed\\n"); g_record_path.clear(); return; }
+        header_written = true;
+        recorded_bytes = 16;
+    }
+    if (recorded_bytes + frame.size() > kMaxRecordBytes) {
+        std::fprintf(stderr, "[worker] record cap reached; disabling recording\\n");
+        out.flush();
+        g_record_path.clear();
+        return;
+    }
+    out.write(reinterpret_cast<const char*>(frame.data()), frame.size());
+    out.flush();
+    if (!out) {
+        std::fprintf(stderr, "[worker] record write failed; disabling recording\\n");
+        g_record_path.clear();
+        return;
+    }
+    recorded_bytes += frame.size();
 }
 
 void RunSyntheticServer(uint16_t port) {
@@ -817,6 +849,13 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     }
     Report("obscan_context_destroy", status);
 
+    if (!g_record_path.empty()) {
+        std::ofstream out(g_record_path, std::ios::binary | std::ios::app);
+        const char term[4] = {'O','S','C','E'};
+        out.write(term, 4);
+        out.flush();
+    }
+
     std::printf("[worker] Frame protocol V%u counters: cloud_frames=%llu full_detail_chunks=%llu\n",
                 openscanner::frame_protocol::VERSION,
                 (unsigned long long)g_cloud_frames_broadcast.load(),
@@ -905,7 +944,12 @@ int RunReplayMode(int argc, char** argv) {
         std::fprintf(stderr, "Cannot open replay file: %s\n", path);
         return 1;
     }
-    std::vector<uint8_t> data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    char header[16];
+    in.read(header, 16);
+    if (!in || std::memcmp(header, "OSCR", 4) != 0) {
+        std::fprintf(stderr, "Bad replay header: %s\n", path);
+        return 1;
+    }
 
     openscanner::WsBroadcastServer server;
     if (!server.Start(port)) {
@@ -915,34 +959,49 @@ int RunReplayMode(int argc, char** argv) {
     std::printf("[worker] Replaying %s on ws://0.0.0.0:%u\n", path, port);
     std::fflush(stdout);
 
-    size_t pos = 0;
-    double first_t = 0, prev_t = 0;
+    size_t frames = 0;
+    double prev_t = 0;
     bool have_prev = false;
-    while (pos + 32 <= data.size()) {
-        // read payload_len at offset 28 (little-endian)
-        uint32_t payload_len = data[pos+28] | (data[pos+29]<<8) | (data[pos+30]<<16) | (data[pos+31]<<24);
+    while (true) {
+        char peek[4];
+        in.read(peek, 4);
+        if (in.gcount() == 0) break;
+        if (std::memcmp(peek, "OSCE", 4) == 0) break;
+        if (in.gcount() != 4) { std::fprintf(stderr, "[worker] truncated terminator\n"); break; }
+        in.seekg(-4, std::ios::cur);
+        char env[32];
+        in.read(env, 32);
+        if (!in) { std::fprintf(stderr, "[worker] truncated frame header\n"); break; }
+        uint32_t payload_len = (unsigned char)env[28] | ((unsigned char)env[29]<<8) |
+                               ((unsigned char)env[30]<<16) | ((unsigned char)env[31]<<24);
         size_t frame_len = 32 + payload_len;
-        if (frame_len > data.size() - pos) break;
-        // t_capture at offset 12 (f64 LE)
-        uint64_t tu = 0;
-        for (int i = 0; i < 8; ++i) tu |= (uint64_t)data[pos+12+i] << (i*8);
-        double t; std::memcpy(&t, &tu, sizeof(t));
-        if (!have_prev) { first_t = t; prev_t = t; have_prev = true; }
-        else {
-            double dt = t - prev_t;
-            if (dt > 0 && dt < 10000) std::this_thread::sleep_for(std::chrono::milliseconds((int)dt));
-            prev_t = t;
+        std::vector<uint8_t> frame(frame_len);
+        std::memcpy(frame.data(), env, 32);
+        if (payload_len > 0) in.read(reinterpret_cast<char*>(frame.data()+32), payload_len);
+        if (!in) { std::fprintf(stderr, "[worker] truncated frame payload\n"); break; }
+
+        uint32_t seq=0, count=0; double tc=0, ts=0; const float* xyz=nullptr;
+        if (!openscanner::frame_protocol::decode_cloud_snapshot(frame.data(), frame.size(), &seq, &tc, &ts, &xyz, &count)) {
+            std::fprintf(stderr, "[worker] invalid frame in replay\n");
+            break;
         }
-        server.BroadcastBinary(data.data() + pos, frame_len);
-        pos += frame_len;
+
+        if (!have_prev) { prev_t = tc; have_prev = true; }
+        else {
+            double dt = tc - prev_t;
+            if (dt > 0 && dt < 10000) std::this_thread::sleep_for(std::chrono::milliseconds((int)dt));
+            prev_t = tc;
+        }
+        server.BroadcastBinary(frame.data(), frame.size());
+        ++frames;
     }
-    std::printf("[worker] Replay complete (%zu bytes).\n", pos);
+    std::printf("[worker] Replay complete (%zu frames).\n", frames);
     std::fflush(stdout);
-    // keep server alive briefly
     std::this_thread::sleep_for(std::chrono::seconds(5));
     server.Stop();
     return 0;
 }
+
 
 // Minimal CaptureSource seam (architecture doc §6): both the live and the
 // replay path implement this interface and feed the same V1 framing path.
