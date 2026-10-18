@@ -57,3 +57,15 @@ Watch the HUD: the count should climb steadily; if it stalls, move to new geomet
   `data` rate at that scale, no multi-second tick stalls, clean teardown, exit 0.
 - **FAIL** = state which condition missed and what the series did. A partial result (points reached,
   render dropped) is a *build* finding — client-side decimation — not another hardware rerun.
+
+## Row #43's teardown observations (required in this run)
+
+The teardown bound (#43, merged) makes the tool issue `obscan_scan_stop` non-blockingly and then poll the destroys until the SDK's tail finishes. Its premise — that the destroys *refuse* while the tail runs (§16's static half) — is not hardware-verified, and it is load-bearing: if a destroy instead proceeds *under* the running tail, that is worse than the old watchdog kill. So this run must record, on a **large mesh** (the 15.6M-vertex case the 300 s session produced):
+
+1. `obscan_scan_stop -> OB_SCAN_SUCCESS` returning **immediately** (not after the tail);
+2. `obscan_session_destroy` / `obscan_context_destroy` returning `MULTI_CALLED` (or the "must first wait other process finished" refusal) **while the tail runs**, then `OB_SCAN_SUCCESS`;
+3. all three teardown lines present (`stop`, `session_destroy`, `context_destroy`);
+4. `[launcher] Worker exited normally with code 0`;
+5. **no watchdog fire** — the log contains no `child timed out after` / `force-killed` line. Match that **stable substring**, not a number: the timeout message is built from the configured value (`worker_process.cpp`), and with #43 merged this run's budget is `session_seconds + 300` — **720 s** for the prescribed 300 s session, not the old 420 s.
+
+If a destroy proceeds while the tail is still running, stop the run, keep the log, and report it as a contradiction — do not retry.
