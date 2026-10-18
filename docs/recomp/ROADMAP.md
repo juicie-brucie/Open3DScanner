@@ -9,93 +9,78 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-18 (rev 11 — adds the app workstream A1–A4 alongside `G1`, and the loop
-hygiene items H1–H2, the first of which is the board-compaction step the dispatcher owns. rev 10
-moved the objective to the reconstruction workstream and handed off the Windows lane; rev 9
-handed off the Windows drafts; rev 8 was the refresh pass; rev 7 added the viewer family;
-rev 6/5/4/3/2/1 are superseded — see **Superseded plans**)._
+_Last planned: 2026-10-18 (rev 13 — corrects rev 12's misread of `G1`: the adoption row is
+**`#59`, `DONE`**, and what is open is its *build* row; adds **`H3`**, the guard that would have
+caught it; folds in the current row set (`A2` `#63`, `A3` `#65`, `A4` `#66`, `#64` `DONE`, `#67`
+in flight). rev 12 recorded the `A2` decision and swept the board; rev 11 added the app
+workstream and the loop-hygiene items; rev 10 moved the objective to the reconstruction
+workstream; rev 9/8/7/6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
-**Two tracks, deliberately — `G1` (open the reconstruction workstream) and `A1` (stand up the
-app's transport foundation). They share a round because they share no resource: `G1` opens with
-a recon row, `A1` is a builder row, and neither touches the serialized hardware room. `H1` — the
-board compaction — is housekeeping the dispatcher owns and owes itself.**
+**Ship the shell: `A2` (`#63`) — the `.app` bundle and the WKWebView window.**
 
-**Track 1 — `G1`, live plane removal, starting with the adoption row that turns the corpus's
-claim into a spec.** The board says the capture/ABI phase is over: 53 rows `DONE`, the viewer
-family landed, the Windows lane handed off. What is left there is one acceptance run, and the
-`#21` provenance hole is closed. Among the G-goals, `G1` is the corpus's own next step and the
-operator's complaint, and the only one that ends in working software without needing another
-goal first. Its aim this round is the *spec*, not the code — the corpus doc is frozen and its
-ABI was never adopted into findings, so recon precedes build.
+The app family is the live workstream and it is now fully *rowed*: `A1` (`#61`) is `DONE`,
+`A2` (`#63`) has landed its code (PR #180) and awaits its row move, and `A3` (`#65`) / `A4`
+(`#66`) are filed, waiting on `A2`'s verdict. `A2`'s SDK-bundling gate is answered — see
+**The `A2` decision**.
 
-**Track 2 — `A1`, serve `ui/` from the capture process, so the client stops needing an external
-static server.** The app family's only true blocker: the shell and everything after it are small
-once the client has an origin the app owns. Cheap, builder-side, non-competing.
-
-This is a deliberate exception to one-objective-per-round: two aims, two resources, no
-contention. **If only one can run, `G1` is the aim and `A1` waits.**
+**`G1` is past its gate too, and rev 12 misread that.** The adoption row is **`#59`, and it is
+`DONE`** (`e842e71`, PR #169; findings in [`plane-removal.md`](../recon/findings/plane-removal.md)).
+Its verdict is **bind the toggles; reimplement only the decision** — and the findings are blunt
+that binding alone does *not* answer the operator's complaint, because that complaint is about
+the vendor's decision **quality**. So what is open for `G1` is its **build row**, in two halves.
 
 ## Critical path
 
 ```
-G1 (live plane removal) ─► recon adoption row ─► build row (bind the ABI for A/B, or
-                            reimplement RANSAC + signed-distance) ─► live per-frame filtering
-A1 (serve ui/ from the process) ─► A2 (bundle + WKWebView) ─► A3 (lifecycle) ─► A4 (settings)
-                                     └─ A2 gated on the operator's SDK-bundling call
-H1 (board compaction) ─► the dispatcher's own per-round read drops ~10×  (self-serving, not blocking)
+A2 (#63 — code landed, PR #180) ─► A3 (#65) ─► A4 (#66)
+A1 (#61) ✅ DONE      H1 ✅ landed (#178)      #64 ✅ DONE — the voxel claim did not survive
 
+G1: adoption (#59) ✅ DONE ─► G1's BUILD ROW (open, unfiled)
+                               bind the toggles + reimplement the decision
 G2 (coverage heatmap) ─► build (prereq #40 landed) ─► G3 (owned tracking, per-pose reasons)
-G4/G5 (denoise + fusion, the accuracy harness) ─► need a fusion feature to exist first
 
-#56 · #41 · #53 (HW) ─► ONE acceptance run (the stall test + V5's visual + OQ-S6's tail) ─► three rows close
-#58 (RECON, in flight) ─► OQ-S13/S14        #21 (closed 2026-10-18)
+#53 (HW — the WebGPU-rejection path only, app-relevant) ─► one browser run
+#62 (HW) — answerable by `smoke_test` as it stands, no build change
+#67 (OQ-S3's static read) — filed and dispatched; not yet visible on main
 ```
 
 Ranked by what it frees, not by board order:
 
-1. **`G1`.** Opens the reconstruction workstream, is the operator's stated pain, and needs one
-   recon row to start. Nothing else unstarted frees as much.
-2. **`A1`.** The app family's only blocker, and cheap: it gives the client an origin the app
-   owns, which is what every later A-row assumes. Builder-side, so it does not contend with
-   `G1`'s recon session.
-3. **The acceptance run.** Not an aim, but the cheapest rows-cleared on the board: three `HW`
-   rows (plus the folded `OQ-S6` observation) on one manual session. Hardware contends with
-   nothing above.
-4. **`H1`.** It frees no row, but it shrinks what the dispatcher itself must hold every round —
-   see **Loop hygiene**. A dispatcher reading a 6 KB board makes better calls than one reading
-   a 67 KB one, so this pays back into every item above it.
-5. **`G2`.** Its prerequisite landed with `#40`, and it is the only G-goal that unblocks
-   another (`G3` depends on its feedback layer).
-6. **`G6`.** The corpus ranked "fix our own SDK usage" first; §1.5's drain half is now
-   **corrected by recon** (see **Orphaned work**), so what remains is the voxel-size claim —
-   live, but unverified, and therefore an adoption row rather than a build row.
+1. **`A2` (`#63`).** Code landed, gate answered, and the whole app family waits on its verdict.
+   Moving the row is the cheapest action on the board.
+2. **`A3` (`#65`).** Launches on `A2`'s verdict; it inherits `OQ-S6`'s answer rather than its
+   question, and it is the row that makes *quit* mean graceful teardown.
+3. **`G1`'s build row — unfiled.** The verdict is in: **bind the toggles, reimplement the
+   decision**. The two halves are independently valuable, and the **reimplement half is the one
+   that answers the operator's actual complaint** — binding alone changes nothing about quality.
+4. **`#53`'s last item.** The WebGPU-*rejection* fallback: cheap, browser-side, app-relevant —
+   a bundled WebView meets exactly that machine.
+5. **`#62`.** Cheapest hardware item: `smoke_test` never registers the listener and prints the
+   device count, so the answer needs a run, not code.
+6. **`G2`.** Its prerequisite landed with `#40`; it is the only G-goal that unblocks another.
 
 ## Ready now
 
 | Row | Role | What it needs |
 | --- | --- | --- |
-| `A1` (unfiled) | builder | Serve `ui/` from the capture process — one origin, no external static server. The app family's first row. |
-| `H1` | dispatcher | Compact the board: archive each `DONE` row's history to `docs/recomp/log/` and leave a pointer. See **Loop hygiene**. |
-| the acceptance run | hardware | One session; the spec is `tests/hardware/plan56-stall-and-v5-visual.md`. Closes `#56`, `#41`, `#53` — and carries the `OQ-S6` tail observation. |
-| `G1`'s adoption row (unfiled) | recon | Turn the corpus's plane-removal ABI + decision-fn into a findings doc, and answer the re-homing question below. |
-| `G2`'s build row (unfiled) | builder | The under-covered point set from the vendor's own per-point result, painted on the live cloud. `#40` landed. |
-| `#58` | recon | In flight. The `OQ-S13`/`S14` residues (`#55`'s). |
-| OQ-7b's row (unfiled) | hardware | The listener-less with-device run; `#12`'s note waits on it. |
-| `#21` | **closed** | Agent-tier + `record-provenance` landed 2026-10-18; nothing outstanding. |
+| `#63` (`A2`) | builder | Code landed (PR #180); awaits its row move. **Gate answered** — carries the search-list and dylib-pin checks. |
+| `#65` (`A3`), `#66` (`A4`) | builder | Filed. `A3` launches on `A2`'s verdict and inherits `OQ-S6`'s answer; `A4` is the failure paths. |
+| `G1`'s **build** row (unfiled) | builder | Adoption (`#59`) is `DONE`; the verdict is **bind the toggles + reimplement the decision**. |
+| `#53` | hardware / browser | One item left: the WebGPU-**rejection** fallback. App-relevant. |
+| `#62` | hardware | OQ-7b's listener-less with-device run — `smoke_test` answers it as it stands. |
+| `G2`'s build row (unfiled) | builder | The under-covered point set painted on the live cloud. `#40` landed; unfiled, not blocked. |
 
 ## Blocked, and on what
 
 | Row | Blocked on |
 | --- | --- |
+| `A3`, `A4` | `A2` — they extend the shell it creates. |
+| `G1`'s build row | `G1`'s adoption row — recon before build, per the corpus rule. (Neither exists yet.) |
 | `G3` | `G2` — the feedback layer it needs to display per-pose reasons. |
 | `G4`, `G5` | A fusion feature actually being planned; a denoise/fusion harness measures something that does not exist yet. |
-| `G1`'s build row | `G1`'s adoption row — recon before build, per the corpus rule. |
-| `A2`, `A3`, `A4` | `A1` for the origin; and **`A2` additionally on the operator's SDK-bundling call** — it decides what the bundle may contain. |
 | the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
-| `H1` | Nothing — the dispatcher owns both the board and `docs/recomp/log/`, so this is self-serve. |
-| `#21` | **Closed** (2026-10-18) — the remedy is on main; the decision's authority is recorded on the row. |
 
 ## Orphaned open questions
 
@@ -106,26 +91,27 @@ reads every findings file's open list.
 
 - **OQ-1** — resolved by `#50`; **OQ-5** by `#47`. Both are answered in their findings.
 - **OQ-4** — closed by `#52`.
+- **OQ-S12** — answered by `#60`: the pose trigger is a real export and is declared, so the
+  "declare vs document" question never had to be taken.
+- **OQ-S13**, **OQ-S14** — closed by `#58`.
 - **OQ-S4** — deferred to the marker pass by decision; not yet live.
 
-**Live, unowned — each needs a row or an explicit park:**
+**Live, unowned — each gets an owner or an explicit trigger.** A "park" without a trigger is
+unowned work with a nicer name, so every row names both the condition that revives it *and* the
+cheapest thing that retires it.
 
-- **OQ-S12** — the pose's *publication trigger* is not in the header subset, and the findings
-  name it as the thing the viewer's `pose` message depends on. **But `V4` shipped and was
-  HW-confirmed with the getter**, so this is a gap in the trigger's semantics, not a hole in
-  the pose channel. Decide: declare the export, or document the getter as the live channel.
-- **OQ-S2** — does pause/stop publish temp→show? Not load-bearing (the live path is decided
-  and landed), so: **park with a trigger** — adopt into the next scan-family recon row.
-- **OQ-S3** — the `+0x2e0`/`+0x320` lock asymmetry on the cloud we read every tick. A latent
-  race; never observed. **Live, low priority** — check before rowing separately.
-- **OQ-S13**, **OQ-S14** — `#58`, in flight.
-- **OQ-S6** — the stop tail vs the watchdog. `#43` landed the watchdog side; **verify** this
-  is closed before rowing it.
-- **OQ-S7**, **OQ-S9**, **OQ-S10**, **OQ-S11** — answered with residuals, none load-bearing.
-  **Park with triggers**, listed in their findings.
-- **OQ-7b** — live; a hardware observation. Propose a row (it is the only `#12`-owed item).
-- **OQ-7c** — static-only and low-value (which VID owns `0x1B20`). **Park.**
-- **OQ-7d** — the one `#52` closed the parent of. **Verify** and close.
+| OQ | Trigger — when it becomes live | Cheapest retirement |
+| --- | --- | --- |
+| **OQ-S6** | **answered 2026-10-18 from the existing records**: the tail fits the watchdog budget with room to spare (the stall test's teardown ≈ 11 s against 600 s; the 15.6M-vertex case ≈ 19 s) | **retired — no run owed.** `A3` designs against the answer |
+| **OQ-7b** | **answerable as it stands** — `smoke_test` never registers the device-message listener and prints the device count | `#62`: a run of an existing tool. **No build change, no skip-listener flag** |
+| **OQ-S2** | a consumer wants the cloud *without* the color getter (a pause-time snapshot) | recon batch with the next scan-family row |
+| **OQ-S3** | a torn or partial cloud is observed, or a second reader is added | recon: read both lock sites statically |
+| **OQ-S7** | a consumer needs *absolute* world orientation (a world-axis grid, or `G3`'s pose graph) | one `get_global_pose` at a known device pose |
+| **OQ-S9** | a torn or frozen cloud is observed at the update cadence | double-call loop during an active scan |
+| **OQ-S10** | a consumer needs *intrinsics* (`G3`'s tracking, or a calibration workflow) | analyzer pass on the session DB row, or a runtime hexdump |
+| **OQ-S11** | a consumer wants the marker disc as a viewer overlay | entry-register capture + a small-`n` hexdump |
+| **OQ-7c** | a second sensor line is supported | static string/symbol read |
+| **OQ-7d** | only its parent question, `#52`, which is closed | **verify against `#52` and close it** |
 
 ## Orphaned work — the corpus's `G6`, corrected
 
@@ -149,54 +135,89 @@ tracked and not lost.
 
 | # | Goal | Needs first | State |
 | --- | --- | --- | --- |
-| **G1** | Live plane removal for **resource management** (cut data per frame during capture), not a post-scan cosmetic cut | a recon adoption row | **the objective** |
+| **G1** | Live plane removal for **resource management** (cut data per frame during capture), not a post-scan cosmetic cut | — | **adoption `#59` `DONE`**; **build row open** — bind the toggles, reimplement the decision |
 | **G2** | Coverage heatmap: replace the one-scalar "insufficient data" verdict with a spatial under-covered set | nothing — `#40` landed | ready to row |
 | **G3** | Owned tracking (marker detection + bundle adjustment) with per-pose rejection reasons | `G2`'s feedback layer | blocked |
 | **G4** | Own denoising + fusion pipeline, Open3D as the MIT anchor | a fusion feature being planned | parked |
 | **G5** | Fusion-accuracy evaluation harness | `G4` | parked with `G4` |
-| **G6** | Fix our own SDK usage: *drain the listener* + align voxel sizes | — | **re-scoped: the drain half is corrected out; the voxel half needs adoption** |
+| **G6** | Fix our own SDK usage: *drain the listener* + align voxel sizes | — | **closed, both halves** — the drain half was corrected out, and `#64` found the voxel claim does not survive (our values are the operator's own, at the minimum of the app's ranges) |
 | **G7** | Keep laser extraction + calibration behind the SDK until the "drop OBScan" decision | that decision (`README.md`) | standing |
 
 Two corpus design constraints bind any row above: keep capture decoupled from fusion via a
 bounded queue, and keep the frame-acceptance gate and the bundle adjuster as **two separate
 systems**.
 
-**The re-homing question, for `G1`'s adoption row** (this is the part that must be answered
-before a build row): the corpus attributes the plane toggles to `OBScanDataManagement`, while
-current recon homes the data-management subobject on `OBScanBase`. Same object, possibly a
-re-homing — **verify, do not assume.** The adoption row should also settle **bind vs
-reimplement**: the corpus gives a reimplement verdict for the filter and keeps the vendor's
-four exports as an A/B reference.
+**`G1`'s verdict, for its build row** — the adoption row answered more than was asked, and the
+answer matters: the re-homing question **dissolves** (same object, two layers), and the call is
+**bind the toggles; reimplement only the decision**. It also names the trap plainly: the toggles
+are live-callable and gate-free, but **binding them changes nothing about quality**, and the
+operator's "it does not work at all" *is* a quality complaint. So the reimplement half is the
+half that answers the complaint — the build row should not be scoped as bind-only.
+
+**Historical note, superseded by `#59`.** Rev 12 carried a "re-homing question" here — whether the
+plane toggles belong to `OBScanDataManagement` or to the data-management subobject on
+`OBScanBase`. The adoption row answered it: **same object, two layers**, and the question
+dissolves. It is kept only so the resolution reads as a resolution.
 
 ## App workstream (A1–A4) — a basic macOS app, captured 2026-10-18
 
-The client is already built; what is missing is **a shell and a transport**. There is **no
-packaging anywhere** — every target is a plain executable, with no `MACOSX_BUNDLE` and no
-`Info.plist` — and the UI is not served by the app: `README.md` requires a separate
-`python3 -m http.server`, and `file://` is explicitly unreliable there.
-`docs/architecture/scan-viewer.md` §2 already named the destination (a web client plus a
-**thin native shell**), so this is the next step of a decided direction, not a new one. The
-A-labels are the planner's; the dispatcher files the rows.
+The client is already built; what was missing is **a shell and a transport**. There is no
+packaging anywhere (no `MACOSX_BUNDLE`, no `Info.plist`), and the UI is not served by the app —
+`README.md` requires a separate `python3 -m http.server`, and `file://` is explicitly unreliable
+there. `docs/architecture/scan-viewer.md` §2 named the destination (a web client plus a **thin
+native shell**), so this is a decided direction, not a new one. The A-labels are the planner's;
+the dispatcher files the rows.
 
 | # | Foundation | Board row | State |
 | --- | --- | --- | --- |
-| **A1** | Serve `ui/` from the capture process — one origin, no external static server | none — **file it** | **the first row**; nothing blocks it |
-| **A2** | The `.app` bundle + a WKWebView window (`MACOSX_BUNDLE`, `Info.plist`, icon) | none | **blocked on the operator's SDK-bundling call** |
-| **A3** | Lifecycle: spawn and supervise the worker, surface a crash, and make **quit = graceful `pause`/`stop`/`destroy`** | none | after `A2` |
-| **A4** | Settings and failure paths — missing-SDK dialog, port, session length | none | after `A2` |
+| **A1** | Serve `ui/` from the capture process — one origin, no external static server | **`#61`** | **`DONE`** |
+| **A2** | The `.app` bundle + a WKWebView window (`MACOSX_BUNDLE`, `Info.plist`, icon) | **`#63`** | **code landed** (PR #180); row move pending. Gate answered |
+| **A3** | Lifecycle: spawn and supervise the worker, surface a crash, and make **quit = graceful `pause`/`stop`/`destroy`** | **`#65`** | filed; launches on `A2`'s verdict; inherits `OQ-S6`'s answer |
+| **A4** | Settings and failure paths — missing-SDK dialog, port, session length | **`#66`** | filed; after `A2` |
+
+### The `A2` decision — no SDK in the bundle
+
+**Operator decision, 2026-10-18 — confirmed twice, and to be applied: the app does not package
+the vendor SDK. It requires the user to have CrealityScan installed, and resolves the dylib from
+that install.**
+
+**Provenance.** The operator stated this directly to the planner session, and re-confirmed it
+explicitly when the dispatcher's note of the same date recorded the gate as *unconfirmed*. The
+dispatcher's note is therefore stale — **no confirmation is pending and `A2` is past its gate.**
+The reversal marker below exists so the one line that would change is *named*, not because a
+reversal is expected.
+
+**⚠ The one line that changes if the operator reverses it.** *Resolution source* — ours instead
+of theirs. On reversal the bundle ships the dylib, requirements 1 and 2 below **collapse** (we
+know where our own copy is), the pin check drops to a build-time assertion, and **licensing
+becomes the blocker rather than the resolver**.
+
+Rationale, recorded with the decision: redistributing OEM code inside an MIT project is a
+licensing problem, and `.recon-cache/` is kept out of git precisely to avoid it. So the bundle
+ships our binaries and the web client, and depends on the user's own licensed copy for the SDK.
+
+**Three consequences that turn "resolve from there" into work** — the loader does the first
+naively today and the other two not at all:
+
+1. **Make the search a list, not one path.** `FindDefaultLibraryPath()` has a single macOS
+   candidate (the `/Applications` app bundle). A user who installed elsewhere — `~/Applications`,
+   another volume, a localized name — fails silently. The Windows branch already carries two
+   candidates; the macOS one should carry the equivalents.
+2. **Fail with a dialog, not a crash.** A missing app must reach A4's actionable message:
+   what is missing, where it looked, and what to install. `A2` must not depend on a path
+   existing.
+3. **Verify the dylib against the pin.** Every ABI claim in the header — struct offsets, vtable
+   slots — was recovered from one pinned slice (the sha256 recorded at the top of the
+   [`device-message-listener`](../recon/findings/device-message-listener.md) findings). The
+   loader checks only that the path *exists*. A user on a newer CrealityScan would get a
+   **silently reassigned ABI**, which is the one failure the whole recomp exists to prevent.
+   The app should verify the loaded dylib's hash and refuse, or warn loudly, on mismatch.
 
 **Toolchain: nothing new is required.** This machine has CommandLineTools with no Xcode.app —
 Apple clang, `codesign`, `notarytool`, `iconutil` and CMake are all present. The two absent
-tools, `actool` and `ibtool`, compile asset catalogs and storyboards; a **programmatic
-ObjC++ shell** (no storyboard, `.icns` via `iconutil`) avoids both. Full Xcode becomes
-necessary only for storyboards, asset catalogs, Instruments, or App Store submission.
-
-**The constraint on `A2`, and the one question for the operator.** The bundle must **not**
-contain the vendor's dylib: redistributing OEM code inside an MIT project is a licensing
-problem, and `.recon-cache/` is kept out of git precisely to avoid it. The safe default is
-therefore *require the scanner app installed, resolve its path, and fail with a dialog* —
-which is what the loader already does. `A2` gets written only once that is confirmed, because
-it decides what the bundle may contain.
+tools, `actool` and `ibtool`, compile asset catalogs and storyboards; a **programmatic ObjC++
+shell** (no storyboard, `.icns` via `iconutil`) avoids both. Full Xcode becomes necessary only
+for storyboards, asset catalogs, Instruments, or App Store submission.
 
 **Rejected shapes**, for the record: a native SwiftUI + Metal rewrite (forks the UI away from
 the portable client and from `V5`); Tauri (a new toolchain — revisit only if the Windows lane
@@ -205,13 +226,17 @@ wants to share a shell); and "package the binary and open a browser tab" (not an
 **Why this is a macOS row and not a Windows one:** it is a macOS-only deliverable, so it sits
 inside the machines-split-by-fork rule. The Windows lane wraps the same client in its own shell.
 
-## Loop hygiene (H1–H2)
+## Loop hygiene (H1–H3)
 
 Housekeeping on the loop's own machinery, not on the product. Both items came from measuring
 the dispatcher session itself on 2026-10-18 — the same reason the old inline `## Log` section
 was split into `docs/recomp/log/`.
 
-### H1 — Board compaction (the dispatcher's own read)
+### H1 — Board compaction — **landed** (`930d70b`, PR #178)
+
+**Result: `PLAN.md` 79,660 → 17,758 bytes.** The acceptance written into rev 11 is met — under
+the 20 KB budget, with the before/after byte count recorded in the PR. The rule below is kept
+because it is the standing discipline at every `→ DONE` transition, not a one-off.
 
 **The measurement.** The dispatcher is one **21-hour session that has never reset**: 303
 messages, 6.37M fresh input, 484M cached read. The biggest fixed cost it pays every round is
@@ -249,6 +274,22 @@ justified by a long-context tier. The live dispatch session is running
 original choice was justified *by context capacity* — the same property `H1` protects. Fix
 the doc or the config, and record the reason where the choice is recorded.
 
+### H3 — Check the board before claiming a row is unactioned
+
+**Why it exists.** Rev 12 asserted three times that `G1`'s adoption row had "never been filed"
+and was "a standing debt". It had been filed as **`#59`**, dispatched to recon, answered
+(`e842e71`) and landed as PR #169 — **`DONE`**. The roadmap read a row that *was* actioned as
+unactioned.
+
+This file already warns about the orphan failure — an OQ with no row. This is its mirror image,
+and it is worse in one way: an orphan merely goes quietly unowned, whereas a phantom debt invites
+someone to **re-do work that is already finished**. The dispatcher caught it, not the planner.
+
+**The rule.** Before this file calls any proposed row unfiled, unactioned or overdue, **grep the
+board for the row's own words first** — `grep -i "<distinctive phrase>" PLAN.md`. The roadmap
+proposes rows; the board records what became of them; the two drift independently. **A claim
+about a row's state is a claim about the board, and must be read from the board.**
+
 ## Windows fork — handed off
 
 **Out of scope for the macOS lane.** By operator rule (2026-10-18): Mac sessions work the
@@ -267,11 +308,14 @@ is set there. **Do not open Windows rows from this roadmap.**
 1. **The seam between binding and building is unproven.** Every G-goal above the seam is
    unexercised: the project has bound an ABI and won a live view, but has never run its own
    reconstruction math on live data. `G1`'s adoption row is where that gets tested cheaply,
-   before a build row is committed.
-2. **What the app bundle may contain is undecided, and it gates `A2`.** Bundling the vendor's
-   dylib would redistribute OEM code inside an MIT project; `.recon-cache/` is kept out of git
-   to avoid exactly that. Safe default: require the scanner app installed and resolve its path,
-   failing with a dialog. Cheapest retirement: the operator's one-line answer.
+   before a build row is committed — and it is also the row that keeps failing to get filed.
+2. **The user's dylib may not be the slice we specced — new, and created by the `A2` decision.**
+   Every ABI claim in the header was recovered from **one pinned slice** (the sha256 recorded in
+   the [`device-message-listener`](../recon/findings/device-message-listener.md) findings).
+   Requiring the user's own install means a newer CrealityScan supplies a *different* dylib and a
+   **silently reassigned ABI** — the exact failure this whole recomp exists to prevent. The
+   loader today checks only that the path exists. Cheapest retirement: verify the hash at load
+   and refuse on mismatch — `A2`'s third consequence.
 3. **Evidence provenance (`#21`) — closed 2026-10-18, one residual.** Added records now need a
    verifier verdict (agent-tier) and a non-`.md` companion raw artifact in the same PR. The
    residual is a *plausible-but-false* record surviving a verdict; the only thing that retires
@@ -280,51 +324,61 @@ is set there. **Do not open Windows rows from this roadmap.**
    base for the corpus's §1, but it is neither `tests/results/**` nor `docs/recon/**`, so the
    `run-records` check and the tier rules do not reach it. Cheapest retirement: an operator
    decision on whether it stays.
-5. **One serialized hardware resource.** The acceptance run and `OQ-7b` queue behind one
+5. **One serialized hardware resource.** `#53`'s rejection-path test and `#62` queue behind one
    manual session. Batch per session, cheapest-first.
-6. **Recon step budget.** `recon` is capped at `steps: 40`, one board row per session. `G1`'s
-   adoption, `#58`, and any `OQ-S12` row are each a session — an order that also asks for
-   adjacent context comes back empty.
+6. **Recon step budget.** `recon` is capped at `steps: 40`, one board row per session — so
+   `G1`'s adoption, if it is filed, is a session of its own and must not carry adjacent context.
 7. **Verification debt.** Claims tagged `[inferred]` that code depends on: the parked
    `OQ-S7/S9/S10/S11` residuals, `OQ-S2`/`S3`, and the tips/control rows `#9` left `[inferred]`.
-8. **The dispatcher's own context, and it grows monotonically.** Measured 2026-10-18: one
-   21-hour session, 303 messages, 6.37M fresh input, 484M cached read — against a board that is
-   91% archive. The failure mode is judgment drift on stale history, not a crash, and this repo
-   has already paid for it once (rev 7 → rev 8). Cheapest retirement: `H1`, then re-measure.
+8. **The dispatcher's own context grows monotonically — mitigation applied, not closed.**
+   Measured 2026-10-18: one 21-hour session, 303 messages, 6.37M fresh input, 484M cached read,
+   against a board that was 91% archive. `H1` has now cut the board to 17,758 bytes, so the
+   biggest fixed cost is down ~4.5×; the *drift* risk remains and should be re-measured after a
+   few rounds rather than declared retired.
 
 ## Next round, as work-order seeds
 
 For the dispatcher to expand — not dispatches in themselves.
 
-1. **`H1`, board compaction** → dispatcher: apply the archival rule at the `→ DONE`
-   transition, bring `PLAN.md` under 20 KB, and record the before/after bytes in the PR. Self-
-   serve — `PLAN.md` and `docs/recomp/log/**` are already dispatch's, and no new agent is
-   involved. Do this one **first**: it shrinks what every later item is read against.
-2. **`G1`'s adoption row** → recon: adopt the corpus's plane-removal ABI + decision-fn into a
-   findings doc; answer the **re-homing question** and give a **bind vs reimplement** verdict.
-   **Wall:** recon owns the header and `docs/recon/**`; the row's deliverable is a spec, no
-   code. One target, one session.
-3. **`A1`** → builder: serve `ui/` from the capture process so the client has an origin the app
-   owns. One origin, no external static server, and the `python3` step leaves the README.
-   **Wall:** builder edits `engine/`, `tools/`; no header change, so nothing here needs recon.
-4. **The acceptance run** → hardware: one session, the combined stall/V5 spec. Closes `#56`,
-   `#41`, `#53`. Add **one observation for `OQ-S6`** — the stop tail against the watchdog on
-   the scale case, which `#43`'s teardown change post-dates; it retires or reopens that OQ for
-   the cost of reading a number in a session that is already running. Archive the raw log and
-   any crash report per the record rules. **Wall:** hardware writes only `tests/results/**`.
-5. **`G2`'s build row** → builder: the under-covered point set painted on the live cloud, from
-   the vendor's own per-point result. **Wall:** builder edits `ui/`, `tools/`; the getters'
-   semantics stay recon's.
-6. **`OQ-S12`'s row** → recon: decide declare-the-export vs document-the-getter. **Wall:**
-   recon owns the header.
-7. **`OQ-7b`'s row** → hardware: the listener-less with-device run, batched with (4).
+1. **`A2` (`#63`)** → dispatcher: move the row on its verdict — the code landed as PR #180. Then
+   it carries the three consequences named in **The `A2` decision**: the macOS search-list, the
+   missing-app dialog (shared with `A4`), and the **dylib-pin check**. **Wall:** builder edits
+   `app/`, `engine/`, `CMakeLists`; no header change, so no recon precedes it.
+2. **`G1`'s build row — file it** → builder, in two halves: **bind the toggles** (live-callable,
+   gate-free, per `#59`'s verdict) and **reimplement the decision**. The second half is the one
+   that answers the operator's complaint; scoping this row as bind-only would land the cheap half
+   and miss the point. `#59`'s findings own the semantics. **Wall:** builder edits `engine/`,
+   `tools/`; the header already declares what the toggles need.
+3. **`A3` (`#65`)** → builder (launches on `A2`'s verdict): spawn and supervise the worker,
+   surface a crash, make quit the graceful teardown. It inherits **`OQ-S6`'s answer** — the tail
+   fits the budget by a wide margin (~11 s against 600 s in the stall test; ~19 s on the
+   15.6M-vertex case) — so it designs against that and owes neither a run nor a row.
+4. **`#53`'s rejection path** → hardware / browser: force WebGPU to reject and confirm the
+   fallback reaches WebGL2 rather than dead-ending. One browser-side run, app-relevant — a
+   bundled WebView meets exactly that machine. **Wall:** `tests/results/**`.
+5. **`#62`** → hardware: `smoke_test` never registers the device-message listener and prints the
+   device count, so this is a run of an existing tool — **no build change, no skip-listener
+   flag**. Batch it with (4).
 
-Also ready, non-competing: `#58` (recon, in flight), the `G6` voxel-size adoption if a recon
-session frees up, **`H2`** (the model-doc reconciliation, one line), and **`A2` once the
-operator answers the SDK-bundling question**.
+Also ready, non-competing: `A4` (`#66`, after `A2`) and `G2`'s build row (unfiled but unblocked —
+`#40` landed). `#67` (OQ-S3's static read) is filed and dispatched, not yet visible on main.
 
 ## Superseded plans
 
+- **2026-10-18 rev 12 → rev 13 — a correction, not a direction change.** Rev 12 claimed three
+  times that `G1`'s adoption row had never been filed. It had: **`#59`, `DONE`** (`e842e71`, PR
+  #169). Rev 13 corrects that, records the verdict (**bind the toggles; reimplement the
+  decision**), and adds **`H3`** — *grep the board before asserting a row's state* — the guard
+  that would have caught the planner's own error. Also folded in: the current row set (`A2`
+  `#63`, `A3` `#65`, `A4` `#66`), `#64` `DONE` (the voxel claim did not survive), and `#67` in
+  flight. Reversal reason: the dispatcher checked the board against this file's claim, which is
+  the check the planner should have run.
+- **2026-10-18 rev 11 → rev 12 — the `A2` decision, recorded as binding.** Rev 11's aim (the app
+  workstream) stands, and its first row (`A1`) landed. Rev 12 records the operator's answer on
+  the bundle — **no SDK; require the user's install** — turns it into three concrete
+  requirements, files `A2`–`A4`, marks `H1` landed (79,660 → 17,758 bytes), and sweeps the board
+  after the stall-test and app rows. It also stops re-proposing `G1` as a track and states the
+  debt plainly instead. Reversal reason: the operator answered the open question.
 - **2026-10-18 rev 10 → rev 11 — additive: two new workstreams, no objective change.** Rev 10's
   aim (`G1`) stands. Rev 11 adds the app workstream (`A1`–`A4`, with `A1` as its first row) and
   the loop-hygiene items (`H1` board compaction, `H2` the model-doc reconciliation), and folds
