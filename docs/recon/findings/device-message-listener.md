@@ -410,6 +410,65 @@ no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
   construction. A listener-less with-device run is still unobserved (OQ-7b
   there).
 
+## 10. The NULL-state cause of the connect-callback SIGSEGV (row #11)
+
+*Static half, plan11 pass, against the four-run crash signature (plan8 + run2/run3/run4,
+identical stacks). The `.ips` `symbolLocation` fields pin the faulting instruction;
+frame data from `2026-10-17-device-message-listener-test-run4.crash.ips`.*
+
+**Which pointer is NULL: `OBDeviceManagement+0x158` — the manager's device pointer.**
+The faulting frame is `device::OrbbecDevice::get_active_device()` at
+**`symbolLocation: 0`** — its *first* instruction (`ldr x9,[x0]` @ `0x1b565c`), i.e. it
+was called with `this == NULL`. Its caller is `OBDeviceManagement::update_device_info`
+at `symbolLocation: 624` — the return site of `bl get_active_device` (`0x5c3580`),
+whose argument was loaded one instruction earlier:
+
+```
+5c3574: ldr x0, [x27, #0x158]     ; x27 = the OBDeviceManagement instance
+5c3580: bl  device::OrbbecDevice::get_active_device
+```
+
+So the NULL is the manager's device pointer at `+0x158` — the same field
+`OBDeviceManagement::release()` clears (`str xzr,[x8,#0x158]`, `0x5c14ec`) before it
+destroys the device (the row #4 teardown map). By the time the watcher's device-info
+update ran, the pointer had been cleared.
+
+**The destroy path takes no lock on that field; the watcher path takes a different
+one.** `update_device_info` locks the manager's `std::mutex` at `+0x100` for its whole
+body (`0x5c333c`), so its read of `+0x158` happens under that mutex. But:
+
+- `release()` takes **no lock at all** — load, clear `+0x158`, call `~OrbbecDevice`
+  (`0x5c14dc`–`0x5c14f0`);
+- the block the main thread hits (`.ips`, all four reports) is inside
+  `~OrbbecInternalDevice` → `stop()` (`0x1da7d8`), which locks the **internal
+  device's `recursive_mutex` at `+0xf8`** (`0x1da80c`, stub `0x2ad7af0`) — a different
+  object and a different lock class.
+
+So the two paths share **no lock**: the destroy path can clear `+0x158` while the
+watcher's `update_device_info` holds `+0x100` and is about to read it. That is the
+race, mechanically — and it answers row #20's open question: `stop()`'s mutex is
+**not** the one `update_device_info` takes. [static lock map; the fault's `this == NULL`
+is `[hw-confirmed: the four .ips reports]`]
+
+**Why a trailing device-changed event is in flight at teardown.** The watcher is a
+periodic GVCP discovery poll: each poll that sees the enumerated set change drives
+`onDeviceChanged → … → the bound callback`. The remove→re-add churn (#15's
+remove-side race) leaves that set flapping (create → destroy → create, with the SDK's
+own `Trying to create a device that you've already created!`), so further polls fire
+device-changed events after the test's sequence has completed — run4 logs exactly such
+an event (`22:45:47.318622`) *after* check 5c returned SUCCESS, racing the main
+thread's entry into `obscan_context_destroy()`. **[inferred from the run log + the
+frame chain; the SDK-side change detection lives in libOrbbecSDK's `DeviceManager`]**
+
+**Can the caller avoid it?** The caller controls the *trigger*, not the race — the
+unsynchronized clear is vendor-side. The churn that manufactures the trailing events
+comes from the remove/re-add dance while the watcher is live, so: **do not remove and
+re-add the listener around live watcher activity** (register once and keep it; this
+project's tools now hold the listeners as process-lifetime statics and never call
+`remove_*`), and if a remove is ever needed, let the device churn settle (well over a
+poll interval) before `obscan_context_destroy()`. Teardown in a disposable worker
+process remains the backstop.
+
 ## Evidence
 
 Raw listings for this pass (disassembly, symbol tables, decoded tables) are in
@@ -430,7 +489,9 @@ created/destroyed/created timeline and both thread ids: registerer/deliverer
 `14660842`, NetDeviceWatcher/faulting thread `14660873`),
 `2026-10-17-plan8-device-message-listener.crash.ips` (the faulting stack), and
 the reconcile analysis
-`2026-10-17-plan8-device-message-listener-crash-analysis.md`. Plus the
+`2026-10-17-plan8-device-message-listener-crash-analysis.md`; and
+`2026-10-17-device-message-listener-test-run4.crash.ips` (the fourth identical stack
+whose `symbolLocation` fields pin the faulting instruction — §10). Plus the
 main-thread re-read `2026-10-17-crash-reports-main-thread-teardown-correction.md`
 (the three archived `.ips` reports' main-thread stacks) and the contradicting
 clean run `2026-10-16-plan1-device-message-listener.md` (destroy SUCCESS,
