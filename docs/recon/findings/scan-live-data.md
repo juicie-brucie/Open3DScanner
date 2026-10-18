@@ -208,10 +208,15 @@ corpus (§2) says to keep behind the SDK.
 gate, #2); (ii) worth **draining** for queue hygiene and future per-frame features
 (G1/G2) — independent builder work; (iii) **OQ-P3 (#28)** gates *using* its payloads.
 
-**Revisit condition.** If OQ-P3 shows `FRAME_READY`'s `data` carries a consumable
-cloud/frame structure, the listener becomes a per-frame cloud channel and this decision
-should be re-taken (it could supersede the tick-poll for latency). Until then,
-getter-publish stands.
+**Revisit condition — FIRED (plan28 pass, OQ-P3 answered).** `FRAME_READY`'s `data` is an
+`OBScanFrame_*`, and the exported `obscan_frame_get_frame_cloud` returns the frame's
+per-frame point cloud (one-shot; see
+[`data-process-message-listeners.md`](data-process-message-listeners.md) §12). The
+listener channel therefore **can** carry per-frame clouds, so the decision should be
+re-taken: the listener path is per-frame (lower latency, vendor-faithful) but is not the
+accumulated model cloud this UI renders — an accumulated view would need our own
+accumulation, and the `obscan_frame_*` C surface is not in our header subset yet.
+Getter-publish (#25) stands until the re-take.
 
 **Corpus status.** `docs/research/**` stays frozen; this section supersedes §1.3/§1.5
 where they differ (the two-burst correction, the 5,196-warning correction, the causal

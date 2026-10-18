@@ -142,6 +142,12 @@ both are mandatory by construction.
   **futures registry**, not a task queue (nothing drains it; it is destroyed
   with the paras). **Asynchronous dispatch via the shared thread pool**; the
   drain thread and the emptied-slot behavior are answered in §10 (OQ-P1).
+- **The four stream wrappers** — `send_rgb_msg` / `send_depth_msg` / `send_ir_msg` /
+  `send_frame_msg` (@ `0x6a9f3c` / `0x6aa000` / `0x6aa090` / `0x6aa120`) — are the observed
+  per-frame delivery paths (§12). Each checks the data probe, pushes the payload's
+  `shared_ptr` into a per-stream mutex-guarded ring (capacity 10), then builds
+  `{id, pad, data = shared_ptr.get()}` and calls the listener **inline** (the same
+  probe+call shape as `send_data_msg`; the generic `send_data_msg` has no direct callers).
 
 `OBScanProcessMessageID_name` is *always* evaluated inside the emitter — so at
 emit time the id passes through the same jump table decoded in §5 below.
@@ -196,7 +202,7 @@ function):
 | --- | --- | --- |
 | `0x00` | `int32` | `msg_id` |
 | `0x04` | `int32` | padding |
-| `0x08` | `void*` | `data` — opaque, payload semantics unverified (`OQ-P3`) |
+| `0x08` | `void*` | `data` — per-id payload pointer; for the four stream ids it is the raw `OBScanImage_*` / `OBScanFrame_*` (§12) |
 
 `OBScanProcessMessage_` is declared with the same three-field shape; the send
 path passes it by registers through the queued closure. The 16-byte
@@ -366,6 +372,65 @@ thread id in the data/process callbacks to settle window 4's reachability. A neg
 proves little (the window is a handful of instructions); do not spend the serialized room on
 it without a specific suspicion.
 
+## 12. Data-message payload semantics per emitter (OQ-P3, answered)
+
+*Static half, plan28 pass; raw excerpts appended to the plan2 dossier. The dynamic record
+`tests/results/2026-10-18-scan-server-data-process-instrumentation.md` observed the four ids
+below as per-frame triples on one vendor thread, payload pointers striding 0x60.*
+
+**Per-id payload map.**
+
+| id | emitter | `data` points at |
+| --- | --- | --- |
+| `0` `NEW_RGB_IMAGE` | `send_rgb_msg(shared_ptr<OBScanImage_>)` @ `0x6a9f3c` | `OBScanImage_*` |
+| `325189888` `NEW_DEPTH_IMAGE` | `send_depth_msg` @ `0x6aa000` | `OBScanImage_*` |
+| `325189889` `NEW_IR_IMAGE` | `send_ir_msg` @ `0x6aa090` | `OBScanImage_*` |
+| `325189890` `FRAME_READY` | `send_frame_msg(shared_ptr<OBScanFrame_>)` @ `0x6aa120` | `OBScanFrame_*` |
+
+All four inline the same dispatch as `send_data_msg` (probe `paras+0x68` → drop if clear;
+build `{msg_id, pad, data}` on the stack; call the listener on the emitting thread) and first
+push the payload's `shared_ptr` into a **per-stream ring** (`msg_buffer_push_impl<T>` @
+`0x6b0850`: a mutex-guarded `std::list<shared_ptr<T>>`, **capacity 10** — evict-oldest or
+fail-and-warn). The generic `send_data_msg` @ `0x6a9fcc` has no direct callers in this binary;
+the stream wrappers are the emitters for these ids.
+
+**The payload objects — both 88 bytes (0x58; malloc rounds to the observed 0x60 stride).**
+
+| offset | field |
+| --- | --- |
+| `+0x00`/`+0x08` | `shared_ptr<Impl>` — for the frame the impl is `OBScanFrameInterface` (`new(0x2e0)`); for the image, the image-data impl |
+| `+0x10` | `uint16` state: bit0 = has data; bit1 = **consumed**; `0` = released |
+| `+0x18` | embedded `pthread_mutex_t` (sig `0x32AAABA7`), 64 bytes to `+0x57` |
+
+**Ownership/lifetime: borrowed, one-shot, ring-kept.** `data` is the raw pointer from the
+shared_ptr — no refcount bump. The object stays alive while its stream ring holds it (10
+deep); `OBScanFrame_::release_data` @ `0x6b2200` sets state 0 and drops the impl. Every
+accessor is **one-shot**: `get_frame_cloud` and the image getters lock `+0x18`, check the
+state, set bit1, then call the impl — a second accessor call on the same object fails with
+`845283600` (`OB_SCAN_ERROR_MULTI_CALLED`, "…multi called !"), and after release with
+`845283584` ("…released !"). Consume synchronously, one accessor call, do not retain.
+
+**FRAME_READY carries a consumable cloud — the §6 revisit trigger has fired.**
+`OBScanFrame_::get_frame_cloud` @ `0x6b2344` fills an `OBScanPointClouds_`-shaped struct
+inside the impl and returns it: points vector `impl+0xa0` → `count@+0x100`, `begin@+0x108`;
+normals `impl+0x150` → `count@+0x1b0`; colors `impl+0x198` → `count@+0x2b0`; reference rods
+from `impl+0x1d0`. The C API exports the path: `obscan_frame_get_frame_cloud(frame,
+OBScanPointClouds**)` @ `0x107fc` (validates both pointers; tail-branches to the native). So
+the listener channel **can** deliver a **per-frame** point cloud. Per `scan-live-data.md` §6
+the live-path decision should be re-taken: this path is per-frame (lower latency,
+vendor-faithful) but is not the accumulated model cloud the current UI renders — an
+accumulated view would need our own accumulation. The `obscan_frame_*` surface is **not in
+our header subset**; building on this path needs a contract row first (the
+`obscan_frame_get_frame_cloud` + `obscan_frame_release` pair, mirroring #24).
+
+**Dynamic trace.** The layouts are static; what a run would add is the *value* per frame —
+whether the frame cloud is populated live and with how many points. Spec (builder + hw,
+after the frame API lands in the header/loader): in the data listener, on `FRAME_READY` call
+`obscan_frame_get_frame_cloud` once and log `{num_points, first point}`; on one image id,
+call one image getter (e.g. `obscan_image_get_width`) and log; expect per-frame counts
+`> 0` and the one-shot behaviour (`MULTI_CALLED` on a second call). This is optional
+confirmation — the semantics above do not depend on it.
+
 ## Evidence
 
 Raw evidence: `.recon-cache/listings/data-process-listeners.plan2.asm` (wrapper
@@ -374,7 +439,9 @@ preview-guard chain, the address-map bias test, and — plan26 pass — the
 process-family drain: closure body @ `0x6aa608`, `thread_pool_enqueue_task` @
 `0x16b2f4`, `thread_pool_create_instance` @ `0x16a5f8` and its caller @ `0x6f3f48`;
 plan27 pass — the slot-home synchronization read: the four registration bodies, both
-emitters, and the pool's mutex/condvar stubs),
+emitters, and the pool's mutex/condvar stubs; plan28 pass — the payload semantics: the
+four stream emitters, the ring push impl, both payload-object ctors, the one-shot
+accessors, and the frame-cloud path),
 plus
 `.recon-cache/listings/device-msg-listener.monostub-vtable.plan9.asm` for the
 plan9 shard covering this file's data/process `operator()` windows. Export
@@ -397,10 +464,11 @@ raw listings are reproduced here.
   → clear+destroy → call through stale `__f_`) is real by construction; a `remove_*`
   must not race live delivery. No dynamic trace needed to close; a stress spec is
   recorded in §11 if ever wanted.
-- **OQ-P3** — `data` payload semantics per emitter (same shape as the device
-  family's **OQ-1**): `send_data_msg` passes the message through with an
-  opaque `data` pointer; who dereferences it is unknown; do not
-  document `data` as anything concrete until settled.
+- **OQ-P3** — *Answered* (plan28 pass) → §12. `data` is the raw `OBScanImage_*`
+  (rgb/depth/ir) or `OBScanFrame_*` (frame) pointer, borrowed, one-shot accessors,
+  ring-kept; `FRAME_READY` yields a per-frame cloud via `obscan_frame_get_frame_cloud` —
+  the `scan-live-data.md` §6 revisit trigger has fired (decision re-take recommended).
+  The frame C API is not yet in our header subset (follow-up row).
 - **OQ-P4** — the `0x42fa0xxx` log-label page is double-unmapped (absent from
   the Ghidra view and from the file at that bias, despite proving
   identity-mapping earlier on the `UNKNOWN` string @ `0x42dfae9`): recover
