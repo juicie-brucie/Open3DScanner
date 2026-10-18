@@ -18,9 +18,13 @@ make a test pass.
 4. Never edit the test, its CMake wiring, or the code under test. If something is
    wrong, stop and report it; do not fix it.
 5. Never set `DYLD_INSERT_LIBRARIES`; the launcher does it.
-6. Before trusting a run, confirm stdout begins with
+6. Before trusting a run, confirm stdout shows the interposer is loaded. Tools that
+   use the shared harness print
    `[launcher] DYLD_INSERT_LIBRARIES=...libMoltenVK.dylib:...libvulkan_disable_interpose.dylib`.
-   If that line is absent, stop — you are running the wrong binary.
+   `scan_server --live` never prints that banner — it sets the environment itself via
+   internal `setenv` — so for it the observable is `[vulkan_disable_interpose] loaded`,
+   which appears as line 2 and is the interposer's own load confirmation. If neither
+   appears, stop — you are running the wrong binary.
 7. One run at a time; never two concurrent SDK users (single client, four GVCP
    ports).
 8. Never retry a timeout. A hang has needed a physical power cycle before. Report
