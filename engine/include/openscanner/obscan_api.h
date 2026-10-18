@@ -356,22 +356,28 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // (tests/results/2026-10-17-plan8-device-message-listener-crash-analysis.md;
 // main-thread re-read:
 // tests/results/2026-10-17-crash-reports-main-thread-teardown-correction.md).
-// Observed [hw-confirmed: the crash report + the run's raw.log]:
+// Observed [hw-confirmed: 2026-10-17 — five crash reports + their raw logs]:
 // (1) The fault site is inside the vendor SDK, strictly upstream of
 // send_device_msg — update_camera_status -> update_device_info ->
 // get_active_device() (device::OrbbecDevice) — on the vendor's
 // NetDeviceWatcher (GVCP) thread: crash.ips frame #12 is
 // libobsensor::pal::NetDeviceWatcher::start(...)::$_1, and the only images
 // on the stack are liborbbec_scan / libOrbbecSDK / libsystem_pthread.
-// (2) The conditions it was observed under — once: an add-after-remove
-// (re-add) of this listener, a DEVICE_CONNECT delivery to the caller's
-// callback completing on the worker thread, add returning SUCCESS, then
-// ~60 ms later that NetDeviceWatcher thread logging ObException.cpp:5
-// "Trying to create a device that you've already created!" and the process
-// SIGSEGV'ing — a separate NetDeviceWatcher-initiated device-changed pass
-// on a different thread, not a post-return continuation of the registration
-// call. It has not been reproduced (the f4c5f86 plan1 run exited 0), so do
-// not read this as "the connect callback reproducibly crashes".
+// (2) The conditions it was observed under — and it reproduces under them:
+// an add-after-remove (re-add) of this listener, a DEVICE_CONNECT delivery
+// to the caller's callback completing on the worker thread, add returning
+// SUCCESS, then ~60 ms later that NetDeviceWatcher thread logging
+// ObException.cpp:5 "Trying to create a device that you've already created!"
+// and the process SIGSEGV'ing — a separate NetDeviceWatcher-initiated
+// device-changed pass on a different thread, not a post-return continuation
+// of the registration call. Five crash reports on this binary and worktree
+// carry that sequence — plan8 16:54; the 19:21 test run; run2 20:01 ("the
+// second reproduction of the identical crash signature today"); run3 22:41
+// ("for a third time (plan8 run, run2, run3)"); run4 22:45 — so treat it as
+// deterministic-ish under the OQ-3 remove/re-add sequence, not as general
+// connect-callback fragility. The f4c5f86 plan1 run (2026-10-16; "a single
+// registration, never a remove or a second add") neither supports nor
+// contradicts this: it never exercised the path, and predates all five.
 // (3) Main-thread state at the fault [hw-confirmed: the correction record —
 // identical in all three archived reports]: the main thread was inside
 // obscan_context_destroy() -> OBDeviceManagement::release() ->

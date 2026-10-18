@@ -343,6 +343,30 @@ DEVICE_CONNECT (crash.ips frame #12:
 the connect callback that runs both immediately at registration (§2) and
 again from the NetDeviceWatcher thread.
 
+**Reproduction count** [hw-confirmed: the five 2026-10-17 runs] — the
+connect-callback SIGSEGV is not a one-off; the precondition is the OQ-3
+remove/re-add sequence. Five crash reports on this binary and worktree carry
+the same signature (`EXC_BAD_ACCESS`/SIGSEGV at `0x0`, faulting thread 5 = the
+NetDeviceWatcher/GVCP thread), and every raw log shows the same sequence: a
+`[worker][cb] DEVICE_CONNECT` delivery → `add(handle, listener_a) after
+remove -> OB_SCAN_SUCCESS` (the re-add) → `ObException.cpp:5 "already
+created"` → SIGSEGV. Named as the archive names them:
+
+| report | run | the record's own words |
+| --- | --- | --- |
+| `2026-10-17-plan8-device-message-listener.crash.ips` | 16:54 | first crash; the analysis file reads its stack |
+| `2026-10-17-device-message-listener-test.crash.ips` | 19:21 | same signature; that report's own destroy/libomp attribution was corrected by the main-thread re-read |
+| `2026-10-17-device-message-listener-test-run2.crash.ips` | 20:01 | "reproduced for the second time today on this exact binary and worktree" |
+| `2026-10-17-device-message-listener-test-run3.crash.ips` | 22:41 | "reproduces, for a third time (plan8 run, run2, run3)" |
+| `2026-10-17-device-message-listener-test-run4.crash.ips` | 22:45 | "Controlled re-run (fourth run of this binary today)" |
+
+So treat it as deterministic-ish under the OQ-3 remove/re-add sequence
+(run3's wording). The single-registration flow (`f4c5f86`, the 2026-10-16
+plan1 run) neither supports nor contradicts this: its record says it "only
+covers what that tool happens to exercise: a single registration, never a
+remove or a second add" — it never exercised the remove/re-add path and
+predates all five observations.
+
 **Main-thread state at the fault** [hw-confirmed:
 `2026-10-17-crash-reports-main-thread-teardown-correction.md` — identical in all
 three archived reports]: the main thread was inside `obscan_context_destroy()` →
@@ -490,9 +514,15 @@ created/destroyed/created timeline and both thread ids: registerer/deliverer
 `2026-10-17-plan8-device-message-listener.crash.ips` (the faulting stack), and
 the reconcile analysis
 `2026-10-17-plan8-device-message-listener-crash-analysis.md`; and
-`2026-10-17-device-message-listener-test-run4.crash.ips` (the fourth identical stack
-whose `symbolLocation` fields pin the faulting instruction — §10). Plus the
+`2026-10-17-device-message-listener-test-run4.crash.ips` (run4's `.ips` — identical
+stack; its `symbolLocation` fields pin the faulting instruction — §10). The five
+crash reports of the series (§9): `2026-10-17-plan8-device-message-listener.crash.ips`,
+`2026-10-17-device-message-listener-test.crash.ips`,
+`2026-10-17-device-message-listener-test-run2.crash.ips`,
+`2026-10-17-device-message-listener-test-run3.crash.ips`,
+`2026-10-17-device-message-listener-test-run4.crash.ips`. Plus the
 main-thread re-read `2026-10-17-crash-reports-main-thread-teardown-correction.md`
-(the three archived `.ips` reports' main-thread stacks) and the contradicting
-clean run `2026-10-16-plan1-device-message-listener.md` (destroy SUCCESS,
-807 ms, exit 0).
+(the three archived `.ips` reports' main-thread stacks) and the single-registration
+run `2026-10-16-plan1-device-message-listener.md` (destroy SUCCESS, 807 ms, exit 0 —
+it never exercised remove/re-add, so it neither supports nor contradicts the
+crash claims; §9).
