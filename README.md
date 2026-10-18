@@ -295,10 +295,12 @@ WebSocket as a stand-in for a real scan session, so the rendering and
 latency-measurement pipeline can be built and benchmarked before it's wired
 to actual OBScan capture data.
 
-`scan_server --live [port] [library_path] [session_seconds]` wires it to a
-real scan against the physically-connected scanner instead (same
+`scan_server --live [port] [library_path] [session_seconds] [--record <file>]`
+wires it to a real scan against the physically-connected scanner instead
+(same
 context/session/scan lifecycle as `tools/live_capture_test`, run inside a
-worker process for the same crash/hang-isolation reasons). Verified
+worker process for the same crash/hang-isolation reasons). `scan_server
+--replay <file> [port]` replays a recorded session without a device. Verified
 end-to-end on real hardware 2026-10-16: the UI connects and streams at
 ~10Hz throughout, real reconstructed mesh data (up to 68,623 vertices seen
 so far) broadcasts and renders once per session, and the worker tears down
