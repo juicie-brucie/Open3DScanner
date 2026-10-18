@@ -884,6 +884,18 @@ OBSCAN_ABI_ASSERT(offsetof(ObScanPose, m[0][3]) == 0x18 &&
 // solve. See docs/recon/findings/scan-live-data.md §17.
 typedef ObScanStatus (*fn_obscan_scan_get_global_pose)(ObScanScanHandle scan, ObScanPose* out_pose);
 typedef ObScanStatus (*fn_obscan_scan_get_registration_pose)(ObScanScanHandle scan, ObScanPose* out_pose);
+
+// The registration family's pose path (row #60; findings §17.2). The flow:
+// create a registration from the session, run it (the runners are not declared
+// here), then confirm — which publishes the scan's registration pose as the
+// global pose — and destroy it. All three reject a NULL handle with
+// OB_SCAN_ERROR_DEADLINE_EXCEEDED (845283591). For a live per-frame pose, the
+// registration getter above is the channel; the global getter changes only on
+// a confirmed result.
+typedef void* ObScanRegistrationHandle;   // opaque; wraps the SDK's object
+typedef ObScanStatus (*fn_obscan_session_create_registration)(ObScanSessionHandle session, ObScanRegistrationHandle* out_registration);
+typedef ObScanStatus (*fn_obscan_registration_confirm_or_cancel_result)(ObScanRegistrationHandle registration, bool confirm);
+typedef ObScanStatus (*fn_obscan_registration_destroy)(ObScanRegistrationHandle registration);
 typedef ObScanStatus (*fn_obscan_scan_get_markers)(ObScanScanHandle scan, ObScanMarkers* out_markers);
 
 // Fills *out_cloud with a pointer to the SDK's frame cloud — the same
