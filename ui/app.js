@@ -119,6 +119,12 @@
   let lastFrameId = -1;
   let framesReceived = 0;
   let bytesReceived = 0;
+  // Accumulator for the on-demand full-detail final mesh: while a full-mesh
+  // transfer is in progress, incoming binary frames are appended here
+  // instead of replacing the live view, and rendered once it completes.
+  let fullMeshAccum = null;
+  let fullMeshReceived = 0;
+  let fullMeshTotal = 0;
 
   // Real scan data (mm-scale, arbitrary origin) has a totally different
   // scale/offset than the synthetic demo sphere (unit-radius, centered at
@@ -207,6 +213,26 @@
     };
     ws.onmessage = (event) => {
       if (typeof event.data === "string") {
+        let msg = null;
+        try { msg = JSON.parse(event.data); } catch (e) { msg = null; }
+        if (msg && msg.type === "full_mesh_start") {
+          fullMeshAccum = new Float32Array(msg.total * 3);
+          fullMeshReceived = 0;
+          fullMeshTotal = msg.total;
+          return;
+        }
+        if (msg && msg.type === "full_mesh_done") {
+          if (fullMeshAccum) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, fullMeshAccum, gl.DYNAMIC_DRAW);
+            updateViewFit(fullMeshAccum, fullMeshReceived);
+            pointCount = fullMeshReceived;
+            lastFrameId = -1;
+            framesReceived++;
+            fullMeshAccum = null;
+          }
+          return;
+        }
         handleStatusMessage(event.data);
         return;
       }
@@ -216,6 +242,14 @@
       const frameId = view.getUint32(0, true);
       const captureTimestampMs = view.getFloat64(4, true);
       const count = view.getUint32(12, true);
+
+      if (fullMeshAccum) {
+        const positions = new Float32Array(buf, 16, count * 3);
+        fullMeshAccum.set(positions, fullMeshReceived * 3);
+        fullMeshReceived += count;
+        framesReceived++;
+        return;
+      }
 
       const positions = new Float32Array(buf, 16, count * 3);
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);

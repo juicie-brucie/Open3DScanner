@@ -720,34 +720,55 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                     StatusName(mesh_status), static_cast<int>(mesh_status), mesh.num_vertices, mesh.num_triangles);
         std::fflush(stdout);
         if (mesh_status == OB_SCAN_SUCCESS && mesh.num_vertices > 0 && mesh.vertices != nullptr) {
-            // Bound the final frame like the live path: broadcast a fixed-size
-            // stride-decimated sample instead of the whole mesh (15.6M points
-            // -> ~187 MB in one WebSocket frame, which stalls the client).
-            // Full geometry is still available via get_realtime_model_mesh
-            // callers; this frame is for a responsive preview.
-            constexpr uint32_t kFinalMeshBroadcastBudget = 20000;
+            // Bounded preview frame (matches the live path) so no single
+            // frame is unbounded; full detail follows as chunks below.
+            constexpr uint32_t kFinalMeshPreviewBudget = 20000;
             uint32_t stride = 1;
-            uint32_t broadcast_count = mesh.num_vertices;
-            if (broadcast_count > kFinalMeshBroadcastBudget) {
-                stride = (broadcast_count + kFinalMeshBroadcastBudget - 1) / kFinalMeshBroadcastBudget;
-                broadcast_count = (mesh.num_vertices + stride - 1) / stride;
+            uint32_t preview_count = mesh.num_vertices;
+            if (preview_count > kFinalMeshPreviewBudget) {
+                stride = (preview_count + kFinalMeshPreviewBudget - 1) / kFinalMeshPreviewBudget;
+                preview_count = (mesh.num_vertices + stride - 1) / stride;
             }
-            std::vector<float> xyz(static_cast<size_t>(broadcast_count) * 3);
-            for (uint32_t i = 0, src = 0; i < broadcast_count; ++i, src += stride) {
+            std::vector<float> xyz(static_cast<size_t>(preview_count) * 3);
+            for (uint32_t i = 0, src = 0; i < preview_count; ++i, src += stride) {
                 xyz[i * 3 + 0] = mesh.vertices[src].x;
                 xyz[i * 3 + 1] = mesh.vertices[src].y;
                 xyz[i * 3 + 2] = mesh.vertices[src].z;
             }
-            std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
+            std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), preview_count);
             server.BroadcastBinary(buf.data(), buf.size());
-            std::printf("[worker] Broadcast final reconstructed mesh as one point-cloud frame (%u of %u points).\n",
-                        broadcast_count, mesh.num_vertices);
+            std::printf("[worker] Broadcast final reconstructed mesh preview (%u of %u points).\\n",
+                        preview_count, mesh.num_vertices);
+
+            // On-demand full-detail path: stream the dense mesh as bounded
+            // chunks so the page can accumulate and render it without any
+            // unbounded frame. The page (ui/app.js) accumulates binary
+            // frames between full_mesh_start and full_mesh_done.
+            server.BroadcastText(std::string("{\"type\":\"full_mesh_start\",\"total\":") +
+                                std::to_string(mesh.num_vertices) + "}");
+            constexpr uint32_t kFullDetailChunk = 20000;
+            for (uint32_t off = 0; off < mesh.num_vertices; off += kFullDetailChunk) {
+                uint32_t cnt = std::min(kFullDetailChunk, mesh.num_vertices - off);
+                std::vector<float> cxyz(static_cast<size_t>(cnt) * 3);
+                for (uint32_t i = 0; i < cnt; ++i) {
+                    cxyz[i * 3 + 0] = mesh.vertices[off + i].x;
+                    cxyz[i * 3 + 1] = mesh.vertices[off + i].y;
+                    cxyz[i * 3 + 2] = mesh.vertices[off + i].z;
+                }
+                std::vector<uint8_t> cbuf = BuildFrame(frame_id++, NowMs(), cxyz.data(), cnt);
+                server.BroadcastBinary(cbuf.data(), cbuf.size());
+            }
+            server.BroadcastText("{\"type\":\"full_mesh_done\"}");
+            std::printf("[worker] Streamed full-detail mesh in %u-point chunks.\\n",
+                        kFullDetailChunk);
+
             // Compile/runtime proof that the loader now resolves the declared
-            // release; the frame above already copied the vertices out.
+            // release; the frames above already copied the vertices out.
             lib.obscan_scan_realtime_model_mesh_release(scan);
             // Give any connected client a moment to actually receive it
             // before teardown starts closing sockets.
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
         }
     }
 
