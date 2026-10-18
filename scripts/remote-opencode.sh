@@ -10,6 +10,23 @@
 #   remote-opencode.sh read    [--machine NAME] <sessionID> [limit]
 #   remote-opencode.sh prompt  [--machine NAME] <sessionID> <text...>   # queued
 #   remote-opencode.sh steer   [--machine NAME] <sessionID> <text...>   # steer
+#   remote-opencode.sh send    [--machine NAME] <sessionID> <body-file>
+#                              [--steer] [--force] [--dry-run]
+#
+# `send` is the path for work orders: the body comes from a FILE (never from
+# argv), it is previewed (bytes, sha256, first/last lines) before it is posted,
+# and it is refused when it looks like a body a shell already ate. Author a body
+# with a QUOTED heredoc, so nothing in it is substituted:
+#
+#   cat > /tmp/order.txt <<'EOF'
+#   ...prose with `backticks`, $vars and $(cmd) left literal...
+#   EOF
+#   scripts/remote-opencode.sh send --local <sessionID> /tmp/order.txt
+#
+# An unquoted <<EOF substitutes `backticks` and $(...) in the body: backticked
+# prose is replaced by command output (usually nothing) and the order silently
+# loses text. If the shell prints "command not found" while you author a body,
+# the file is already wrong - delete it and write it again quoted.
 #
 # The server URL and password are read at runtime from the desktop app's state
 # file (the same entry the app uses); they are never printed, echoed or logged.
@@ -90,6 +107,56 @@ case "$verb" in
       echo "hint: no such session on this target - if it is a local session, pass --local" >&2
     fi
     printf '%s\n' "$out" ;;
+  send)
+    # send <sessionID> <body-file> [--steer] [--force] [--dry-run]
+    # The body comes from a file, so it never travels through a shell; the
+    # guards refuse a body a shell already ate (an unquoted heredoc).
+    i=0; sid=""; file=""; delivery="queue"; force=0; dry=0
+    while [ "$i" -lt "${#rest[@]}" ]; do
+      a="${rest[$i]}"
+      case "$a" in
+        --steer)   delivery="steer" ;;
+        --force)   force=1 ;;
+        --dry-run) dry=1 ;;
+        -*) echo "send: unknown flag $a" >&2; exit 2 ;;
+        *) if [ -z "$sid" ]; then sid="$a"
+           elif [ -z "$file" ]; then file="$a"
+           else echo "send: unexpected argument $a" >&2; exit 2; fi ;;
+      esac
+      i=$((i + 1))
+    done
+    [ -n "$sid" ]  || { echo "send: sessionID required" >&2; exit 2; }
+    [ -n "$file" ] || { echo "send: body file required" >&2; exit 2; }
+    [ -f "$file" ] || { echo "send: body file not found: $file" >&2; exit 2; }
+    body=$(cat "$file")
+    [ -n "$body" ] || { echo "send: body file is empty" >&2; exit 2; }
+    if [ "$force" = 0 ]; then
+      if printf '%s' "$body" | grep -qE '(zsh|bash|sh): ?(line )?[0-9]+: .*(command not found|bad substitution|no matches found|unmatched|syntax error)'; then
+        echo "send: REFUSING - the body carries shell error text, the mark of a garbled unquoted heredoc." >&2
+        echo "send: re-author it with a quoted heredoc (cat > file <<'EOF') or pass --force if intentional." >&2
+        exit 3
+      fi
+      nb=$(printf '%s' "$body" | tr -cd '`' | wc -c | tr -d ' ')
+      if [ $((nb % 2)) -ne 0 ]; then
+        echo "send: REFUSING - odd backtick count ($nb), the mark of a body a shell ate." >&2
+        echo "send: re-author it with a quoted heredoc (cat > file <<'EOF') or pass --force if intentional." >&2
+        exit 3
+      fi
+    fi
+    bytes=$(printf '%s' "$body" | wc -c | tr -d ' ')
+    sum=$(printf '%s' "$body" | shasum -a 256 | cut -c1-12)
+    echo "--- send: $bytes bytes, sha256 $sum, delivery $delivery ---" >&2
+    printf '%s\n' "$body" | sed -n '1,3p' >&2
+    lines=$(printf '%s\n' "$body" | wc -l | tr -d ' ')
+    if [ "$lines" -gt 4 ]; then echo "    ... ($lines lines)" >&2; printf '%s\n' "$body" | tail -1 >&2; fi
+    echo "--- end ---" >&2
+    if [ "$dry" = 1 ]; then echo "send: dry run - not posted" >&2; exit 0; fi
+    payload=$(jq -n --arg t "$body" --arg d "$delivery" '{text:$t, delivery:$d}')
+    out=$(api POST "/api/session/$sid/prompt" "$payload")
+    if printf '%s' "$out" | jq -e '._tag == "SessionNotFoundError"' >/dev/null 2>&1; then
+      echo "hint: no such session on this target - if it is a local session, pass --local" >&2
+    fi
+    printf '%s\n' "$out" ;;
   *)
-    sed -n '2,20p' "$0" >&2; exit 2 ;;
+    awk 'NR>1 && /^set /{exit} NR>1{print}' "$0" >&2; exit 2 ;;
 esac
