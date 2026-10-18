@@ -333,6 +333,10 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // get_active_device()).
 // ABI-legal, correctness-unproven — findings §2/§8/§9, board #11.
 // Messages emitted while no listener is installed are dropped, not queued.
+// Because the add-time DISCONNECT is synchronous inside the add call, adding
+// (or remove+add) from inside a callback re-enters that callback nested on the
+// same thread; the watcher and scan paths deliver concurrently instead. See
+// findings §4 (OQ-4).
 // The listener object is referenced (a pointer to it is captured), never
 // copied, so the caller must keep it alive until it is removed — and past
 // obscan_context_destroy(): the SDK's background threads can outlive

@@ -141,7 +141,48 @@ the same emitter for its device-changed passes but never reached
 listener invocation recorded in this run — the add-time DISCONNECT
 (raw.log:23) and the CONNECT (:75) — ran on the worker thread `14660842`,
 and an invocation from the NetDeviceWatcher thread was never exercised.
-See OQ-4.
+**Which thread runs the emitter (OQ-4).** `update_camera_status` has exactly
+one static caller: the `bind_device_connect_callback()` lambda (`0x5c5f30`) —
+the callback the SDK binds into the device (the chain #5/#11 mapped:
+`deviceConnectedCall` → the bound callback → `update_camera_status`). So the
+listener is invoked on whichever thread drives that chain:
+
+- the **registering/calling thread** for the add-time synchronous delivery (the
+  DISCONNECT) and the re-add's CONNECT — `[hw-confirmed: all five 2026-10-17
+  device-listener runs]`: every `[cb]` line's thread hash equals the
+  registration thread's (plan8 `raw.log:23/:26/:75`; test/run2/run3/run4 the
+  same);
+- the **NetDeviceWatcher (GVCP) thread** — statically the same chain (its
+  device-changed passes call `deviceConnectedCall` → the bound callback); no
+  recorded run shows it invoking the listener (the crash series faulted
+  upstream of `send_device_msg`, §9; run4's watcher pass at 22:45:46.406 fell
+  in the removed-slot window, when `send_device_msg` returns early — the drop
+  rule above). `[inferred]`;
+- the **scan frame-read path** — `send_need_calib_msg` (the
+  `CONNECT_NEED_CALIBRATION` emitter) is called from `read_depth_point_cloud`
+  in the three scanning contexts (`0x897bf8`, `0x95bae8`, `0xc1a3c4`).
+  `[inferred]`;
+- the **upgrade path** — `device_upgrade_call_back` and
+  `send_device_upgrade_msg` have no static callers (they are callbacks handed
+  to the device's upgrade machinery), so they run on the upgrade's own thread.
+  `[inferred]`.
+
+**Re-entrancy.** Yes, on the same thread: the add-time delivery is *synchronous
+inside* `obscan_device_management_add_device_msg_listener`, so calling `add`
+(or remove→add) from inside the callback delivers the DISCONNECT nested — the
+callback re-enters itself `[hw-confirmed: the five runs]` (the DISCONNECT is
+logged *during* the add call, before the wrapper returns). The watcher and
+frame paths deliver concurrently (another thread), not nested — the listener
+must be thread-safe regardless. Two adjacent hazards stand: a callback that
+removes and frees its own listener while the invoke body is mid-call
+(§6.1/§8), and the re-add window the crash series exposed (#5/#11).
+
+**Trace that would close the watcher half (if wanted):** run
+`device_message_listener_test` with the listener installed and cause a
+device-changed pass (unplug/replug, or wait for the watcher's poll) while the
+slot is occupied; the tool's `[cb]` line prints the callback's thread hash —
+compare it with the watcher thread's tid in the vendor log (`GVCPClient`
+lines). One observation settles it.
 
 Note the same rule holds for the context-level families: data/process
 listeners exist to receive frames/process events, and preview refuses without
@@ -407,17 +448,18 @@ no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
   `.recon-cache/listings/OBDeviceManagement_remove_device_msg_listener.asm`
   (re-read this pass). `[hw-confirmed: 2026-10-17-plan8-device-message-listener]`
   — `[worker][PASS] add after remove == SUCCESS (OQ-3 cleared slot)`.
-- **OQ-4** — Exact thread that invokes the listener (vendor device thread?), and
-  whether any re-entrancy is possible from inside the callback. Needs dynamic
-  tracing. **Partially resolved**
-  (`2026-10-17-plan8-device-message-listener`): the registration-driven
-  delivery ran on the registering worker thread (`14660842`) — raw.log:26
-  prints callback-thread hash == registration-thread hash, and check 7's
-  CONNECT (:75) carries the same hash — so every invocation recorded ran on
-  the worker thread and none on a watcher thread. The vendor's
-  NetDeviceWatcher (GVCP) thread (`14660873`) executes the same emitter but
-  never invoked the listener in the recorded run — it faulted upstream of
-  `send_device_msg` (§9). The re-entrancy half stays open → **#11**.
+- **OQ-4** — *Resolved (row #52), one hardware confirmation left*: the listener
+  runs on the thread that drives the emitter chain — the registering/calling
+  thread for the add-time DISCONNECT and the re-add CONNECT (`[hw-confirmed:
+  all five 2026-10-17 runs]`), and statically also the NetDeviceWatcher thread
+  (the same `deviceConnectedCall` → bound-callback → `update_camera_status`
+  chain; no recorded invocation — the crash series faulted upstream and run4's
+  watcher pass fell in the removed-slot window), the scan frame-read path
+  (`send_need_calib_msg` from `read_depth_point_cloud`), and the upgrade
+  callbacks (§4). Re-entrancy: **yes** — the add-time delivery is synchronous
+  inside `add`, so calling add (or remove→add) from inside the callback
+  re-enters it nested. The single observation that closes the watcher half is
+  the trace in §4.
 - **OQ-5** — *Resolved (row #47)*: the tips / control / calib `*_name` tables
   are decoded (§11) — tips 5 entries (`0x126202xx`), control 35 (`0x147002xx`
   plus a bare `0`), calib-message 9 (`0x147001xx` plus a bare `0`), plus the
