@@ -440,14 +440,88 @@ const char* StatusName(ObScanStatus status) {
             return "OB_SCAN_SUCCESS";
         case OB_SCAN_ERROR_INVALID_ARGUMENT:
             return "OB_SCAN_ERROR_INVALID_ARGUMENT";
-        case OB_SCAN_ERROR_CAMERA_NOT_REGISTER:
-            return "OB_SCAN_ERROR_CAMERA_NOT_REGISTER";
+        case OB_SCAN_ERROR_FATAL:
+            return "OB_SCAN_ERROR_FATAL";
         case OB_SCAN_ERROR_DEVICE_DISCONNECT:
             return "OB_SCAN_ERROR_DEVICE_DISCONNECT";
-        case OB_SCAN_ERROR_DEVICE_BUSY:
-            return "OB_SCAN_ERROR_DEVICE_BUSY";
+        case OB_SCAN_ERROR_SESSION_PAUSED:
+            return "OB_SCAN_ERROR_SESSION_PAUSED";
+        case OB_SCAN_ERROR_SESSION_NOT_PAUSED:
+            return "OB_SCAN_ERROR_SESSION_NOT_PAUSED";
         case OB_SCAN_ERROR_UNSUPPORTED_CONFIGURATION:
             return "OB_SCAN_ERROR_UNSUPPORTED_CONFIGURATION";
+        case OB_SCAN_ERROR_CAMERA_PERMISSION_NOT_GRANTED:
+            return "OB_SCAN_ERROR_CAMERA_PERMISSION_NOT_GRANTED";
+        case OB_SCAN_ERROR_DEADLINE_EXCEEDED:
+            return "OB_SCAN_ERROR_DEADLINE_EXCEEDED";
+        case OB_SCAN_ERROR_CAMERA_STREAMING_RETRY_FAILED:
+            return "OB_SCAN_ERROR_CAMERA_STREAMING_RETRY_FAILED";
+        case OB_SCAN_ERROR_LISTENER_NOT_FOUND:
+            return "OB_SCAN_ERROR_LISTENER_NOT_FOUND";
+        case OB_SCAN_ERROR_MULTI_CALLED:
+            return "OB_SCAN_ERROR_MULTI_CALLED";
+        case OB_SCAN_ERROR_CAMERA_NOT_REGISTER:
+            return "OB_SCAN_ERROR_CAMERA_NOT_REGISTER";
+        case OB_SCAN_ERROR_OUT_MEMORY:
+            return "OB_SCAN_ERROR_OUT_MEMORY";
+        case OB_SCAN_ERROR_FILE_NOT_EXIST:
+            return "OB_SCAN_ERROR_FILE_NOT_EXIST";
+        case OB_SCAN_ERROR_FILE_READ_FAILED:
+            return "OB_SCAN_ERROR_FILE_READ_FAILED";
+        case OB_SCAN_ERROR_FILE_WRITE_FAILED:
+            return "OB_SCAN_ERROR_FILE_WRITE_FAILED";
+        case OB_SCAN_ERROR_GRAPHICS_PROBLEM:
+            return "OB_SCAN_ERROR_GRAPHICS_PROBLEM";
+        case OB_SCAN_ERROR_HAVE_NOT_MARKER:
+            return "OB_SCAN_ERROR_HAVE_NOT_MARKER";
+        case OB_SCAN_ERROR_IMPORT_EMPTY_PROJ:
+            return "OB_SCAN_ERROR_IMPORT_EMPTY_PROJ";
+        case OB_SCAN_ERROR_IMPORT_SELF_PROJ:
+            return "OB_SCAN_ERROR_IMPORT_SELF_PROJ";
+        case OB_SCAN_ERROR_NO_PLUG_IN_POWER:
+            return "OB_SCAN_ERROR_NO_PLUG_IN_POWER";
+        case OB_SCAN_ERROR_INVALID_SCAN:
+            return "OB_SCAN_ERROR_INVALID_SCAN";
+        case OB_SCAN_ERROR_DEVICE_BUSY:
+            return "OB_SCAN_ERROR_DEVICE_BUSY";
+        case OB_SCAN_ERROR_CANCEL_RUN:
+            return "OB_SCAN_ERROR_CANCEL_RUN";
+        case OB_SCAN_ERROR_CAMERA_PARAMS_INCONSISTENT:
+            return "OB_SCAN_ERROR_CAMERA_PARAMS_INCONSISTENT";
+        case OB_SCAN_ERROR_LASER_MARKER_FRAMEWORK_INVALID_CLOUD_SCAN:
+            return "OB_SCAN_ERROR_LASER_MARKER_FRAMEWORK_INVALID_CLOUD_SCAN";
+        case OB_SCAN_ERROR_OUT_HARD_DISK:
+            return "OB_SCAN_ERROR_OUT_HARD_DISK";
+        case OB_SCAN_ERROR_READ_DEVICE_PARAMS:
+            return "OB_SCAN_ERROR_READ_DEVICE_PARAMS";
+        case OB_SCAN_ERROR_IMPORT_NOT_SUPPORT_PROJ:
+            return "OB_SCAN_ERROR_IMPORT_NOT_SUPPORT_PROJ";
+        case OB_SCAN_ERROR_IMPORT_HIGH_VERSION_PROJ:
+            return "OB_SCAN_ERROR_IMPORT_HIGH_VERSION_PROJ";
+        case OB_SCAN_ERROR_RESTORE_FACTORY_CRC_CHECK_FAILED:
+            return "OB_SCAN_ERROR_RESTORE_FACTORY_CRC_CHECK_FAILED";
+        case OB_SCAN_ERROR_RESTORE_FACTORY_DATA_WRITE_FAILED:
+            return "OB_SCAN_ERROR_RESTORE_FACTORY_DATA_WRITE_FAILED";
+        case OB_SCAN_ERROR_AI_HEAD_RESTORATION_NOT_DETECT_FACE:
+            return "OB_SCAN_ERROR_AI_HEAD_RESTORATION_NOT_DETECT_FACE";
+        case OB_SCAN_ERROR_MESH_NOT_FOUND_HOLE:
+            return "OB_SCAN_ERROR_MESH_NOT_FOUND_HOLE";
+        case OB_SCAN_ERROR_PROJ_NOT_WRITE_PERMISSION:
+            return "OB_SCAN_ERROR_PROJ_NOT_WRITE_PERMISSION";
+        case OB_SCAN_ERROR_SET_LED_LASER:
+            return "OB_SCAN_ERROR_SET_LED_LASER";
+        case OB_SCAN_ERROR_LOADING_INTR_LASER_PARAMS:
+            return "OB_SCAN_ERROR_LOADING_INTR_LASER_PARAMS";
+        case OB_SCAN_ERROR_SET_IR_MODE:
+            return "OB_SCAN_ERROR_SET_IR_MODE";
+        case OB_SCAN_ERROR_AI_REPLACE_RGB_FEATS_NOT_OBVIOUS:
+            return "OB_SCAN_ERROR_AI_REPLACE_RGB_FEATS_NOT_OBVIOUS";
+        case OB_SCAN_ERROR_IMPORTED_MESH_SIZE_NOT_SUPPORT:
+            return "OB_SCAN_ERROR_IMPORTED_MESH_SIZE_NOT_SUPPORT";
+        case OB_SCAN_ERROR_MODEL_GENERATION_FAILED_WITH_NETWORK_EXCEPTION:
+            return "OB_SCAN_ERROR_MODEL_GENERATION_FAILED_WITH_NETWORK_EXCEPTION";
+        case OB_SCAN_ERROR_ALLOCATE_GPU_RESOURCES_FAILED:
+            return "OB_SCAN_ERROR_ALLOCATE_GPU_RESOURCES_FAILED";
         default:
             return "OB_SCAN_ERROR_(see obscan_api.h)";
     }
@@ -788,19 +862,51 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/false);
     Report("obscan_scan_stop", status);
 
-    for (int i = 0; i < 3000; ++i) {
-        status = lib.obscan_session_destroy(&session);
-        if (status == OB_SCAN_SUCCESS || status != OB_SCAN_ERROR_MULTI_CALLED) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    {
+        int polls = 0;
+        int refusals = 0;
+        auto started = std::chrono::steady_clock::now();
+        do {
+            ++polls;
+            status = lib.obscan_session_destroy(&session);
+            if (status == OB_SCAN_ERROR_MULTI_CALLED) {
+                ++refusals;
+                if (refusals == 1 || refusals % 10 == 0) {
+                    std::printf("[worker] obscan_session_destroy poll %d: refused (%s)\n", polls, StatusName(status));
+                    std::fflush(stdout);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        } while (status == OB_SCAN_ERROR_MULTI_CALLED && polls < 3000);
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
+        std::printf("[worker] obscan_session_destroy: %d poll(s), %d refusal(s), %.1fs, final %s\n",
+                    polls, refusals, elapsed / 1000.0, StatusName(status));
+        std::fflush(stdout);
+        Report("obscan_session_destroy", status);
     }
-    Report("obscan_session_destroy", status);
 
-    for (int i = 0; i < 3000; ++i) {
-        status = lib.obscan_context_destroy(&context);
-        if (status == OB_SCAN_SUCCESS || status != OB_SCAN_ERROR_MULTI_CALLED) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    {
+        int polls = 0;
+        int refusals = 0;
+        auto started = std::chrono::steady_clock::now();
+        do {
+            ++polls;
+            status = lib.obscan_context_destroy(&context);
+            if (status == OB_SCAN_ERROR_MULTI_CALLED) {
+                ++refusals;
+                if (refusals == 1 || refusals % 10 == 0) {
+                    std::printf("[worker] obscan_context_destroy poll %d: refused (%s)\n", polls, StatusName(status));
+                    std::fflush(stdout);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        } while (status == OB_SCAN_ERROR_MULTI_CALLED && polls < 3000);
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
+        std::printf("[worker] obscan_context_destroy: %d poll(s), %d refusal(s), %.1fs, final %s\n",
+                    polls, refusals, elapsed / 1000.0, StatusName(status));
+        std::fflush(stdout);
+        Report("obscan_context_destroy", status);
     }
-    Report("obscan_context_destroy", status);
 
     std::printf("[worker] Frame protocol V%u counters: cloud_frames=%llu full_detail_chunks=%llu\n",
                 openscanner::frame_protocol::VERSION,
