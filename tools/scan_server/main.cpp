@@ -5,6 +5,12 @@
 //       Synthetic, animated sphere — exists so the UI's render/latency
 //       pipeline can be built and measured without a physical scanner.
 //
+//   scan_server --live [port] [path] [seconds] [--record <file>]
+//       Drives a real OBScan session; --record writes V1 frames to <file>.
+//
+//   scan_server --replay <file> [port]
+//       Replays a recorded session (V1 frames) without a device.
+//
 //   scan_server --live [port] [path-to-liborbbec_scan.dylib-or-dll]
 //       Drives a real OBScan session against a physically-connected
 //       scanner (same context/session/scan lifecycle as
@@ -30,6 +36,7 @@
 #include <cstring>
 #include <functional>
 #include <fstream>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <thread>
@@ -48,6 +55,7 @@
 namespace {
 
 std::string g_record_path;
+uint64_t g_recorded_frame_count = 0;
 constexpr int kPointGridSize = 48;        // kPointGridSize^2 points on a sphere.
 constexpr double kFrameIntervalMs = 1000.0 / 30.0;  // ~30 Hz.
 
@@ -297,6 +305,7 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
         return;
     }
     recorded_bytes += frame.size();
+    ++g_recorded_frame_count;
 }
 
 void RunSyntheticServer(uint16_t port) {
@@ -850,10 +859,16 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     Report("obscan_context_destroy", status);
 
     if (!g_record_path.empty()) {
-        std::ofstream out(g_record_path, std::ios::binary | std::ios::app);
-        const char term[4] = {'O','S','C','E'};
-        out.write(term, 4);
-        out.flush();
+        std::fstream out(g_record_path, std::ios::binary | std::ios::in | std::ios::out);
+        if (out) {
+            out.seekp(8);
+            uint64_t count = g_recorded_frame_count;
+            out.write(reinterpret_cast<const char*>(&count), sizeof(count));
+            out.seekp(0, std::ios::end);
+            const char term[4] = {'O','S','C','E'};
+            out.write(term, 4);
+            out.flush();
+        }
     }
 
     std::printf("[worker] Frame protocol V%u counters: cloud_frames=%llu full_detail_chunks=%llu\n",
@@ -878,15 +893,18 @@ int RunLiveMode(int argc, char** argv) {
     uint16_t port = 8787;
     std::string library_path;
     int session_seconds = g_live_session_seconds;
-    if (argc > 2) port = static_cast<uint16_t>(std::atoi(argv[2]));
-    if (argc > 3) library_path = argv[3];
-    if (argc > 4) session_seconds = std::atoi(argv[4]);
     std::string record_path;
+    std::vector<std::string> positional;
     for (int i = 2; i < argc; ++i) {
         if (std::string(argv[i]) == "--record" && i + 1 < argc) {
-            record_path = argv[i + 1];
+            record_path = argv[++i];
+        } else {
+            positional.push_back(argv[i]);
         }
     }
+    if (positional.size() > 0) port = static_cast<uint16_t>(std::atoi(positional[0].c_str()));
+    if (positional.size() > 1) library_path = positional[1];
+    if (positional.size() > 2) session_seconds = std::atoi(positional[2].c_str());
     if (library_path.empty()) library_path = openscanner::ObscanLibrary::FindDefaultLibraryPath();
     if (library_path.empty()) {
         std::fprintf(stderr, "No OBScan SDK library found. Pass the path explicitly: scan_server --live <port> <path>\n");
@@ -950,6 +968,12 @@ int RunReplayMode(int argc, char** argv) {
         std::fprintf(stderr, "Bad replay header: %s\n", path);
         return 1;
     }
+    uint32_t version = (unsigned char)header[4] | ((unsigned char)header[5] << 8) |
+                       ((unsigned char)header[6] << 16) | ((unsigned char)header[7] << 24);
+    if (version != 1) {
+        std::fprintf(stderr, "Unsupported replay version: %u\n", version);
+        return 1;
+    }
 
     openscanner::WsBroadcastServer server;
     if (!server.Start(port)) {
@@ -962,11 +986,12 @@ int RunReplayMode(int argc, char** argv) {
     size_t frames = 0;
     double prev_t = 0;
     bool have_prev = false;
+    bool saw_terminator = false;
     while (true) {
         char peek[4];
         in.read(peek, 4);
         if (in.gcount() == 0) break;
-        if (std::memcmp(peek, "OSCE", 4) == 0) break;
+        if (std::memcmp(peek, "OSCE", 4) == 0) { saw_terminator = true; break; }
         if (in.gcount() != 4) { std::fprintf(stderr, "[worker] truncated terminator\n"); break; }
         in.seekg(-4, std::ios::cur);
         char env[32];
@@ -989,13 +1014,18 @@ int RunReplayMode(int argc, char** argv) {
         if (!have_prev) { prev_t = tc; have_prev = true; }
         else {
             double dt = tc - prev_t;
+            // Clamp: skip absurd deltas (clock jumps / corrupt timestamps).
             if (dt > 0 && dt < 10000) std::this_thread::sleep_for(std::chrono::milliseconds((int)dt));
             prev_t = tc;
         }
         server.BroadcastBinary(frame.data(), frame.size());
         ++frames;
     }
-    std::printf("[worker] Replay complete (%zu frames).\n", frames);
+    if (saw_terminator) {
+        std::printf("[worker] Replay complete (%zu frames).\n", frames);
+    } else {
+        std::printf("[worker] Replay incomplete (%zu frames): missing terminator.\n", frames);
+    }
     std::fflush(stdout);
     std::this_thread::sleep_for(std::chrono::seconds(5));
     server.Stop();
@@ -1003,17 +1033,15 @@ int RunReplayMode(int argc, char** argv) {
 }
 
 
-// Minimal CaptureSource seam (architecture doc §6): both the live and the
-// replay path implement this interface and feed the same V1 framing path.
-class CaptureSource {
-public:
-    virtual ~CaptureSource() = default;
-    virtual int run() = 0;
-};
-
-class ObscanCaptureSource : public CaptureSource {
+// CaptureSource seam (architecture doc §6): both the live and the replay
+// path implement openscanner::CaptureSource. subscribe() is a documented
+// stub for now; the full §6 surface (status/start/pause/stop/...) and a
+// FrameSink-backed unification of RunLiveServer's lifecycle are deliberately
+// left to a follow-up row — see the PR notes.
+class ObscanCaptureSource : public openscanner::CaptureSource {
 public:
     ObscanCaptureSource(int argc, char** argv) : argc_(argc), argv_(argv) {}
+    void subscribe(openscanner::FrameSink&) override {}
     int run() override {
         if (argc_ >= 3 && std::string(argv_[1]) == kWorkerFlag) {
             uint16_t port = static_cast<uint16_t>(std::atoi(argv_[2]));
@@ -1032,9 +1060,10 @@ private:
     char** argv_;
 };
 
-class ReplayCaptureSource : public CaptureSource {
+class ReplayCaptureSource : public openscanner::CaptureSource {
 public:
     ReplayCaptureSource(int argc, char** argv) : argc_(argc), argv_(argv) {}
+    void subscribe(openscanner::FrameSink&) override {}
     int run() override {
         if (argc_ >= 2 && std::string(argv_[1]) == "--replay") {
             return RunReplayMode(argc_, argv_);
@@ -1050,17 +1079,17 @@ private:
 
 int main(int argc, char** argv) {
     if (argc >= 3 && std::string(argv[1]) == kWorkerFlag) {
-        std::unique_ptr<CaptureSource> src(new ObscanCaptureSource(argc, argv));
+        std::unique_ptr<openscanner::CaptureSource> src(new ObscanCaptureSource(argc, argv));
         return src->run();
     }
 
     if (argc >= 2 && std::string(argv[1]) == "--live") {
-        std::unique_ptr<CaptureSource> src(new ObscanCaptureSource(argc, argv));
+        std::unique_ptr<openscanner::CaptureSource> src(new ObscanCaptureSource(argc, argv));
         return src->run();
     }
 
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
-        std::unique_ptr<CaptureSource> src(new ReplayCaptureSource(argc, argv));
+        std::unique_ptr<openscanner::CaptureSource> src(new ReplayCaptureSource(argc, argv));
         return src->run();
     }
 
