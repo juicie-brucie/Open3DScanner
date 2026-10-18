@@ -73,3 +73,7 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
   **operator-directed bootstrap** (creation, seed, `[win]` entry, pin row, bootstrap note).
   From here the parent's dispatcher writes only the parent's repo; cross-repo changes arrive
   as requests over the coordination channel.
+
+- `[mac]` 2026-10-18 — the fork was made **public** (operator's decision; it was created
+  private). An unauthenticated check now returns 200, not 404. Its macOS CI is publicly
+  visible while unported — a scheduling input for the fork's lane, not a defect.
