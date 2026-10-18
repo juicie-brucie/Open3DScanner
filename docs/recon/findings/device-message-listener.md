@@ -303,7 +303,14 @@ the header. **[pattern inferred from three families]**
 ## 8. Lifetime rules
 
 - The **listener object is caller-owned** and must outlive registration; the SDK
-  retains a pointer to it inside the stored `std::function`.
+  retains a pointer to it inside the stored `std::function`. That requirement
+  does not end at `obscan_context_destroy()`: the SDK's background threads
+  (hotplug / GVCP watchers, RPC clients) can outlive destroy while still
+  holding the captured pointer **[inferred: project threading model —
+  `engine/src/obscan_loader.cpp:114-122`, `tools/scan_server/main.cpp:394-400`]**,
+  so freeing the listener together with the context is not safe; the earliest
+  known-safe point to free it is process exit (the scan server keeps its
+  listeners in static storage accordingly).
 - Release with `obscan_device_management_remove_device_msg_listener` before
   destroying the listener. Registration is single-slot (§2.3), so an add/add
   pair fails rather than replacing.

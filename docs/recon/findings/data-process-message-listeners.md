@@ -218,7 +218,13 @@ remain analogy-only (**[inferred]**; noted as a follow-up there).
 ## 7. Lifetime rules
 
 - The listener object is referenced inside the stored `std::function` and must
-  stay alive until `remove_*` succeeds or the context is destroyed.
+  stay alive until `remove_*` succeeds — and past `obscan_context_destroy()`:
+  the SDK's background threads can outlive destroy while still holding the
+  captured pointer **[inferred: project threading model —
+  `engine/src/obscan_loader.cpp:114-122`]**, so freeing it together with the
+  context is not safe; the earliest known-safe point to free it is process
+  exit. Same rule as the device family —
+  [`device-message-listener.md`](device-message-listener.md) §8.
 - `remove_*` clears the probe word and destroys the function (§2.5) — after
   which a fresh add succeeds. There is no queue, so nothing booked-but-undelivered
   survives a remove (data path); the process path's queued closures may still
