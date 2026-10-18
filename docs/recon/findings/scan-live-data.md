@@ -282,9 +282,15 @@ or hardware.
 (`scan+0x4c8`, `ldar`) and requires **exactly 3 (paused)** — anything else logs
 "get model mesh must first pause scan !" (`0x42e722b`) and returns `0x32620110`
 (`OB_SCAN_ERROR_MULTI_CALLED`). So: not during scanning (2), not after stop (4),
-not after resume; the mesh must be read **while paused**. (The null-context path
-is also MULTI_CALLED; a NULL out struct is `0x32620100` "the mesh is nullptr !";
-mesh-conversion failures are `0x32620101` `OB_SCAN_ERROR_FATAL`.)
+not after resume; the mesh must be read **while paused**. A NULL **scan handle**
+is the wrapper's `0x32620107` (`OB_SCAN_ERROR_DEADLINE_EXCEEDED`), per the
+universal handle rule (`obscan_api.h`). The native's "the laser scan context is
+nullptr" branch (`0x42e71d6`) is a **different** check — the internal context
+obtained from `scan+0x7b0` via `get_cloud_scan_context()`, reachable only with
+step == 3 — and returns MULTI_CALLED. A NULL out struct is `0x32620100` "the mesh
+is nullptr !"; mesh-conversion failures are `0x32620101`
+`OB_SCAN_ERROR_FATAL`. **[inferred: static writer/gate map; not exercised
+per-step on hardware]**
 
 **It is a build, not a copy.** Each call:
 
