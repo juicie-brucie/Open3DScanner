@@ -788,19 +788,51 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/false);
     Report("obscan_scan_stop", status);
 
-    for (int i = 0; i < 3000; ++i) {
-        status = lib.obscan_session_destroy(&session);
-        if (status == OB_SCAN_SUCCESS || status != OB_SCAN_ERROR_MULTI_CALLED) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    {
+        int polls = 0;
+        int refusals = 0;
+        auto started = std::chrono::steady_clock::now();
+        do {
+            ++polls;
+            status = lib.obscan_session_destroy(&session);
+            if (status == OB_SCAN_ERROR_MULTI_CALLED) {
+                ++refusals;
+                if (refusals == 1 || refusals % 10 == 0) {
+                    std::printf("[worker] obscan_session_destroy poll %d: refused (%s)\n", polls, StatusName(status));
+                    std::fflush(stdout);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        } while (status == OB_SCAN_ERROR_MULTI_CALLED && polls < 3000);
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
+        std::printf("[worker] obscan_session_destroy: %d poll(s), %d refusal(s), %.1fs, final %s\n",
+                    polls, refusals, elapsed / 1000.0, StatusName(status));
+        std::fflush(stdout);
+        Report("obscan_session_destroy", status);
     }
-    Report("obscan_session_destroy", status);
 
-    for (int i = 0; i < 3000; ++i) {
-        status = lib.obscan_context_destroy(&context);
-        if (status == OB_SCAN_SUCCESS || status != OB_SCAN_ERROR_MULTI_CALLED) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    {
+        int polls = 0;
+        int refusals = 0;
+        auto started = std::chrono::steady_clock::now();
+        do {
+            ++polls;
+            status = lib.obscan_context_destroy(&context);
+            if (status == OB_SCAN_ERROR_MULTI_CALLED) {
+                ++refusals;
+                if (refusals == 1 || refusals % 10 == 0) {
+                    std::printf("[worker] obscan_context_destroy poll %d: refused (%s)\n", polls, StatusName(status));
+                    std::fflush(stdout);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        } while (status == OB_SCAN_ERROR_MULTI_CALLED && polls < 3000);
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
+        std::printf("[worker] obscan_context_destroy: %d poll(s), %d refusal(s), %.1fs, final %s\n",
+                    polls, refusals, elapsed / 1000.0, StatusName(status));
+        std::fflush(stdout);
+        Report("obscan_context_destroy", status);
     }
-    Report("obscan_context_destroy", status);
 
     std::printf("[worker] Frame protocol V%u counters: cloud_frames=%llu full_detail_chunks=%llu\n",
                 openscanner::frame_protocol::VERSION,
