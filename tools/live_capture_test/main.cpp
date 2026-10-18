@@ -687,6 +687,7 @@ int main(int argc, char** argv) {
         std::string insert = moltenvk_path + ":" + VULKAN_DISABLE_INTERPOSE_DYLIB;
         setenv("DYLD_INSERT_LIBRARIES", insert.c_str(), /*overwrite=*/1);
         std::printf("[launcher] DYLD_INSERT_LIBRARIES=%s\n", insert.c_str());
+        std::fflush(stdout); // banner must precede worker output when piped
     } else {
         std::printf("[launcher] Could not derive libMoltenVK.dylib path from '%s'; skipping Vulkan-disable fix.\n",
                      library_path.c_str());
@@ -694,6 +695,7 @@ int main(int argc, char** argv) {
 #endif
 
     std::printf("[launcher] Running live capture session in a worker process...\n");
+    std::fflush(stdout);
     int worker_exit_code = -1;
     std::string crash_reason;
     // Budget: device-connect wait (<=6s) + frame-ready wait (<=20s) +

@@ -143,6 +143,7 @@ int main(int argc, char** argv) {
     }
 
     std::printf("[launcher] Running SDK session in a worker process...\n");
+    std::fflush(stdout);
     int worker_exit_code = -1;
     std::string crash_reason;
     bool worker_ok =
