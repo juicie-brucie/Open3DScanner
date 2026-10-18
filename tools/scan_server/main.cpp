@@ -742,6 +742,9 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             server.BroadcastBinary(buf.data(), buf.size());
             std::printf("[worker] Broadcast final reconstructed mesh as one point-cloud frame (%u of %u points).\n",
                         broadcast_count, mesh.num_vertices);
+            // Compile/runtime proof that the loader now resolves the declared
+            // release; the frame above already copied the vertices out.
+            lib.obscan_scan_realtime_model_mesh_release(scan);
             // Give any connected client a moment to actually receive it
             // before teardown starts closing sockets.
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
