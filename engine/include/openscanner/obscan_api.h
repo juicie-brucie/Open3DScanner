@@ -258,8 +258,10 @@ typedef struct ObScanTriangle {
 } ObScanTriangle;
 
 // OBScan.SDK.OBScanTriangleMesh — the live/preview reconstructed mesh for a
-// scan (see obscan_scan_get_realtime_model_mesh). Same buffer-lifetime
-// caveat as OBScanPointClouds above.
+// scan (see obscan_scan_get_realtime_model_mesh). The getter returns pointers
+// into the SDK's mesh cache on the scan object (borrowed, no copy); the next
+// getter call re-fills it and obscan_scan_realtime_model_mesh_release frees it
+// — copy out immediately. See docs/recon/findings/scan-live-data.md §14.
 typedef struct ObScanTriangleMesh {
     uint32_t num_vertices;      // 0x00
     ObScanPoint* vertices;      // 0x08
@@ -619,12 +621,20 @@ typedef ObScanStatus (*fn_obscan_scan_get_model_point_color_clouds)(ObScanScanHa
 // shared precondition code). The cloud buffers are borrowed; there is no
 // ownership to drop.
 typedef ObScanStatus (*fn_obscan_scan_model_clouds_release)(ObScanScanHandle scan);
-// Only valid while the scan is paused — called during an active scan it
-// fails with OB_SCAN_ERROR_MULTI_CALLED and the native log line "get
-// model mesh must first pause scan !". Confirmed against this
-// project's own logs: every poll-loop call to this before pause hit
-// exactly that error.
+// Only valid while the scan is paused (step == 3) — during an active scan it
+// fails with OB_SCAN_ERROR_MULTI_CALLED and the native log line "get model
+// mesh must first pause scan !"; after stop it fails the same way. The call
+// BUILDS the mesh into the SDK's cache on the scan object and returns borrowed
+// pointers into it: the next call (which rebuilds/re-fills) or the release
+// below (which frees the cache) invalidates them — copy out immediately. See
+// docs/recon/findings/scan-live-data.md §14.
 typedef ObScanStatus (*fn_obscan_scan_get_realtime_model_mesh)(ObScanScanHandle scan, ObScanTriangleMesh* out_mesh);
+// Frees the cached mesh that the getter above built (native:
+// OrbbecScanLaser::model_mesh_release — OBScanMeshDatas destructor + delete;
+// clears the scan's cache pointer). Returns 0 for a valid handle, 845283591
+// for a NULL one. Call once per consumed mesh (or before the next getter
+// call); not a no-op, unlike the cloud release.
+typedef ObScanStatus (*fn_obscan_scan_realtime_model_mesh_release)(ObScanScanHandle scan);
 typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, ObScanModeConfig* out_config);
 
 // OBScanTarget.ConfigCombinedExposureAndLaserCurrent(int value) — a
