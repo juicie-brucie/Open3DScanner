@@ -386,12 +386,11 @@ no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
 
 ## OPEN QUESTIONS
 
-- **OQ-1** — `data` payload semantics. `send_device_msg(int)` supplies
-  `data = this+0x167` (non-NULL, an interior pointer to the manager) for
-  `msg_id == 0` and NULL for every other id, but `update_camera_status` emits
-  through the struct overload with its own `data` values. Per-call-site payloads
-  are not yet mapped. Nothing in the header should claim `data` is a device list
-  until this is settled.
+- **OQ-1** — *Resolved (row #50)*: the device family's `data` is either `NULL`
+  or the address of the manager's 1-byte **"is support rescan"** flag
+  (`manager+0x167`) — never a device list. CONNECT (id 0) carries the flag
+  pointer; DISCONNECT and every other emitter on file pass `NULL` (§12). The
+  header's `ObScanDeviceMessage.data` comment now states this.
 - **OQ-2** — *Resolved* (2026-10-17-plan9) → §6.1. The listener is a single delegate
   pointer at `0x00`, consumed by one load through the `__func` vtable chain at
   `__DATA_CONST 0x454d3b0`; the delegate ABI is the by-value message in
@@ -592,6 +591,40 @@ covers calib-message (`0x147001xx`), control (`0x147002xx`) and calib-state
 (`0x147003xx`). The control ids also carry a bare `0` (middle-button short
 press), as does the calib family (`CALIB_SUCCESS`). [observed across the five
 decodes]
+
+## 12. The `data` payload map (OQ-1, resolved)
+
+*Static half, plan50 pass. Every device-family emitter's `data` value, read from
+the call sites; no analyzer run.*
+
+**The id-0 literal is a capability flag, not a device list.** The manager's
+`+0x167` byte is the **"is support rescan"** flag: `send_device_msg(int)` logs
+`"is support rescan: %s"` (`0x42f5e94`) from it (`0x5c3844`–`0x5c3884`), and
+`update_camera_status` *writes* it from the device callback's bool
+(`0x5c3078`: `add x20, x19, #0x167; stlrb w8, [x20]`) and passes `&flag` as the
+CONNECT payload (`0x5c328c`, `x2 = x20`).
+
+**Per-call-site map** (all live emitters go through
+`send_device_msg(OBScanDeviceMessage)` `0x5c5304`):
+
+| emitter | id | `data` |
+| --- | --- | --- |
+| `update_camera_status` (`0x5c31e0`) | `DEVICE_DISCONNECT` (`0x12620100`) | `NULL` |
+| `update_camera_status` (`0x5c328c`) | `DEVICE_CONNECT` (`0`) | `&manager->is_support_rescan` |
+| `update_camera_status` (`0x5c32cc`) | `CONNECT_READ_PARAMS_FAILED` / `CONNECT_CRC_CHECK_FAILED` (`0x12620117`/`0x12620118`) | `NULL` |
+| `update_camera_status` (`0x5c32f4`) | `CONNECT_NEED_CALIBRATION` (`0x12620114`) | `NULL` |
+| `send_need_calib_msg` (`0x5c5cd0`) | `CONNECT_NEED_CALIBRATION` (`0x12620114`) | `NULL` |
+| `device_upgrade_call_back` (`0x5c0ff8`) | the callback's progress id | `NULL` |
+| `send_device_upgrade_msg` (`0x5c1114`) | the id argument | `NULL` |
+
+The `int` overload (`send_device_msg(int)` `0x5c3818` — statically unreferenced,
+§7) would pass `this+0x167` for id 0 and `NULL` otherwise: the same flag
+pointer. So on every path on file, **`data` is either `NULL` or the address of
+the manager's 1-byte "is support rescan" flag** — no emitter passes a device
+list (the `list<DeviceInfo>` that `update_camera_status` receives goes to a
+separate callback, `0x5c3244`). This matches the hardware evidence on file
+`[hw-confirmed: the plan8 registration run]`: the registration DISCONNECT
+delivered `NULL`, the real CONNECT delivered non-NULL.
 
 ## Evidence
 
