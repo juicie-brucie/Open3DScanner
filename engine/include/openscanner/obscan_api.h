@@ -726,6 +726,25 @@ typedef ObScanStatus (*fn_obscan_scan_realtime_model_mesh_release)(ObScanScanHan
 typedef ObScanStatus (*fn_obscan_scan_get_mode_config)(ObScanScanHandle scan, ObScanModeConfig* out_config);
 
 // ---------------------------------------------------------------------------
+// The config apply surface (row #55): post-creation setters. All take the scan
+// handle and reject a NULL one with OB_SCAN_ERROR_DEADLINE_EXCEEDED
+// (845283591); non-zero returns are refusals (findings §18). Exposure changes
+// go through to the device live; the mode reconfig stops and re-starts the
+// scan pipeline, so prefer it for FOV/light-type changes only.
+// `obscan_scan_reconfig_scan_mode_config` is the read-modify-write pair to
+// `obscan_scan_get_mode_config` (there is no dedicated set_fov).
+typedef ObScanStatus (*fn_obscan_scan_config_ir_exposure_time)(ObScanScanHandle scan, int32_t value);
+typedef ObScanStatus (*fn_obscan_scan_config_color_exposure_time)(ObScanScanHandle scan, int32_t value);
+typedef ObScanStatus (*fn_obscan_scan_config_laser_current)(ObScanScanHandle scan, int32_t value);
+typedef ObScanStatus (*fn_obscan_scan_config_depth_range)(ObScanScanHandle scan, int32_t min_value, int32_t max_value);
+typedef ObScanStatus (*fn_obscan_scan_config_rgb_fill_light)(ObScanScanHandle scan, bool enabled);
+typedef ObScanStatus (*fn_obscan_scan_config_show_data_rotate)(ObScanScanHandle scan, bool enabled);
+typedef ObScanStatus (*fn_obscan_scan_config_light_type)(ObScanScanHandle scan, ObScanLightType light_type);
+typedef ObScanStatus (*fn_obscan_scan_reconfig_scan_mode_config)(ObScanScanHandle scan, const ObScanModeConfig* config);
+// `obscan_scan_config_manaul_remove_plane` exists but its C argument order is
+// not yet recovered (native: (bool, OBScanPlane_&, int&) — findings OQ-S14).
+
+// ---------------------------------------------------------------------------
 // Frame and image payloads — the read side of the listener live path.
 // `ObScanDataMessage.data` for NEW_{IR,DEPTH,RGB}_IMAGE is an image object and
 // for FRAME_READY a frame object (findings §12); these are the C entry points

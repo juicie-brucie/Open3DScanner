@@ -655,6 +655,63 @@ not statically derivable — an lldb/dtrace capture of the entry registers
 settles it. Its caller is unproven: the name is absent from the app's P/Invoke
 tables. It stays undeclared (a separate contract row if wanted).
 
+## 18. The config apply surface — post-creation setters (row #55)
+
+*Static half, plan55 pass (one sweep + inline reads; no analyzer). The row's
+premise — "no mode/FOV setter" — is superseded: the export table carries a
+family of setters, including the full mode-config re-apply.*
+
+### The C-reachable setters (all reject a NULL scan with `0x32620107`)
+
+| export | C signature | native chain | mutates |
+| --- | --- | --- | --- |
+| `obscan_scan_config_combined_exposure_and_laser_current` (`0xedcc`) | `(scan, int32_t)` | `OBScanBase::config_combined…` `0x6f691c` | pushes to the device; on ok writes `dataMgmt+0x40` |
+| `obscan_scan_config_ir_exposure_time` (`0xee54`) | `(scan, int32_t)` | vtable `+0x28` → `…config_ir_exposure_time(int)` `0x6f5a0c` → `OBDeviceManagement::set_ir_exposure_time` `0x5c6400` | the device (live) |
+| `obscan_scan_config_color_exposure_time` (`0xeee4`) | `(scan, int32_t)` | vtable `+0x30` → `…config_color_exposure_time(int)` `0x6f5a78` | the device |
+| `obscan_scan_config_depth_range` (`0xef74`) | `(scan, int32_t, int32_t)` | vtable `+0x38` → `…config_depth_range(int, int)` `0x6f5b00` | the device / streamer |
+| `obscan_scan_config_laser_current` (`0xf018`) | `(scan, int32_t)` | vtable `+0x48` → `…config_laser_current(int)` `0x6f5c10` | the device |
+| `obscan_scan_config_rgb_fill_light` (`0xf0a8`) | `(scan, bool)` | `OBScanBase::config_rgb_fill_light(bool)` `0x6fa630` | the device |
+| `obscan_scan_reconfig_scan_mode_config` (`0xf148`) | `(scan, const ObScanModeConfig*)` | prints the config, copies it, vtable `+0x78` → `OrbbecScanSpeckle/Laser::reconfig_scan_mode_config(OBScanModeConfig, bool=1)` `0x5cb00`/`0xc41a4` | the stored `OBScanModeConfig` (`dataMgmt+0xa8` via `set_mode_config` `0x702504`) **and** the device (`streamer_set_scan_config`) |
+| `obscan_scan_config_show_data_rotate` (`0xf1f0`) | `(scan, bool)` | `OBScanBase::config_show_data_rotate(bool)` `0x6f7dc8` | a view flag |
+| `obscan_scan_config_light_type` (`0xf268`) | `(scan, ObScanLightType)` | vtable `+0x70` → `…config_light_type(int, bool=1)` `0x6f5c84` | the mode/device |
+| `obscan_scan_config_manaul_remove_plane` (`0xf8cc`) | `(scan, …)` — arg order not fully read | `…config_manaul_remove_plane(bool, OBScanPlane_&, int&)` `0x5c5c0`/`0xc3b18` | the plane-removal tool |
+
+**Gates and codes.** The exposure setters refuse with `0x32620110`
+(`OB_SCAN_ERROR_MULTI_CALLED`) when `[scan+0x3c] == 1` (`0x6f5a1c`; the flag's
+writer is unmapped `[inferred]`), else return the device call's status. The
+mode reconfig stops the device first (unless the mode's `+0x14 == 2`), gates on
+the `OrbbecScanStep` (`scan+0x4c8`, §5) and on the `+0xe1` latch
+(`0x32620105` `OB_SCAN_ERROR_UNSUPPORTED_CONFIGURATION` when unset — the latch
+is set once by the constructor path, §13), with a `0x32620101` default. Treat
+any non-zero as a refusal; the per-gate mapping is residual **OQ-S13**.
+
+### Creation vs post-creation
+
+`ObScanConfig` = `{ObScanModeConfig mode_config@0x00; const char* name@0x38}`
+— the create-scan config *embeds* the mode config. The constructor-only path
+(`OrbbecScanSpeckle/Laser::set_scan_config(OBScanConfig const*)`
+`0x6bfbc`/`0xc8e50`; no static callers outside creation) stores the mode config,
+pushes it to the device and sets the `+0xe1` latch. Post-creation the same
+effect is reached by `reconfig_scan_mode_config`, which takes the bare
+`ObScanModeConfig` the getter returns — a clean read-modify-write.
+
+### The seam statement (docs/architecture/scan-viewer.md §6)
+
+- **`setExposure(const Exposure&)` is directly implementable** — the dedicated
+  setters exist and write through to the device live
+  (`config_ir_exposure_time`, `config_color_exposure_time`,
+  `config_laser_current`; `config_combined_exposure_and_laser_current` for the
+  single-slider case; `config_rgb_fill_light` for the fill light).
+- **`setFov(ObScanFov)` is implementable via read-modify-write** —
+  `obscan_scan_get_mode_config` → set `scan_fov` (and any sibling fields) →
+  `obscan_scan_reconfig_scan_mode_config`. There is no dedicated set_fov; the
+  seam must preserve the other mode-config fields (re-read before writing if
+  anything else may have changed them). Post-creation reconfig is legal — the
+  `+0xe1` latch is already set by creation.
+- Neither seam method needs a re-create path. The one caveat to document: the
+  mode reconfig stops and re-starts the scan pipeline (a visible
+  interruption), so FOV changes are heavier than exposure changes.
+
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
@@ -728,6 +785,15 @@ tables. It stays undeclared (a separate contract row if wanted).
   depends on it (the global pose updates per confirm). Declare it in a
   registration-family row, or document the registration getter as the live
   channel.
+- **OQ-S13** — the config setters' per-gate status mapping (§18): the
+  exposure setters' `+0x3c` gate (who writes the flag, and what it means), and
+  the mode reconfig's full code map (step gate, `+0xe1`, the `0x32620101`
+  default). A hardware sweep (call each setter across the step map and log the
+  status) would settle it; the C-facing rule "non-zero = refusal" is safe
+  meanwhile.
+- **OQ-S14** — `obscan_scan_config_manaul_remove_plane`'s C argument order
+  (§18): the native takes `(bool, OBScanPlane_&, int&)`; the wrapper's arg
+  roles were not fully read.
 
 ## Evidence
 
@@ -772,3 +838,8 @@ ProjectFileCache::store_serializable) and the record verified in a real session
 cache (`<output_dir>/resources.obscan`, SQLite, `files.name = camera_intrin.bat`,
 210 B) — plus the packer format (0x1a03f4) and the 41-field order (0x6e3874). The
 backup/resume blob's producer is a libOrbbecSDK virtual (out of snapshot).
+
+Row #55 (the config apply surface): the export table (the `_obscan_scan_config_*`
+family), the wrapper region 0xedcc-0xf2f0, the implementation names for the
+value types, and the natives sweep (row55-a draft, folded); `ObScanConfig` vs
+`ObScanModeConfig` from the header + `set_scan_config` 0x6bfbc/0xc8e50.
