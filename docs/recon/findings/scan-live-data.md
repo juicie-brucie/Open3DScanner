@@ -760,6 +760,61 @@ effect is reached by `reconfig_scan_mode_config`, which takes the bare
   mode reconfig stops and re-starts the scan pipeline (a visible
   interruption), so FOV changes are heavier than exposure changes.
 
+## 19. The voxel sizes — per-mode, per-session (row #64)
+
+*Static half + on-disk evidence, plan64 pass. The corpus
+(`pipeline-quality-assessment.md` §3 item 1: "align voxel sizes with what the
+real app uses … the real app's 0.5 and 0.25") was re-derived; it does **not**
+survive as a misalignment claim.*
+
+**The contract's voxel fields.** `ObScanModeConfig` carries two:
+`double voxel_size@0x20` and `double detail_voxel_size@0x30`. They are set at
+creation (`ObScanConfig.mode_config`) and changeable post-creation only through
+the whole-config `obscan_scan_reconfig_scan_mode_config` (§18 — there is no
+dedicated voxel setter). A **third, separate surface** exists: the
+meshlization/optimization config's own `voxel_size` — the app's
+`scanDataConfig.dat` shows `OBScanOptimizationConfig {compute_speed,
+voxel_size, credible_ratio, remove_markers, export_format}` per optimization
+run (0.1, 0.1, 0.2269 in that project), and the C exports
+`obscan_session_get_default_meshlization_config` (`0xcb8c`) /
+`obscan_session_get_applyed_meshlization_config` (`0xcc04`) expose it
+(undeclared in our header — a follow-up).
+
+**The app's actual values are per-mode and per-session.** The app's
+`scanParamConfig.dat` (JSON) carries the parameter sets side by side; the same
+laser field differs across two real sessions:
+
+| file (session) | parameter set | `VoxelSizeProperty` | `DetailVoxelSizeProperty` |
+| --- | --- | --- | --- |
+| the operator's `example project from CScan` | `LaserScanParam` (projection 1) | **0.1** | **0.05** |
+| the captured `creality_scan_comparison*` sessions | `LaserScanParam` (projection 1) | **0.5** | **0.25** |
+| the operator's project | `InfaredScanParam` (projection 0) | 0.5 | 0.25 |
+
+with the app's own ranges `VoxelSizeRangeProperty [0.1, 2.0]` and
+`DetailVoxelSizeRangeProperty [0.05, 0.25]` (the operator's laser set reads a
+degenerate detail range `[0.05, 0.05]`). So the value is a **per-session
+property**, not a fixed reference — the corpus's 0.5/0.25 is one session's
+setting, not "what the app uses".
+
+**Our tools.** `tools/scan_server/main.cpp:689-690` and
+`tools/live_capture_test/main.cpp:458-459` both pass `voxel_size = 0.1`,
+`detail_voxel_size = 0.05` — **exactly the operator's laser-session values**,
+and both sit at the minimum of the app's ranges (the finest allowed).
+
+**Verdict: nothing to change.** The 125x-voxel-count arithmetic is right
+((0.5/0.1)^3 = 125; (0.25/0.05)^3 = 125) but its premise — that our values are
+out of line with the app's — does not survive re-derivation: the app's values
+vary per session, and ours match a real one. If a *resource* goal wants a
+coarser grid, the right move is to expose the voxel size as a config knob
+bounded by the app's ranges (voxel [0.1, 2.0], detail [0.05, 0.25]) — a
+deliberate choice, not an "alignment". No build change is warranted by this
+row; no header change (the mode config's fields are already declared; the
+meshlization config is a separate follow-up).
+
+**Cross-notes from the same files:** `PlaneRemoveProperty` is `true` in the
+IR set and `false` in the laser one (relevant to G1's adoption); the device
+block confirms the Raptor Pro / fw 1.5.7 / sn `CR0886100SN`.
+
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
@@ -913,3 +968,8 @@ Row #58 (the config-setter residues): light reads only — the setter natives
 Row #60 (the pose trigger): the registration family wrappers (0xda1c/0xde2c/0xdecc),
 the trigger native (0x55334), and the family listing from the dynsym. Light reads
 only; no analyzer.
+
+Row #64 (the voxel sizes): the app-side primary evidence re-read — the
+operator\u2019s CScan project files `scanParamConfig.dat` / `scanDataConfig.dat`
+(JSON) plus the captured copies under the verify worktree\u2019s
+`logs/creality_scan_comparison*`. Light reads; no analyzer.
