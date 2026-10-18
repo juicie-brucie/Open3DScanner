@@ -373,6 +373,89 @@ model already relies on this: threads and device state outlive the destroy call 
 bail-out). On the clean path the stop-path IMU error (`Stop imu stream error:
 std::bad_cast` at 23:35:37.584) did **not** prevent the release.
 
+## 16. The stop path's tail — the model save and the .obmc serialization (row #37)
+
+*Static half, plan37 pass. What `obscan_scan_stop` runs after the pipeline is
+destroyed, and where the 2026-10-18 scale run's teardown stalled.*
+
+**Call shape.** The tool calls
+`obscan_scan_stop(scan, progress_cb, status_cb, /*is_block=*/true)`
+(`tools/scan_server/main.cpp:747`). The C wrapper (`0xf980`) registers an
+async task (`OBScanBase::begin_async_task`, type `0x10`) and calls
+`OBScanBase::stop(progress_cb, is_block)` (`0x6faebc`); with `is_block=true`
+the stop runs **synchronously on the calling thread** through the concrete
+stop impl (vtable `+0x188`), so the wrapper returns only after the whole tail
+below. (`is_block=false` enqueues the same work on the `"default"` named
+thread pool and returns; `stop` also `wait_until`s the *previous* future
+first, returning `0x32620110` on timeout.)
+
+**The tail, in order** (native log + listing):
+
+1. Pipeline stop + destroy — the `Pipeline.cpp` lines (`Stop pipeline done!` /
+   `Pipeline destroyed!`) immediately before the hang.
+2. Virtual `save_stop_realtime_scan_datas` — laser override
+   `LaserTextureScanning::save_stop_realtime_scan_datas` (`0x9644c8`) →
+   `LaserScanningContextInterface::save_stop_realtime_scan_datas` (`0x95f954`):
+   `platform::existPath`/`createPath` for the output dir, then two saves.
+3. Virtual `save_model_clouds` (`LaserScanningContextInterface`, `0x95f210`;
+   one of four overrides — the marker class's is a "not implemented" stub):
+   - `obscan_cloud_transform` (`0x6acfe4`) — applies the **rotate pose** to the
+     model cloud (transforms into a fresh cloud; vector `__append` + `memcpy`),
+     O(vertices);
+   - `rs_common::print_matrix("rotate pose for model.ply", pose)` — the bare
+     `rotate pose for model.ply` + 4×4 print in the log (~90° about Z in the
+     recorded run);
+   - `obscan_common::write_cloud_with_intensity_ply(cloud,
+     <outdir>/result/model.ply, /*binary=*/1, 1, 0)` (`0x6b9a94`) — binary PLY
+     (`format binary_little_endian 1.0`; `property float x,y,z,intensity,nx,ny,nz`),
+     **28 B/vertex**, `fopen("wb")` + per-record `fwrite`, with a per-iteration
+     `ProgressReporter` check (the "user cancel save !" abort). The first bool
+     picks `"wb"` vs `"w"`; the ASCII variant would `fprintf` one
+     `"%f %f %f %f %f %f %f %hu %hu %hu\n"` line per vertex;
+   - `OBScanDataManagement::update_model_cloud` (27 instrs — a
+     `compute_cloud_bbox` pass).
+4. `save_detail_model_online_fusion_result` (`0x95fe54`) →
+   `OutOfCoreSerializableLaserOnlineFusionOpt::to_buffer(path)` (`0x9a0cbc`) —
+   the **out-of-core fusion serialization**: `/temp/mainLOMCache.obmc` (+
+   `/temp/detailLOMCache.obmc`; `SerializablePointCloudFuser` /
+   `OutOfCoreSerializableOnlineFusion`, guarded by "is not a .obmc file!!!").
+5. Then the stop returns and the tool proceeds to `obscan_session_destroy` →
+   `obscan_context_destroy` (§15).
+
+**Both runs execute every step** — the pose print is in the clean run too
+(its raw log line 4524), straight through to `obscan_scan_stop -> OB_SCAN_SUCCESS`.
+
+**Scale — the model save is linear and completes; the stall is after it.**
+The runs' `result/model.ply` under the tool's fixed
+`/tmp/openscanner_live_server_session/<session>/` output dir:
+
+| run | model-cloud vertices | file size | header + N×28 | complete | mtime |
+| --- | --- | --- | --- | --- | --- |
+| clean (01:22) | 225,637 | 6,318,058 | 222 + 6,317,836 ✓ | yes | 01:22:45 |
+| rerun (01:47) | 11,398,756 | 319,165,392 | 224 + 319,165,168 ✓ | yes | 01:47:41 |
+
+So the model write **finished** ~12 s into the rerun's stop — it is not the
+hang. The last file activity is `temp/mainLOMCache.obmc` at **01:47:43**, then
+no logs, prints, or writes for ~6m46s until the launcher's 420 s watchdog
+killed the worker (`EXIT_CODE=2`). The stall sits in the post-save tail — the
+out-of-core serialization (step 4) is the prime suspect. **OQ-S6** carries the
+trace spec.
+
+**Can the tool avoid or bound it?**
+- The tail is the SDK's, not something the tool holds: the mesh the tool
+  broadcast is a borrowed snapshot it copies out (§14) — holding or dropping
+  it changes nothing. The saved model cloud is the SDK's own (11.4M vertices
+  here vs the clean run's 225K — ~50×).
+- `session_config.output_dir` gates only the `model.ply` write (empty dir →
+  the writer fails fast, "save_dir is false") — and that write is not the
+  hang, so config avoidance does not dodge it.
+- The blocking call is what leaves the tool hostage: the watchdog fires while
+  the tool is inside `obscan_scan_stop`. A build-side bound is `is_block=false`
+  (returns immediately; the work continues on the `"default"` pool) followed
+  by polling the destroys — they refuse (`MULTI_CALLED` / "must first wait
+  other process finished") until the tail completes — or a larger teardown
+  watchdog. Nothing tool-side skips the SDK's tail.
+
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
@@ -391,6 +474,18 @@ std::bad_cast` at 23:35:37.584) did **not** prevent the release.
   (`obscan_scan_get_model_point_color_clouds`) once per tick make `get_raw_cloud`
   (or the color call itself) return live points during an active scan? Do not
   assume until a run shows it — this is the direct test of §3's mechanism.
+- **OQ-S6** — *Actionable, hardware:* where exactly the stop tail stalls at
+  scale (§16). The model save completes (both runs' `model.ply` files are
+  complete, 28 B/vertex); the last activity is `temp/mainLOMCache.obmc` at
+  01:47:43, then silence until the 420 s watchdog. Dynamic trace: reproduce the
+  scale run and, during the hang, `sample <worker-pid> 30` (or
+  `lldb -p <pid> -o 'thread backtrace all'`) — the stop thread's stack names
+  the function (expect `OutOfCoreSerializableLaserOnlineFusionOpt::to_buffer`
+  or a wait in the stop impl); plus `lsof -p` (which file it holds), a size
+  poll of the `.obmc` (growing = slow, flat = stuck), and `footprint -p`
+  (the session's cache is 385 MB here vs 704 MB in the clean run). A
+  controlled A/B (same duration, two mesh sizes; or a repeat run) separates
+  "slow tail" from "deadlock".
 
 ## Evidence
 
@@ -409,3 +504,11 @@ std::bad_cast` at 23:35:37.584) did **not** prevent the release.
   the call-site mapping (addresses above are its).
 - Run: `tests/results/2026-10-17-live-scan-manual-test.md` (0 points × 3000
   ticks; 5,845-point mesh after pause; no raw log survives).
+
+Row #37 (the stop-tail hang): `tests/results/2026-10-18-scan-server-scale-acceptance-rerun.md`
+(the hung run) and `tests/results/2026-10-18-scan-server-scale-acceptance.md` (the clean
+contrast); the tool's stop call site `tools/scan_server/main.cpp:747`; and the on-disk
+artifacts under `/tmp/openscanner_live_server_session/` — `sjNH28m_…/result/model.ply`
+(319,165,392 B, complete, mtime 01:47:41) and `sjNH28m_…/temp/mainLOMCache.obmc`
+(385,871,872 B, mtime 01:47:43) vs the clean run's `s40lAcB_…/result/model.ply`
+(6,318,058 B, complete) and `s40lAcB_…/temp/mainLOMCache.obmc` (704,504,982 B).

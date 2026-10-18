@@ -614,6 +614,13 @@ typedef ObScanStatus (*fn_obscan_scan_pause)(ObScanScanHandle scan);
 // a near-empty model), not a failed stop call. NULL callbacks are
 // rejected, same as preview.
 //
+// `is_block=true` runs the SDK's whole stop tail synchronously on the
+// calling thread — after the pipeline stop/destroy it applies the model's
+// rotate pose, writes <output_dir>/result/model.ply (28 B/vertex) and
+// serializes the out-of-core fusion cache (temp/*.obmc) — so the call blocks
+// for all of it, and its duration scales with the session's data. A large
+// session's teardown tail is not bounded by this call's return path; see
+// docs/recon/findings/scan-live-data.md §16.
 // typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, bool is_block, ObScanStatusCallback status_callback);  // WRONG — kept here as a record of the dead end, do not resurrect.
 typedef ObScanStatus (*fn_obscan_scan_stop)(ObScanScanHandle scan, ObScanProgressCallback progress_callback,
                                              ObScanStatusCallback status_callback, bool is_block);
