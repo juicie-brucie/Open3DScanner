@@ -119,6 +119,9 @@
   let lastFrameId = -1;
   let framesReceived = 0;
   let bytesReceived = 0;
+  // Client backpressure: at most one received frame may be pending render
+  // at a time; later arrivals are dropped instead of queuing unboundedly.
+  let framePending = false;
   // Accumulator for the on-demand full-detail final mesh: while a full-mesh
   // transfer is in progress, incoming binary frames are appended here
   // instead of replacing the live view, and rendered once it completes.
@@ -237,9 +240,11 @@
         return;
       }
       const buf = event.data;
+      if (framePending) return; // drop: renderer is behind
       bytesReceived += buf.byteLength;
       const frame = FrameProtocol.decodeCloudSnapshot(buf);
       if (!frame) return;
+      framePending = true;
       const frameId = frame.seq;
       const captureTimestampMs = frame.tCapture;
       const count = frame.count;
@@ -384,6 +389,7 @@
       gl.uniform1f(brightnessLocation, brightness);
       gl.drawArrays(gl.POINTS, 0, pointCount);
     }
+    framePending = false;
     renderFrames++;
 
     const now = performance.now();
