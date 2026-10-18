@@ -22,7 +22,7 @@ artifact: the only thing both sides agree on, and the thing a human reviews.
 | `openscanner/recon` | primary | `obscan_api.h`, `docs/recon/**` | `opencode/glm-5.3-flash-free#max` |
 | `openscanner/builder` | primary | `engine/src`, `mesh`, `ui`, `tools` | `opencode/beam-free#high` |
 | `openscanner/recon-sweep` | subagent | `docs/recon/findings/**` (draft) | `opencode/deepseek-v4.1-flash-free#low` |
-| `openscanner/verifier` | all | *nothing* (read-only) | `opencode/space-bunny-free#max` |
+| `openscanner/verifier` | all | PR comments (verdicts); no edits | `opencode/space-bunny-free#max` |
 | hardware tester | external | `tests/results/**` | Claude Code, driven by hand |
 
 ### Why these models
@@ -137,23 +137,27 @@ Two review gates, deliberately different kinds:
 
 Landing is gated mechanically, in two tiers:
 
-- **Docs and artifacts** (`docs/**`, `tests/results/**`, `CLAUDE.md`, `.claude/**`,
-  `.github/**`): the verdict is the deterministic check `scripts/verify-pr.py`, run by
-  CI as the `verify-pr` status. No agent pass; green means mergeable.
-- **Code** (`engine/**`, `tools/**`, `tests/**`, `mesh/**`, `ui/**`, `scripts/**`,
-  CMake): the script runs first, then an `openscanner/verifier` session adjudicates what
-  the script cannot — semantics vs the header, prose vs evidence, overclaiming — and
-  posts exactly one comment: `VERDICT: MERGEABLE @ <head-sha>` or
-  `VERDICT: NEEDS CHANGE @ <head-sha>`. The `verdict-gate` workflow turns the newest
-  verdict for the current head into the `verdict` status.
+- **Script tier** (run records and raw logs under `tests/results/**`, `docs/recomp/**`,
+  `CLAUDE.md`, `README.md`, …): the verdict is the deterministic check
+  `scripts/verify-pr.py`, run by CI as the `verify-pr` status. When every changed path
+  is in this tier, `verdict-gate` sets `verdict=success` automatically. No agent pass.
+- **Agent tier** (`engine/**`, `tools/**`, `tests/hardware/**`, `mesh/**`, `ui/**`,
+  `scripts/**`, CMake, `.github/**`, `.claude/**`, `docs/recon/**`, and
+  `tests/results/**` addenda): CI runs the **trusted copy of the script from `main`**
+  (so a PR cannot edit the gate that judges it), then an `openscanner/verifier` session
+  adjudicates what the script cannot — semantics vs the header, prose vs evidence,
+  overclaiming — and posts exactly one comment: `VERDICT: MERGEABLE @ <head-sha>` or
+  `VERDICT: NEEDS CHANGE @ <head-sha>`. `verdict-gate` turns an anchored verdict line
+  naming the current head into the `verdict` status; a comment with more than one
+  verdict line is ignored (no status, so no merge).
 
-`main` is protected: both statuses are required and force-pushes are blocked. PRs are
+`main`'s branch protection requires both statuses and blocks force-pushes. PRs are
 opened with `gh pr merge --auto --merge`, so a PR lands the moment its checks pass. A
-verdict is bound to a SHA, so it goes stale automatically when the branch moves — a
-`NEEDS CHANGE` verdict blocks the merge and is fixed on the branch. The verifier
-**reports, never acts**: it does not merge, push, or edit, and the dispatcher never
-self-certifies — the script is deterministic and runs in CI, and the agent verdict
-comes from a session other than the dispatcher.
+verdict is bound to a SHA: it goes stale automatically when the branch moves, and a
+`NEEDS CHANGE` blocks the merge. The verifier **reports, never acts** — it does not
+merge, push, or edit. The checker is deterministic and runs in CI, and the agent verdict
+comes from a session other than the dispatcher; the GitHub account is shared, so that
+separation is process-level, not cryptographic.
 
 ## Claude Pro's place
 

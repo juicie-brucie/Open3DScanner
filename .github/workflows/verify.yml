@@ -30,4 +30,15 @@ jobs:
       - name: Run deterministic checks
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/verify-pr.py ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Run the trusted copy of the checker from the base branch, so a PR
+          # cannot edit the gate that judges it (scripts/** is agent-tier).
+          if git cat-file -e origin/main:scripts/verify-pr.py 2>/dev/null; then
+            git show origin/main:scripts/verify-pr.py > "$RUNNER_TEMP/verify-pr.py"
+            echo "using scripts/verify-pr.py from origin/main"
+          else
+            cp scripts/verify-pr.py "$RUNNER_TEMP/verify-pr.py"
+            echo "origin/main has no scripts/verify-pr.py yet - using the PR copy (bootstrap)"
+          fi
+          python3 "$RUNNER_TEMP/verify-pr.py" ${{ github.event.pull_request.number }}

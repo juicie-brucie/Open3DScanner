@@ -1,6 +1,8 @@
 name: verdict-gate
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
   issue_comment:
     types: [created]
 
@@ -10,8 +12,35 @@ permissions:
   statuses: write
 
 jobs:
+  auto-verdict:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Script-tier PRs are script-gated
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ ! -f scripts/verify-pr.py ]; then
+            echo "main has no scripts/verify-pr.py yet - leaving verdict pending"
+            exit 0
+          fi
+          tier=$(python3 scripts/verify-pr.py --tier ${{ github.event.pull_request.number }})
+          if [ "$tier" != "script" ]; then
+            echo "tier=$tier - a verifier verdict comment is required"
+            exit 0
+          fi
+          gh api -X POST "repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }}" \
+            -f state=success -f context=verdict -f description="docs/artifacts - script-gated"
+          echo "tier=script - verdict set to success"
+
   verdict:
-    if: github.event.issue.pull_request && contains(github.event.comment.body, 'VERDICT:')
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, 'VERDICT:')
     runs-on: ubuntu-latest
     steps:
       - name: Set verdict status for the current head
@@ -25,12 +54,22 @@ jobs:
             OWNER|MEMBER|COLLABORATOR) ;;
             *) echo "ignoring comment from association: $ASSOC"; exit 0 ;;
           esac
-          if [[ "$BODY" =~ VERDICT:[[:space:]]*(MERGEABLE|NEEDS[[:space:]]CHANGE)[[:space:]]*@[[:space:]]*([0-9a-f]{40}) ]]; then
-            verdict="${BASH_REMATCH[1]}"
-            sha="${BASH_REMATCH[2]}"
-          else
-            echo "no verdict pattern in comment"; exit 0
+          # Exactly one VERDICT occurrence, anchored on its own line. A quoted
+          # example or a retraction elsewhere in the comment makes it inert
+          # (no status -> no merge), never a false success.
+          n=$(printf '%s\n' "$BODY" | grep -c 'VERDICT:' || true)
+          if [ "$n" -ne 1 ]; then
+            echo "found $n VERDICT occurrences - ignoring"
+            exit 0
           fi
+          line=$(printf '%s\n' "$BODY" | grep -m1 -E '^VERDICT: (MERGEABLE|NEEDS CHANGE) @ [0-9a-f]{40}$' || true)
+          if [ -z "$line" ]; then
+            echo "no anchored verdict line - ignoring"
+            exit 0
+          fi
+          verdict=${line#VERDICT: }
+          verdict=${verdict%% @*}
+          sha=${line##*@ }
           head=$(gh api "${{ github.event.issue.pull_request.url }}" --jq .head.sha)
           if [ "$sha" != "$head" ]; then
             echo "verdict names $sha but head is $head - stale, ignoring"
