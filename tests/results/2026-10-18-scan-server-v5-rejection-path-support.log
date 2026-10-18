@@ -1,0 +1,3689 @@
+[launcher] Running live scan server in a worker process (up to 90s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/18 19:14:28.974189][info][16177082][Context.cpp:67] Context created with config: default config!
+[10/18 19:14:28.974216][info][16177082][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/18 19:14:28.991197][info][16177082][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/18 19:14:28.991246][info][16177082][DeviceManager.cpp:15] Current found device(s): (0)
+[10/18 19:14:28.991254][info][16177082][Context.cpp:82] EnumerateNetDevice:true
+[10/18 19:14:28.993981][info][16177098][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/18 19:14:28.994005][info][16177098][GVCPClient.cpp:325] bind 0.0.0.0:53748
+[10/18 19:14:28.994047][info][16177098][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/18 19:14:28.994070][info][16177098][GVCPClient.cpp:325] bind 0.0.0.0:57597
+[10/18 19:14:28.994084][info][16177098][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/18 19:14:28.994096][info][16177098][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/18 19:14:28.994119][info][16177098][GVCPClient.cpp:325] bind 0.0.0.0:58084
+[10/18 19:14:28.994130][info][16177098][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/18 19:14:28.994268][error][16177099][GVCPClient.cpp:355] sendto failed with error:49
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/18 19:14:29.003628][info][16177099][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/18 19:14:29.006483][info][16177099][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/18 19:14:30.019995][info][16177098][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/18 19:14:30.020066][info][16177098][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/18 19:14:31.020901][info][16177098][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/18 19:14:31.020919][info][16177098][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/18 19:14:31.020926][info][16177098][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/18 19:14:31.126353][info][16177098][Ethernet.cpp:244] rpc client connection state:1
+[10/18 19:14:31.129238][info][16177098][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/18 19:14:31.129258][info][16177098][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/18 19:14:31.129267][info][16177098][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/18 19:14:31.229918][info][16177098][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/18 19:14:31.336318][info][16177098][RPCClientPort.cpp:20] create client port cost:103ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/18 19:14:31.336423][info][16177098][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/18 19:14:31.344528][info][16177098][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/18 19:14:31.344555][info][16177098][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/18 19:14:31.546663][info][16177098][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/18 19:14:31.546681][info][16177098][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/18 19:14:31.546689][info][16177098][RPCClientPort.cpp:241] No stream need to stop
+[10/18 19:14:31.546696][info][16177098][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/18 19:14:31.546846][info][16177098][RPCClientPort.cpp:241] No stream need to stop
+[10/18 19:14:31.546858][info][16177098][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/18 19:14:31.651533][info][16177098][Ethernet.cpp:244] rpc client connection state:1
+[10/18 19:14:31.651878][info][16177098][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/18 19:14:31.651892][info][16177098][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/18 19:14:31.651899][info][16177098][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/18 19:14:31.752067][info][16177098][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/18 19:14:31.853116][info][16177098][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/18 19:14:31.853309][info][16177098][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/18 19:14:31.861781][info][16177098][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/18 19:14:31.861801][info][16177098][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/18 19:14:32.014490][info][16177111][GVCPClient.cpp:421] 0, 3, 248, 1 [**5 logs in 3010ms, last: 19:14:30.020687**]
+[10/18 19:14:32.014500][info][16177112][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**5 logs in 3008ms, last: 19:14:30.020688**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=1
+[worker] obscan_context_create_session                 -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_create_scan                    -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_preview                           -> OB_SCAN_SUCCESS (0)
+[10/18 19:14:32.152634][info][16177082][RPCClientPort.cpp:20] create client port cost:103ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/18 19:14:32.154168][info][16177082][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[worker] obscan_scan_config_combined_exposure_and_laser_current -> OB_SCAN_SUCCESS (0)
+[10/18 19:14:32.179048][info][16177086][AccelSensor.cpp:22] AccelSensor created
+[10/18 19:14:32.179055][info][16177086][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/18 19:14:32.181065][info][16177086][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/18 19:14:32.181116][info][16177086][GyroSensor.cpp:23] GyroSensor created!
+[10/18 19:14:32.181122][info][16177086][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/18 19:14:32.182318][info][16177086][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/18 19:14:32.184846][info][16177086][ScannerAbstractDevice.cpp:808] switchDepthWorkMode done! same mode. currentDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}, targetDepthMode:{name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/18 19:14:32.184867][info][16177086][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/18 19:14:32.185391][info][16177086][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/18 19:14:32.186856][error][16177086][PioneerDevice.cpp:371] deRectifyMaskParams is nullptr
+[10/18 19:14:32.187222][info][16177086][PioneerDevice.cpp:384] Depth sensor has been created!
+[10/18 19:14:32.187243][info][16177086][PioneerDevice.cpp:1254] switchDepthWorkMode done! oldDepthMode: {name: , checksum(hex): 00000000000000000000000000000000, optionCode: NORMAL}, newDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/18 19:14:32.187304][info][16177086][Pipeline.cpp:42] Pipeline created with device: {name: Creality Raptor Pro, sn: CR0886100SN}, @0x75F32C0618
+[10/18 19:14:32.289537][info][16177086][RPCClientPort.cpp:20] create client port cost:102ms,port name:Creality Raptor Pro RGB Camera,client port:10012
+[10/18 19:14:32.289677][info][16177086][PioneerDevice.cpp:431] Color sensor has been created!
+[10/18 19:14:32.291810][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1920,height:1200,format:OB_FORMAT_Y8,fps:50
+[10/18 19:14:32.291824][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1520,height:1200,format:OB_FORMAT_Y8,fps:60
+[10/18 19:14:32.291833][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_RIGHT,width:1320,height:1040,format:OB_FORMAT_Y8,fps:60
+[10/18 19:14:32.291842][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1920,height:1200,format:OB_FORMAT_Y8,fps:50
+[10/18 19:14:32.291850][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1920,height:1200,format:OB_FORMAT_MJPG,fps:50
+[10/18 19:14:32.291859][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1520,height:1200,format:OB_FORMAT_Y8,fps:60
+[10/18 19:14:32.291867][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1520,height:1200,format:OB_FORMAT_MJPG,fps:60
+[10/18 19:14:32.291875][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1320,height:1040,format:OB_FORMAT_Y8,fps:60
+[10/18 19:14:32.291883][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_IR_LEFT,width:1320,height:1040,format:OB_FORMAT_MJPG,fps:60
+[10/18 19:14:32.291891][info][16177086][ScannerAbstractDevice.cpp:720] effective profile type:OB_SENSOR_COLOR,width:1280,height:800,format:OB_FORMAT_MJPG,fps:30
+[10/18 19:14:32.292246][info][16177102][PioneerDevice.cpp:584] OB_SENSOR_IR_RIGHT sensor has been created!
+[10/18 19:14:32.292261][warning][16177086][ObException.cpp:5] No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_DEPTH
+[10/18 19:14:32.293437][warning][16177086][ObException.cpp:5] No required type sensor found! Calibrate depth work mode, sensorType: OB_SENSOR_IR
+[10/18 19:14:32.321574][info][16177086][Pipeline.cpp:236] Try to start streams!
+[10/18 19:14:32.321683][info][16177086][VideoSensor.cpp:617] start OB_SENSOR_IR_LEFT stream with profile: {type: OB_STREAM_IR_LEFT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 30}
+[10/18 19:14:32.321692][info][16177086][RPCClientPort.cpp:192] start OB_STREAM_IR_LEFT stream call
+[10/18 19:14:32.361415][info][16177086][RPCClientPort.cpp:237] start OB_STREAM_IR_LEFT stream done
+[10/18 19:14:32.361525][info][16177086][VideoSensor.cpp:617] start OB_SENSOR_IR_RIGHT stream with profile: {type: OB_STREAM_IR_RIGHT, format: OB_FORMAT_Y8, width: 1920, height: 1200, fps: 30}
+[10/18 19:14:32.361535][info][16177086][RPCClientPort.cpp:192] start OB_STREAM_IR_RIGHT stream call
+[10/18 19:14:32.381841][info][16177086][RPCClientPort.cpp:237] start OB_STREAM_IR_RIGHT stream done
+[10/18 19:14:32.381912][info][16177086][Pipeline.cpp:249] Start streams done!
+[10/18 19:14:32.381938][info][16177086][Pipeline.cpp:232] Pipeline start done!
+using metallib
+use_poly: 1
+[10/18 19:14:32.560820][warning][16177202][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=49100, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/18 19:14:32.583838][warning][16177208][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2c5a0 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f31047e0 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2c720 thread=10287585485175235657
+[10/18 19:14:32.688143][warning][16177200][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1321920, expected=2304000 @OB_SENSOR_IR_LEFT
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2c780 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f3104840 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2c7e0 thread=10287585485175235657
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2c840 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f3105ec0 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2c8a0 thread=10287585485175235657
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2c900 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f3105f20 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2c960 thread=10287585485175235657
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2c9c0 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f3105f80 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2ca20 thread=10287585485175235657
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2ca80 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f3105fe0 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2cae0 thread=10287585485175235657
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2cb40 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f3106040 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2cba0 thread=10287585485175235657
+[10/18 19:14:32.924473][error][16177228][GVCPClient.cpp:355] sendto failed with error:49 [**2 logs in 3930ms**]
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2cc00 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f31060a0 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2cc60 thread=10287585485175235657
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2ccc0 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f3106100 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2cd20 thread=10287585485175235657
+[worker][data] msg_id=325189889 (NEW_IR_IMAGE) data=0x75f2f2cd80 thread=10287585485175235657
+[worker][data] msg_id=325189888 (NEW_DEPTH_IMAGE) data=0x75f3106160 thread=10287585485175235657
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x75f2f2cde0 thread=10287585485175235657
+中心亮度: 231.042
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1490
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1402
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] frame_ready_count=10
+[worker] obscan_scan_start                             -> OB_SCAN_SUCCESS (0)
+[worker] Frame protocol V1 (envelope: magic u32, version u16, type u16, seq u32, t_capture f64, t_server f64, payload_len u32 = 32 bytes)
+[worker] Streaming live scan frames on ws://0.0.0.0:8787 (open ui/index.html)
+[worker] Note: each tick calls obscan_scan_get_model_point_color_clouds, which publishes the
+[worker] model cloud, so live frames can carry points during scanning. The per-tick payload is
+[worker] decimated to a fixed budget so the UI stays live at high accumulated point counts. The
+[worker] final pause -> get_realtime_model_mesh snapshot is still broadcast at the end.
+[worker] tick 0/900: color_cloud num_points=0 (max seen so far: 0), clients=0, paused=0
+中心亮度: 243.5
+Circle Points Dark
+adjust_expo 0
+input_expo 2400
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.15
+============ 输出参数 =============
+exposure_time: 2025
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:33.928450][info][16177098][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**2 logs in 3908ms**]
+中心亮度: 217.944
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 2020
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1932
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 210.727
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1930
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1842
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 206.111
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1840
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1752
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 200.5
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1750
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1662
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:35.686324][warning][16177222][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1321920, expected=2304000 @OB_SENSOR_IR_RIGHT [**4 logs in 3125ms, last: 19:14:33.355320**]
+中心亮度: 194.045
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1660
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1572
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:35.692616][warning][16177224][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1751580, expected=2304000 @OB_SENSOR_IR_LEFT [**3 logs in 3004ms, last: 19:14:33.332035**]
+中心亮度: 189.5
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1570
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1482
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 190.4
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1480
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1392
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 186.292
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1390
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1302
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.6
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:37.851474][warning][16177208][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+中心亮度: 179.4
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.808
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.154
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:38.925006][info][16177234][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**9 logs in 6910ms, last: 19:14:36.936239**]
+[10/18 19:14:38.926283][info][16177233][GVCPClient.cpp:421] 0, 3, 248, 1 [**9 logs in 6911ms, last: 19:14:36.936237**]
+[10/18 19:14:38.945101][error][16177533][GVCPClient.cpp:355] sendto failed with error:49 [**3 logs in 6020ms**]
+中心亮度: 179.3
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 50/900: color_cloud num_points=570 (max seen so far: 570), clients=3, paused=0
+中心亮度: 171.038
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:39.949263][info][16177098][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**3 logs in 6020ms**]
+中心亮度: 179.1
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.115
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:40.958120][warning][16177430][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**2 logs in 3106ms, last: 19:14:38.052831**]
+中心亮度: 179.25
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.65
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 170.192
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 170.385
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.231
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:43.759296][warning][16177381][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_LEFT [**17 logs in 8066ms, last: 19:14:38.975339**]
+[10/18 19:14:43.918310][warning][16177420][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=20664, expected=2304000 @OB_SENSOR_IR_RIGHT [**17 logs in 8231ms, last: 19:14:38.978134**]
+中心亮度: 169.731
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.2
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 100/900: color_cloud num_points=649 (max seen so far: 649), clients=3, paused=0
+中心亮度: 169.769
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.692
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.462
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 161.333
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.423
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.45
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.423
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.95
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.462
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 170.154
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:50.143759][warning][16177208][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**2 logs in 9185ms**]
+中心亮度: 169.538
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+[10/18 19:14:50.949792][info][16177538][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**18 logs in 12024ms, last: 19:14:48.973530**]
+[10/18 19:14:50.949792][info][16177536][GVCPClient.cpp:421] 0, 3, 248, 1 [**18 logs in 12023ms, last: 19:14:48.973523**]
+[10/18 19:14:50.979591][error][16178005][GVCPClient.cpp:355] sendto failed with error:49 [**6 logs in 12034ms**]
+[worker] tick 150/900: color_cloud num_points=676 (max seen so far: 680), clients=3, paused=0
+中心亮度: 176.385
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1380
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 184.6
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1380
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1292
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:51.994863][info][16177098][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**6 logs in 12045ms**]
+中心亮度: 178.1
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.6
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.192
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.65
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.1
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.462
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 177.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.2
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.95
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:14:56.357287][warning][16177744][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1276704, expected=2304000 @OB_SENSOR_IR_LEFT [**38 logs in 12597ms, last: 19:14:52.954656**]
+[10/18 19:14:56.392564][warning][16177746][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1276704, expected=2304000 @OB_SENSOR_IR_RIGHT [**42 logs in 12474ms, last: 19:14:52.941544**]
+中心亮度: 178.4
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.308
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.65
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 200/900: color_cloud num_points=707 (max seen so far: 707), clients=4, paused=0
+中心亮度: 178.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.45
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.346
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.346
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.65
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.538
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.65
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.269
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 167.962
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.1
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.6
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.269
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:15:02.837165][warning][16177981][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**7 logs in 12693ms, last: 19:14:52.997875**]
+中心亮度: 168.577
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 250/900: color_cloud num_points=717 (max seen so far: 717), clients=4, paused=0
+中心亮度: 169.038
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 177.8
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.542
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.45
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.7
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.192
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1290
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 183.5
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1370
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1282
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 177.7
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1280
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 167.654
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1280
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1280
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 300/900: color_cloud num_points=733 (max seen so far: 733), clients=4, paused=0
+中心亮度: 169
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1280
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 172.792
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1360
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 187.6
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1440
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1352
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.269
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1350
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 173.269
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1350
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 182.2
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1350
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1262
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.962
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.75
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.962
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.4
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:15:14.983569][info][16178010][GVCPClient.cpp:421] 0, 3, 248, 1 [**36 logs in 24033ms, last: 19:15:13.051133**]
+[10/18 19:15:14.984568][info][16178011][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**36 logs in 24034ms, last: 19:15:13.051135**]
+中心亮度: 167.045
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:15:15.056036][error][16178745][GVCPClient.cpp:355] sendto failed with error:49 [**12 logs in 24076ms**]
+中心亮度: 165.731
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.7
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 350/900: color_cloud num_points=730 (max seen so far: 737), clients=4, paused=0
+[10/18 19:15:16.061228][info][16177098][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**12 logs in 24066ms**]
+中心亮度: 176.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.95
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.923
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 166.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 177.05
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 166.308
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 177.1
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.962
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.577
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 181.95
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1340
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1252
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 400/900: color_cloud num_points=752 (max seen so far: 752), clients=4, paused=0
+中心亮度: 164.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.154
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:15:22.828133][warning][16177200][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2119860, expected=2304000 @OB_SENSOR_IR_LEFT [**33 logs in 26470ms**]
+[10/18 19:15:22.832054][warning][16177202][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2119860, expected=2304000 @OB_SENSOR_IR_RIGHT [**33 logs in 26439ms**]
+中心亮度: 176
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.423
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:15:24.447605][warning][16177202][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2377656, expected=2304000 @OB_SENSOR_IR_RIGHT
+[10/18 19:15:24.450892][warning][16177200][VideoSensor.cpp:450] This frame will be dropped because because the data size is larger than expected! size=2377656, expected=2304000 @OB_SENSOR_IR_LEFT
+中心亮度: 165.077
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.538
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.75
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.1
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.35
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:15:27.229262][warning][16177208][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**5 logs in 24392ms**]
+中心亮度: 165.192
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+[worker] tick 450/900: color_cloud num_points=767 (max seen so far: 770), clients=4, paused=0
+中心亮度: 180.95
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1330
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1242
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.6
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.95
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 171.75
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 155.667
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.35
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.885
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.269
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.423
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.8
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.231
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.65
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.269
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.654
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 500/900: color_cloud num_points=779 (max seen so far: 784), clients=4, paused=0
+中心亮度: 175.2
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.6
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.7
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 156.25
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.05
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.769
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.462
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.8
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.1
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.35
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.731
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.05
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.7
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 550/900: color_cloud num_points=786 (max seen so far: 792), clients=4, paused=0
+中心亮度: 175.25
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 172.75
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.3
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.95
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.462
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 157.708
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.038
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.35
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 162.731
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.154
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.962
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 600/900: color_cloud num_points=793 (max seen so far: 796), clients=4, paused=0
+中心亮度: 175.55
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.385
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.6
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.45
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.75
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.077
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 156.333
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.4
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.731
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 650/900: color_cloud num_points=797 (max seen so far: 800), clients=4, paused=0
+中心亮度: 174.95
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.538
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 172.083
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.8
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 172.167
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.6
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 171.292
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.95
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.038
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.192
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1240
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+Lines Slightly Bright
+Circle Points Unchange
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 181.682
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1480
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1392
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 184.1
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1390
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1302
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 700/900: color_cloud num_points=796 (max seen so far: 800), clients=4, paused=0
+中心亮度: 169.615
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 162.417
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 167.75
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.55
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.9
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.308
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:16:03.061529][info][16178750][GVCPClient.cpp:421] 0, 3, 248, 1 [**72 logs in 48077ms, last: 19:16:01.248158**]
+[10/18 19:16:03.061529][info][16178751][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**72 logs in 48076ms, last: 19:16:01.248160**]
+中心亮度: 169.231
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:16:03.251349][error][16180642][GVCPClient.cpp:355] sendto failed with error:49 [**24 logs in 48195ms**]
+中心亮度: 179.25
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 178.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:16:04.252082][info][16177098][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**24 logs in 48190ms**]
+中心亮度: 168.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.05
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.962
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.923
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 750/900: color_cloud num_points=797 (max seen so far: 800), clients=4, paused=0
+中心亮度: 179.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 179.7
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.577
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 168.808
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 169.462
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1300
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 175.654
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1380
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 182.077
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1460
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1372
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.654
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1370
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 173.583
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1370
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:16:11.109414][warning][16178959][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1399464, expected=2304000 @OB_SENSOR_IR_LEFT [**154 logs in 48281ms, last: 19:16:09.873305**]
+[10/18 19:16:11.130073][warning][16178963][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1411740, expected=2304000 @OB_SENSOR_IR_RIGHT [**158 logs in 48298ms, last: 19:16:09.894860**]
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 181.792
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1450
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1362
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 186.65
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1440
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1352
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 173.308
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1350
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 173.769
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1350
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 800/900: color_cloud num_points=809 (max seen so far: 809), clients=4, paused=0
+中心亮度: 182
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1350
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1262
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.192
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.269
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 174.083
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.3
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.85
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.346
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.8
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.923
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 175.75
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.15
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.4
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.615
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.05
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[worker] tick 850/900: color_cloud num_points=822 (max seen so far: 823), clients=4, paused=0
+中心亮度: 165.423
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+[10/18 19:16:20.418918][warning][16179388][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**35 logs in 53189ms, last: 19:16:12.481322**]
+中心亮度: 165
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 158.458
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1260
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+中心亮度: 166.5
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1340
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 172.423
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1340
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 180.65
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 1340
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 1252
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.308
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 163.654
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 176.3
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.731
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 164.769
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+中心亮度: 165.077
+Circle Points Unchange
+============ 输出参数 =============
+exposure_time: 1250
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 100
+ir_white_electric: 100
+ir_blue_electric: 45
+===================================
+Lines Slightly Bright
+Circle Points Unchange
+[worker] obscan_scan_pause                             -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_get_realtime_model_mesh -> OB_SCAN_SUCCESS (0), num_vertices=6963, num_triangles=4783
+[worker] Broadcast final reconstructed mesh preview (6963 of 6963 points).
+[worker] Streamed full-detail mesh in 20000-point chunks.
+[worker] obscan_scan_stop                              -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_destroy poll 1: refused (OB_SCAN_ERROR_MULTI_CALLED)
+[10/18 19:16:31.655896][info][16177090][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/18 19:16:31.658456][info][16177090][Pipeline.cpp:344] Try to stop pipeline!
+[10/18 19:16:31.658480][info][16177090][Pipeline.cpp:316] Try to stop streams!
+[10/18 19:16:31.686952][info][16177090][RPCClientPort.cpp:255] stop OB_STREAM_IR_RIGHT stream call
+[10/18 19:16:31.690114][info][16177090][RPCClientPort.cpp:265] stop OB_STREAM_IR_RIGHT stream done
+[10/18 19:16:31.692316][info][16177090][VideoSensor.cpp:734] Video sensor stopped, @OB_SENSOR_IR_RIGHT
+[10/18 19:16:31.692610][info][16177090][Pipeline.cpp:329] Sensor stream stopped, sensorType=OB_SENSOR_IR_RIGHT
+[10/18 19:16:31.720081][info][16177090][RPCClientPort.cpp:255] stop OB_STREAM_IR_LEFT stream call
+[10/18 19:16:31.725042][info][16177090][RPCClientPort.cpp:265] stop OB_STREAM_IR_LEFT stream done
+[10/18 19:16:31.728852][info][16177090][VideoSensor.cpp:734] Video sensor stopped, @OB_SENSOR_IR_LEFT
+[10/18 19:16:31.728862][info][16177090][Pipeline.cpp:329] Sensor stream stopped, sensorType=OB_SENSOR_IR_LEFT
+[10/18 19:16:31.728871][info][16177090][Pipeline.cpp:335] Stop streams done!
+[10/18 19:16:31.728886][info][16177090][Pipeline.cpp:373] Stop pipeline done!
+[10/18 19:16:31.728913][info][16177090][Pipeline.cpp:69] Pipeline destroyed! @0x75F32C0618
+rotate pose for model.ply
+-0.000000044, -1.000000000, 0.000000000, 0.000000000
+1.000000000, -0.000000044, 0.000000000, 0.000000000
+0.000000000, 0.000000000, 1.000000000, 0.000000000
+0.000000000, 0.000000000, 0.000000000, 1.000000000
+
+[worker] obscan_session_destroy: 5 poll(s), 4 refusal(s), 0.5s, final OB_SCAN_SUCCESS
+[worker] obscan_session_destroy                        -> OB_SCAN_SUCCESS (0)
+[10/18 19:16:32.101965][info][16177082][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/18 19:16:32.102003][info][16177082][RPCClientPort.cpp:241] No stream need to stop
+[10/18 19:16:32.102013][info][16177082][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro RGB Camera
+[10/18 19:16:32.102085][info][16177082][VideoSensor.cpp:281] VideoSensor destroyed, @OB_SENSOR_COLOR
+[10/18 19:16:32.102105][info][16177082][VideoSensor.cpp:281] VideoSensor destroyed, @OB_SENSOR_DEPTH
+[10/18 19:16:32.102119][info][16177082][AccelSensor.cpp:30] AccelSensor destroyed!
+[10/18 19:16:32.102132][info][16177082][GyroSensor.cpp:31] GyroSensor destroyed!
+[10/18 19:16:32.102142][info][16177082][RPCClientPort.cpp:241] No stream need to stop
+[10/18 19:16:32.102148][info][16177082][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IR Camera
+[10/18 19:16:32.102191][info][16177082][VideoSensor.cpp:281] VideoSensor destroyed, @OB_SENSOR_IR_LEFT
+[10/18 19:16:32.102208][info][16177082][VideoSensor.cpp:281] VideoSensor destroyed, @OB_SENSOR_IR_RIGHT
+[10/18 19:16:32.102219][info][16177082][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/18 19:16:32.102226][info][16177082][RPCClientPort.cpp:241] No stream need to stop
+[10/18 19:16:32.102232][info][16177082][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/18 19:16:32.102727][info][16177082][RPCClientPort.cpp:241] No stream need to stop
+[10/18 19:16:32.102736][info][16177082][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/18 19:16:32.351433][info][16177082][Context.cpp:89] Context destroyed
+[10/18 19:16:32.351471][warning][16180995][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1150056, expected=2304000 @OB_SENSOR_IR_LEFT [**29 logs in 21242ms, last: 19:16:27.236245**]
+[10/18 19:16:32.351504][warning][16180996][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1150056, expected=2304000 @OB_SENSOR_IR_RIGHT [**29 logs in 21221ms, last: 19:16:27.211974**]
+[10/18 19:16:32.351614][warning][16181510][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**4 logs in 11932ms, last: 19:16:27.170559**]
+[10/18 19:16:32.351648][info][16180769][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**14 logs in 28099ms, last: 19:16:32.350715**]
+[10/18 19:16:32.351680][error][16180749][GVCPClient.cpp:355] sendto failed with error:49 [**14 logs in 29100ms, last: 19:16:31.345525**]
+[10/18 19:16:32.351713][info][16180647][GVCPClient.cpp:421] 0, 3, 248, 1 [**45 logs in 29290ms, last: 19:16:31.345679**]
+[10/18 19:16:32.351747][info][16180648][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**45 logs in 29290ms, last: 19:16:31.345682**]
+[vulkan_disable_interpose] intercepted vkGetInstanceProcAddr lookup of a create function
+[vulkan_disable_interpose] blocked vkCreateInstance
+vkCreateInstance failed -3
+[worker] obscan_context_destroy: 1 poll(s), 0 refusal(s), 0.3s, final OB_SCAN_SUCCESS
+[worker] obscan_context_destroy                        -> OB_SCAN_SUCCESS (0)
+[worker] Frame protocol V1 counters: cloud_frames=901 full_detail_chunks=1
+[launcher] Worker exited normally with code 0.
