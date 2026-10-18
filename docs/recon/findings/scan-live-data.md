@@ -143,6 +143,75 @@ window — so the manual run's 0 points were the publish-trigger gap, never a
 step rejection. **[inferred: static writer/gate map; not exercised per-step on
 hardware]**
 
+## 6. Live-path decision — getter-publish is ours; the listener stays a frame channel
+
+*(Roadmap rev-5 seed 1: read §3 against `docs/research/pipeline-quality-assessment.md`
+§1.3/§1.5 — unreviewed — and the header; pick the path, record the decision and the
+loser's prerequisite.)*
+
+Evidence re-checked against the archived app session
+(`logs/creality_scan_comparison_20261016/native_logs/scan_log_20261016-024738.txt`) and
+our own run (`logs/exposure_sweep_new_setup_20261016/native_scan_log.txt`).
+
+**§1.3 "the real app never polls for the live cloud" — adopted, one correction.**
+
+- The app registers **all five listener families** at startup (02:47:38:
+  `obscan_context_add_data_msg_listener`, `add_process_msg_listener`, control, device,
+  tips — all in the same second). The corpus did not cite this; it is the strongest
+  single support for "the listener is the app's channel".
+- The four cloud getters appear in **two bursts only** — at scan creation
+  (02:48:15.15) and once mid-session (02:49:00.73, inside a UI state-refresh sequence
+  ending in `obscan_scan_plane_remove(false)`). Not "exactly once" — but the thrust
+  holds: **no per-frame polling**.
+- "Live frames reach it through the data-message listener" **cannot be shown in the
+  app's log and is not disproved by it either**: `send_data_msg` is **silent**
+  (drop-at-emit, no log line), so the log has no visibility into data deliveries. The
+  claim rests on the registration above + the never-polled getters + the recovered
+  per-frame ids (`FRAME_READY`, `NEW_{IR,DEPTH,RGB}_IMAGE`). **[inferred]**
+- Caveat: the log only proves what went through the `obscan_*` C wrappers; direct
+  native calls (IL2CPP bindings) would not appear. Nothing observed suggests it, but
+  the log cannot exclude it. **[inferred]**
+
+**§1.5 "our tooling drives the SDK differently" — confirmed in part, corrected in part.**
+
+- Confirmed: we register the data listener (03:06:48) and never consume its payloads;
+  our runs emit `mframe queue is full` (907 in the exposure-sweep run) and the app's log
+  has **zero** `mframe` warnings. That is the corpus's sharpest claim and it holds.
+- Corrected: "a `frame queue is full` warning the real app never emits" is true only for
+  `mframe` — the app's own log carries **5,196** queue-full warnings (2,598 `mdepth` +
+  2,598 `mir`). The queues overflow in the vendor app too.
+- Corrected/tension: the causal story ("we never drain → the queues fill") is not
+  established and sits in tension with the same corpus's §1.1 ("queue is full = the
+  paused state, not backpressure"). Timings fit neither cleanly: our warnings start
+  ~60 ms **before** `obscan_scan_start` (stream/preview start) and run continuously;
+  the app's start right after its first pause. Once full, they stay full in both.
+  **[inferred]**
+- The data emitter has **no direct `bl` callers**; it is referenced from data-section
+  tables (4 pointers) — the emitters are reached indirectly. Naming them and the
+  payloads is **OQ-P3 (#28)**.
+
+**Decision.** *Getter-publish is our live path.* Per tick,
+`obscan_scan_get_model_point_color_clouds` publishes the pending temp→show swap and
+returns the model cloud (points, normals, colors, bbox) — the exact artifact our UI
+renders, with no payload decoding and no extraction work. Implemented (#25), statically
+sound (§3), hardware proof pending (OQ-S5). *The listener channel is not our live-view
+path*: it delivers per-frame notifications/images, not a cloud; using its payloads needs
+OQ-P3, and turning raw images into a cloud is the SDK's own extraction — which the same
+corpus (§2) says to keep behind the SDK.
+
+**The loser's prerequisite.** The listener stays: (i) mandatory to register (the preview
+gate, #2); (ii) worth **draining** for queue hygiene and future per-frame features
+(G1/G2) — independent builder work; (iii) **OQ-P3 (#28)** gates *using* its payloads.
+
+**Revisit condition.** If OQ-P3 shows `FRAME_READY`'s `data` carries a consumable
+cloud/frame structure, the listener becomes a per-frame cloud channel and this decision
+should be re-taken (it could supersede the tick-poll for latency). Until then,
+getter-publish stands.
+
+**Corpus status.** `docs/research/**` stays frozen; this section supersedes §1.3/§1.5
+where they differ (the two-burst correction, the 5,196-warning correction, the causal
+caveat).
+
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
@@ -169,6 +238,9 @@ hardware]**
 - `.recon-cache/listings/scan-live-data.plan24.asm` — row #24's additions: the
   color-getter wrapper, vtable mapping, the `ret` release native, the step
   writer/gate map, and the bbox layout.
+- Logs re-read for §6: `logs/creality_scan_comparison_20261016/native_logs/scan_log_20261016-024738.txt`
+  (the vendor app's session — listener registrations, getter bursts, queue-full counts)
+  and `logs/exposure_sweep_new_setup_20261016/native_scan_log.txt` (our run).
 - `.recon-cache/listings/liborbbec_scan_arm64.full.asm` — full listing used for
   the call-site mapping (addresses above are its).
 - Run: `tests/results/2026-10-17-live-scan-manual-test.md` (0 points × 3000
