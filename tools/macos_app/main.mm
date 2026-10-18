@@ -23,6 +23,7 @@
 @property(nonatomic, strong) NSTask* worker;
 @property(nonatomic, assign) BOOL quitting;
 @property(nonatomic, assign) BOOL restarting;
+@property(nonatomic, assign) BOOL reloadAfterRestart;
 @property(nonatomic, assign) NSInteger retryCount;
 @property(nonatomic, copy) NSURL* pageURL;
 @property(nonatomic, assign) NSInteger port;
@@ -137,6 +138,7 @@
             } else if (self.restarting) {
                 self.restarting = NO;
                 [self startWorker];
+                [self reloadPageIfNeeded];
             } else if (status == 0) {
                 // A designed session end (bounded session length) is a clean
                 // exit, not a crash.
@@ -164,12 +166,20 @@
     [alert runModal];
 }
 
+- (void)reloadPageIfNeeded {
+    if (!self.reloadAfterRestart) return;
+    self.reloadAfterRestart = NO;
+    self.retryCount = 0;
+    [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+}
+
 - (void)restartWorker {
     if (self.worker != nil && self.worker.running) {
         self.restarting = YES;
         kill(self.worker.processIdentifier, SIGTERM);
     } else {
         [self startWorker];
+        [self reloadPageIfNeeded];
     }
 }
 
@@ -177,7 +187,8 @@
     (void)sender;
     NSAlert* alert = [[NSAlert alloc] init];
     alert.messageText = @"OpenScanner Settings";
-    alert.informativeText = @"Applied on OK; the worker restarts. Quit always runs the full teardown.";
+    alert.informativeText = @"Applied on OK; the worker restarts and the page reloads for a port change. "
+                             @"Quit always runs the full teardown.";
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
 
@@ -203,12 +214,14 @@
     alert.accessoryView = accessory;
 
     if ([alert runModal] != NSAlertFirstButtonReturn) return;
+    NSInteger oldPort = self.port;
     NSInteger port = portField.stringValue.integerValue;
     NSInteger secs = secsField.stringValue.integerValue;
     if (port < 1 || port > 65535 || secs < 1 || secs > 3600) {
         [self surfaceError:@"Port must be 1–65535 and session length 1–3600 seconds."];
         return;
     }
+    self.reloadAfterRestart = (oldPort != port);
     self.port = port;
     self.sessionSeconds = secs;
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
@@ -223,10 +236,10 @@
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
     (void)notification;
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    self.port = [defaults integerForKey:@"OpenScannerPort"];
-    if (self.port == 0) self.port = 8787;
-    self.sessionSeconds = [defaults integerForKey:@"OpenScannerSessionSeconds"];
-    if (self.sessionSeconds == 0) self.sessionSeconds = 300;
+    NSInteger savedPort = [defaults integerForKey:@"OpenScannerPort"];
+    self.port = (savedPort >= 1 && savedPort <= 65535) ? savedPort : 8787;
+    NSInteger savedSecs = [defaults integerForKey:@"OpenScannerSessionSeconds"];
+    self.sessionSeconds = (savedSecs >= 1 && savedSecs <= 3600) ? savedSecs : 300;
 
     // Programmatic menu (no storyboard): app menu with Settings… and Quit.
     NSMenu* menuBar = [[NSMenu alloc] init];
