@@ -308,8 +308,7 @@ using it:
   `obscan_scan_get_model_point_color_clouds`, which publishes the model
   cloud while scanning, so they can carry points during the scan. The
   per-tick payload is decimated to a fixed budget so the UI stays live at
-  high accumulated point counts. `obscan_scan_get_raw_cloud` is logged
-  alongside for contrast (it only reflects the last publish). The final
+  high accumulated point counts. The final
   `obscan_scan_get_realtime_model_mesh` snapshot is still broadcast after
   pause.
 - Ctrl+C triggers a graceful `obscan_scan_pause`/`stop`/`destroy`
@@ -317,10 +316,11 @@ using it:
   the bounded session length finish on its own) rather than `pkill`/
   `kill -9`**, which skips that teardown and has left this hardware
   needing a physical power cycle to recover (confirmed twice).
-- If you must kill it, kill the **worker** first, then the launcher:
-  `pkill -f "scan_server --live-worker"` (or its PID), then
-  `pkill -f "scan_server --live"`. Killing only the launcher leaves the
-  worker holding the port and the device — a second SDK user.
+- If you must kill it, prefer Ctrl+C first; if the launcher is already
+  dead, kill the worker by PID (its command line is
+  `scan_server --live-worker ...`, so `pkill -f "scan_server --live"`
+  never matches it), accepting that teardown is then skipped and the
+  hardware may need a power cycle. Then kill the launcher.
 
 Swapping in real frames changes the frame producer, not the transport or
 the UI.

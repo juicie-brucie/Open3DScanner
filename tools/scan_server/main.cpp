@@ -10,18 +10,13 @@
 //       scanner (same context/session/scan lifecycle as
 //       tools/live_capture_test) and broadcasts whatever it gets back.
 //
-//       Known limitation, carried over from live_capture_test's own
-//       findings (see README.md "Known issues" and
-//       logs/exposure_sweep_new_setup_20261016/): obscan_scan_get_raw_cloud
-//       has never been observed to return nonzero points *during* active
-//       scanning, regardless of config — so the live per-frame broadcast
-//       will likely show 0 points throughout the scan. The only call that
-//       has ever produced real data is obscan_scan_get_realtime_model_mesh,
-//       and only once the scan is paused. This mode broadcasts raw_cloud
-//       continuously while scanning (so the UI's "connected and streaming"
-//       state is real even if empty), then does one final pause ->
-//       get_realtime_model_mesh -> broadcast before tearing down, so the
-//       UI gets to show real captured geometry at least once per session.
+//       Live frames now come from obscan_scan_get_model_point_color_clouds,
+//       which publishes the model cloud while scanning, so they can carry
+//       points during the scan; the per-tick payload is decimated to a
+//       fixed budget so the UI stays live at high accumulated point counts.
+//       The final pause -> get_realtime_model_mesh snapshot is still
+//       broadcast before teardown, so the UI shows full captured geometry
+//       at least once per session.
 
 #include <algorithm>
 #include <atomic>
@@ -356,7 +351,7 @@ constexpr int kWantStableFrames = 10;
 // same teardown that's required a physical power cycle to recover from
 // in the past. Let it finish on its own; don't pkill it.
 int g_live_session_seconds = 300;
-constexpr int kLiveTickIntervalMs = 100;  // ~10Hz raw_cloud polling.
+constexpr int kLiveTickIntervalMs = 100;  // ~10Hz live-frame polling.
 
 std::atomic<bool> g_got_connect_message{false};
 std::atomic<int> g_frame_ready_count{0};
@@ -600,10 +595,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
     } else {
         std::printf("[worker] Streaming live scan frames on ws://0.0.0.0:%u (open ui/index.html)\n", port);
         std::printf(
-            "[worker] Note: each tick now calls obscan_scan_get_model_point_color_clouds, which publishes the\n"
-            "[worker] model cloud, so live frames should be nonzero during scanning. obscan_scan_get_raw_cloud\n"
-            "[worker] only reflects the last publish and is logged alongside for contrast; the final pause ->\n"
-            "[worker] get_realtime_model_mesh snapshot is still broadcast at the end of this session.\n");
+            "[worker] Note: each tick calls obscan_scan_get_model_point_color_clouds, which publishes the\n"
+            "[worker] model cloud, so live frames can carry points during scanning. The per-tick payload is\n"
+            "[worker] decimated to a fixed budget so the UI stays live at high accumulated point counts. The\n"
+            "[worker] final pause -> get_realtime_model_mesh snapshot is still broadcast at the end.\n");
     }
     std::fflush(stdout);
 
