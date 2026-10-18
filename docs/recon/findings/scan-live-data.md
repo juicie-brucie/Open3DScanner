@@ -217,6 +217,55 @@ getter-publish stands.
 where they differ (the two-burst correction, the 5,196-warning correction, the causal
 caveat).
 
+## 7. The raw/color lockstep is the mechanism, exactly (row #30)
+
+#25's acceptance run (`tests/results/2026-10-17-scan-server-live-acceptance.md`) logged
+`raw_cloud num_points` **exactly equal** to `color_cloud num_points` at every sampled
+tick (292/292, 340/340, 442/442, 867/867, 883/883), unlike #23's flat 0. Candidate (a)
+is the answer, and it is a **structural consequence** of §2/§3 — not a coincidence and
+not a new mechanism.
+
+**The trace, end to end.**
+
+1. `get_raw_cloud` has no publish path and no gate of its own (§2): it locks
+   `dataMgmt+0x320`, reads the show-cloud shared_ptr at `dataMgmt+0x2e8`, copies
+   `count = (points.end − points.begin)/16`, `points.begin`, `normals.begin`, unlocks.
+   No calls, no flag access.
+2. `get_model_color_clouds` (§3/§4) calls `swap_model_temp_to_show_clouds` (the
+   flag-gated temp→show publish) **first**, then reads the same member via
+   `get_model_cloud_ptr`. After the color call, the show cloud is current.
+3. The tool calls them in that fixed order every tick — color, then raw, then logs both
+   counts from the same tick (`tools/scan_server/main.cpp` ~607–659; the raw call was
+   added back alongside the color call by PR #67's fix-forward `a88d576`, whose own
+   comment reads "Raw getter never publishes; reading it after the color getter shows
+   the last published cloud"). Raw therefore reads the very cloud the color call just
+   published, and both counts come from the same member via the same formula —
+   **necessarily equal**. (The record's "within 1–2" belongs to the max-seen counter,
+   not to the pair.)
+4. No swap can intervene between the two calls: the only swap triggers are the getter
+   calls themselves (the clear paths that also publish do not run during scanning), and
+   the tool's calls are single-threaded. The fusion producer only fills the temp cloud
+   and sets the pending flag; it never swaps.
+
+This also demonstrates §2's contract in the field: `get_raw_cloud` returns exactly the
+last published cloud.
+
+**Candidates (b) and (c).** (b) is subsumed, with a correction: the difference from #23
+is the **presence** of the color call, not the order — pre-#25 the loop polled raw only
+(that is the flat-0 record); PR #67 replaced it with the color call; the fix-forward
+added raw back for contrast. Any order still yields equality as long as both reads
+follow a publish — the order only decides same-tick vs one-tick-stale. (c) is ruled out:
+both records ran the same tool (`scan_server --live`, default SDK resolution — the
+acceptance record documents `/Applications/CrealityScan.app/.../liborbbec_scan.3.5.3.dylib`,
+sha `184d92a8…c017ec`); the only variable that changed between the records is the tool.
+
+**Is an isolated raw-only run needed? No.** That case is already recorded: the pre-#25
+run (`tests/results/2026-10-17-live-scan-manual-test.md`, same dylib, raw-only loop)
+returned 0 for all 3000 ticks. The two records plus the static trace form the complete
+A/B. A same-build raw-before-color ordering experiment would only show the lag semantics
+already implied here; if anyone still wants it, it is a tool change (builder), not recon
+or hardware.
+
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
@@ -246,6 +295,9 @@ caveat).
 - Logs re-read for §6: `logs/creality_scan_comparison_20261016/native_logs/scan_log_20261016-024738.txt`
   (the vendor app's session — listener registrations, getter bursts, queue-full counts)
   and `logs/exposure_sweep_new_setup_20261016/native_scan_log.txt` (our run).
+- §7 re-read: `tests/results/2026-10-17-scan-server-live-acceptance.md` + its
+  `.log` (the lockstep ticks), and `tests/results/2026-10-17-live-scan-manual-test.md`
+  (the pre-#25 raw-only control).
 - `.recon-cache/listings/liborbbec_scan_arm64.full.asm` — full listing used for
   the call-site mapping (addresses above are its).
 - Run: `tests/results/2026-10-17-live-scan-manual-test.md` (0 points × 3000
