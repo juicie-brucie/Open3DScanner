@@ -231,8 +231,11 @@ def main():
         if not ok:
             fails.append(name)
 
-    # 1. whitespace
-    r = git("diff", "--check", f"{base_ref}...{head_ref}")
+    # 1. whitespace — verbatim run captures are exempt. A raw log is the device's
+    #    own output (trailing spaces and all) and must never be edited to satisfy a
+    #    linter; the records and everything authored stay checked.
+    r = git("diff", "--check", f"{base_ref}...{head_ref}", "--", ".",
+            ":(exclude)tests/results/*.log", ":(exclude)tests/results/*.ips")
     add("whitespace", not (r.stdout.strip() or r.stderr.strip()),
         (r.stdout + r.stderr).strip()[:400] or "clean")
 
