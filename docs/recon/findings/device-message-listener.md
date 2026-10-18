@@ -49,7 +49,7 @@ three failure paths share the same return value `845283584`
 2. **`listener == NULL`** — native log: `the listener is nullptr !`.
 3. **A listener is already installed** — native log:
    `OBScanDeviceMessageListener is already set !`. The probe is the
-   `std::function` manager word at `this+0xb8`, i.e. an earlier registration
+   `std::function`'s `__f_` word at `this+0xb8`, i.e. an earlier registration
    that was never removed. **Registration is single-slot: a second add without a
    remove fails.**
 4. Otherwise it installs and returns `0` after logging
@@ -233,17 +233,21 @@ __func::operator() @ 0x5c2204
 The listener object is double-dereferenced exactly once: one 8-byte load at
 offset `0x00`. `__clone`/`__clone(__base*)` copy the *capture* (the 16 bytes at
 `__func+8`), never walking into the listener; `destroy()` is `ret`; the invoke
-never loads beyond `[listener+0]` and never writes it. So the ABI consumes one
-pointer-sized word of the listener object and nothing else — no vtable, no
-extra field, no object header behind it (this is not an IL2CPP object shape;
-word 0 is called as code).
+never loads beyond `[listener+0]` and never writes it. So the **delivery path**
+consumes one pointer-sized word of the listener object and nothing else — no
+vtable, no extra field, no object header behind it (this is not an IL2CPP
+object shape; word 0 is called as code). Scoped to delivery deliberately:
+remove is a separate entry point and is accounted for separately — it never
+dereferences the listener at all (it clears `__f_` and destroys the stored
+function; OQ-3, answered).
 
 **Delegate argument ABI.** The call is the by-value ABI of the header's
 `void (*)(ObScanDeviceMessage msg)`: a static one-argument callee takes the
 16-byte composite in `x0`/`x1`. The `pad` word is *not* observable as a separate
-scalar (a 3-scalar `(msg_id, pad, data)` ABI would need `x2`; the invoke leaves
-`x2` untouched), so the header signature distinguishes correctly from
-`(int32, int32, void*)`.
+scalar: a 3-scalar `(msg_id, pad, data)` ABI would need `data` to travel in
+`x2`, but in the invoke `x2` is the *code pointer* — loaded by `ldr x2,[x9]`
+and consumed by `br x2` — not a `data` argument. The header signature therefore
+distinguishes correctly from `(int32, int32, void*)`.
 `[hw-confirmed: 2026-10-17-plan8-device-message-listener]` — the harness
 log (raw.log:23 / raw.log:75) records `DEVICE_DISCONNECT (msg_id=308412672)
 data=0x0` and `DEVICE_CONNECT (msg_id=0) data=0x104d93e67`, exactly what the
@@ -261,16 +265,18 @@ other registered families pin the same shape:
 | device (`this+0xa0`) | `0x454d3b0` | `0x5c2204` | `ldp; ldr x9,[x0,#8]; ldr x2,[x9]; br` |
 | data (context) | `0x4539308` | `0x1b7ec` | byte-identical |
 | process (context) | `0x4539398` | `0x1bbc4` | byte-identical |
-| tips | `0x454d440` | not ranged | — |
-| control | `0x454d…` (capture at `0x5c2bdc`) | not ranged | — |
+| tips | `0x454d440` (reg `0x5c24d4`) | `0x5c2678` | byte-identical |
+| control | `0x454d560` (reg `0x5c2bdc`) | `0x5c2d78` | byte-identical |
 
-data/process are therefore **static-verified** this pass; tips/control only
-share the registration construction (`stp vptr, listener` at `0x5c24d4` /
-`0x5c2bdc`) so far — their `+0x30` invokes were not separately disassembled.
-Suggested (non-blocking for this spec) follow-up: range those two slots.
-**[inferred] for tips/control.** Also unrelated: the `0x454d888` capture seen
-next to `add_device_msg_listener` belongs to `device::OrbbecDevice::
-set_call_back`'s connect lambda, not to any listener family.
+All five families are now **static-verified at the invoke**: the tips/control
+`+0x30` slots (`0x5c2678` / `0x5c2d78`) were ranged in the follow-up pass and
+both bodies are byte-identical to the device family's; the `target(type_info)`
+symbols following each invoke pin the two vtables as the tips/control listener
+`__func`s. Raw:
+`.recon-cache/listings/device-msg-listener.tips-control-invokes.plan18.asm`.
+Also unrelated: the `0x454d888` capture seen next to `add_device_msg_listener`
+belongs to `device::OrbbecDevice::set_call_back`'s connect lambda, not to any
+listener family.
 
 ## 7. Device-message vocabulary — complete
 
@@ -357,10 +363,18 @@ no `ADRP`+`ADD` address reference. Detection covered only those two forms, so
   pointer at `0x00`, consumed by one load through the `__func` vtable chain at
   `__DATA_CONST 0x454d3b0`; the delegate ABI is the by-value message in
   `x0`/`x1` `[hw-confirmed: 2026-10-17-plan8-device-message-listener]`. The
-  data/process families are byte-identical statically; tips/control remain
-  analogy-only (`[inferred]`, follow-up noted in §6.1).
+  data/process families are byte-identical statically, and tips/control are
+  ranged too — all five families share one invoke body (§6.1).
 - **OQ-3** — Does `remove_device_msg_listener` fully clear the `std::function`
-  (making a subsequent add succeed)? Not disassembled.
+  (making a subsequent add succeed)? **Answered** — the native (`0x5c23f4`)
+  loads `__f_` from `this+0xb8`, clears it (`str xzr, [x8,#0xb8]`), then calls
+  the stored function's destroy slot (`+0x20` when `__f_` points at the inline
+  buffer, else `+0x28`) and returns `0`; an empty slot logs and returns
+  `845283593` (`OB_SCAN_ERROR_LISTENER_NOT_FOUND`). The `const` listener
+  argument is **never read**. Raw:
+  `.recon-cache/listings/OBDeviceManagement_remove_device_msg_listener.asm`
+  (re-read this pass). `[hw-confirmed: 2026-10-17-plan8-device-message-listener]`
+  — `[worker][PASS] add after remove == SUCCESS (OQ-3 cleared slot)`.
 - **OQ-4** — Exact thread that invokes the listener (vendor device thread?), and
   whether any re-entrancy is possible from inside the callback. Needs dynamic
   tracing. **Partially resolved**
