@@ -12,77 +12,58 @@
   const wsUrl = "ws://" + host + ":" + port + "/";
 
   const hud = document.getElementById("hud");
-  const canvas = document.getElementById("gl");
-  const gl = canvas.getContext("webgl2");
-  if (!gl) {
-    hud.textContent = "WebGL2 is not available in this browser.";
-    return;
+  let canvas = document.getElementById("gl");
+  const backendParam = params.get("backend"); // "webgpu" | "webgl2" | null (auto)
+  let renderer = null;
+
+  // Renderer selection: WebGPU when available (and not forced off), else the
+  // WebGL2 fallback. Both implement the same interface (see ui/render/).
+  // Every path fails softly: a rejected adapter/device or a pipeline
+  // validation error falls through to WebGL2, and a canvas claimed by
+  // WebGPU is replaced so the fallback can bind a fresh one.
+  async function initRenderer() {
+    if (backendParam !== "webgl2") {
+      try {
+        renderer = await window.createWebGPURenderer(canvas);
+      } catch (e) {
+        console.warn("WebGPU init failed; falling back to WebGL2:", e);
+        renderer = null;
+      }
+      if (!renderer) {
+        // A canvas that already returned a WebGPU context cannot also
+        // return a WebGL2 one; swap in a fresh element.
+        let probe = null;
+        try { probe = canvas.getContext("webgl2"); } catch (e) { probe = null; }
+        if (!probe) {
+          const fresh = canvas.cloneNode(false);
+          canvas.parentNode.replaceChild(fresh, canvas);
+          canvas = fresh;
+        }
+      }
+    }
+    if (!renderer) {
+      try {
+        renderer = window.createWebGL2Renderer(canvas);
+      } catch (e) {
+        console.warn("WebGL2 init failed:", e);
+        renderer = null;
+      }
+    }
+    if (!renderer) {
+      hud.textContent = "Neither WebGPU nor WebGL2 is available in this browser.";
+      return false;
+    }
+    hud.dataset.backend = renderer.name;
+    return true;
   }
 
   function resize() {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.floor(window.innerWidth * dpr);
     canvas.height = Math.floor(window.innerHeight * dpr);
-    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (renderer) renderer.resize(canvas.width, canvas.height);
   }
   window.addEventListener("resize", resize);
-  resize();
-
-  // --- Shaders ------------------------------------------------------------
-
-  const vertexSrc = `#version 300 es
-    layout(location = 0) in vec3 a_position;
-    uniform mat4 u_matrix;
-    out float v_depth;
-    void main() {
-      gl_Position = u_matrix * vec4(a_position, 1.0);
-      gl_PointSize = 2.5;
-      v_depth = a_position.z;
-    }
-  `;
-
-  const fragmentSrc = `#version 300 es
-    precision mediump float;
-    in float v_depth;
-    uniform float u_brightness;
-    out vec4 outColor;
-    void main() {
-      float t = clamp((v_depth + 1.0) * 0.5, 0.0, 1.0);
-      vec3 near = vec3(1.0, 0.85, 0.35);
-      vec3 far = vec3(0.25, 0.55, 1.0);
-      outColor = vec4(mix(far, near, t) * u_brightness, 1.0);
-    }
-  `;
-
-  function compileShader(type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      throw new Error("Shader compile error: " + gl.getShaderInfoLog(shader));
-    }
-    return shader;
-  }
-
-  const program = gl.createProgram();
-  gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexSrc));
-  gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentSrc));
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    throw new Error("Program link error: " + gl.getProgramInfoLog(program));
-  }
-  const matrixLocation = gl.getUniformLocation(program, "u_matrix");
-  const brightnessLocation = gl.getUniformLocation(program, "u_brightness");
-
-  const positionBuffer = gl.createBuffer();
-  const vao = gl.createVertexArray();
-  gl.bindVertexArray(vao);
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.enableVertexAttribArray(0);
-  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-
-  gl.enable(gl.DEPTH_TEST);
-  gl.clearColor(0.07, 0.07, 0.08, 1.0);
 
   // --- Minimal matrix math (no library needed for this) -------------------
 
@@ -228,8 +209,7 @@
         }
         if (msg && msg.type === "full_mesh_done") {
           if (fullMeshAccum) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, fullMeshAccum, gl.DYNAMIC_DRAW);
+            renderer.upload(fullMeshAccum);
             updateViewFit(fullMeshAccum, fullMeshReceived);
             pointCount = fullMeshReceived;
             lastFrameId = -1;
@@ -267,8 +247,7 @@
       const captureTimestampMs = frame.tCapture;
       const count = frame.count;
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, frame.positions, gl.DYNAMIC_DRAW);
+      renderer.upload(frame.positions);
       updateViewFit(frame.positions, count);
       pointCount = count;
       lastFrameId = frameId;
@@ -279,7 +258,14 @@
       if (latencySamples.length > kLatencyWindow) latencySamples.shift();
     };
   }
-  connect();
+  initRenderer().then((ok) => {
+    if (!ok) return;
+    resize();
+    connect();
+  }).catch((e) => {
+    console.error("renderer init threw:", e);
+    hud.textContent = "Renderer init failed: " + e;
+  });
 
   // --- Scan controls (start/pause/finish, exposure, FOV) -------------------
   // Purely reactive to the server's status broadcasts (see
@@ -387,25 +373,19 @@
   let lastDataFpsSampleFrames = 0;
 
   function draw() {
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    if (pointCount > 0) {
-      const aspect = canvas.width / canvas.height;
-      // Fixed 0.1/100.0 near/far planes (fine for the synthetic unit
-      // sphere) clip almost all of a real scan's mm-scale geometry, since
-      // viewDistance there is easily in the hundreds — scale the clip
-      // planes to the fitted distance/radius instead so content at any
-      // scale stays inside the frustum.
-      const near = Math.max(viewDistance - viewRadius * 4, viewDistance * 0.01, 0.001);
-      const far = viewDistance + viewRadius * 4;
-      const proj = perspective(fovRad(), aspect, near, far);
-      const view = translation(-viewCenter[0], -viewCenter[1], -viewCenter[2] - viewDistance);
-      const matrix = multiply(proj, view);
-      gl.useProgram(program);
-      gl.bindVertexArray(vao);
-      gl.uniformMatrix4fv(matrixLocation, false, matrix);
-      gl.uniform1f(brightnessLocation, brightness);
-      gl.drawArrays(gl.POINTS, 0, pointCount);
-    }
+    if (!renderer) return;
+    const aspect = canvas.width / canvas.height;
+    // Fixed 0.1/100.0 near/far planes (fine for the synthetic unit
+    // sphere) clip almost all of a real scan's mm-scale geometry, since
+    // viewDistance there is easily in the hundreds — scale the clip
+    // planes to the fitted distance/radius instead so content at any
+    // scale stays inside the frustum.
+    const near = Math.max(viewDistance - viewRadius * 4, viewDistance * 0.01, 0.001);
+    const far = viewDistance + viewRadius * 4;
+    const proj = perspective(fovRad(), aspect, near, far);
+    const view = translation(-viewCenter[0], -viewCenter[1], -viewCenter[2] - viewDistance);
+    const matrix = multiply(proj, view);
+    renderer.draw(matrix, brightness, pointCount);
     framePending = false;
     renderFrames++;
 
@@ -434,6 +414,7 @@
     const scanState = latestStatus ? latestStatus.state : "--";
     const scanMode = latestStatus ? latestStatus.mode : "--";
     hud.innerHTML =
+      '<span class="label">backend</span>  <span class="value">' + (renderer ? renderer.name : "--") + "</span>\n" +
       '<span class="label">status</span>  <span class="value">' + connectionState + "</span>\n" +
       '<span class="label">scan</span>    <span class="value">' + scanState + " (" + scanMode + ")</span>\n" +
       '<span class="label">latency</span>  <span class="' + latencyClass + '">' + latencyText + "</span>\n" +
