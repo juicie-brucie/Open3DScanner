@@ -759,7 +759,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 server.BroadcastBinary(cbuf.data(), cbuf.size());
             }
             server.BroadcastText("{\"type\":\"full_mesh_done\"}");
-            std::printf("[worker] Streamed full-detail mesh in %u-point chunks).\n",
+            std::printf("[worker] Streamed full-detail mesh in %u-point chunks.\n",
                         kFullDetailChunk);
 
             // Compile/runtime proof that the loader now resolves the declared
