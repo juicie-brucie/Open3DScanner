@@ -15,4 +15,5 @@ wrote a crash report for this run.
 The session did not collect it; `.claude/agents/hw-test.md` rule 11 now requires
 the check on every non-clean exit. This correction only adds the archival fact —
 the record's crash conclusions were reached without this report and are not
-re-assessed here. See the plan8 crash analysis cited by the record, which retracts its libomp attribution.
+re-assessed here. See the plan8 crash analysis cited by the record, which
+retracts its libomp attribution.
