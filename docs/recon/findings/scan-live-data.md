@@ -542,6 +542,43 @@ channel, and the global pose changes only when a result is confirmed. The scan
 pose appears in **no listener payload**; the only per-frame pose is the frame
 payload's (`FRAME_READY` → `obscan_frame_get_frame_pose`).
 
+**The trigger is a real export (OQ-S12, resolved) — and now declared.** The
+publication path is a complete exported family:
+
+- `obscan_session_create_registration(session, ObScanRegistrationHandle* out)`
+  (`0xda1c` → `bbe4e2e6::create_registration(OBScanRegistrationHandle_**)`
+  `0x22538`; NULL session → `0x32620107`). The handle is opaque and wraps the
+  object — `destroy` reads its inner pointer at `+0x00`.
+- `obscan_registration_confirm_or_cancel_result(handle, bool confirm)`
+  (`0xde2c`, logs `obscan_registration_confirm_or_cancel_result: %s`; NULL
+  handle → `0x32620107`) → `OBScanRegistration::confirm_or_cancel_result(bool)`
+  (`0x55334`) → `resolve_registration_result(bool)` (`0x553fc`) — the sole
+  caller of `set_global_pose`. **Confirming publishes the scan's registration
+  pose as the global pose; cancelling drops the pending result.** The gates
+  (the registration step `reg+0x50 == 3`, the pending set, `thread_is_idle`,
+  the project-step window → `0x32620110`) are the `[inferred]` half from the
+  row-#40 sweep.
+- `obscan_registration_destroy(handle)` (`0xdecc`; NULL handle or NULL inner
+  object → `0x32620107`; gated by `can_destroy_this` `0x55710`).
+
+**What a consumer can rely on:** the *registration* pose is the live solve
+(`obscan_scan_get_registration_pose`) — the channel V4 uses; the *global* pose
+(`obscan_scan_get_global_pose`) changes only when a registration result is
+confirmed through the trigger above. So a viewer's `pose` message can be fed
+getter-only (the registration getter, per frame) or "confirmed" (the global
+getter, on the trigger) — the header now declares both.
+
+The family is larger than the trigger: the runners
+`obscan_registration_auto_registration` (`0xda94` →
+`OBScanRegistration::auto_registration(OBScanIndexs_ const&, std::function…)`
+`0x53e90`) and `obscan_registration_point_pair_registration` (`0xdc5c` →
+`…::point_pair_registration(OBScanPPRegist… const&, …)` `0x54be0`) with their
+cancels (`0xdbec`/`0xddbc`), the session group-info getters
+(`0xc908`/`0xc980`), and the reference-rod register/unregister trio
+(`0x128a8`/`0x12920`/`0x12998`). Their multi-argument signatures are **not**
+read here — a follow-up row if the viewer must *run* a registration, not just
+confirm one.
+
 ### 17.3 The markers getter — `obscan_scan_get_markers`
 
 `(scan, ObScanMarkers* out)`: wrapper `0x105b0` (NULL scan only →
@@ -791,11 +828,12 @@ effect is reached by `reconfig_scan_mode_config`, which takes the bare
   statically derivable — an entry-register capture + a small-`n` hexdump
   settles it; its caller is unproven (absent from the app's P/Invoke
   tables). See §17.6.
-- **OQ-S12** — the pose's publication trigger `obscan_registration_confirm_or_cancel_result`
-  (`0xde2c`) is not in our header subset (§17.2): the viewer's `pose` message
-  depends on it (the global pose updates per confirm). Declare it in a
-  registration-family row, or document the registration getter as the live
-  channel.
+- **OQ-S12** — *Resolved (row #60)*: the trigger **is** a C-reachable export —
+  `obscan_registration_confirm_or_cancel_result(handle, bool)` — and it heads a
+  complete exported registration family (§17.2). The pose-path trio
+  (`session_create_registration`, the trigger, `registration_destroy`) is now
+  declared in the header; the runners' signatures remain a follow-up if the
+  viewer must *run* registrations.
 - **OQ-S13** — *Answered (row #58), two residues*: the gate→code map is in §18
   (the `+0x3c` gate → `0x32620110` for the exposure/depth/laser/combined
   family and `0x32620105` for `show_data_rotate`; the reconfig's step gates →
@@ -871,3 +909,7 @@ value types, and the natives sweep (row55-a draft, folded); `ObScanConfig` vs
 Row #58 (the config-setter residues): light reads only — the setter natives
 (0x6f5a0c-0x6f5d20), the reconfig pair (0x5cb00/0xc41a4), the device callee
 (0x5c6400), and the plane wrapper/native (0xf8cc/0x5c5c0). No analyzer.
+
+Row #60 (the pose trigger): the registration family wrappers (0xda1c/0xde2c/0xdecc),
+the trigger native (0x55334), and the family listing from the dynsym. Light reads
+only; no analyzer.
