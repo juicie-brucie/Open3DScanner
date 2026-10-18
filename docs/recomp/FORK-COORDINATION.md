@@ -60,3 +60,8 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
 - `[mac]` 2026-10-18 — coordination channel confirmed live: `Windows11` registered in the
   desktop app's server list and answering (OpenCode 2.0.32); `scripts/remote-opencode.sh` named
   as the channel in `WINDOWS-FORK.md` §5.
+
+- `[mac]` 2026-10-18 — repo `Open3DScanner-Win64` created (standalone, private) and seeded from the
+  parent at `dac0e7d`; its copy of this file carries its `[win]` entry, and both copies' §4 now
+  carry the room-hygiene rule. The §2 pin row for the fork stays unset until the fork wires its
+  check.
