@@ -316,8 +316,11 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // ABI-legal, correctness-unproven — findings §2/§8/§9, board #11.
 // Messages emitted while no listener is installed are dropped, not queued.
 // The listener object is referenced (a pointer to it is captured), never
-// copied, so the caller must keep it alive until it is removed or the
-// context is destroyed. Delivery happens on the emitting (vendor) thread
+// copied, so the caller must keep it alive until it is removed — and past
+// obscan_context_destroy(): the SDK's background threads can outlive
+// destroy while still holding the captured pointer, so freeing it together
+// with the context is not safe; keep it valid for the life of the process
+// (§8). Delivery happens on the emitting (vendor) thread
 // [hw-confirmed: 2026-10-17-plan8 — DEVICE_CONNECT was invoked on the
 // thread that registered the listener], so a listener must be thread-safe.
 // See docs/recon/findings/device-message-listener.md.
@@ -503,8 +506,9 @@ typedef ObScanStatus (*fn_obscan_device_management_select_active_device)(ObScanD
 // Single-slot: registering a second listener without removing the first, or
 // passing NULL, returns OB_SCAN_ERROR_INVALID_ARGUMENT. `listener` must stay
 // alive for as long as the SDK might still invoke it (it is referenced, not
-// copied); this project always owns one for the lifetime of the context that
-// registered it.
+// copied) — including after obscan_context_destroy(); see the lifetime rule
+// in the device-message block above. This project keeps its listeners in
+// static storage for the whole process lifetime.
 typedef ObScanStatus (*fn_obscan_device_management_add_device_msg_listener)(ObScanDeviceManagementHandle device_handle, ObScanDeviceMessageListener* listener);
 
 // Session / scan lifecycle — the live-capture path this project actually
