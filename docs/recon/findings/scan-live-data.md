@@ -329,6 +329,50 @@ re-fills the datas, the pointers returned by a previous call are invalidated
 runtime-dependent facts are the mesh contents/counts, which the acceptance run
 already sampled (6112 vertices / 4331 triangles after pause).
 
+## 15. The teardown path and the four RPC client ports (row #4)
+
+*Static half, plan4 pass + the archived runs. Raw excerpts:
+`.recon-cache/listings/scan-live-data.teardown-ports.plan4.asm`. The four ports are
+`libobsensor::pal::RPCClientPort` objects — they live in **libOrbbecSDK** (the scan dylib
+contains no `RPCClientPort` strings); the scan library drives the SDK device that owns
+them.*
+
+**The four ports** (per connected device; acceptance-run log): Depth `10010`, IMU
+`10011`, RGB `10012`, IR `10013` — the IR port serves IR left+right, IMU serves
+accel+gyro.
+
+**What each teardown call releases.**
+
+| call | releases | ports? |
+| --- | --- | --- |
+| `obscan_scan_pause` | scan state only (step → 3, pending-flag clear) | no |
+| `obscan_scan_stop` | the pipeline/streams (`Pipeline destroyed!` during the stop path) | no |
+| `obscan_session_destroy` (`0xc1d8`) | the session object only (`can_destroy_this` guard, `set_this_nullptr`, handle cleared) | no |
+| `obscan_context_destroy` (`0xb61c`) | the context **and the device**: its success path ends in `bl OBDeviceManagement::release()` (`0xb690`) — the **only caller** of `release()` | **yes — all four** |
+
+`OBDeviceManagement::release()` @ `0x5c14d8` clears the device pointer at manager
+`+0x158` and destroys+frees the device (`device::OrbbecDevice::~` @ `0x1b4bbc` →
+releases the internal-device shared_ptr), which tears down the SDK device: sensors and
+all four ports. `pause`/`stop`/`session_destroy` cannot release the ports — none of them
+calls `release()` or `~OrbbecDevice` (the destructor's only callers are `release`,
+`OBDeviceManagement::~`, and `init_device`, which destroys the *previous* device on a
+device re-init).
+
+**Runtime confirmation (no new run needed).** The acceptance run
+(`tests/results/2026-10-17-scan-server-live-acceptance.log`) logs all four
+`rpc client destroyed:` lines (RGB, IR, IMU, Depth) within 1.2 ms at teardown
+(23:35:37.965), then `Context.cpp:89 Context destroyed`, `obscan_context_destroy ->
+OB_SCAN_SUCCESS`, worker exit 0. The same four-line pattern is in the clean-exit
+`live_capture_test` run (`logs/branch_claude-clever-albattani-cebx0e-v2/
+live_capture_test_run2_CLEAN_EXIT_0.log`).
+
+**Does any path leave one open?** Any path that does not reach
+`obscan_context_destroy` — a crash, a bail-out before teardown, a killed process —
+leaves the device and all four ports open until process exit (the loader's threading
+model already relies on this: threads and device state outlive the destroy call in a
+bail-out). On the clean path the stop-path IMU error (`Stop imu stream error:
+std::bad_cast` at 23:35:37.584) did **not** prevent the release.
+
 ## OPEN QUESTIONS
 
 - **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
