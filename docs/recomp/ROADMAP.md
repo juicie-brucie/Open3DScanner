@@ -24,7 +24,8 @@ spec.**
 The board says the capture/ABI phase is over: 53 rows `DONE`, the viewer family landed
 (`V1`, `V3`, `V4`; `V2`'s backpressure half and `V5` are among the three `HW` rows waiting on
 one run), and the Windows lane handed off. What is left on the macOS board is **one
-acceptance run** (clearing `#41`/`#53`/`#56`) and **one user decision** (`#21`). There is no
+acceptance run** (clearing `#41`/`#53`/`#56`) left on this board; the `#21` provenance hole is
+closed (agent-tier + `record-provenance`). There is no
 unstarted workstream except the G-goals, and among them `G1` is the corpus's own next step
 once the usage fix is set aside — and the operator's own complaint. It is also the only G-goal
 that ends in working software without needing another goal first.
@@ -44,7 +45,7 @@ G2 (coverage heatmap) ─► build (prereq #40 landed) ─► G3 (owned tracking
 G4/G5 (denoise + fusion, the accuracy harness) ─► need a fusion feature to exist first
 
 #56 · #41 · #53 (HW) ─► ONE acceptance run (the stall test + V5's visual) ─► three rows close
-#58 (RECON, in flight) ─► OQ-S13/S14        #21 (TODO) ─► operator decision
+#58 (RECON, in flight) ─► OQ-S13/S14        #21 (closed 2026-10-18)
 ```
 
 Ranked by what it frees, not by board order:
@@ -68,7 +69,7 @@ Ranked by what it frees, not by board order:
 | `G2`'s build row (unfiled) | builder | The under-covered point set from the vendor's own per-point result, painted on the live cloud. `#40` landed. |
 | `#58` | recon | In flight. The `OQ-S13`/`S14` residues (`#55`'s). |
 | OQ-7b's row (unfiled) | hardware | The listener-less with-device run; `#12`'s note waits on it. |
-| `#21` | operator | The tiering decision for added run records — a policy call, not agent work. |
+| `#21` | **closed** | Agent-tier + `record-provenance` landed 2026-10-18; nothing outstanding. |
 
 ## Blocked, and on what
 
@@ -78,7 +79,7 @@ Ranked by what it frees, not by board order:
 | `G4`, `G5` | A fusion feature actually being planned; a denoise/fusion harness measures something that does not exist yet. |
 | `G1`'s build row | `G1`'s adoption row — recon before build, per the corpus rule. |
 | the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
-| `#21` | The operator. |
+| `#21` | **Closed** (2026-10-18) — the remedy is on main; the decision's authority is recorded on the row. |
 
 ## Orphaned open questions
 
@@ -170,8 +171,10 @@ is set there. **Do not open Windows rows from this roadmap.**
    unexercised: the project has bound an ABI and won a live view, but has never run its own
    reconstruction math on live data. `G1`'s adoption row is where that gets tested cheaply,
    before a build row is committed.
-2. **Evidence provenance (`#21`).** Added records and logs under `tests/results/**` are
-   script-tier, so a fabricated or mis-transcribed record auto-merges with no judgment pass.
+2. **Evidence provenance (`#21`) — closed 2026-10-18.** Added records and logs under
+   `tests/results/**` now need a verifier verdict (agent-tier), and every added record needs a
+   non-`.md` companion raw artifact in the same PR; the residual risk is a plausible-but-false
+   record surviving a verdict.
    Cheapest retirement: the operator decision; interim, land each manual report as a record.
 3. **A second evidence corpus outside the gate.** `logs/**` is tracked and is the evidence
    base for the corpus's §1, but it is neither `tests/results/**` nor `docs/recon/**`, so the
@@ -203,7 +206,7 @@ For the dispatcher to expand — not dispatches in themselves.
    recon owns the header.
 5. **`OQ-7b`'s row** → hardware: the listener-less with-device run, batched with (2).
 
-Also ready, non-competing: `#58` (recon, in flight), `#21` (operator decision), and the
+Also ready, non-competing: `#58` (recon, in flight), `#21` (closed 2026-10-18), and the
 `G6` voxel-size adoption if a recon session frees up.
 
 ## Superseded plans

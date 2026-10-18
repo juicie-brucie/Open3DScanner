@@ -22,11 +22,11 @@ is script-gated or needs an agent verdict):
 Gating checks
   whitespace      `git diff --check`
   run-records     tests/results/: no existing record modified, deleted or renamed
-                  in place (addenda *-correction.md / *-analysis.md excepted)
+                  in place (addenda *-correction.md / *-analysis.md / *-addendum.md excepted)
   record-provenance
                   an added tests/results/*.md record must be accompanied, in the
                   same PR, by an added raw artifact sharing its stem (typically
-                  its .log); addenda/corrections/analyses are exempt.
+                  its .log, non-.md); addenda/corrections/analyses are exempt.
   plan            PLAN.md row syntax: unique numbers, valid statuses, well-formed.
                   Status moves and new rows are reported, not gated.
   archives        cited `sha256 <hex>` values in changed tests/results/*.md must
@@ -263,7 +263,8 @@ def main():
     for line in r.stdout.splitlines():
         st, path = line.split("\t")[0], line.split("\t")[-1]
         bn = os.path.basename(path)
-        is_addendum = bn.endswith("-correction.md") or bn.endswith("-analysis.md")
+        is_addendum = (bn.endswith("-correction.md") or bn.endswith("-analysis.md")
+                       or bn.endswith("-addendum.md"))
         if st.startswith("M"):
             if is_addendum:
                 addenda += 1
@@ -280,7 +281,8 @@ def main():
     added_res = [l.split("\t")[-1] for l in r.stdout.splitlines() if l.startswith("A")]
     records = [p for p in added_res if p.endswith(".md")
                and not re.search(r"-(correction|analysis|addendum)\.md$", p)]
-    others = [os.path.basename(p) for p in added_res if p not in records]
+    others = [os.path.basename(p) for p in added_res
+              if p not in records and not p.endswith(".md")]
     missing = [p for p in records
                if not any(o.startswith(os.path.basename(p)[:-3]) for o in others)]
     add("record-provenance", not missing,
