@@ -694,7 +694,9 @@ typedef struct ObScanImageData ObScanImageData;
 // your stack, pass &out, and the SDK fills it in. Layouts from the listing;
 // see docs/recon/findings/data-process-message-listeners.md §15.
 // Marker records: also filled by the scan family's obscan_scan_get_markers.
-// Elements are 16-byte records; their internals are unmapped (findings §15).
+// The three arrays are parallel: `markers` = 16-byte {x,y,z,pad} positions,
+// `aux_0` = the same shape (normals), `aux_1` = one f32 (radius) per marker.
+// See docs/recon/findings/scan-live-data.md §17.3.
 typedef struct ObScanMarkers {
     uint32_t num_markers;   // 0x00
     const void* markers;    // 0x08  begin of the 16-byte marker records
