@@ -15,6 +15,7 @@
 typedef SOCKET socket_t;
 #define OPENSCANNER_INVALID_SOCKET INVALID_SOCKET
 #define OPENSCANNER_CLOSESOCK closesocket
+#define OPENSCANNER_SHUTDOWN(s) shutdown(s, SD_BOTH)
 #else
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -24,6 +25,7 @@ typedef SOCKET socket_t;
 typedef int socket_t;
 #define OPENSCANNER_INVALID_SOCKET (-1)
 #define OPENSCANNER_CLOSESOCK ::close
+#define OPENSCANNER_SHUTDOWN(s) shutdown(s, SHUT_RDWR)
 #endif
 
 // ---------------------------------------------------------------------------
@@ -212,22 +214,29 @@ bool ReadFrame(socket_t client, uint8_t* opcode, std::vector<uint8_t>* payload) 
     return true;
 }
 
-void SendAll(socket_t sock, const uint8_t* data, size_t len) {
+bool SendAll(socket_t sock, const uint8_t* data, size_t len) {
     size_t sent = 0;
     while (sent < len) {
 #if defined(_WIN32)
         int n = send(sock, reinterpret_cast<const char*>(data + sent), static_cast<int>(len - sent), 0);
 #else
-        ssize_t n = send(sock, data + sent, len - sent, 0);
+#if defined(MSG_NOSIGNAL)
+        const int flags = MSG_NOSIGNAL;
+#else
+        const int flags = 0;  // macOS: SO_NOSIGPIPE + process SIGPIPE ignore cover this.
 #endif
-        if (n <= 0) return;  // Peer gone; the reader thread will notice and prune this client.
+        ssize_t n = send(sock, data + sent, len - sent, flags);
+#endif
+        if (n <= 0) return false;  // Failed/timed-out send: caller drops this client.
         sent += static_cast<size_t>(n);
     }
+    return true;
 }
 
 // Encodes and sends one unmasked WebSocket frame (server->client frames are
-// never masked per RFC 6455).
-void SendFrame(socket_t sock, uint8_t opcode, const uint8_t* payload, size_t len) {
+// never masked per RFC 6455). Returns false if the peer stalled/gone; the
+// caller must not write another frame to that socket.
+bool SendFrame(socket_t sock, uint8_t opcode, const uint8_t* payload, size_t len) {
     std::vector<uint8_t> header;
     header.push_back(0x80 | opcode);  // FIN=1, opcode
     if (len <= 125) {
@@ -242,8 +251,9 @@ void SendFrame(socket_t sock, uint8_t opcode, const uint8_t* payload, size_t len
             header.push_back(static_cast<uint8_t>((static_cast<uint64_t>(len) >> (i * 8)) & 0xFF));
         }
     }
-    SendAll(sock, header.data(), header.size());
-    if (len > 0) SendAll(sock, payload, len);
+    if (!SendAll(sock, header.data(), header.size())) return false;
+    if (len > 0 && !SendAll(sock, payload, len)) return false;
+    return true;
 }
 
 }  // namespace
@@ -293,6 +303,13 @@ struct WsBroadcastServer::Impl {
             snd_timeout.tv_sec = 0;
             snd_timeout.tv_usec = 100000;
             setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&snd_timeout), sizeof(snd_timeout));
+#if defined(SO_NOSIGPIPE)
+            // Second belt against SIGPIPE on a reset peer (macOS/BSD).
+            // scan_server also ignores SIGPIPE process-wide; this covers
+            // any other host of this server.
+            int no_sigpipe = 1;
+            setsockopt(client, SOL_SOCKET, SO_NOSIGPIPE, reinterpret_cast<const char*>(&no_sigpipe), sizeof(no_sigpipe));
+#endif
 #endif
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
@@ -439,15 +456,30 @@ void WsBroadcastServer::Stop() {
 
 void WsBroadcastServer::BroadcastBinary(const uint8_t* data, size_t size) {
     std::lock_guard<std::mutex> lock(impl_->clients_mutex);
-    for (socket_t client : impl_->clients) {
-        SendFrame(client, 0x2 /* binary */, data, size);
+    for (auto it = impl_->clients.begin(); it != impl_->clients.end();) {
+        if (!SendFrame(*it, 0x2 /* binary */, data, size)) {
+            // A partial frame already went out; never write another frame to
+            // this socket. Drop it from the broadcast list and wake its
+            // reader, which owns the actual close().
+            socket_t dead = *it;
+            it = impl_->clients.erase(it);
+            OPENSCANNER_SHUTDOWN(dead);
+        } else {
+            ++it;
+        }
     }
 }
 
 void WsBroadcastServer::BroadcastText(const std::string& text) {
     std::lock_guard<std::mutex> lock(impl_->clients_mutex);
-    for (socket_t client : impl_->clients) {
-        SendFrame(client, 0x1 /* text */, reinterpret_cast<const uint8_t*>(text.data()), text.size());
+    for (auto it = impl_->clients.begin(); it != impl_->clients.end();) {
+        if (!SendFrame(*it, 0x1 /* text */, reinterpret_cast<const uint8_t*>(text.data()), text.size())) {
+            socket_t dead = *it;
+            it = impl_->clients.erase(it);
+            OPENSCANNER_SHUTDOWN(dead);
+        } else {
+            ++it;
+        }
     }
 }
 
