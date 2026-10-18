@@ -737,7 +737,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             }
             std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), preview_count);
             server.BroadcastBinary(buf.data(), buf.size());
-            std::printf("[worker] Broadcast final reconstructed mesh preview (%u of %u points).\\n",
+            std::printf("[worker] Broadcast final reconstructed mesh preview (%u of %u points).\n",
                         preview_count, mesh.num_vertices);
 
             // On-demand full-detail path: stream the dense mesh as bounded
@@ -759,7 +759,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 server.BroadcastBinary(cbuf.data(), cbuf.size());
             }
             server.BroadcastText("{\"type\":\"full_mesh_done\"}");
-            std::printf("[worker] Streamed full-detail mesh in %u-point chunks.\\n",
+            std::printf("[worker] Streamed full-detail mesh in %u-point chunks).\n",
                         kFullDetailChunk);
 
             // Compile/runtime proof that the loader now resolves the declared
