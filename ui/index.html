@@ -101,14 +101,19 @@
   // headers, so edits silently stopped taking effect even across new
   // tabs/reloads) — load it with a cache-busting query param every time
   // instead of relying on a <script src> tag.
-  const p = document.createElement("script");
-  p.src = "frame_protocol.js?t=" + Date.now();
-  p.onload = () => {
-    const s = document.createElement("script");
-    s.src = "app.js?t=" + Date.now();
-    document.body.appendChild(s);
-  };
-  document.body.appendChild(p);
+  function loadScript(src, onload) {
+    const el = document.createElement("script");
+    el.src = src + "?t=" + Date.now();
+    el.onload = onload;
+    document.body.appendChild(el);
+  }
+  loadScript("frame_protocol.js", () => {
+    loadScript("render/webgl2_renderer.js", () => {
+      loadScript("render/webgpu_renderer.js", () => {
+        loadScript("app.js");
+      });
+    });
+  });
 </script>
 </body>
 </html>
