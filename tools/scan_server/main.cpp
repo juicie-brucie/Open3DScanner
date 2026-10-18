@@ -347,6 +347,8 @@ constexpr int kLiveTickIntervalMs = 100;  // ~10Hz live-frame polling.
 
 std::atomic<bool> g_got_connect_message{false};
 std::atomic<int> g_frame_ready_count{0};
+std::atomic<uint64_t> g_cloud_frames_broadcast{0};
+std::atomic<uint64_t> g_full_detail_chunks_broadcast{0};
 
 // Set by a SIGINT/SIGTERM handler so Ctrl+C (or a plain `kill`/pkill, which
 // sends SIGTERM by default) breaks out of the streaming loop into the
@@ -585,6 +587,8 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
         // Still try to tear the scan down cleanly below rather than leaving
         // the device mid-scan.
     } else {
+        std::printf("[worker] Frame protocol V%u (envelope: magic u32, version u16, type u16, seq u32, t_capture f64, t_server f64, payload_len u32 = 32 bytes)\n",
+                    openscanner::frame_protocol::VERSION);
         std::printf("[worker] Streaming live scan frames on ws://0.0.0.0:%u (open ui/index.html)\n", port);
         std::printf(
             "[worker] Note: each tick calls obscan_scan_get_model_point_color_clouds, which publishes the\n"
@@ -676,11 +680,13 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                     }
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
                     server.BroadcastBinary(buf.data(), buf.size());
+                    ++g_cloud_frames_broadcast;
                 } else {
                     // Broadcast an empty frame too, so the UI's data-fps/HUD
                     // reflects a real, live connection rather than going idle.
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
                     server.BroadcastBinary(buf.data(), buf.size());
+                    ++g_cloud_frames_broadcast;
                 }
                 // Release is a no-op in the vendor (native `ret`); call it
                 // for API symmetry per the header. Buffers are borrowed, so
@@ -729,6 +735,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
             }
             std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), preview_count);
             server.BroadcastBinary(buf.data(), buf.size());
+            ++g_cloud_frames_broadcast;
             std::printf("[worker] Broadcast final reconstructed mesh preview (%u of %u points).\n",
                         preview_count, mesh.num_vertices);
 
@@ -749,6 +756,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
                 }
                 std::vector<uint8_t> cbuf = BuildFrame(frame_id++, NowMs(), cxyz.data(), cnt);
                 server.BroadcastBinary(cbuf.data(), cbuf.size());
+                ++g_full_detail_chunks_broadcast;
             }
             server.BroadcastText("{\"type\":\"full_mesh_done\"}");
             std::printf("[worker] Streamed full-detail mesh in %u-point chunks.\n",
@@ -793,6 +801,12 @@ int RunLiveServer(const std::string& library_path, uint16_t port) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     Report("obscan_context_destroy", status);
+
+    std::printf("[worker] Frame protocol V%u counters: cloud_frames=%llu full_detail_chunks=%llu\n",
+                openscanner::frame_protocol::VERSION,
+                (unsigned long long)g_cloud_frames_broadcast.load(),
+                (unsigned long long)g_full_detail_chunks_broadcast.load());
+    std::fflush(stdout);
 
     server.Stop();
     return 0;
