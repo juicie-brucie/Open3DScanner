@@ -353,27 +353,39 @@ typedef void (*ObScanStatusCallback)(ObScanStatus status);
 // itself (findings §4). A DISCONNECT after a CONNECT is a real unplug.
 //
 // Known hazard — rewritten from the PLAN #8 crash analysis
-// (tests/results/2026-10-17-plan8-device-message-listener-crash-analysis.md).
-// Established [hw-confirmed: that crash report + the run's raw.log]:
+// (tests/results/2026-10-17-plan8-device-message-listener-crash-analysis.md;
+// main-thread re-read:
+// tests/results/2026-10-17-crash-reports-main-thread-teardown-correction.md).
+// Observed [hw-confirmed: the crash report + the run's raw.log]:
 // (1) The fault site is inside the vendor SDK, strictly upstream of
 // send_device_msg — update_camera_status -> update_device_info ->
 // get_active_device() (device::OrbbecDevice) — on the vendor's
 // NetDeviceWatcher (GVCP) thread: crash.ips frame #12 is
 // libobsensor::pal::NetDeviceWatcher::start(...)::$_1, and the only images
 // on the stack are liborbbec_scan / libOrbbecSDK / libsystem_pthread.
-// (2) The temporal adjacency is real and is the fact that #11's re-run must
-// reproduce: a DEVICE_CONNECT delivery to the caller's callback completed on
-// the worker thread, add-after-remove returned SUCCESS, and ~60 ms later
-// that NetDeviceWatcher thread logged ObException.cpp:5 "Trying to create a
-// device that you've already created!" and the process SIGSEGV'd. So the
-// crash follows a connect callback by ~60 ms — but as a separate
-// NetDeviceWatcher-initiated device-changed pass on a different thread, not
-// a post-return continuation of the registration call, and NOT the same
-// class as the obscan_context_destroy()/libomp crash (different thread, no
-// such frames). Not established: what leaves device bookkeeping in that
-// NULL state — a pre-existing inconsistency that remove->add merely
-// exposes, or re-entry while the device object re-creates; board #11 exists
-// to settle that. Until #11 rules, run anything that registers this
+// (2) The conditions it was observed under — once: an add-after-remove
+// (re-add) of this listener, a DEVICE_CONNECT delivery to the caller's
+// callback completing on the worker thread, add returning SUCCESS, then
+// ~60 ms later that NetDeviceWatcher thread logging ObException.cpp:5
+// "Trying to create a device that you've already created!" and the process
+// SIGSEGV'ing — a separate NetDeviceWatcher-initiated device-changed pass
+// on a different thread, not a post-return continuation of the registration
+// call. It has not been reproduced (the f4c5f86 plan1 run exited 0), so do
+// not read this as "the connect callback reproducibly crashes".
+// (3) Main-thread state at the fault [hw-confirmed: the correction record —
+// identical in all three archived reports]: the main thread was inside
+// obscan_context_destroy() -> OBDeviceManagement::release() ->
+// ~OrbbecDevice -> ~OrbbecInternalDevice -> OrbbecInternalDevice::stop(),
+// blocked on a recursive_mutex. Teardown was racing the fault, not absent —
+// the "never reached destroy" reading is dropped. No run shows
+// obscan_context_destroy() itself crashing: the f4c5f86 run's destroy
+// returned SUCCESS in 807 ms with the worker exiting 0, so the
+// "destroy/libomp crash" claim is unobserved (not established).
+// Not established: what leaves device bookkeeping in that NULL state — a
+// pre-existing inconsistency that remove->add merely exposes, or re-entry
+// while the device object re-creates (board #11); and whether stop()'s
+// mutex is the one get_active_device()/update_device_info() take (open in
+// the correction record). Until #11 rules, run anything that registers this
 // listener inside a disposable worker process (see worker_process.h) — for
 // the unproven NetDeviceWatcher threading around remove->add, not for
 // callback-run fragility.
