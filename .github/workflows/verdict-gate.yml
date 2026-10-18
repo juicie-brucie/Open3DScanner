@@ -1,0 +1,89 @@
+name: verdict-gate
+
+on:
+  # pull_request_target, not pull_request: the auto-verdict job must run from
+  # the base branch's copy of this workflow, so a PR cannot edit the gate that
+  # judges it. It checks out `main` and runs no PR code.
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+jobs:
+  auto-verdict:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Script-tier PRs are script-gated
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ ! -f scripts/verify-pr.py ]; then
+            echo "main has no scripts/verify-pr.py yet - leaving verdict pending"
+            exit 0
+          fi
+          tier=$(python3 scripts/verify-pr.py --tier ${{ github.event.pull_request.number }})
+          if [ "$tier" != "script" ]; then
+            echo "tier=$tier - a verifier verdict comment is required"
+            exit 0
+          fi
+          gh api -X POST "repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }}" \
+            -f state=success -f context=verdict -f description="docs/artifacts - script-gated"
+          echo "tier=script - verdict set to success"
+
+  verdict:
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, 'VERDICT:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set verdict status for the current head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ github.event.comment.body }}
+          ASSOC: ${{ github.event.comment.author_association }}
+        run: |
+          set -euo pipefail
+          case "$ASSOC" in
+            OWNER|MEMBER|COLLABORATOR) ;;
+            *) echo "ignoring comment from association: $ASSOC"; exit 0 ;;
+          esac
+          # Exactly one verdict-shaped token anywhere in the comment (bold /
+          # italic markers stripped, so decorated forms count too). A quoted
+          # example, a prefixed correction or a retraction alongside the real
+          # line makes the comment inert (no status -> no merge), never a false
+          # success. The anchored line below is then used for the SHA.
+          n=$(printf '%s\n' "$BODY" | sed 's/\*//g' \
+            | grep -o -E 'VERDICT:[[:space:]]*(MERGEABLE|NEEDS CHANGE)[[:space:]]*@[[:space:]]*[0-9a-f]{40}' \
+            | wc -l | tr -d ' ')
+          if [ "$n" -ne 1 ]; then
+            echo "found $n verdict-shaped tokens - ignoring"
+            exit 0
+          fi
+          line=$(printf '%s\n' "$BODY" | grep -m1 -E '^VERDICT: (MERGEABLE|NEEDS CHANGE) @ [0-9a-f]{40}[[:space:]]*$' || true)
+          if [ -z "$line" ]; then
+            echo "verdict token is not an anchored line - ignoring"
+            exit 0
+          fi
+          verdict=${line#VERDICT: }
+          verdict=${verdict%% @*}
+          sha=${line##*@ }
+          sha=${sha%%[[:space:]]*}
+          head=$(gh api "${{ github.event.issue.pull_request.url }}" --jq .head.sha)
+          if [ "$sha" != "$head" ]; then
+            echo "verdict names $sha but head is $head - stale, ignoring"
+            exit 0
+          fi
+          if [ "$verdict" = "MERGEABLE" ]; then state=success; else state=failure; fi
+          gh api -X POST "repos/${{ github.repository }}/statuses/$sha" \
+            -f state="$state" -f context=verdict \
+            -f description="verifier: ${verdict// /_}"

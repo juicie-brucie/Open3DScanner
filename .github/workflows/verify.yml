@@ -1,0 +1,44 @@
+name: verify-pr
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  verify-pr:
+    name: verify-pr
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Cache build tree
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: build-${{ hashFiles('**/CMakeLists.txt', 'engine/**', 'tools/**', 'tests/**', 'mesh/**', 'ui/**') }}
+          restore-keys: |
+            build-
+
+      - name: Run deterministic checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Run the trusted copy of the checker from the base branch, so a PR
+          # cannot edit the gate that judges it (scripts/** is agent-tier).
+          if git cat-file -e origin/main:scripts/verify-pr.py 2>/dev/null; then
+            git show origin/main:scripts/verify-pr.py > "$RUNNER_TEMP/verify-pr.py"
+            echo "using scripts/verify-pr.py from origin/main"
+          else
+            cp scripts/verify-pr.py "$RUNNER_TEMP/verify-pr.py"
+            echo "origin/main has no scripts/verify-pr.py yet - using the PR copy (bootstrap)"
+          fi
+          python3 "$RUNNER_TEMP/verify-pr.py" ${{ github.event.pull_request.number }}

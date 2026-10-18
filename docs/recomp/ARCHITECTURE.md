@@ -22,7 +22,7 @@ artifact: the only thing both sides agree on, and the thing a human reviews.
 | `openscanner/recon` | primary | `obscan_api.h`, `docs/recon/**` | `opencode/glm-5.3-flash-free#max` |
 | `openscanner/builder` | primary | `engine/src`, `mesh`, `ui`, `tools` | `opencode/beam-free#high` |
 | `openscanner/recon-sweep` | subagent | `docs/recon/findings/**` (draft) | `opencode/deepseek-v4.1-flash-free#low` |
-| `openscanner/verifier` | all | *nothing* (read-only) | `opencode/space-bunny-free#max` |
+| `openscanner/verifier` | all | PR comments (verdicts); no edits | `opencode/space-bunny-free#max` |
 | hardware tester | external | `tests/results/**` | Claude Code, driven by hand |
 
 ### Why these models
@@ -54,7 +54,7 @@ explicitly — otherwise fan-out would run on recon's `#max` model, which is bac
 | `recon` | header + `docs/recon` | allow | allow | `recon-sweep`, `verifier` |
 | `builder` | src dirs; **deny header** | **deny** | **deny** | `verifier` only |
 | `recon-sweep` | `docs/recon` only | allow | **deny** | — |
-| `verifier` | **deny all** | **deny** | **deny** | — |
+| `verifier` | **deny all** (PR comments are not edits) | **deny** | **deny** | — |
 
 Three rules carry the design:
 
@@ -96,6 +96,7 @@ Open3DScanner/
   docs/recon/findings/*.md                  # narrative spec (recon writes)
   docs/recomp/PLAN.md                       # task board (you own)
   docs/recomp/ARCHITECTURE.md               # this file
+  scripts/verify-pr.py                      # deterministic PR checks (CI + verifier)
   tests/hardware/*                          # test programs (builder)
   tests/results/*                           # observed behavior (hardware agent)
   .recon-cache/                             # vendor bins + REA snapshots (gitignored)
@@ -134,13 +135,31 @@ Two review gates, deliberately different kinds:
 - **verifier** — static, cheap, automated: "does the code disagree with the header?"
 - **hardware** — empirical, manual: "does the header disagree with the real device?"
 
-Landing is gated on the first of those. **Nothing merges without a verdict from
-someone other than the dispatcher** — a verifier session, or the user, reports
-`MERGEABLE` or `NEEDS CHANGE` against the exact head commit, by SHA. Reading the diff
-yourself is participation, not verification. A verdict goes stale the moment the branch
-moves; a `NEEDS CHANGE` verdict is fixed on the branch, never merged with a follow-up;
-and the verifier **reports, never acts** — it does not merge, push, or edit, so a
-verifier session running `gh pr merge` is a merge by proxy, not a verified one.
+Landing is gated mechanically, in two tiers:
+
+- **Script tier** (run records and raw logs under `tests/results/**`, `docs/recomp/**`,
+  `CLAUDE.md`, `README.md`, …): the verdict is the deterministic check
+  `scripts/verify-pr.py`, run by CI as the `verify-pr` status. When every changed path
+  is in this tier, `verdict-gate` sets `verdict=success` automatically. No agent pass.
+- **Agent tier** (`engine/**`, `tools/**`, `tests/hardware/**`, `mesh/**`, `ui/**`,
+  `scripts/**`, CMake, `.github/**`, `.claude/**`, `docs/recon/**`, and
+  `tests/results/**` addenda): CI runs the **trusted copy of the script from `main`**;
+  workflow files are themselves agent-tier, so a PR that edits `.github/**` is reviewed
+  rather than trusted, and the `auto-verdict` job runs via `pull_request_target` from
+  the base branch (it checks out `main` and runs no PR code), so it cannot be edited by
+  the PR it judges. Then an `openscanner/verifier` session adjudicates what the script cannot — semantics vs the header, prose vs evidence,
+  overclaiming — and posts exactly one comment: `VERDICT: MERGEABLE @ <head-sha>` or
+  `VERDICT: NEEDS CHANGE @ <head-sha>`. `verdict-gate` turns an anchored verdict line
+  naming the current head into the `verdict` status; a comment with more than one
+  verdict line is ignored (no status, so no merge).
+
+`main`'s branch protection (enabled with this change) requires both statuses and blocks force-pushes. PRs are
+opened with `gh pr merge --auto --merge`, so a PR lands the moment its checks pass. A
+verdict is bound to a SHA: it goes stale automatically when the branch moves, and a
+`NEEDS CHANGE` blocks the merge. The verifier **reports, never acts** — it does not
+merge, push, or edit. The checker is deterministic and runs in CI, and the agent verdict
+comes from a session other than the dispatcher; the GitHub account is shared, so that
+separation is process-level, not cryptographic.
 
 ## Claude Pro's place
 
@@ -183,10 +202,10 @@ start the next round.
 ## Open items
 
 - **Git discipline:** settled — one worktree per role, each on its own branch off
-  `main`, landing through a PR with a merge commit that carries a verifier verdict on
-  its exact head commit, recorded on the PR by SHA. Two `git` clients in one checkout
-  interleave the index, so sessions never share one, and a room is only ever torn down
-  by the user.
+  `main`, landing through a PR with a merge commit. The gate is mechanical: `verify-pr`
+  always, plus a `verdict` status from the verifier's comment on the exact head for
+  code. Two `git` clients in one checkout interleave the index, so sessions never share
+  one, and a room is only ever torn down by the user.
 - **Hardware seam:** decide whether the Claude Code agent works in this checkout
   (writing only `tests/results/**`) or its own clone.
 - **Vendor binaries:** `.recon-cache/` must be populated before the first

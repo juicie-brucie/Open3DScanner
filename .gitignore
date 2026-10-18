@@ -17,3 +17,5 @@ GPPLog.txt
 # REA/Ghidra snapshots and local vendor binaries used for ABI recovery.
 # Large and reference-only — never committed. See docs/recon/README.md.
 /.recon-cache/
+__pycache__/
+*.pyc
