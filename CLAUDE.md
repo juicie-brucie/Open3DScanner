@@ -12,7 +12,9 @@ Hardware tests run from the worktree that holds the interposer build:
 
 Never from the main checkout — it lacks the interposer and the 180 s timeout.
 
-Results go to `tests/results/` with the raw log alongside.
+Results go to `tests/results/` with the raw log alongside; a crashed
+run's macOS crash report (`~/Library/Logs/DiagnosticReports/`) is archived
+there too, as `<record-slug>.crash.ips`.
 
 A `PreToolUse` hook (`.claude/hooks/guard-hw-run.sh`) enforces the sharp edges:
 it blocks setting `DYLD_INSERT_LIBRARIES`, touching `.recon-cache/` or vendor
