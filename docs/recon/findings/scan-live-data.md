@@ -93,23 +93,62 @@ loaders (`OrbbecScanSpeckle::import_old_realtime_result`,
 `laser::OBScanLaserMarkerlessImport`), `TextureScanningContext::save_model_clouds`,
 and `get_realtime_fusion_model` (marker/fusion paths).
 
-## 4. Related surface (for the follow-ups)
+## 4. The color getter and its release — now in the header subset (row #24)
 
-- The C API also exposes the color getter `obscan_scan_get_model_point_color_clouds`
-  (`0xfba4`; validates the out pointers, dispatches vtable `+0xe8`) and
-  `obscan_scan_model_clouds_release` (`0xfc4c`; vtable `+0xf0`) — **neither is in
-  our header subset**. The color getter's native gates on the scan state at
-  `scan+0x4c8` ∈ 1..9, else `845283600` (`OB_SCAN_ERROR_MULTI_CALLED`,
-  `This step can not get model cloud !`).
-- `get_realtime_model_mesh` remains pause-gated (the mesh is produced by the
-  on-pause optimization) — a separate mechanism, already documented in the header.
+- `fn_obscan_scan_get_model_point_color_clouds` (wrapper `0xfba4`; native
+  `OrbbecScanLaser::get_model_color_clouds` @ `0xc5bdc`, dispatched through
+  vtable `+0xe8` from the vptr) and `fn_obscan_scan_model_clouds_release`
+  (native `OrbbecScanLaser::set_update_model_release` @ `0xc5cc4` — **a bare
+  `ret`**: the release frees nothing; the wrapper returns `0` for any valid
+  handle) are declared in `obscan_api.h` as of this pass.
+- C shape: `(scan, out_clouds, out_bbox, out_count)`. The wrapper validates
+  `out_clouds` (`the OBScanPointClouds is nullptr !`) and `out_bbox` (`the
+  OBScanCloudBbox is nullptr !`) — both `845283584` — but **not** `out_count`;
+  pass a valid pointer. `out_count` receives `scan+0x834`, the fusion's
+  accumulated point count.
+- `ObScanCloudBbox` (48 bytes) is declared alongside: min/max/center float
+  triples with a pad word after each; center = (min+max)/2. Layout from
+  `obscan_common::compute_cloud_bbox` @ `0x6ad464` / `init_obscan_bbox`
+  @ `0x6ad540`; the getter copies it from `dataMgmt+0x250` (the published
+  cloud's bbox).
+- `get_realtime_model_mesh` remains pause-gated (step == 3, §5) — the mesh is
+  produced by the on-pause optimization, a separate mechanism.
 - `judge_need_swap_fixed_model` and `get_realtime_fusion_model` are additional
   `+0x4fa` users (marker-framework publication) — not traced.
 
+## 5. The scan step at `scan+0x4c8` (OQ-S1, answered)
+
+`OBScanBase::get_obscan_step` @ `0x6f98a8` reads a 4-byte step value at
+`scan+0x4c8` (`ldar` acquire); transitions are `stlr` release stores. Values
+observed at their writers:
+
+| value | meaning (from the writer) |
+| --- | --- |
+| 1 | ready / preview (`preview`, `clear_repreview` end, `reconfig_*`, `clear_point_cloud_impl` end) |
+| 2 | **scanning** (`start` — both scan classes) |
+| 3 | paused (`pause`, `device_disconnect_pause`, `load_cache_file`) |
+| 4 | stopped (`after_stop_process_func`, `clear_point_cloud_impl` initial) |
+| 5 | post-process / optimization-to-mesh (`edit_delete_post_process_datas_func`, `judge_optimization_to_mesh_problem_state`, `send_optimization_to_mesh_failed_msg`) |
+| 6 | optimization-to-mesh (`OBScanBase::optimization_to_mesh`) |
+| 9 | mesh-adjacent (`OrbbecScanLaser::after_stop_process_func`, one branch) |
+| 10 | meshlization (`OBScanBase::meshlization`) |
+| 16 | texturization (`OBScanBase::texturization`) |
+
+Gates: `get_model_color_clouds` requires **1..9** (else `845283600`,
+`OB_SCAN_ERROR_MULTI_CALLED`, `This step can not get model cloud !`);
+`get_model_mesh` requires **== 3** — this is the header's "only valid while
+paused" note; `is_realtime_scanning_state` is true for **≤ 3** (the "must
+finish current scan" gate). An active scan sits at step 2, inside the getter's
+window — so the manual run's 0 points were the publish-trigger gap, never a
+step rejection. **[inferred: static writer/gate map; not exercised per-step on
+hardware]**
+
 ## OPEN QUESTIONS
 
-- **OQ-S1** — What is `scan+0x4c8` (the state the color getter gates on, 1..9)?
-  Map its writers to know when the color getter is legal across the lifecycle.
+- **OQ-S1** — *Answered* (row #24) → §5. `scan+0x4c8` is the `OrbbecScanStep`
+  (1 ready, 2 scanning, 3 paused, 4 stopped, 5/6 post-process, 9 mesh-adjacent,
+  10 meshlization, 16 texturization); the color getter is legal for 1..9, the
+  mesh getter for == 3.
 - **OQ-S2** — Does anything publish temp→show on pause/stop (i.e., would
   `get_raw_cloud` return data after pause *without* the color getter)? `pause`
   clears `+0x4fa` in one branch; no publisher call found in its prologue — not
@@ -127,6 +166,9 @@ and `get_realtime_fusion_model` (marker/fusion paths).
 
 - `.recon-cache/listings/scan-live-data.plan23.asm` — curated excerpts: wrapper,
   native getter, writers, both swaps, producer, color getter, C companions.
+- `.recon-cache/listings/scan-live-data.plan24.asm` — row #24's additions: the
+  color-getter wrapper, vtable mapping, the `ret` release native, the step
+  writer/gate map, and the bbox layout.
 - `.recon-cache/listings/liborbbec_scan_arm64.full.asm` — full listing used for
   the call-site mapping (addresses above are its).
 - Run: `tests/results/2026-10-17-live-scan-manual-test.md` (0 points × 3000
