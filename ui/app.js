@@ -180,7 +180,7 @@
     }
     const rms = Math.sqrt(sumSq / count);
     const radius = Math.max(rms * 2.0, 0.001);  // ~2 sigma covers the dense cluster.
-    viewCenter = [cx, cy, cz];
+    if (cameraMode !== "follow") viewCenter = [cx, cy, cz];
     viewRadius = radius;
     // Distance needed to fit `radius` within the vertical half-FOV, plus
     // headroom so the cloud isn't touching the viewport edges.
