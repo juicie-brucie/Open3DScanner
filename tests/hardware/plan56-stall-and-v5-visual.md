@@ -38,14 +38,25 @@ instead of dying. This procedure re-runs the identical stall against the fix.
 
 ## Procedure
 
-1. **Tab A** (stall subject): open the page; confirm it connects and the HUD counts up.
-   **Record the HUD's `backend` line** (the V5 visual, first half — it names WebGPU or
-   WebGL2 as live).
-2. **Tab B** (control): open `http://127.0.0.1:8788/?backend=webgl2` — confirm it renders,
-   and **record its `backend` line** (the V5 visual, second half — the forced WebGL2 path).
+1. **Tab A** (stall subject): open the page — **hard-refresh it** (or use the `?t=` URL
+   `watch.sh` prints) so a pre-V5 cached `index.html` cannot serve the old script chain;
+   confirm it connects and the HUD counts up. **Record the HUD's `backend` line** (the V5
+   visual, first half — it names WebGPU or WebGL2 as live).
+2. **Tab B** (control): open `http://127.0.0.1:8788/?backend=webgl2` (hard-refresh if it was
+   visited before) — confirm it renders, and **record its `backend` line** (the V5 visual,
+   second half — the forced WebGL2 path).
+
+2b. **The rejection path** (#53's third item): read tab A's `backend` line. If it already
+   reads `webgl2` with **no** query parameter, that is the fallback (the browser gave no
+   usable WebGPU) — record it as such. Otherwise disable WebGPU in the browser
+   (`chrome://flags` → WebGPU → Disabled, relaunch), reload tab A's default URL, and confirm
+   the page still renders on `webgl2` — a rejecting `requestAdapter`/`requestDevice` must
+   reach the WebGL2 path. If instead the page shows "Neither WebGPU nor WebGL2 is
+   available", that is a **FAIL** of the rejection path: record it, and continue with the
+   stall test. Record the `backend` line after this step.
 3. Let both stream a few seconds. Optional sanity: toggle follow once in tab A.
 4. **Stall tab A** with the same busy loop the rerun used — 3 s blocking the main JS thread
-   (via the browser tooling (the rerun blocked the tab the same way)):
+   (the rerun's route: the browser tooling's `javascript_tool`, or the tab's own console):
 
    ```js
    const end = performance.now() + 3000; while (performance.now() < end) {}
@@ -58,7 +69,8 @@ instead of dying. This procedure re-runs the identical stall against the fix.
    - **Tab B must keep receiving**: its HUD keeps counting, no freeze — record that it did.
    - **The server must survive**: the tick lines keep printing past the stall with no gap;
      the log contains **no** `Broken pipe` / `signal 13`; the process is still alive (`ps`)
-     when checked.
+     when checked. The tick lines' `clients=` may drop (2 → 1) when the server prunes the stalled tab —
+     that is the intended drop; record it (the old run held `clients=2` right up to the crash).
    - If tab A reconnects (reload, or its own re-connect), it receives frames again — record
      what it took.
 6. End the session and **tear down normally**: the pause → mesh → stop → destroy sequence,
@@ -69,7 +81,7 @@ instead of dying. This procedure re-runs the identical stall against the fix.
 
 - **PASS** = the server survived the stall (no `Broken pipe`, tick lines continuous), tab B
   never lost its stream, tab A's drop/reconnect behaved as "that client got dropped", clean
-  teardown with exit 0 — plus both `backend` lines recorded (#53's visual).
+  teardown with exit 0 — plus both `backend` lines recorded and the rejection path exercised (#53's visual).
 - **FAIL** = the process died, or tab B lost its stream, or a desynced tab A silently kept
   "receiving". Keep the log; do not retry without direction. If it died to a signal, also
   check rule 11 (`~/Library/Logs/DiagnosticReports/`).
