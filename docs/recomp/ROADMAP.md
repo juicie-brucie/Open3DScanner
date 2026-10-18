@@ -9,11 +9,10 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-18 (rev 8 — refresh pass. Re-read against the board at
-`7c33178`; removes the stale loop-state claims rev 7 carried (rows `#3`/`#4`, `#26`–`#30`,
-`#38` are all `DONE`), separates the **landed** decimation from the **forward** protocol
-design, and re-stages the architecture doc with explicit move boundaries. rev 7 added the
-viewer family; rev 6/5/4/3/2/1 are superseded — see **Superseded plans**)._
+_Last planned: 2026-10-18 (rev 9 — adds the Windows fork workstream and stages its charter
+plus the fork-coordination file. rev 8 was the refresh pass; its architecture-doc staging
+block has landed and moved to `docs/architecture/scan-viewer.md`. rev 7 added the viewer
+family; rev 6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
@@ -173,6 +172,36 @@ slots to `OBScanDataManagement`, while current recon homes the data-management s
 at `scan+0xf0` on `OBScanBase` ([`findings/scan-live-data.md`](../recon/findings/scan-live-data.md) §1).
 Same object, possibly a re-homing — verify, don't assume.
 
+## Windows fork — a second workstream, captured 2026-10-18
+
+The operator is standing up a Windows dev environment for a Windows port. The repo is
+**`Open3DScanner-Win64`** — standalone, *not* a GitHub fork relationship; the parent stays the
+pinned upstream. Charter: `WINDOWS-FORK.md` and coordination: `FORK-COORDINATION.md`, both
+**staged at the end of this file** for the dispatcher to land.
+
+**The gate is a question, not a task:** does Creality ship a Windows build with the same
+`obscan_*` surface? If not, this is not a port at all — it is the Orbbec-SDK path in
+`README.md`'s "Possible future direction". Everything else waits on that answer, so **no rows
+are proposed this round**; the gate is an operator answer, not dispatchable work.
+
+Already true, from the tree: the loader is **`#ifdef`-split** (`LoadLibraryA` /
+`GetProcAddress` / `GetLastError` vs `dlopen`) and `engine/CMakeLists.txt` has a `WIN32`
+branch — the engine is closer than it looks. Not true: `tools/` and `tests/hardware/` are
+`if(APPLE)` throughout, the hardware guardrail is a bash hook that will not fire on Windows,
+and every recon artifact is macOS arm64 — so the ABI must be recovered again, not
+reinterpreted.
+
+**The one rule that matters:** `obscan_api.h` is single-sourced in the parent. Platform
+differences go into it as `#ifdef`-guarded declarations with a Windows findings doc beside the
+macOS ones. A second header in a second repo is a second contract, and two contracts drift —
+the exact failure the one-home rule exists to prevent.
+
+**The channel already exists.** `scripts/remote-opencode.sh` (parent, PR #150) addresses a
+second machine's OpenCode server through the desktop app's server list; the Windows box is
+registered as `Windows11` and answers (OpenCode 2.0.32, verified 2026-10-18). The charter's §5
+names it as the coordination channel, and the fork's copy of the coordination file is seeded
+with its first `[win]` entry at repo-creation time.
+
 ## Risks
 
 1. ~~The live path is unbounded in the cloud size~~ — **retired by `#32`**, and the
@@ -237,3 +266,254 @@ Also ready, non-competing: `#40` (recon), `#41` (builder), `#34`/`#35` (recon/bu
   Superseded by rev 2. Half landed (the scan family was opened via `#23`); the other half
   was wrong as written — the queue's most obvious item (`#2`/`#19`) already had a passing
   run on `main`.
+
+---
+
+# STAGING — Windows fork drafts
+
+**Dispatcher: these are drafts, not roadmap content.** Two documents are staged here, each
+with its own boundaries. Extract each into its own file, delete this whole block from
+`ROADMAP.md` in the same PR, and PR it.
+
+| Draft | Lands at | Tier |
+| --- | --- | --- |
+| `WINDOWS-FORK.md` | the **fork** repo, `docs/recomp/WINDOWS-FORK.md` — or temporarily in the parent at `docs/recomp/WINDOWS-FORK.md` until `Open3DScanner-Win64` exists | agent-tier |
+| `FORK-COORDINATION.md` | the **parent**, `docs/recomp/FORK-COORDINATION.md` | agent-tier |
+
+**Boundaries:** each document is exactly the text between its `--- BEGIN <name>` and
+`--- END <name>` marker lines, excluding the markers. There is no staging block in this
+file's committed base, so the PR diff shows no removal to compare against; these boundaries
+are the contract. Relative links are written for each file's final home.
+
+---
+
+--- BEGIN WINDOWS-FORK.md
+
+# Windows fork — charter
+
+Forward strategy for the Windows port of OpenScanner. This is the fork's **charter**: what it
+is, what it shares with the parent, how work is coordinated, and what must be true before it
+builds.
+
+Owner: the `openscanner/planner` agent. Statuses, claims and evidence live on the board —
+this file points at them and never restates them.
+
+_Last planned: 2026-10-18._
+
+## 1. The decision: name and shape
+
+**Name: `Open3DScanner-Win64`** (owner `juicie-brucie`, sibling of `Open3DScanner`).
+
+- `Win64` rather than `Windows` because the target is **x64** — the vendor ships an x64
+  Windows build, and Windows-on-ARM is a separate question (Open question 2). The parent pins
+  an **arm64** slice for the same reason; the arch belongs in the name.
+- Alternatives: `Open3DScanner-Windows` (friendlier, less precise); `openscanner-win`
+  (lowercase, breaks the repo family's naming).
+
+**Shape: standalone, not a GitHub *fork* relationship.** A GitHub fork shares history and
+routes PRs at the parent by default, which is wrong here — the fork's CI runs on Windows, its
+vendor artifacts differ, and it must not accidentally PR platform-specific changes into the
+parent's gate. Standalone, with the parent as a **pinned upstream**.
+
+## 2. What stays canonical in the parent
+
+The fork's most important rule, because it protects the one thing the recomp loop is built on.
+
+**`engine/include/openscanner/obscan_api.h` is single-sourced in the parent.** A second
+header in a second repo is a second contract, and two contracts drift. Therefore:
+
+- Platform differences go into the **one** header as `#ifdef _WIN32`-guarded declarations,
+  with a Windows findings doc alongside the macOS ones — never a forked copy.
+- If the Windows DLL's ABI genuinely differs (calling convention, packing, export names), the
+  difference is recorded as a **platform note in the findings**, not as a divergent header.
+- The fork consumes the header as a **synced copy with a recorded pin** (commit + sha256),
+  checked in CI. A submodule is the alternative; a synced copy is simpler for one file and
+  fails loudly when stale.
+- `docs/recon/findings/**` stays the home for recovered semantics. The fork adds Windows
+  findings there; it does not fork the directory.
+
+Everything else — `mesh/`, `ui/`, most of `engine/`, `tools/` — is shared code with a platform
+split, and the fork tracks the parent as upstream.
+
+## 3. Portability map
+
+What actually needs work, from the current tree (the loader and CMake already carry the split
+— this is not a guess):
+
+| Layer | State | Windows work |
+| --- | --- | --- |
+| `engine/src/obscan_loader.cpp` | **already `#ifdef`-split** — `LoadLibraryA`/`GetProcAddress`/`GetLastError` vs `dlopen`/`dlsym` | point it at the Windows DLL path; the macOS app path is inside the Apple branch |
+| `engine/CMakeLists.txt` | already has a `WIN32` branch | verify it compiles; the headers were built for clang |
+| `mesh/` (Manifold, libigl, meshio) | portable, permissively licensed | build only; the `igl/copyleft` rule is unchanged |
+| `ui/` | portable (web) | none |
+| `tools/`, `tests/hardware/` | **`if(APPLE)` throughout** | port CMake + the worker/launcher split; the interpose-dylib mechanism is macOS-specific |
+| `.claude/hooks/guard-hw-run.sh` | **bash**, POSIX path semantics | does not run on Windows — needs an equivalent before any hardware work |
+| Recon artifacts (header offsets, findings) | recovered from the **macOS arm64** dylib | **a new recon target**, not a port — see §6 |
+
+## 4. Branch and PR conventions
+
+Mirror the parent's mechanics, so an operator switching machines keeps one mental model:
+
+- **One worktree per role, one session per worktree.** A room belongs to the session in it;
+  never share a checkout, never tear down someone else's room.
+- **Branches: `<role>/<thing>`** — `recon/win-plan1`, `build/win-loader`, `hw/win-plan2`,
+  `dispatch/land-win-recon1`.
+- **Every change lands through a PR with a merge commit.** Never commit to `main`; never
+  squash. `main` is protected.
+- **Two gates, same shapes:** a deterministic `verify-pr` run in CI (a Windows port of the
+  script) plus an `openscanner/verifier` verdict on the exact head commit for agent-tier
+  paths. Port the tier list; do not redefine it.
+- **Vendor artifacts are never committed.** `.recon-cache/` is gitignored in both repos; the
+  Windows DLLs are a different target with their own sha256 pins, recorded in
+  [`FORK-COORDINATION.md`](FORK-COORDINATION.md).
+- **Run records** (`tests/results/**`) keep the parent's discipline: one file per run, never
+  edited in place, corrections as dated addenda.
+
+## 5. Coordination channel
+
+The two machines talk through the OpenCode desktop app's **server list** plus
+`scripts/remote-opencode.sh` (parent, PR #150). The Windows box is registered there as
+`Windows11`; the script resolves the endpoint and credential from the app's state by display
+name, so **neither the URL nor the credential is recorded in either repo.**
+
+- **Who uses it: the dispatcher, not the planner.** The script's own header names its purpose —
+  coordinating with "a dispatcher running on a second machine". Each side's dispatcher can read
+  the other's sessions (`active`, `sessions`, `read`) and hand it work: `prompt` queues,
+  `steer` exists only to stop a running agent before it commits something already known to be
+  wrong.
+- **Secrets.** Credentials are read at runtime and passed to `curl` through a stdin config,
+  never `argv`, so they never reach `ps` or a transcript. Keep that property in anything built
+  on it; never echo one, never put one in a prompt to either machine, never commit one.
+- **What it is not.** Not a file channel and not an MCP server — it cannot write the other
+  repo's files. That is exactly why §2's single-source rule and the coordination file's
+  one-writer-per-file rule exist: the channel carries *orders and reports*, the repos carry
+  *state*.
+- **Conventions do not change with the channel.** A work order sent across machines has the
+  same shape as a local one: the board row, the evidence, the deliverable, the wall, and what
+  to report back.
+
+## 6. Recon: the real cost
+
+The parent's ABI claims were recovered from the macOS arm64 dylib, pinned per findings doc.
+**None of that transfers silently.** A Windows build needs:
+
+1. **The vendor's Windows artifacts.** Whether Creality ships a Windows build with the same
+   `obscan_*` surface is **open question 1** — the gate on everything else. If no `obscan_*`
+   DLL exists for Windows, this is not a port; it is the Orbbec-SDK path in `README.md`'s
+   "Possible future direction".
+2. **A fresh recon pass** against the Windows binaries — the C ABI is the same *interface*,
+   but x64 MS calling convention ≠ AAPCS64, and struct layout/packing must be re-verified
+   rather than assumed. A new target with new findings, not a reinterpretation.
+3. **Its own pins** — sha256 per Windows artifact, in the coordination file.
+
+Budget it as the parent's PLAN #1 was budgeted: one target per recon session.
+
+## 7. Guardrails
+
+The parent's hardware safety rests on a `PreToolUse` hook; on Windows that hook does not fire,
+so **the fork starts with no hardware backstop at all**. Before any Windows hardware run:
+
+- Port `guard-hw-run.sh` (or replace it) so the equivalent invariants hold: no manual
+  library-path injection, no vendor-artifact edits, no listener tests outside the designated
+  worktree.
+- Keep the parent's hard rules verbatim — one SDK user at a time, no power-cycle shortcuts, no
+  retry after a timeout, capture the exit code and any crash report.
+
+## 8. What the fork needs before its first build
+
+In order, each gating the next:
+
+1. **Answer open question 1** — does a Windows `obscan_*` binary exist?
+2. A Windows toolchain decision (MSVC vs clang-cl) and a CMake configure that gets `mesh/` and
+   `engine/` compiling.
+3. The contract pin wired into CI (fails loudly when the header is stale).
+4. A PowerShell/Python equivalent of `guard-hw-run.sh`.
+5. A first Windows recon target, with its own findings doc and pins.
+
+## Open questions
+
+1. **Does Creality ship a Windows build of the scan SDK with the `obscan_*` surface?** The gate
+   on the whole fork. (operator / vendor inspection)
+2. Is the Windows target x64 only, or is Windows-on-ARM in scope? Affects the name and the
+   artifact set. (operator)
+3. Does the parent's `#ifdef _WIN32` loader split actually compile against a real DLL, or was
+   it written blind? It has never been exercised. (builder, once an artifact exists)
+4. What replaces the interpose-dylib mechanism on Windows, if the teardown crash needs the
+   same containment? (builder/recon)
+5. Does the fork need its own agent definitions and worktrees, or does one shared config do?
+   (operator)
+
+--- END WINDOWS-FORK.md
+
+---
+
+--- BEGIN FORK-COORDINATION.md
+
+# Fork coordination — `Open3DScanner` ↔ `Open3DScanner-Win64`
+
+The two repos run independent loops and share one contract. This file is the cross-repo
+coordination record: the contract pin, the platform registry, and an append-only log.
+
+Owner: the parent's `openscanner/planner`. The fork keeps its own copy, seeded from this one.
+
+## 1. The two-writer problem, and the rule
+
+Both loops append to a log; neither can write the other's repo. So:
+
+- **One writer per file.** This file is owned by the parent's planner. The fork keeps its own
+  copy, seeded from here.
+- **The parent's copy is canonical** for cross-platform decisions. A fork decision that
+  affects the parent is folded back by the operator (or a fork→parent PR) — never by an agent
+  writing across repos.
+- **Entries are append-only, dated, and prefixed** `[mac]` / `[win]`. Appending is the only
+  edit; nothing above the last entry is rewritten. That keeps a merge trivial.
+
+## 2. The contract pin
+
+The header is single-sourced in the parent (see `WINDOWS-FORK.md` §2). Each repo records the
+revision it consumes and checks it in CI, so a stale copy fails loudly instead of quietly
+diverging.
+
+| Repo | Parent commit | `obscan_api.h` sha256 | Checked in CI |
+| --- | --- | --- | --- |
+| `Open3DScanner` (parent) | `main` (self) | regenerated per commit | n/a |
+| `Open3DScanner-Win64` (fork) | _(unset)_ | _(unset)_ | not yet wired |
+
+## 3. Platform registry
+
+One row per artifact a platform's recon depends on. Vendor artifacts are never committed; only
+their pins are.
+
+| Platform | Artifact | Role | sha256 | Pinned by |
+| --- | --- | --- | --- | --- |
+| macOS arm64 | the parent's scan dylib | the parent's recon target | per its findings docs | parent findings |
+| Windows x64 | _(none yet — open question 1)_ | | | |
+
+## 4. Seeding the fork
+
+The fork receives this file at repo-creation time with its **`[win]` seed entry already
+written**, so the log exists as a log before anyone needs it and the fork's first dispatch has
+somewhere to record. Seeded once, by whoever creates the repo; after that it is appended only
+by the fork's own planner.
+
+For the fork's copy: keep the parent's `[mac]` lines as history and add the seed below.
+
+- `[win]` 2026-10-18 — repo `Open3DScanner-Win64` created; `WINDOWS-FORK.md` and this file
+  seeded from the parent at `<parent-commit>` (the contract pin's parent commit, §2). Contract
+  pin not yet wired. Blocked on: does a Windows `obscan_*` binary exist?
+
+## 5. Log
+
+_Append dated one-liners: what changed, which side, and the outcome. Newest last._
+
+- `[mac]` 2026-10-18 — Windows fork chartered; repo named `Open3DScanner-Win64`; contract
+  single-sourcing and the pin rule agreed. Blocked on: does a Windows `obscan_*` binary exist?
+- `[mac]` 2026-10-18 — coordination channel confirmed live: `Windows11` registered in the
+  desktop app's server list and answering (OpenCode 2.0.32); `scripts/remote-opencode.sh` named
+  as the channel in `WINDOWS-FORK.md` §5.
+
+--- END FORK-COORDINATION.md
+
+---
+
+# END STAGING
