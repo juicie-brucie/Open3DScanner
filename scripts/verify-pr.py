@@ -13,9 +13,11 @@ Tiers (printed with the report; used by verdict-gate.yml to decide whether a PR
 is script-gated or needs an agent verdict):
     agent tier   engine/**, tools/**, mesh/**, ui/**, scripts/**, tests/hardware/**,
                  any CMakeLists.txt, .github/**, .claude/**, docs/recon/**,
+                 docs/recomp/{WINDOWS-FORK,FORK-COORDINATION}.md,
                  tests/results/** addenda (*-correction.md, *-analysis.md)
     script tier  everything else (run records, raw logs, .ips, PLAN.md,
-                 docs/recomp/**, CLAUDE.md, README.md, ...)
+                 docs/recomp/** except the two fork documents above, CLAUDE.md,
+                 README.md, ...)
     An empty or unreadable file list is treated as agent tier.
 
 Gating checks
@@ -64,6 +66,10 @@ AGENT_PATTERNS = [
     r"^tests/hardware/", r"CMakeLists\.txt$",
     r"^\.github/", r"^\.claude/",
     r"^docs/recon/", r"^docs/architecture/",
+    # Contract-bearing docs under the otherwise script-tier docs/recomp/:
+    # the Windows-fork charter and coordination file carry rules (the contract
+    # pin, the two-writer rule) and deserve a verdict like docs/recon/**.
+    r"^docs/recomp/(WINDOWS-FORK|FORK-COORDINATION)\.md$",
     r"^tests/results/.*(-correction|analysis)\.md$",
 ]
 
