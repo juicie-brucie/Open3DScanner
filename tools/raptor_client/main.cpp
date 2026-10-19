@@ -10,8 +10,11 @@
 //
 // Usage:
 //   raptor_client --dry-run                  # framing selftest, no device
+//   raptor_client --dry-run-live             # bytes each call would send
 //   raptor_client --discover                 # GVCP discovery only
-//   raptor_client --live <host> [port] [seconds] [out.raw]
+//   raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]
+//       per-call logging is on by default: every get_frame result (bin size /
+//       empty / error) and every SET_PROPERTY (prop, value, ACCEPT/REJECT).
 //
 // Wall: tools/** only. Clean-room: implements the spec; no vendor binary.
 
@@ -321,6 +324,18 @@ int DryRun() {
 // ---------------------------------------------------------------------------
 // Live session (needs the daemon + device; hardware room)
 // ---------------------------------------------------------------------------
+std::string HexHead(const Bytes& b, size_t max = 16) {
+    static const char* hex = "0123456789abcdef";
+    std::string s;
+    for (size_t i = 0; i < b.size() && i < max; ++i) {
+        if (i) s += ' ';
+        s += hex[b[i] >> 4];
+        s += hex[b[i] & 0xf];
+    }
+    if (b.size() > max) s += " …";
+    return s;
+}
+
 Value StartStream(RpcClient& c, const std::string& suffix, uint8_t command, uint32_t w, uint32_t h, uint32_t fps) {
     Packer p;
     p.array(5);
@@ -328,75 +343,170 @@ Value StartStream(RpcClient& c, const std::string& suffix, uint8_t command, uint
     return c.call("ob_rpc_start_stream" + suffix, p.out);
 }
 
-void SetProperty(RpcClient& c, const std::string& suffix, uint32_t prop, int32_t value, uint16_t request_id) {
+// Decode the vendor response (RespHeader: magic 5242, size, opcode, requestId,
+// errorCode) if it is a bin; returns true when errorCode == 0.
+bool VendorAccepted(const Value& rpc_result, uint16_t* out_opcode, uint16_t* out_reqid, uint16_t* out_error) {
+    if (rpc_result.kind != Value::Kind::Bin || rpc_result.bin.size() < 10) return false;
+    const Bytes& b = rpc_result.bin;
+    auto le16 = [&](size_t o) { return (uint16_t)(b[o] | (b[o + 1] << 8)); };
+    if (le16(0) != 0x4252) return false;  // "BR"
+    if (out_opcode) *out_opcode = le16(4);
+    if (out_reqid) *out_reqid = le16(6);
+    if (out_error) *out_error = le16(8);
+    return le16(8) == 0;
+}
+
+void SetProperty(RpcClient& c, const std::string& suffix, uint32_t prop, int32_t value, uint16_t request_id,
+                 bool log) {
     Bytes vendor = BuildVendorRequest(kOpSetProperty, request_id, SetPropertyPayload(prop, value));
     Packer p;
     p.array(2);
     p.bin(vendor);
     p.uint(64);  // expected response size for an ack (spec §2.1)
-    c.call("ob_rpc_send_data" + suffix, p.out);
+    Value r = c.call("ob_rpc_send_data" + suffix, p.out);
+    uint16_t opcode = 0, reqid = 0, err = 0xffff;
+    bool accepted = VendorAccepted(r, &opcode, &reqid, &err);
+    if (log) {
+        if (r.kind == Value::Kind::Error) {
+            std::printf("[live] SET prop=%u value=%d reqid=%u -> rpc ERROR: %s\n", prop, value, request_id,
+                        r.error.c_str());
+        } else if (r.kind == Value::Kind::Bin) {
+            std::printf("[live] SET prop=%u value=%d reqid=%u -> vendor %s (opcode=%u reqid=%u err=%u, %zu B)\n",
+                        prop, value, request_id, accepted ? "ACCEPT" : "REJECT", opcode, reqid, err, r.bin.size());
+        } else {
+            std::printf("[live] SET prop=%u value=%d reqid=%u -> rpc kind=%d\n", prop, value, request_id,
+                        (int)r.kind);
+        }
+        std::fflush(stdout);
+    }
 }
 
-int Live(const std::string& host, uint16_t port, int seconds, const std::string& out_path) {
+int Live(const std::string& host, uint16_t port, int seconds, const std::string& out_path, int pull_ms, bool log) {
     RpcClient rpc;
     if (!rpc.connect(host, port)) {
         std::fprintf(stderr, "[live] cannot connect to %s:%u (is RPCServer running?)\n", host.c_str(), port);
         return 1;
     }
-    std::printf("[live] connected %s:%u\n", host.c_str(), port);
+    std::printf("[live] connected %s:%u (pull_ms=%d, per-call logging=%s)\n", host.c_str(), port, pull_ms,
+                log ? "on" : "off");
     Value started = StartStream(rpc, "", 6, 1920, 1200, 50);
     if (started.kind == Value::Kind::Error) {
         std::fprintf(stderr, "[live] start_stream failed: %s\n", started.error.c_str());
         return 1;
     }
-    std::printf("[live] stream started; pulling frames for %ds\n", seconds);
+    std::printf("[live] start_stream -> %s\n", started.kind == Value::Kind::Bool && started.b ? "true" : "non-error");
+    std::fflush(stdout);
 
-    uint32_t frames = 0;
+    uint64_t get_calls = 0, bins = 0, empties = 0, errors = 0;
     uint16_t request_id = 0;
     bool saved = false;
+    auto last_log = std::chrono::steady_clock::now() - std::chrono::seconds(1);
     auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
     while (std::chrono::steady_clock::now() < deadline) {
         Packer p;
         p.array(0);
         Value frame = rpc.call("ob_rpc_get_frame", p.out);
+        ++get_calls;
+        bool should_log = false;
         if (frame.kind == Value::Kind::Bin) {
-            ++frames;
+            ++bins;
             if (!saved) {
                 std::ofstream f(out_path, std::ios::binary);
                 f.write(reinterpret_cast<const char*>(frame.bin.data()), frame.bin.size());
                 std::printf("[live] saved first frame: %s (%zu bytes)\n", out_path.c_str(), frame.bin.size());
                 saved = true;
+                should_log = true;
+            } else {
+                auto now = std::chrono::steady_clock::now();
+                should_log = now - last_log >= std::chrono::milliseconds(250);
             }
+        } else if (frame.kind == Value::Kind::Error) {
+            ++errors;
+            should_log = true;  // always show errors
+        } else {
+            ++empties;
+            should_log = get_calls <= 5 || (get_calls % 100 == 0);
+        }
+        if (log && should_log) {
+            last_log = std::chrono::steady_clock::now();
+            if (frame.kind == Value::Kind::Bin) {
+                std::printf("[live] GET_FRAME #%llu -> bin(%zu) head=[%s]\n", (unsigned long long)get_calls,
+                            frame.bin.size(), HexHead(frame.bin).c_str());
+            } else if (frame.kind == Value::Kind::Error) {
+                std::printf("[live] GET_FRAME #%llu -> ERROR: %s\n", (unsigned long long)get_calls,
+                            frame.error.c_str());
+            } else {
+                std::printf("[live] GET_FRAME #%llu -> empty (kind=%d)\n", (unsigned long long)get_calls,
+                            (int)frame.kind);
+            }
+            std::fflush(stdout);
         }
         // §3.1 host-driven loops: laser trio and exposure, at the observed cadence.
-        SetProperty(rpc, "", 3, 0, ++request_id);
-        SetProperty(rpc, "", 152, 0, ++request_id);
-        SetProperty(rpc, "", 153, 1, ++request_id);
-        SetProperty(rpc, "", 154, 866000, ++request_id);
-        SetProperty(rpc, "", 155, 866000, ++request_id);
+        SetProperty(rpc, "", 3, 0, ++request_id, log);
+        SetProperty(rpc, "", 152, 0, ++request_id, log);
+        SetProperty(rpc, "", 153, 1, ++request_id, log);
+        SetProperty(rpc, "", 154, 866000, ++request_id, log);
+        SetProperty(rpc, "", 155, 866000, ++request_id, log);
+        if (pull_ms > 0) std::this_thread::sleep_for(std::chrono::milliseconds(pull_ms));
     }
     StartStream(rpc, "", 7, 1920, 1200, 50);  // stop
-    std::printf("[live] pulled %u frames; stream stopped\n", frames);
-    return frames > 0 ? 0 : 1;
+    std::printf("[live] done: get_frame=%llu bin=%llu empty=%llu error=%llu; stream stopped\n",
+                (unsigned long long)get_calls, (unsigned long long)bins, (unsigned long long)empties,
+                (unsigned long long)errors);
+    return bins > 0 ? 0 : 1;
+}
+
+// Prints the exact bytes each call would send, so the logging path is
+// exercisable without the daemon (the row's "what can be tested locally").
+int DryRunLive() {
+    int failures = 0;
+    auto show = [&](const char* what, const Bytes& b) {
+        std::printf("[dry-run-live] %-28s %zu B: %s\n", what, b.size(), HexHead(b, 24).c_str());
+        if (b.empty()) ++failures;
+    };
+    RpcClient unused;  // not connected; we only encode here
+    (void)unused;
+    Packer start;
+    start.array(5);
+    start.uint(6); start.uint(9); start.uint(1920); start.uint(1200); start.uint(50);
+    show("start_stream params", start.out);
+    Packer getf;
+    getf.array(0);
+    show("get_frame params", getf.out);
+    for (uint32_t prop : {3u, 152u, 153u, 154u, 155u}) {
+        Bytes vendor = BuildVendorRequest(kOpSetProperty, (uint16_t)(prop & 0xffff), SetPropertyPayload(prop, 0));
+        show("SET_PROPERTY vendor", vendor);
+    }
+    std::printf("[dry-run-live] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
 }
 
 }  // namespace
 
 int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--dry-run") return DryRun();
+    if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
     if (argc >= 2 && std::string(argv[1]) == "--live") {
         std::string host = argc > 2 ? argv[2] : "127.0.0.1";
         uint16_t port = argc > 3 ? (uint16_t)std::atoi(argv[3]) : 10013;
         int seconds = argc > 4 ? std::atoi(argv[4]) : 5;
         std::string out = argc > 5 ? argv[5] : "/tmp/raptor_frame.raw";
-        return Live(host, port, seconds, out);
+        int pull_ms = 0;
+        bool log = true;
+        for (int i = 2; i < argc; ++i) {
+            if (std::string(argv[i]) == "--pull-ms" && i + 1 < argc) pull_ms = std::atoi(argv[++i]);
+            if (std::string(argv[i]) == "--quiet") log = false;
+        }
+        return Live(host, port, seconds, out, pull_ms, log);
     }
     std::printf(
         "raptor_client — Phase B (C1) client for the Creality RPCServer daemon\n"
         "Usage:\n"
         "  raptor_client --dry-run                  framing selftest, no device\n"
+        "  raptor_client --dry-run-live             print the bytes each call would send\n"
         "  raptor_client --discover                 GVCP discovery only\n"
-        "  raptor_client --live <host> [port] [seconds] [out.raw]\n");
+        "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
+        "      per-call logging is ON by default (--quiet disables it); --pull-ms 0 = as fast\n");
     return 0;
 }
