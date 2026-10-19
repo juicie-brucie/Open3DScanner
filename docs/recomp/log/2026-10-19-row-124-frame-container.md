@@ -18,7 +18,7 @@
   self-length).
 
   **The payload is raw 8-bit image samples.** The normalised autocorrelation's strongest lag is
-  **1920** in 10/10 depth frames and 1/1 IR frame; 51–73 % of adjacent bytes are equal; adjacent
+  **1920** in 10/10 depth frames and 1/1 IR frame; 12.6–67.9 % of adjacent bytes are equal; adjacent
   rows are near-identical; the 0xFF invalid bands recur every 1920 B. Entropy is 2.96–7.22
   bits/byte (IR 0.76) — not compressed, not obfuscated. **H4 survives; H1, H3 and H5 are falsified.**
 

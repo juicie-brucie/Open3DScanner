@@ -136,7 +136,7 @@ depth replies and a `uint32` otherwise — a decoder must not assume a width.
 either with a frame (above) or with the **no-data form**, 26 B:
 
 ```
-9401cd1c61c09b000000ccffc40000c40000c40000cea2c90018ff
+9401cd1c61c09b000000ccffc40000c40000c400cea2c90018ff
   e0=0 e1=0 e2=0 e3=255 e4=bin(0) e5=0 e6=bin(0) e7=0 e8=bin(0) e9=uint32 0xA2C90018 e10=-1
 ```
 
@@ -154,7 +154,7 @@ data, not an encoded image:
 | measurement | depth (n = 10) | IR (n = 1) |
 | --- | --- | --- |
 | adjacent-byte \|Δ\|, mean | 1.99 – 6.22 | 0.25 |
-| adjacent-byte pairs that are **equal** | 51 % – 73 % | 79.8 % |
+| adjacent-byte pairs that are **equal** | 12.6 % – 67.9 % | 79.8 % |
 | normalised autocorrelation, **lag 1920** | **+0.990 … +0.999** | **+0.972** |
 | same, lag 1 | +0.977 … +0.998 | +0.978 |
 | same, lag 120 / 480 / 960 | −0.570 … +0.769 | −0.028 / −0.026 / −0.024 |
@@ -377,7 +377,7 @@ one thing the next capture must settle** (§6).
 | **H1 — standard codec** (JPEG/PNG/zlib/HEVC/LZ4/Zstd/…) | **FALSIFIED** | 0/10 + 0/1 for all 12 decoders and 4 external tools (§3.2); 0/11 for all 18 signatures (§3.1); entropy < 7.9 bits/byte on 11/11 (§3.3) |
 | **H2 — vendor container** (proprietary header + body) | **SURVIVES — and is now resolved** | the container *is* the RPC envelope, byte-exact (§2.1); but it is **headerless inside**, so this resolves to "vendor envelope + raw body", not "vendor image format" |
 | **H3 — sparse point / measurement data** | **FALSIFIED** | `len mod stride` is not constant for 8/12/16/24/28/32/48/64 (§3.4); the lag-1920 autocorrelation peak and the row-to-row similarity are image structure, not a point array (§2.2) |
-| **H4 — uncompressed raw pixels** | **KEPT — and confirmed** | the payload **is** raw 8-bit pixels: lag-1920 autocorrelation is the top lag in 10/10 + 1/1; 51–73 % of adjacent bytes are equal; adjacent rows are near-identical; 0xFF invalid bands recur every 1920 B (§2.2). The plan's H4 as written ("bin length == w×h×bpp") is **wrong in detail**: the bin is a *band*, not the frame (§4.2) |
+| **H4 — uncompressed raw pixels** | **KEPT — and confirmed** | the payload **is** raw 8-bit pixels: lag-1920 autocorrelation is the top lag in 10/10 + 1/1; 12.6–67.9 % of adjacent bytes are equal; adjacent rows are near-identical; 0xFF invalid bands recur every 1920 B (§2.2). The plan's H4 as written ("bin length == w×h×bpp") is **wrong in detail**: the bin is a *band*, not the frame (§4.2) |
 | **H5 — obfuscated / encrypted payload** | **FALSIFIED** | entropy 2.96–7.22 bits/byte with structure; a constant header was *not* found because there is no header (T5 LCP = 0), and T6 found no self-describing field — but the payload is plainly not opaque: it is a 1920-stride image |
 
 **One hypothesis survives: H4, refined.** The frame is **not** a compressed
