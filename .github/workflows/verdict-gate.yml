@@ -68,6 +68,10 @@ jobs:
           ASSOC: ${{ github.event.comment.author_association }}
         run: |
           set -euo pipefail
+          # A UTF-8 BOM at the head of the comment defeats the anchored-line
+          # check below (^VERDICT: never matches). The fork lane lost a cycle to
+          # this; strip one if present, never alter anything else.
+          BODY="${BODY#$'\xef\xbb\xbf'}"
           case "$ASSOC" in
             OWNER|MEMBER|COLLABORATOR) ;;
             *) echo "ignoring comment from association: $ASSOC"; exit 0 ;;

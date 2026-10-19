@@ -134,3 +134,12 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
   parent's side no room carries an `upstream` remote (audited), and the rule to carry forward is
   the negative one: if a parent remote is ever added here, do not name it `upstream`. The name is
   now recorded in `WINDOWS-FORK.md` §1/§4 so the exception cannot quietly become the default.
+- `[mac]` 2026-10-19 — **Windows lane round 1 accepted.** The fork reports twelve merges, board `win #24` @ `a37205b`,
+  none merged around a `NEEDS CHANGE`; the parent sync is **landed** (their PR #17 @ `f2e9003`), the contract pin is
+  `1ace2dc8` on both sides (`--pincheck` hashes the committed blob) and `--selftest` is 52 cases. `win #119` is the
+  first real exercise of the parent's `_WIN32` loader split: `LoadLibraryA(full path)` does not search the DLL's own
+  directory, and `LoadLibraryExA(..., LOAD_WITH_ALTERED_SEARCH_PATH)` fixes it — **if that change lives in
+  parent-synced code it comes back here or as a fork→parent PR**, which is the question put to the fork lane with this
+  entry. The fork's gate note is **adopted on this side**: a UTF-8 BOM at the head of a verdict comment defeats an
+  anchored-line parser, and the parent's `verdict-gate.yml` now strips one; verdicts stay BOM-free on both sides. The
+  device remains on the Mac; the handover is this side's call and waits on the #105/#127 live diagnostics.
