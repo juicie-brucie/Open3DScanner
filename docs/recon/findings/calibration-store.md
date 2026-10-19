@@ -4,12 +4,17 @@
 path (`scan-live-data.md`) is taken as given; this note completes its 41-field
 map and adds the laser-plane and thermal items.*
 
+*Follow-up (row #94 corrections): the out-of-band wire hand-back of 2026-10-18
+is preserved at `calibration-wire-handback-2026-10-18.md` and folded in below —
+wire facts are tagged `[inferred, wire-observed 2026-10-18]` and are not a
+gated run record.*
+
 ## 0. The three stores at a glance
 
 | item | authoritative store | live copy | C-ABI reachability |
 | --- | --- | --- | --- |
 | intrinsics | session cache `<output_dir>/resources.obscan` (SQLite; record `camera_intrin`, row `files.name='camera_intrin.bat'`, 210 B) — written from the device's `DeviceParameters` at preview/new-scan start | `device::DeviceParameters` (device layer) | read with any SQLite client + §3's map; no getter |
-| laser planes | device **flash records** (16-byte header + payload; magic `0x46447314`) | 5120-B struct in the device-param cache (`ScanParamProcessor::getDeviceCacheParam()` + 0x10) | none (internal device layer) |
+| laser planes | device **flash records** (16-byte header + payload; magic `0x464473<kind>`, kind 0x14 = planes; payload 5180 B `[wire-observed]`) | 5120-B struct in the device-param cache (`ScanParamProcessor::getDeviceCacheParam()` + 0x10) | none (internal device layer) |
 | thermal | SDK-hardcoded coefficients (Raptor) + flash calibration entries + the device temperature | the device-layer conversion result | only a toggle: `obscan_device_management_open_temperature_compensation(bool)` @`0x14728` |
 
 ## 1. Laser planes
@@ -18,18 +23,46 @@ map and adds the laser-plane and thermal items.*
 
 - **Device flash (authoritative).**
   `DeviceParamAccessor::updateLineLaserLightPlaneParam(const char*, unsigned)`
-  @`0x23f324` validates a blob — {u32 magic `0x46447314` @+0, u32 XOR-checksum
-  @+4 (table @`0x2ceb980`), u32 length @+8, u32 type `0x211000` @+0xc} — then
-  writes it with `AbstractDeviceHandle::updateFlashData(0x46447314, 0x212000,
-  data, len, 1)` @`0x315638`. Reached from
+  @`0x23f324` validates a blob — {u32 magic `0x464473<kind>` @+0 (the low byte
+  is a per-kind tag; 0x14 = planes) `[inferred, wire-observed 2026-10-18]`,
+  u32 **CRC-32** @+4, u32 length @+8, u32 **address** @+0xc} — then writes it
+  with `AbstractDeviceHandle::updateFlashData(0x46447314, 0x211000, data, len,
+  1)` @`0x315638`. The second key is the record's own flash address: the
+  write-side disassembly reads `mov w2,#0x1000; movk w2,#0x21,lsl#16` =
+  `0x211000` (the earlier revision's `0x212000` was a transcription error), and
+  the wire sees the record land at `0x211000` `[inferred, wire-observed
+  2026-10-18]`. The header's type field equals the record's own flash address
+  generally, not a per-record-type constant `[inferred, wire-observed
+  2026-10-18]`. Reached from
   `OrbbecInternalDevice::update_line_laser_light_plane_param` @`0x1eb27c` ←
   `device::OrbbecDevice::update_line_laser_light_plane_param` @`0x1b598c`.
+- **The checksum is a standard reflected CRC-32** [inferred — static]: the
+  validator's table @`0x2ceb980` is byte-for-byte the poly-`0xEDB88320` table
+  (table[1] = `0x77073096`), the accumulator starts at `0xFFFFFFFF`
+  (`0x23f39c`), the update is the byte-wise `crc = table[(crc^b)&0xff] ^
+  (crc>>8)` loop (`0x23f3ac`–`0x23f3c4`), and the result is complemented
+  (`mvn` @`0x23f3c8`) before comparison with the stored word. Coverage: the
+  whole record from its start for `length` bytes, with the checksum word
+  (bytes 4..7) zeroed (`str wzr,[x19,#0x4]` on the copy @`0x23f394`). The
+  wire's brute-force did not reproduce it because the coverage/zeroing was
+  guessed; the write-side validator above is the definition. Validation against
+  the nine captured records is pending their bytes (outside the repo).
 - **The backup record.** `DeviceParamAccessor::getBackupLineLaserLightPlaneParams()`
   @`0x24211c` reads 8192 B (`readFlashData(key, 0x2000, vector)` @`0x315a8c`)
   with the flash key from a **per-device-type table** @`0x2cebeb0` (types
-  0xc05..0xc10; default `0x213000`), then magic-checks the buffer. Caller:
+  0xc05..0xc10; entries alternate `0xa400` / `0x213000`, out-of-range →
+  `0x213000`), then magic-checks the buffer. Caller:
   `LineLaserAbstractDeviceHandle::checkDeviceNecessaryParamStatus`
-  @`0x360480`/`0x3604f0`/`0x360558`.
+  @`0x360480`/`0x3604f0`/`0x360558`. The captured device resolves to a
+  `0x213000` entry, and the wire sees the backup copy at `0x213000` with a
+  checksum differing from the `0x211000` primary — the backup-vs-user split
+  `[inferred, wire-observed 2026-10-18]`.
+- **The read transport is observable without libOrbbecSDK** [inferred,
+  wire-observed 2026-10-18]: the host reads flash with vendor opcode 25
+  (memory read) tunnelled through the RPC method `ob_rpc_send_data`, framed
+  with the vendor header (magic `0x47` 'MG', size/opcode/requestId); responses
+  use the `0x4252` 'BR' framing, 768 B per read (120 reads in the captured
+  session). This settles OQ-S15d's transport half.
 - **The calibration temp info** (inside the line-laser record family):
   `getCalibrationTempInfoFromLineLaserParam()` @`0x23faac` reads flash key
   `0x14000`, 8192 B, and parses a length+checksum section. Caller:
@@ -57,9 +90,10 @@ image made of **named 4096-B files** uploaded per entry via
 
 ### 1.3 Format and units
 
-- The **flash record format is settled**: 16-byte header
-  (magic/checksum/length/type) + payload; length and type validated on write;
-  XOR-checksum table at `0x2ceb980`.
+- The **flash record format is settled**: 16-byte header {magic
+  `0x464473<kind>`, CRC-32, length, address} + payload; length and address
+  validated on write (the address doubles as the header's type field); CRC-32
+  table at `0x2ceb980`.
 - The **payload shape** is per-line coefficient rows:
   `ConvertScannerCalibParams2LineLaserParams` @`0xd11b74` zero-fills
   `LineLaserParams` (5488 B = 0x1570) and fills a header (+0x0..+0x14: four
@@ -69,10 +103,35 @@ image made of **named 4096-B files** uploaded per entry via
   then sparse groups at +0xa8..+0xe0 and +0x1508..+0x1530. So the struct is
   **N laser lines × 8 coefficients** (three such tables) plus scalars. The
   per-coefficient **units are not determinable from the conversion** [open].
-- Sizes to keep straight: flash read 8192 B; `LineLaserParams` 5488 B; the
-  live user copy 5120 B; the SoC files 4096 B.
+- Sizes to keep straight: flash read window 8192 B; flash record payload
+  **5180 B (0x143c)** `[inferred, wire-observed 2026-10-18]`; `LineLaserParams`
+  5488 B; the live user copy 5120 B; the SoC files 4096 B. The 60-byte
+  flash-vs-live difference (5180 vs 5120) is unaccounted for — header/trailer
+  vs struct body, or flash-only fields (OQ-S15a).
 
-### 1.4 What is not settled
+### 1.4 The flash map as read at startup / project-open
+
+Wire-observed `[inferred, wire-observed 2026-10-18]` — nine records, each with
+the 16-byte header (the header's type field = the record's own address):
+
+| flash address | magic kind | length | when |
+| --- | --- | --- | --- |
+| 0x200000 | 0x11 | 6780 (0x1a7c) | startup — primary |
+| 0x202000 | 0x11 | 6780 | startup — copy of 0x200000 |
+| 0x204000 | 0x08 | 2952 (0xb88) | startup |
+| 0x20a000 | 0x12 | 6646 (0x19f6) | startup |
+| 0x20e000 | 0x13 | 12066 (0x2f22) | startup |
+| 0x211000 | 0x14 | 5180 (0x143c) | startup — **laser planes** |
+| 0x213000 | 0x14 | 5180 | startup — plane backup copy |
+| 0x215000 | 0x15 | 12066 (0x2f22) | startup — same size as 0x20e000 |
+| 0x0b0000 | 0x08 | 3916 (0xf4c) | project-open (t≈25 s) |
+
+Reads are contiguous 768-B windows over 0x200000..0x206000 and
+0x20a000..0x218000 at startup, plus 0x0b0000..0x0b2000 at project-open.
+0x20e000 (kind 0x13) and 0x215000 (kind 0x15) — same length, adjacent — look
+like another primary/backup pair (OQ-S15f).
+
+### 1.5 What is not settled
 
 - The 5120-B user struct's internal layout (a wholesale cache copy; its
   producer was not traced).
@@ -81,6 +140,8 @@ image made of **named 4096-B files** uploaded per entry via
 - Whether any of this reaches the session cache (the record-name inventory
   shows `camera_intrin.bat` only; a plane record, if any, needs a session-dir
   listing).
+- The identity of the other flash records (kinds 0x08/0x11/0x12/0x13/0x15) and
+  the 0x20e000/0x215000 pairing (OQ-S15f).
 
 ## 2. The thermal model
 
@@ -200,7 +261,9 @@ fields are not needed to use the intrinsics.
 - **The backup/resume blob** (`obscan_device_management_backup_device_param`)
   still dispatches into libOrbbecSDK (vtable+0x200, per §17.4): settle it with
   the **libOrbbecSDK_arm64.dylib** binary (already in `.recon-cache/`) or a
-  runtime hexdump of the blob — not from this snapshot.
+  runtime hexdump of the blob — not from this snapshot. The wire did not show
+  it either (it never left libOrbbecSDK), so the schema half of OQ-S15d stays
+  open `[inferred, wire-observed 2026-10-18]`.
 
 ## 5. `obscan_calib_get_calibration_score` — score only
 
@@ -214,25 +277,34 @@ QR); the factory calibration (planes/intrinsics) does not flow through it.
 
 ## 6. Settled statically vs needs a run
 
-**Settled:** the flash record format + keys; the plane write chain; the
-live-copy sizes; the 41-field map's intrinsics core; the thermal compensator's
-coefficients/algorithm/threshold and its application points; the score
-export's shape.
+**Settled (static):** the flash record format + keys; the plane write chain;
+the live-copy sizes; the CRC-32 checksum recipe; the 41-field map's intrinsics
+core; the thermal compensator's coefficients/algorithm/threshold and its
+application points; the score export's shape.
+
+**Settled (wire-observed, not a gated run):** the flash-read transport
+(opcode 25 / `ob_rpc_send_data`, 768-B reads); the nine-record flash map; the
+plane record at 0x211000 + the 0x213000 backup; the 5180-B payload length.
 
 **Needs a run:** the payload semantics/units (plane coefficients, the unmapped
 packed fields); the user struct's internal layout; whether the planes reach
-the session dir; the compensator's numeric effect; the flash transport
-(libOrbbecSDK).
+the session dir; the compensator's numeric effect; the backup blob's schema;
+the nine records' identities; checksum validation against the captured
+bytes.
 
 ## OPEN QUESTIONS
 
-- **OQ-S15a** — the 5120-B user plane struct's layout and the per-coefficient
-  units (a runtime hexdump of the cache struct, or a deeper consumer read).
+- **OQ-S15a** — the 5120-B user plane struct's layout, the per-coefficient
+  units, and the 60-byte flash-vs-live difference (5180 vs 5120) (a runtime
+  hexdump of the cache struct, or a deeper consumer read).
 - **OQ-S15b** — packed positions 1–3, 29–34, 35–41 semantics (a
   device-params hexdump alongside a session record).
 - **OQ-S15c** — does the session dir carry a plane record (a session-dir
   listing from a laser scan)?
-- **OQ-S15d** — the flash transport (libOrbbecSDK) and the backup blob's
-  schema.
+- **OQ-S15d** — the flash transport and the backup blob's schema. *Transport
+  half: wire-observed 2026-10-18 (opcode 25 via `ob_rpc_send_data`, 768-B
+  reads). Schema half: still open.*
 - **OQ-S15e** — the 0.4-threshold units and the compensator's numeric effect
   (a temperature-step capture).
+- **OQ-S15f** — the identities of the other flash record kinds
+  (0x08/0x11/0x12/0x13/0x15) and the 0x20e000/0x215000 pairing.
