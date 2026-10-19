@@ -461,6 +461,39 @@ their triggers and cheapest retirements.
 
 Both are the operator's, both config-or-filesystem, and neither is dispatchable to a repo role.
 
+**One correction to "fixed" — verified 2026-10-19, and it is the wall's mechanism, not its named
+paths.** `W2`'s *named* leaks are closed: the builder can no longer write the findings it consumes,
+the hardware records, `PLAN.md`, `.github/**` or `.claude/**`. But it is **not the mechanism the audit
+specified**. The audit asked for `edit * deny` plus allows; what landed is **seven denies, zero
+allows, and no blanket deny** (`blanket_deny: 0`). An enumeration closes the paths it names and
+**nothing else** — so the builder still reaches `README.md`, `CLAUDE.md`, `docs/research/**`,
+`docs/architecture/**`, `docs/tooling/**` and `THIRD_PARTY_LICENSES.md`, silently, by the **absence**
+of a rule rather than by a decision.
+
+**That is why the root README still carries a factual error.** No role *owns* it: it appears in no
+agent's allow list, and the only reason anything can write it is that absent deny — so the drift is
+**structural, not accidental**. It is the third unowned artifact after `docs/research/**` and
+`docs/architecture/**`, and the first to produce a user-visible wrong claim (see the README
+correction below). **Two fixes belong together:** restore `deny:*` on the builder with the audit's
+allow list, and give the repo-level docs an owner.
+
+### The root README's factual error (open — no role can own the fix)
+
+`README.md`'s "Possible future direction" section claimed the low-level layer
+(`libOrbbecSDK.1.7.1.dylib`) is "Orbbec's own **public, open-source** SDK … the same one published on
+GitHub". **Verified wrong against Orbbec's own GitHub org.** `orbbec/OrbbecSDK` describes itself as
+*"Orbbec SDK v1&v2 **Pre-Compiled** Repo"* — **binaries, not source** — while
+`orbbec/OrbbecSDK_v2` is *"Orbbec SDK v2 **Open-Source** Repo"*, and it is a **different** codebase.
+
+So: **the open-source SDK starts at v2**, and v2 does not list the Raptor Pro's `0x0c03` (a live
+enumeration probe saw zero devices). **The layer we actually bind has no source to read** — which is
+the strongest argument for the pivot, not against it: the observed protocol is the only route to
+independence, because the SDK route was never open.
+
+The corrected section is handed to the operator with the verification. It is **not applied here**
+because no role has edit reach on `README.md` — see the correction above. That is also why a claim
+this wrong survived: nobody could fix it.
+
 **`B1` — the builder agent does not load, and the cause is exact.** `openscanner/builder` is absent
 from the loaded agents list, and the server log says so on every attempt: `Error: Agent not found:
 openscanner/builder`. The file is present, and it parses under a lenient YAML reader. The difference
