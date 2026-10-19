@@ -64,6 +64,9 @@
     const main = makeVao();
     const overlay = makeVao();
     gl.enable(gl.DEPTH_TEST);
+    // LEQUAL so the under-covered overlay (same positions, drawn second)
+    // is not depth-rejected by the cloud's equal-depth fragments.
+    gl.depthFunc(gl.LEQUAL);
     gl.clearColor(0.07, 0.07, 0.08, 1.0);
 
     function uploadTo(target, positions) {

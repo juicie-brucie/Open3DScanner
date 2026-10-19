@@ -48,7 +48,9 @@
       }] },
       fragment: { module: shader, entryPoint: "fs", targets: [{ format }] },
       primitive: { topology: "point-list" },
-      depthStencil: { format: "depth24plus", depthWriteEnabled: true, depthCompare: "less" },
+      // less-equal so the overlay drawn second at the same depth paints over
+      // the cloud instead of being rejected by the equal-depth tie.
+      depthStencil: { format: "depth24plus", depthWriteEnabled: true, depthCompare: "less-equal" },
     });
 
     // 96-byte uniform block: matrix (64), brightness (4), override (4),
