@@ -88,6 +88,19 @@ three** interfaces — 23 entries (RGB, port 10012), 54 (IR, 10013), 89 (depth,
 - Whether each response is a *new* frame or the latest frame re-sent on a
   fast poll is not settled (needs payload comparison). `[inferred]`
 
+**Correction (row #124's pre-flight — the `bin(N)` gloss is not a valid
+msgpack reading).** The head `9b 00 cf 00` above does not decode to
+`bin8(52,992)`: in the msgpack grammar `9b` is *fixarray(11)* and `cf` is
+*int8*; 52,992 = 0xCF00 is a big-endian 16-bit **read** of the byte pair
+`cf 00`, not a length field. The one frame-response head recorded in this repo
+(`streaming-replay-payloads.md` §5, 24 bytes) parses as `[1, 5, nil,
+fixarray(11)]` — an **array** result, not a bin — and it **truncates
+mid-element** (element 9 is a `uint64` cut after 5 of its 8 bytes). So the
+result's shape is genuinely unsettled, and "the payload's first bytes" is not
+yet a defined offset. The identification plan and the step that settles this
+are in `frame-codec.md` §2.1; the container itself is row #124's deliverable.
+`[inferred]`
+
 ## 2. The vendor-command framing inside `ob_rpc_send_data`
 
 ### 2.1 The framing (public `Protocol.hpp` — matches the wire)
@@ -197,6 +210,10 @@ single-action captures (the plan's OQ-F2). `[inferred]`
    8-bit stream, so they are encoded; the codec/container is not derivable
    from these captures alone. Phase B/C need this (a targeted capture with
    known content, plus the vendor's own output as the A/B reference).
+   **In progress (row #124):** the identification plan, the hypothesis table
+   and the acceptance are in `frame-codec.md`; the corpus is row #123's
+   extractor output. The result element's *shape* is also open here — see
+   §1.3's correction.
 2. **The small (208-B) segments** on the frame ports (146k on 10010, 147k on
    10013, ~30 MB each) — role unsettled (a second sub-stream? a preview? a
    segmentation artifact?).
