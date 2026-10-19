@@ -11,6 +11,9 @@
 //         OPENSCANNER_PLANE_REMOVE=1            auto plane removal on
 //         OPENSCANNER_TURNTABLE_PLANE_REMOVE=1  turntable plane removal on
 //         OPENSCANNER_MANUAL_PLANE=a,b,c,d      manual plane for the SDK
+//       Our own removal decision (row #77), independent of the toggles:
+//         OPENSCANNER_OUR_PLANE_REMOVE=1        fit a plane, cut below it
+//         OPENSCANNER_PLANE_MARGIN=<float>      keep-distance margin
 //
 //   scan_server --replay <file> [port]
 //       Replays a recorded session (V1 frames) without a device.
@@ -86,6 +89,68 @@ void QuitTrace(const char* msg) {
         ssize_t ignored = write(g_quit_log_fd, buf, static_cast<size_t>(n));
         (void)ignored;
     }
+}
+
+// Our own removal decision (row #77): fit a dominant plane from the live
+// cloud (deterministic RANSAC) and cut points below a margin. This is the
+// decision layer only — it runs on whatever cloud the vendor path published,
+// so it composes with (or replaces) the #71 toggle-bound vendor removal.
+std::atomic<uint64_t> g_our_plane_cut{0};
+std::atomic<uint64_t> g_our_plane_kept{0};
+std::atomic<uint64_t> g_our_plane_fits{0};
+
+double view_radius_guess(const ObScanPoint* pts, uint32_t n) {
+    if (n == 0) return 0.0;
+    double sx = 0, sy = 0, sz = 0;
+    for (uint32_t i = 0; i < n; ++i) { sx += pts[i].x; sy += pts[i].y; sz += pts[i].z; }
+    double cx = sx / n, cy = sy / n, cz = sz / n;
+    double sum = 0;
+    for (uint32_t i = 0; i < n; ++i) {
+        double dx = pts[i].x - cx, dy = pts[i].y - cy, dz = pts[i].z - cz;
+        sum += dx * dx + dy * dy + dz * dz;
+    }
+    return std::sqrt(sum / n);
+}
+
+struct OurPlane {
+    double a = 0, b = 0, c = 0, d = 0;
+    bool valid = false;
+    uint32_t inliers = 0;
+};
+
+OurPlane FitDominantPlane(const ObScanPoint* pts, uint32_t n, int iterations, double inlier_dist) {
+    OurPlane best;
+    if (n < 3) return best;
+    uint64_t seed = 0x9e3779b97f4a7c15ULL;
+    auto rnd = [&seed](uint32_t m) {
+        seed = seed * 6364136223846793005ULL + 1442695040888963407ULL;
+        return static_cast<uint32_t>((seed >> 33) % m);
+    };
+    for (int it = 0; it < iterations; ++it) {
+        uint32_t i = rnd(n), j = rnd(n), k = rnd(n);
+        if (i == j || j == k || i == k) continue;
+        const ObScanPoint& p0 = pts[i];
+        const ObScanPoint& p1 = pts[j];
+        const ObScanPoint& p2 = pts[k];
+        double ux = p1.x - p0.x, uy = p1.y - p0.y, uz = p1.z - p0.z;
+        double vx = p2.x - p0.x, vy = p2.y - p0.y, vz = p2.z - p0.z;
+        double a = uy * vz - uz * vy;
+        double b = uz * vx - ux * vz;
+        double c = ux * vy - uy * vx;
+        double norm = std::sqrt(a * a + b * b + c * c);
+        if (norm < 1e-9) continue;
+        a /= norm; b /= norm; c /= norm;
+        double d = -(a * p0.x + b * p0.y + c * p0.z);
+        uint32_t inliers = 0;
+        for (uint32_t t = 0; t < n; ++t) {
+            double dist = std::fabs(a * pts[t].x + b * pts[t].y + c * pts[t].z + d);
+            if (dist <= inlier_dist) ++inliers;
+        }
+        if (inliers > best.inliers) {
+            best = {a, b, c, d, true, inliers};
+        }
+    }
+    return best;
 }
 
 // Directory containing the running binary (with trailing '/'), or "".
@@ -992,21 +1057,48 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             if (status == OB_SCAN_SUCCESS) {
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
+                    // Our own decision layer (row #77): fit a dominant plane
+                    // and cut below it. Runs on the cloud the vendor path
+                    // published, so it composes with (or replaces) #71.
+                    const ObScanPoint* pts = cloud.points;
+                    uint32_t npts = cloud.num_points;
+                    std::vector<ObScanPoint> kept;
+                    const char* our_env = std::getenv("OPENSCANNER_OUR_PLANE_REMOVE");
+                    if (our_env != nullptr && std::string(our_env) == "1") {
+                        double extent = std::max(view_radius_guess(cloud.points, cloud.num_points), 1e-6);
+                        double inlier = extent * 0.01;
+                        const char* margin_env = std::getenv("OPENSCANNER_PLANE_MARGIN");
+                        double margin = margin_env != nullptr ? std::atof(margin_env) : 0.0;
+                        OurPlane plane = FitDominantPlane(cloud.points, cloud.num_points, 60, inlier);
+                        if (plane.valid) {
+                            kept.reserve(cloud.num_points);
+                            for (uint32_t t = 0; t < cloud.num_points; ++t) {
+                                double dist = plane.a * cloud.points[t].x + plane.b * cloud.points[t].y +
+                                              plane.c * cloud.points[t].z + plane.d;
+                                if (dist >= margin) kept.push_back(cloud.points[t]);
+                            }
+                            g_our_plane_cut.fetch_add(cloud.num_points - (uint32_t)kept.size());
+                            g_our_plane_kept.fetch_add((uint32_t)kept.size());
+                            ++g_our_plane_fits;
+                            pts = kept.data();
+                            npts = (uint32_t)kept.size();
+                        }
+                    }
                     // Bound the per-tick cost: broadcast a fixed-size sample
                     // instead of copying/broadcasting the whole accumulated
                     // cloud every tick (O(points) -> O(kLiveBroadcastPointBudget)).
                     constexpr uint32_t kLiveBroadcastPointBudget = 20000;
                     uint32_t stride = 1;
-                    uint32_t broadcast_count = cloud.num_points;
+                    uint32_t broadcast_count = npts;
                     if (broadcast_count > kLiveBroadcastPointBudget) {
                         stride = (broadcast_count + kLiveBroadcastPointBudget - 1) / kLiveBroadcastPointBudget;
-                        broadcast_count = (cloud.num_points + stride - 1) / stride;
+                        broadcast_count = (npts + stride - 1) / stride;
                     }
                     std::vector<float> xyz(static_cast<size_t>(broadcast_count) * 3);
                     for (uint32_t i = 0, src = 0; i < broadcast_count; ++i, src += stride) {
-                        xyz[i * 3 + 0] = cloud.points[src].x;
-                        xyz[i * 3 + 1] = cloud.points[src].y;
-                        xyz[i * 3 + 2] = cloud.points[src].z;
+                        xyz[i * 3 + 0] = pts[src].x;
+                        xyz[i * 3 + 1] = pts[src].y;
+                        xyz[i * 3 + 2] = pts[src].z;
                     }
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
                     server.BroadcastBinary(buf.data(), buf.size());
@@ -1200,6 +1292,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
         }
         std::printf("\n");
     }
+    std::printf("[worker] our_plane_removal fits=%llu kept=%llu cut=%llu\n",
+                (unsigned long long)g_our_plane_fits.load(),
+                (unsigned long long)g_our_plane_kept.load(),
+                (unsigned long long)g_our_plane_cut.load());
     std::fflush(stdout);
 
     server.Stop();
