@@ -68,6 +68,12 @@ method name carries start/stop; the array does not); the format field (9) and
 the exact field names are not on the wire. `ob_set_ir_frame_light_type`'s first
 argument is the same streamtype (6/7), not a light type (§7).
 
+**Extension (row #114)**: `ob_get_stream_profile_list` is issued on **all
+three** interfaces — 23 entries (RGB, port 10012), 54 (IR, 10013), 89 (depth,
+10010) — not only the RGB one; the entries are
+`[0, format, width, height, fps]`, i.e. `start_stream`'s params 2–5. See
+`stream-profiles-row114.md` §1–§2.
+
 ### 1.3 The frame response (what Phase B must decode)
 
 - The response is `[1, msgid, nil, bin(N)]` — a msgpack **bin**, not a str:
@@ -212,10 +218,16 @@ single-action captures (the plan's OQ-F2). `[inferred]`
 ## 7. The streaming sequence (replay payloads, retired OQs)
 
 **Retired OQs**: §6 item 3 (pull semantics / cadence) is now settled from the
-capture: the vendor client calls `get_frame` at ~51 Hz immediately after
-`start_stream` (first response at 45.76 ms), with params `90` (empty array) —
-matches our client. The daemon responds with a non-empty bin immediately (no
-empty polls), so the daemon buffers frames server-side.
+capture: the vendor client calls `get_frame` immediately after `start_stream`
+(first response at 45.76 ms), with params `90` (empty array) — matches our
+client. The daemon responds with a non-empty bin immediately (no empty polls),
+so the daemon buffers frames server-side.
+
+**Correction (row #114)**: the call rate is **~85–86 Hz**, not the ~51 Hz
+stated here before — IR 7,420 calls / 86.08 s = 86.2 Hz, depth 7,260 /
+86.05 s = 84.4 Hz, steady across every full 10 s bucket. The old 51.2 Hz came
+from a nine-interval window of the first ten frames (the cadence is bimodal:
+median 5.45 ms, p90 23.8 ms). See `stream-profiles-row114.md` §5.
 
 **The streaming sequence, from the vendor's client** (session4, t=25.26–25.36):
 
@@ -241,7 +253,9 @@ empty polls), so the daemon buffers frames server-side.
 
 4. **First frame response** (t=25.340): IR port 10013 returns a bin at
    25.339836, 45.76 ms after start_stream request. The client immediately
-   begins `get_frame` at ~51 Hz (cadence: 9 intervals in 0.1757 s).
+   begins `get_frame`, at ~85–86 Hz over the whole capture (the 51.2 Hz in
+   `streaming-replay-payloads.md` §2 is a nine-interval window artifact —
+   `stream-profiles-row114.md` §5).
 
 5. **Post-stream property sets** (t=25.358–25.364): props 2022=8, 2024=2,
    2020=1, 3=0, 152=0, 153=0, 151=1. Props 3/152/153 are the laser loop

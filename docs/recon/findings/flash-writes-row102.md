@@ -23,7 +23,7 @@ This matters for C2 (#100): if there's a required persistent write we missed, cl
 | Method | Count | Classification | Rationale |
 |--------|-------|----------------|-----------|
 | `ob_get_device_enumeration_info` | 1 | **Read** | returns device metadata |
-| `ob_get_stream_profile_list` | 1 | **Read** | returns profile list |
+| `ob_get_stream_profile_list` | 3 | **Read** | returns profile list (one per interface: RGB / IR / depth) |
 | `ob_rpc_get_frame` | 14,680 | **Read** | returns frame data |
 | `ob_rpc_get_imu_frame` | 15,892 | **Read** | returns IMU samples |
 | `ob_rpc_get_device_report_infomation` | 671 | **Read** | returns diagnostic data |
@@ -38,6 +38,8 @@ This matters for C2 (#100): if there's a required persistent write we missed, cl
 | `ob_rpc_send_data` | 3,336 | **Wrapper** | carries vendor commands below |
 
 **Verdict**: RPC methods are either reads or volatile state changes. No persistent writes.
+
+*Correction (row #114): `ob_get_stream_profile_list` is issued **3** times, not 1 — once per interface (23 RGB / 54 IR / 89 entries). See `stream-profiles-row114.md` §1.*
 
 ### 2.3 Vendor Commands (inside `ob_rpc_send_data`, opcode field)
 
