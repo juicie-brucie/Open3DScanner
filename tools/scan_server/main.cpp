@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
 #include <functional>
 #include <fstream>
 #include <iterator>
@@ -48,6 +49,7 @@
 #include <vector>
 
 #if !defined(_WIN32)
+#include <sys/time.h>
 #include <unistd.h>
 #endif
 
@@ -63,6 +65,28 @@
 #include "openscanner/worker_process.h"
 
 namespace {
+
+// Quit-path instrumentation (row #79): append-only trace shared with the
+// app. write(2) on a pre-opened fd so the signal handler can log safely.
+int g_quit_log_fd = -1;
+void QuitTraceInit() {
+    if (g_quit_log_fd >= 0) return;
+    const char* path = std::getenv("OPENSCANNER_QUIT_LOG");
+    if (path == nullptr || path[0] == '\0') path = "/tmp/openscanner-quit.log";
+    g_quit_log_fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+}
+void QuitTrace(const char* msg) {
+    if (g_quit_log_fd < 0) return;
+    struct timeval tv = {};
+    gettimeofday(&tv, nullptr);
+    char buf[256];
+    int n = std::snprintf(buf, sizeof(buf), "%ld.%06d [worker pid %d] %s\n", (long)tv.tv_sec, (int)tv.tv_usec,
+                          (int)getpid(), msg);
+    if (n > 0) {
+        ssize_t ignored = write(g_quit_log_fd, buf, static_cast<size_t>(n));
+        (void)ignored;
+    }
+}
 
 // Directory containing the running binary (with trailing '/'), or "".
 std::string ExecutableDir() {
@@ -495,6 +519,7 @@ volatile std::sig_atomic_t g_stop_requested = 0;
 
 void OnStopSignal(int) {
     g_stop_requested = 1;
+    QuitTrace("signal handler entered (g_stop_requested set)");
 }
 
 void OnDeviceMessage(ObScanDeviceMessage msg) {
@@ -678,6 +703,8 @@ void Report(const char* step, ObScanStatus status) {
 
 int RunLiveServer(const std::string& library_path, uint16_t port, const std::string& record_path = "") {
     g_record_path = record_path;
+    QuitTraceInit();
+    QuitTrace("RunLiveServer: installing signal handlers");
     std::signal(SIGINT, &OnStopSignal);
     std::signal(SIGTERM, &OnStopSignal);
 #if defined(SIGPIPE)
@@ -889,12 +916,14 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     for (int tick = 0; tick < total_ticks; ++tick) {
 #if !defined(_WIN32)
         if (getppid() != original_parent) {
+            QuitTrace("orphan guard: parent changed -> stop requested");
             std::printf("[worker] parent exited — stopping and tearing down cleanly.\n");
             std::fflush(stdout);
             g_stop_requested = 1;
         }
 #endif
         if (g_stop_requested) {
+            QuitTrace("live loop observed stop request -> breaking to teardown");
             std::printf(
                 "[worker] Stop requested (Ctrl+C or UI \"finish\") — ending the live loop and tearing down "
                 "cleanly.\n");
@@ -1090,7 +1119,9 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     // destroys below then refuse (MULTI_CALLED / "must first wait other
     // process finished") until that tail completes, so poll them instead
     // of treating the first refusal as a failure.
+    QuitTrace("teardown: calling obscan_scan_stop(is_block=false)");
     status = lib.obscan_scan_stop(scan, &OnPreviewProgress, &OnPreviewStatus, /*is_block=*/false);
+    QuitTrace("teardown: obscan_scan_stop returned");
     Report("obscan_scan_stop", status);
 
     {
@@ -1114,8 +1145,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     polls, refusals, elapsed / 1000.0, StatusName(status));
         std::fflush(stdout);
         Report("obscan_session_destroy", status);
+        QuitTrace("teardown: session_destroy poll loop done");
     }
 
+    QuitTrace("teardown: starting context_destroy poll loop");
     {
         int polls = 0;
         int refusals = 0;
@@ -1137,7 +1170,9 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     polls, refusals, elapsed / 1000.0, StatusName(status));
         std::fflush(stdout);
         Report("obscan_context_destroy", status);
+        QuitTrace("teardown: context_destroy poll loop done");
     }
+    QuitTrace("teardown complete");
 
     if (!g_record_path.empty()) {
         std::fstream out(g_record_path, std::ios::binary | std::ios::in | std::ios::out);
