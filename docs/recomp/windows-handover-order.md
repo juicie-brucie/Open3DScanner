@@ -1,7 +1,8 @@
 # Windows handover order — the first cross-machine run (`mac #115` / `win #113`)
 
-**Status: DRAFT — the go-ahead is not given.** It waits on the **operator's explicit cable decision**
-(A: Windows first / B: Mac #127 first) and on an **enumerated device**; and on: the Mac's **#127 live reply dump**
+**Status: DRAFT — the go-ahead is not given.** The operator chose **A (Windows first)** on 2026-10-19: the
+device stays on Windows, `#127` waits, and the **replug is the only open physical step**. It waits on an
+**enumerated device** and on: the Mac's **#127 live reply dump**
 (the client landed as #327; the live run waits on the device) and on the fork's **`win #122`/`win #123`**
 (the loader fix and the vendor crash) plus a replug. **#124's container identification is done** — the
 container is named from the 11 captured frames, no device needed. **`win #114` is not a wait**:
