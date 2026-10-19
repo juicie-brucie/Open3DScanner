@@ -11,3 +11,8 @@
   can't be told apart yet. Mechanically sound, functionally incomplete.
   Filed as **#105** (`TODO`) — per-call logging + re-deriving the request
   shape against the capture set. #98 stays `HW` pending real frames.
+
+  Addendum (dispatcher): the operator's live screenshot of the **vendor** path (the app's own scan,
+  same daemon) shows a full stream — 245,235 points, `tracking SUCCESS (0)`, `coverage 0% covered,
+  6667 under-covered pts` — so the daemon serves frames fine and #105's gap is `raptor_client`'s
+  request shape/sequencing. `[inferred — screenshot, not a measurement of raptor_client]`
