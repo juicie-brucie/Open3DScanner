@@ -1,9 +1,18 @@
 # Windows handover order — the first cross-machine run (`mac #115` / `win #113`)
 
-**Status: DRAFT — the go-ahead is not given.** The device stays on the Mac until #127's live reply
-dump has run, #320's extractor counts are the corpus, and #124's container identification has its
-data. This file is the order the go-ahead will send; it exists so the fork lane can check its shape
-before the window opens.
+**Status: DRAFT — the go-ahead is not given.** It waits on: the Mac's #127 live reply dump,
+#320's extractor and #124's container identification; and the fork's **`win #120`** (the
+precondition-vs-FAIL distinction) and **`win #121`** (the preflight load assertion) landing.
+
+## Vocabulary — read this first
+
+Two different axes, both in the record:
+
+- **Conditions** (the fork runbook's "six cells"): **2 client states × 3 phases, 30 s each** —
+  the six conditions in the table below.
+- **Result fields**: the six measurements taken **per condition**.
+
+The order uses "conditions" and "result fields" so neither list is mapped onto the other.
 
 ## Preconditions
 
@@ -13,12 +22,16 @@ before the window opens.
 - The Mac does not start a scan for the duration of the window.
 
 **Windows (their side):**
-- **`CrealityScan.exe` started and the daemon up before any test runs.** After `win #119` the SDK
-  *loads*, so the old skip-on-load-failure path is unreachable: with no daemon, both listener tests
-  exit **1** at `obscan_context_create()` and ctest records **FAILED**, not skipped — and the
-  interposer banner still prints, so the spurious failure looks like a real run.
-- The preflight asserts the SDK **loads**, not merely that the DLL exists; a present-but-unloadable
-  SDK is a **FAIL**, not the expected state.
+- **Start `CrealityScan.exe` and confirm the daemon is up before any test.** On Windows the app is
+  what starts the daemon, so "vendor app not running" cannot be assumed: **launch the app, confirm
+  the daemon, then either close the UI if the daemon survives, or leave it idle — and the record
+  states which**, because it affects the raw numbers.
+- The preflight must print a **load PASS/FAIL**, not a path. `Test-Path` on the DLL is not enough
+  (`win #121`); a present-but-unloadable SDK is a **FAIL**.
+- **Device-absent is currently `FAIL`, not `SKIP`** — after `win #119` the SDK loads, so the old
+  return-2 load-failure path is unreachable; with no daemon/device the tests exit **1** at
+  `obscan_context_create()` and ctest records **FAILED**. Do not read a device-absent run as a
+  skip until `win #120` lands.
 - After the cable move, `Get-PnpDevice -PresentOnly` shows `VID_2BC5` with Depth/IR/RGB.
 
 ## Sequence
@@ -26,41 +39,59 @@ before the window opens.
 1. Mac: stop the daemon; confirm nothing holds the device; release the cable.
 2. Operator moves the cable to Windows.
 3. Windows: confirm enumeration (`VID_2BC5`, Depth/IR/RGB).
-4. Windows: start `CrealityScan.exe`; confirm the daemon is up.
-5. Windows: `scripts/hw-preflight.ps1 scan_server` — asserts the load, not existence.
-6. Windows: the run (the six cells below).
+4. Windows: start `CrealityScan.exe`; confirm the daemon; record the app/UI state chosen.
+5. Windows: `scripts/hw-preflight.ps1 scan_server` — must print the **load PASS/FAIL**.
+6. Windows: the run — the six **conditions** × the six **result fields**.
 7. Windows: postflight; the record written to `tests/results/`.
 8. Operator returns the cable; Mac: restart the daemon and confirm enumeration.
 9. The fork's `win #114` reconcile runs **before any board move** is claimed from the record.
 
+## Conditions (six, 30 s each)
+
+| # | client state | phase |
+| --- | --- | --- |
+| 1 | no client | still |
+| 2 | no client | moved by hand |
+| 3 | no client | paused–resumed |
+| 4 | UI open | still |
+| 5 | UI open | moved by hand |
+| 6 | UI open | paused–resumed |
+
+## Result fields (six, per condition)
+
+| # | field | note |
+| --- | --- | --- |
+| 1 | raw frame delivery cadence | measured from **`get_frame` timing** — the fork's client is `scan_server`; the record must **not** claim the vendor client's poll |
+| 2 | realized poll rate + tick breakdown | the `[perf] window` lines: pose, publish-getter, post+encode, broadcast, points/bytes, realized period — present via #17 |
+| 3 | UI `data` fps (HUD) | |
+| 4 | UI `render` fps (HUD) | |
+| 5 | `raptor_client --live` summary (`bin`/`empty`/`error`, per port) | **"not ported"** — POSIX sockets, excluded from the sync (`mac #116` owns the shim); never blank |
+| 6 | crash sweep | WER `ReportArchive` + Event Log 1000 with its own `AppName`/`AppPath`/time; if unavailable, the exact sentence `no Windows crash-report source available - sweep not performed` |
+
 ## Artifacts pinned for the window
 
-- Scanner variant + serial: `<fill at go-ahead>`
-- `CrealityScan` **4.3.2**; `lib_orbbec_scan` build **3.5.3.260921**
+- Scanner variant + serial: `<fill at go-ahead>`; USB link (3.x).
+- `CrealityScan` **4.3.2**; `lib_orbbec_scan` build **3.5.3.260921**; `OrbbecSDK.dll` (unversioned).
 - **No update or reinstall** of the vendor app during the window; if either changes, the comparison is void.
+- Machine spec: Ryzen 9 5900X, 31.9 GB, Windows 11 Pro 26200, RTX 2080 Ti 11 GB (WMI under-reports
+  the video memory to 4 GB — record the WMI value and the true one).
+- Build provenance: compiler/MSVC, CMake and Ninja versions, and the configured `start_stream` profile.
 
 ## The record
 
-**Header fields:** Date; worktree + branch + HEAD; target binary and how it was built; other copy (if any);
-preflight (`.ps1` name + result); interposer — **N/A with the DLL path recorded and the load asserted**;
-preconditions (daemon up, one SDK user, vendor app state); run start (dry and live); device (variant, serial,
-USB link); vendor versions as pinned above.
-
-**Six cells**, mapped one-for-one onto `mac #115`:
-
-| # | Cell | Note |
-| --- | --- | --- |
-| 1 | the daemon's raw frame delivery rate | |
-| 2 | the realized poll rate + tick breakdown | "not ported" if #111's instrumentation is not, never blank |
-| 3 | the UI's `data` fps | |
-| 4 | the UI's `render` fps | |
-| 5 | `raptor_client --live` summary (`bin`/`empty`/`error`, per port) | "not ported" if the client is not — never blank |
-| 6 | the crash sweep (WER / Event Log form) | or the exact "sweep not performed" sentence with its reason |
+- **Header: the parent's eight fields, identical** — Date / Worktree / Branch / Target / Other copy /
+  Preflight / Interposer / Run start.
+- **Windows preconditions block, after them**: build SHA + compiler/CMake/Ninja; device variant +
+  serial + USB link; vendor versions as pinned; app/daemon state (which was chosen, per the
+  precondition above); browser used for the HUD.
+- **Raw log and HUD evidence committed beside the record in the same PR** — the gate's
+  `record-provenance` requires it. The record is **agent-tier**.
+- Conditions and result fields as two separate tables; the record states the condition when each
+  result field was taken.
 
 ## Reference
 
-- Fork-side rows: `win #113` (the run), `win #119` (the loader fix, now folded into the parent),
-  `win #120` (the precondition distinction), `win #114` (reconcile).
-- Parent-side rows: `mac #115` (the cross-machine check), `#130` (the parent's own
-  precondition-vs-FAIL defect, filed from the fork's finding), `#127`/`#124` (the Mac-side work
-  that gates the go-ahead).
+Fork rows: `win #113` (the run), `win #119` (the loader fix, folded into the parent), `win #120`
+(precondition-vs-FAIL), `win #121` (preflight load assertion), `win #114` (reconcile).
+Parent rows: `mac #115` (the cross-machine check), `#130` (our own precondition-vs-FAIL defect),
+`#127`/`#124` (the Mac-side work gating the go-ahead).
