@@ -13,12 +13,13 @@
 //   raptor_client --dry-run-live             # bytes each call would send
 //   raptor_client --selftest-timeout         # the bounded reply read, no device
 //   raptor_client --discover                 # GVCP discovery only
-//   raptor_client --replay <file> [host] [port] [--dry-run] [--quiet]
-//       [--reply-timeout-ms N]
+//   raptor_client --replay <file> [host] [--dry-run] [--quiet]
+//       [--reply-timeout-ms N] [--ir-port N] [--depth-port N]
 //       recon's captured request frames, unchanged, in order (hex lines).
 //       The '+<ms>' prefix is an ABSOLUTE capture timestamp (ms since the
 //       capture started), so the replay paces on the inter-arrival deltas
-//       between stamps.
+//       between stamps. Each frame is routed by the interface suffix on
+//       its method name to that interface's own port.
 //   raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]
 //       per-call logging is on by default: every get_frame result (bin size /
 //       empty / error) and every SET_PROPERTY (prop, value, ACCEPT/REJECT).
@@ -43,6 +44,7 @@
 #include <cstring>
 #include <fstream>
 #include <map>
+#include <memory>
 #include <string>
 #include <thread>
 #include <variant>
@@ -682,6 +684,174 @@ int64_t FirstFrameWaitMs(int64_t first_delta_ms) {
     return first_delta_ms < 0 ? 0 : first_delta_ms;
 }
 
+// ---------------------------------------------------------------------------
+// Interface routing (row #120)
+//
+// A captured method name ends in a suffix that identifies the device and
+// the interface it addresses (protocol-spec.md §1.1): the device id is
+// "0-2-1" and the interface index follows it — "0-2-12" is interface 2 (IR),
+// "0-2-10" is interface 0 (depth). Each interface has its own TCP port on
+// the daemon, so a replay that mixes interfaces must use one connection
+// per interface, not one connection for everything.
+//
+// The suffix is read out of the frame; the frame itself is never re-encoded
+// and goes out byte for byte as captured.
+// ---------------------------------------------------------------------------
+
+// The two interfaces the capture file exercises, and the port each was
+// observed on (protocol-spec.md §1.1: depth 10010, IR 10013).
+struct InterfaceRoute {
+    std::string suffix;  // the method-name suffix, e.g. "0-2-12"
+    std::string name;    // a short label for the diagnostics
+    uint16_t port;       // the daemon port for that interface
+};
+
+// The suffix→interface→port table. The ports are overridable on the
+// command line (--ir-port / --depth-port) for a daemon on other ports.
+class RouteTable {
+public:
+    RouteTable() {
+        routes_.push_back({"0-2-12", "IR", 10013});
+        routes_.push_back({"0-2-10", "depth", 10010});
+    }
+    const std::vector<InterfaceRoute>& routes() const { return routes_; }
+    // The index of a suffix in the table, or -1 when it is not one this
+    // client knows.
+    int IndexOfSuffix(const std::string& suffix) const {
+        for (size_t i = 0; i < routes_.size(); ++i) {
+            if (routes_[i].suffix == suffix) return (int)i;
+        }
+        return -1;
+    }
+    // The index of an interface by its label, or -1.
+    int IndexOfName(const std::string& name) const {
+        for (size_t i = 0; i < routes_.size(); ++i) {
+            if (routes_[i].name == name) return (int)i;
+        }
+        return -1;
+    }
+    // Point an interface at another port. Returns false for an unknown
+    // name, so a typo is an error rather than a silent no-op.
+    bool SetPortByName(const std::string& name, uint16_t port) {
+        int i = IndexOfName(name);
+        if (i < 0) return false;
+        routes_[(size_t)i].port = port;
+        return true;
+    }
+    // The known suffixes, for an error message.
+    std::string KnownSuffixes() const {
+        std::string s;
+        for (const InterfaceRoute& r : routes_) {
+            if (!s.empty()) s += ", ";
+            s += r.suffix;
+        }
+        return s;
+    }
+
+private:
+    std::vector<InterfaceRoute> routes_;
+};
+
+// The method name of a captured request frame. The frame is a msgpack
+// array [0, msgid, method, params]; this reads the method out of it
+// WITHOUT re-encoding — the bytes the caller sends are untouched.
+//
+// The method is a msgpack string in the third slot. Rather than decode
+// the whole frame (whose params can hold arbitrary binary), this walks
+// the array header and the two leading scalars and then reads the string
+// header. Returns false if the frame is not shaped like a request.
+bool MethodNameOfFrame(const Bytes& frame, std::string* method) {
+    size_t i = 0;
+    if (frame.size() < 2) return false;
+    uint8_t tag = frame[i];
+    if ((tag & 0xf0) != 0x90) return false;  // not a msgpack array
+    size_t count = tag & 0x0f;
+    if (count < 3) return false;  // need [0, msgid, method, ...]
+    ++i;
+    // Skip element 0 (the request marker) and element 1 (the msgid).
+    for (int e = 0; e < 2; ++e) {
+        if (i >= frame.size()) return false;
+        uint8_t t = frame[i];
+        if (t <= 0x7f) { i += 1; }
+        else if (t >= 0xe0) { i += 1; }
+        else if (t == 0xcc) { i += 2; }
+        else if (t == 0xcd) { i += 3; }
+        else if (t == 0xce) { i += 5; }
+        else if (t == 0xcf) { i += 9; }
+        else return false;
+        if (i > frame.size()) return false;
+    }
+    if (i >= frame.size()) return false;
+    uint8_t t = frame[i];
+    size_t len = 0;
+    size_t hdr = 0;
+    if (t >= 0xa0 && t <= 0xbf) { len = t & 0x1f; hdr = 1; }
+    else if (t == 0xd9) { if (i + 1 >= frame.size()) return false; len = frame[i + 1]; hdr = 2; }
+    else if (t == 0xda) {
+        if (i + 2 >= frame.size()) return false;
+        len = ((size_t)frame[i + 1] << 8) | frame[i + 2];
+        hdr = 3;
+    } else {
+        return false;  // not a string
+    }
+    if (i + hdr + len > frame.size()) return false;
+    method->assign(reinterpret_cast<const char*>(frame.data() + i + hdr), len);
+    return true;
+}
+
+// The interface suffix of a method name: the trailing "0-2-1<index>" the
+// device and interface share (protocol-spec.md §1.1). Returns false when
+// the name carries no such suffix.
+bool InterfaceSuffixOfMethod(const std::string& method, std::string* suffix) {
+    // The suffix is the trailing run of digits and dashes that ends the
+    // name; the method part before it is letters/underscores. A name that
+    // is nothing but the token counts as carrying it.
+    size_t end = method.size();
+    size_t start = end;
+    while (start > 0) {
+        char c = method[start - 1];
+        if ((c >= '0' && c <= '9') || c == '-') start--;
+        else break;
+    }
+    if (start == end) return false;  // no trailing digits at all
+    *suffix = method.substr(start, end - start);
+    return true;
+}
+
+// The route for a method's interface suffix, or nullptr when the suffix is
+// not one this client knows how to reach.
+const InterfaceRoute* RouteForSuffix(const RouteTable& table, const std::string& suffix) {
+    int i = table.IndexOfSuffix(suffix);
+    return i < 0 ? nullptr : &table.routes()[(size_t)i];
+}
+
+// The route a frame goes to, read from the method name in the frame. On
+// failure *err explains why, naming the frame.
+bool RouteForFrame(const RouteTable& table, const Bytes& frame, size_t frame_index,
+                   const InterfaceRoute** route, std::string* suffix_out, std::string* err) {
+    std::string method;
+    if (!MethodNameOfFrame(frame, &method)) {
+        *err = "frame " + std::to_string(frame_index) +
+               ": not a msgpack-RPC request frame (cannot read the method name)";
+        return false;
+    }
+    std::string suffix;
+    if (!InterfaceSuffixOfMethod(method, &suffix)) {
+        *err = "frame " + std::to_string(frame_index) + ": method '" + method +
+               "' has no interface suffix";
+        return false;
+    }
+    const InterfaceRoute* r = RouteForSuffix(table, suffix);
+    if (!r) {
+        *err = "frame " + std::to_string(frame_index) + ": unknown interface suffix '" + suffix +
+               "' (known: " + table.KnownSuffixes() + ")";
+        return false;
+    }
+    *route = r;
+    *suffix_out = suffix;
+    return true;
+}
+
 // Regression for the row #105 parser bug: '+25429 94000d…' — the space after
 // the timestamp must delimit it, or the digit scanner eats 94000 (hex chars
 // that are also decimal digits).
@@ -777,10 +947,109 @@ int ReplayDeltaSelftest() {
     return failures ? 1 : 0;
 }
 
+// Row #120: the interface suffix parse and the suffix→port routing table,
+// no device. The capture file mixes interfaces (13 IR, 23 depth — see
+// docs/recon/findings/streaming-replay-payloads.md §6), so a frame must
+// go out on its own interface's port.
+//
+// The frames here are the capture's own bytes, so the test pins the real
+// method names: "ob_rpc_get_frame0-2-12" (IR) and
+// "ob_rpc_get_frame0-2-10" (depth).
+int ReplayInterfaceSelftest() {
+    int failures = 0;
+    auto check = [&](const char* name, bool pass) {
+        std::printf("[replay-selftest] %-52s %s\n", name, pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+
+    // The two captured IR frames: the same request on the two interfaces.
+    const char* ir_hex = "940005b66f625f7270635f6765745f6672616d65302d322d313290";
+    const char* depth_hex = "9400cca3b66f625f7270635f6765745f6672616d65302d322d313090";
+    auto hexbytes = [](const char* h) {
+        Bytes b;
+        auto nib = [](char c) -> int {
+            if (c >= '0' && c <= '9') return c - '0';
+            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+            return -1;
+        };
+        for (size_t i = 0; h[i] && h[i + 1]; i += 2) b.push_back((uint8_t)((nib(h[i]) << 4) | nib(h[i + 1])));
+        return b;
+    };
+    Bytes ir = hexbytes(ir_hex);
+    Bytes depth = hexbytes(depth_hex);
+    check("the captured frames parse to bytes", ir.size() == 27 && depth.size() == 28);
+
+    // The method name is read out of the frame, without re-encoding it.
+    std::string method;
+    check("reads the IR method name", MethodNameOfFrame(ir, &method) && method == "ob_rpc_get_frame0-2-12");
+    check("reads the depth method name",
+          MethodNameOfFrame(depth, &method) && method == "ob_rpc_get_frame0-2-10");
+
+    // The frames are untouched by the parse.
+    check("parsing does not alter the frame bytes", ir == hexbytes(ir_hex) && depth == hexbytes(depth_hex));
+
+    // The suffix is the trailing device+interface token.
+    std::string suffix;
+    check("extracts the IR suffix",
+          InterfaceSuffixOfMethod("ob_rpc_get_frame0-2-12", &suffix) && suffix == "0-2-12");
+    check("extracts the depth suffix",
+          InterfaceSuffixOfMethod("ob_rpc_get_frame0-2-10", &suffix) && suffix == "0-2-10");
+    check("a name with no suffix yields none",
+          !InterfaceSuffixOfMethod("ob_get_device_enumeration_info", &suffix));
+    check("a name that is only the token still carries it",
+          InterfaceSuffixOfMethod("0-2-12", &suffix) && suffix == "0-2-12");
+
+    // The routing table: the observed suffix→port map.
+    RouteTable routes;
+    const InterfaceRoute* route = nullptr;
+    std::string got;
+    std::string err;
+    check("the IR frame routes to the IR port",
+          RouteForFrame(routes, ir, 1, &route, &got, &err) && route->port == 10013 &&
+              route->name == "IR");
+    check("the depth frame routes to the depth port",
+          RouteForFrame(routes, depth, 1, &route, &got, &err) && route->port == 10010 &&
+              route->name == "depth");
+
+    // An unknown suffix is an error naming the frame, not a silent default.
+    Bytes unknown = hexbytes("940005b66f625f7270635f6765745f6672616d65302d322d323390");
+    check("an unknown suffix is rejected", !RouteForFrame(routes, unknown, 7, &route, &got, &err));
+    check("the error names the frame and the suffix",
+          err.find("frame 7") != std::string::npos && err.find("0-2-23") != std::string::npos);
+    check("a frame with no suffix is rejected",
+          !RouteForFrame(routes, hexbytes("940005b66f625f7265706c7920696e666f0"), 3, &route, &got, &err));
+    check("a frame that is not a request is rejected",
+          !RouteForFrame(routes, Bytes{0xc4, 0x01, 0x00}, 2, &route, &got, &err));
+
+    // The ports are overridable.
+    check("--ir-port overrides the IR port", routes.SetPortByName("IR", 20013));
+    check("--depth-port overrides the depth port", routes.SetPortByName("depth", 20010));
+    check("the overridden IR port is used",
+          RouteForFrame(routes, ir, 1, &route, &got, &err) && route->port == 20013);
+    check("the overridden depth port is used",
+          RouteForFrame(routes, depth, 1, &route, &got, &err) && route->port == 20010);
+    check("an unknown interface name is rejected", !routes.SetPortByName("RGB", 10012));
+
+    std::printf("[replay-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
+}
+
+// The message a stalled frame produces. It names the frame AND the
+// interface the frame went to: the two connections are separate, so
+// "which request went unanswered" is only half the answer.
+std::string ReplayTimeoutMessage(size_t frame_index, const std::string& suffix, int timeout_ms) {
+    char buf[160];
+    std::snprintf(buf, sizeof(buf), "[replay] frame %zu (%s): no reply within %d ms", frame_index,
+                  suffix.c_str(), timeout_ms);
+    return buf;
+}
+
 // The cadence the replay would use, as one summary line: how many frames,
 // the span they cover, and the mean gap between them. This is the
-// no-hardware check that the pacing is the captured one (row #117).
-void PrintCadence(const std::vector<int64_t>& stamps, const std::vector<int64_t>& deltas, int backward) {
+// no-hardware check that the pacing is the captured one (row #117), and
+// the per-interface split is what a run routes on (row #120).
+void PrintCadence(const std::vector<int64_t>& stamps, const std::vector<int64_t>& deltas, int backward,
+                  const RouteTable& routes, const std::vector<int>& frame_route) {
     // The capture file groups frames by call type, not by time, so the span
     // is max(stamp) - min(stamp), not last - first.
     int64_t lo = -1, hi = -1;
@@ -801,10 +1070,31 @@ void PrintCadence(const std::vector<int64_t>& stamps, const std::vector<int64_t>
                 deltas.size(), (long long)span, mean,
                 (long long)(deltas.empty() ? 0 : FirstFrameWaitMs(deltas[0])),
                 backward ? " (backward stamps clamped to 0)" : "");
+
+    // Per interface: how many frames it carries, and the span of its own
+    // timestamps. The two are separate connections on the daemon.
+    std::string split;
+    for (size_t r = 0; r < routes.routes().size(); ++r) {
+        size_t count = 0;
+        int64_t rlo = -1, rhi = -1;
+        for (size_t i = 0; i < frame_route.size(); ++i) {
+            if (frame_route[i] != (int)r) continue;
+            ++count;
+            if (stamps[i] < 0) continue;
+            if (rlo < 0 || stamps[i] < rlo) rlo = stamps[i];
+            if (rhi < 0 || stamps[i] > rhi) rhi = stamps[i];
+        }
+        if (count == 0) continue;
+        int64_t rspan = (rlo >= 0 && rhi >= rlo) ? (rhi - rlo) : 0;
+        if (!split.empty()) split += " / ";
+        split += routes.routes()[r].name + " " + std::to_string(count) + " (span " +
+                 std::to_string(rspan) + " ms)";
+    }
+    std::printf("[replay] interfaces: %s\n", split.c_str());
 }
 
-int Replay(const std::string& host, uint16_t port, const std::string& path, bool dry_run, bool log,
-           int reply_timeout_ms) {
+int Replay(const std::string& host, const RouteTable& routes, const std::string& path, bool dry_run,
+           bool log, int reply_timeout_ms) {
     std::vector<Bytes> frames;
     std::vector<int64_t> stamps;
     std::string err;
@@ -817,51 +1107,95 @@ int Replay(const std::string& host, uint16_t port, const std::string& path, bool
     if (frames.empty()) return 2;
     int backward = 0;
     std::vector<int64_t> deltas = ToInterFrameDeltas(stamps, &backward);
-    PrintCadence(stamps, deltas, backward);
+
+    // Route every frame before sending anything: an unknown interface
+    // suffix is an error naming the frame, not a silent default to some
+    // port. Doing this up front means a bad file fails before the first
+    // byte goes out.
+    std::vector<int> frame_route;
+    std::vector<std::string> frame_suffix;
+    frame_route.reserve(frames.size());
+    frame_suffix.reserve(frames.size());
+    for (size_t i = 0; i < frames.size(); ++i) {
+        const InterfaceRoute* route = nullptr;
+        std::string suffix;
+        if (!RouteForFrame(routes, frames[i], i + 1, &route, &suffix, &err)) {
+            std::fprintf(stderr, "[replay] %s\n", err.c_str());
+            return 2;
+        }
+        frame_route.push_back(routes.IndexOfSuffix(route->suffix));
+        frame_suffix.push_back(suffix);
+    }
+
+    PrintCadence(stamps, deltas, backward, routes, frame_route);
     if (dry_run) {
         for (size_t i = 0; i < frames.size(); ++i) {
             int64_t wait = (i == 0) ? FirstFrameWaitMs(deltas[i]) : deltas[i];
             char ts[32];
             if (stamps[i] < 0) std::snprintf(ts, sizeof(ts), "none");
             else std::snprintf(ts, sizeof(ts), "%lldms", (long long)stamps[i]);
-            std::printf("[replay] frame %zu: t=%s wait %lldms %zu B: %s\n", i + 1, ts,
-                        (long long)wait, frames[i].size(), HexHead(frames[i]).c_str());
+            const InterfaceRoute& r = routes.routes()[(size_t)frame_route[i]];
+            std::printf("[replay] frame %zu: %s (%s) -> port %u, t=%s wait %lldms %zu B: %s\n", i + 1,
+                        r.suffix.c_str(), r.name.c_str(), (unsigned)r.port, ts, (long long)wait,
+                        frames[i].size(), HexHead(frames[i]).c_str());
         }
         return 0;
     }
-    RpcClient rpc;
-    if (!rpc.connect(host, port)) {
-        std::fprintf(stderr, "[replay] cannot connect to %s:%u (is RPCServer running?)\n", host.c_str(), port);
-        return 1;
+
+    // One connection per interface actually present in the file. Each
+    // connection is used in strict request/response order, so at most one
+    // reply is ever outstanding on it.
+    std::map<std::string, std::unique_ptr<RpcClient>> conns;
+    for (size_t r = 0; r < routes.routes().size(); ++r) {
+        bool present = false;
+        for (int idx : frame_route) {
+            if (idx == (int)r) { present = true; break; }
+        }
+        if (!present) continue;
+        const InterfaceRoute& route = routes.routes()[r];
+        auto rpc = std::unique_ptr<RpcClient>(new RpcClient());
+        if (!rpc->connect(host, route.port)) {
+            std::fprintf(stderr, "[replay] cannot connect to %s:%u for interface %s (%s) "
+                         "(is RPCServer running?)\n",
+                         host.c_str(), (unsigned)route.port, route.name.c_str(), route.suffix.c_str());
+            return 1;
+        }
+        std::printf("[replay] connected %s:%u for interface %s (%s)\n", host.c_str(),
+                     (unsigned)route.port, route.name.c_str(), route.suffix.c_str());
+        conns[route.suffix] = std::move(rpc);
     }
-    std::printf("[replay] connected %s:%u; sending unchanged request frames (reply timeout %d ms)\n",
-                host.c_str(), port, reply_timeout_ms);
+    std::printf("[replay] sending unchanged request frames (reply timeout %d ms)\n", reply_timeout_ms);
     uint64_t bins = 0, empties = 0, errors = 0;
     for (size_t i = 0; i < frames.size(); ++i) {
         int64_t wait = (i == 0) ? FirstFrameWaitMs(deltas[i]) : deltas[i];
         if (wait > 0) std::this_thread::sleep_for(std::chrono::milliseconds(wait));
+        RpcClient& rpc = *conns[frame_suffix[i]];
         if (!rpc.sendRaw(frames[i])) {
-            std::fprintf(stderr, "[replay] frame %zu: send failed\n", i + 1);
+            std::fprintf(stderr, "[replay] frame %zu (%s): send failed\n", i + 1,
+                         frame_suffix[i].c_str());
             ++errors;
             break;
         }
         Value reply = rpc.readReplyWithDeadline(reply_timeout_ms);
         if (reply.kind == Value::Kind::Bin) {
             ++bins;
-            if (log) std::printf("[replay] frame %zu -> bin(%zu) head=[%s]\n", i + 1, reply.bin.size(),
-                                 HexHead(reply.bin).c_str());
+            if (log) std::printf("[replay] frame %zu (%s) -> bin(%zu) head=[%s]\n", i + 1,
+                                 frame_suffix[i].c_str(), reply.bin.size(), HexHead(reply.bin).c_str());
         } else if (reply.kind == Value::Kind::Timeout) {
-            // Name the frame: the point of the bound is that a stall says
-            // WHICH request went unanswered, not just "it hung".
-            std::fprintf(stderr, "[replay] frame %zu: no reply within %d ms\n", i + 1, reply_timeout_ms);
+            // Name the frame AND its interface: the point of the bound is
+            // that a stall says WHICH request went unanswered and on which
+            // of the daemon's interfaces.
+            std::fprintf(stderr, "%s\n", ReplayTimeoutMessage(i + 1, frame_suffix[i], reply_timeout_ms).c_str());
             std::fflush(stderr);
             return 1;
         } else if (reply.kind == Value::Kind::Error) {
             ++errors;
-            if (log) std::printf("[replay] frame %zu -> ERROR: %s\n", i + 1, reply.error.c_str());
+            if (log) std::printf("[replay] frame %zu (%s) -> ERROR: %s\n", i + 1,
+                                 frame_suffix[i].c_str(), reply.error.c_str());
         } else {
             ++empties;
-            if (log) std::printf("[replay] frame %zu -> kind=%d\n", i + 1, (int)reply.kind);
+            if (log) std::printf("[replay] frame %zu (%s) -> kind=%d\n", i + 1, frame_suffix[i].c_str(),
+                                 (int)reply.kind);
         }
         std::fflush(stdout);
     }
@@ -957,6 +1291,14 @@ int ReplyTimeoutSelftest() {
     peer.join();
     close(lfd);
 
+    // Row #120: a stall names the frame AND the interface it went to.
+    check("the timeout message names the frame and its interface",
+          ReplayTimeoutMessage(7, "0-2-10", 2000) ==
+              "[replay] frame 7 (0-2-10): no reply within 2000 ms");
+    check("the timeout message names the IR interface too",
+          ReplayTimeoutMessage(1, "0-2-12", 1500) ==
+              "[replay] frame 1 (0-2-12): no reply within 1500 ms");
+
     std::printf("[replay-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
     return failures ? 1 : 0;
 }
@@ -969,18 +1311,19 @@ int main(int argc, char** argv) {
         if (rc) return rc;
         rc |= ReplayParserSelftest();
         rc |= ReplayDeltaSelftest();
+        rc |= ReplayInterfaceSelftest();
         return rc;
     }
     if (argc >= 2 && std::string(argv[1]) == "--selftest-timeout") return ReplyTimeoutSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
-        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [port] [--dry-run] [--quiet] [--reply-timeout-ms N]\n"); return 2; }
+        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [--dry-run] [--quiet] [--reply-timeout-ms N] [--ir-port N] [--depth-port N]\n"); return 2; }
         std::string path = argv[2];
         std::string host = "127.0.0.1";
-        uint16_t port = 10013;
         bool dry_run = false, log = true;
         int reply_timeout_ms = kDefaultReplyTimeoutMs;
+        RouteTable routes;
         // Positionals are host then port; anything starting with "--" is a
         // flag, so a flag may appear before them.
         std::vector<std::string> positionals;
@@ -990,18 +1333,34 @@ int main(int argc, char** argv) {
                 if (a == "--dry-run") dry_run = true;
                 else if (a == "--quiet") log = false;
                 else if (a == "--reply-timeout-ms" && i + 1 < argc) reply_timeout_ms = std::atoi(argv[++i]);
+                else if ((a == "--ir-port" || a == "--depth-port") && i + 1 < argc) {
+                    int port = std::atoi(argv[++i]);
+                    std::string name = (a == "--ir-port") ? "IR" : "depth";
+                    if (port <= 0 || port > 65535) {
+                        std::fprintf(stderr, "%s must be a valid port (got %s)\n", a.c_str(), argv[i]);
+                        return 2;
+                    }
+                    if (!routes.SetPortByName(name, (uint16_t)port)) {
+                        std::fprintf(stderr, "unknown interface: %s\n", name.c_str());
+                        return 2;
+                    }
+                }
                 else { std::fprintf(stderr, "unknown option: %s\n", a.c_str()); return 2; }
             } else {
                 positionals.push_back(a);
             }
         }
         if (positionals.size() > 0) host = positionals[0];
-        if (positionals.size() > 1) port = (uint16_t)std::atoi(positionals[1].c_str());
+        if (positionals.size() > 1) {
+            std::fprintf(stderr, "the replay now routes per interface; a single port argument is "
+                         "ambiguous — use --ir-port and --depth-port\n");
+            return 2;
+        }
         if (reply_timeout_ms <= 0) {
             std::fprintf(stderr, "--reply-timeout-ms must be positive (got %d)\n", reply_timeout_ms);
             return 2;
         }
-        return Replay(host, port, path, dry_run, log, reply_timeout_ms);
+        return Replay(host, routes, path, dry_run, log, reply_timeout_ms);
     }
     if (argc >= 2 && std::string(argv[1]) == "--live") {
         std::string host = argc > 2 ? argv[2] : "127.0.0.1";
@@ -1023,16 +1382,21 @@ int main(int argc, char** argv) {
         "  raptor_client --dry-run-live             print the bytes each call would send\n"
         "  raptor_client --selftest-timeout         bounded reply read, no device\n"
         "  raptor_client --discover                 GVCP discovery only\n"
-        "  raptor_client --replay <file> [host] [port] [--dry-run] [--quiet]\n"
-        "      [--reply-timeout-ms N]\n"
+        "  raptor_client --replay <file> [host] [--dry-run] [--quiet]\n"
+        "      [--reply-timeout-ms N] [--ir-port N] [--depth-port N]\n"
         "      sends recon's captured request frames unchanged, in order; file\n"
         "      format: one hex frame per line, optional '+<ms> ' prefix,\n"
         "      '#' comments/blank lines ignored.\n"
         "      The '+<ms>' prefix is an ABSOLUTE capture timestamp (milliseconds\n"
         "      since the capture started), not a per-frame delay, so the replay\n"
         "      paces on the inter-arrival deltas between consecutive stamps.\n"
+        "      Each frame is routed by the interface suffix on its method name\n"
+        "      to that interface's own port, one connection per interface:\n"
+        "        0-2-12  IR     port 10013  (--ir-port)\n"
+        "        0-2-10  depth  port 10010  (--depth-port)\n"
         "      --reply-timeout-ms bounds each reply read (default 2000); on\n"
-        "      expiry the replay names the frame and exits non-zero.\n"
+        "      expiry the replay names the frame and its interface and exits\n"
+        "      non-zero.\n"
         "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
         "      per-call logging is ON by default (--quiet disables it); --pull-ms 0 = as fast\n");
     return 0;
