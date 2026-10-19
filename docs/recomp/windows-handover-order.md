@@ -21,6 +21,8 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 - No scan running, and the vendor daemon **stopped**, not merely idle; the cable released.
 - The hw worktree synced and built at a recorded commit; the run's binary named in the record.
 - The Mac does not start a scan for the duration of the window.
+- **The hardware guard is armed for the room** (`…-wt-hw`): the hardware rules are scoped to it, and a
+  listener test started outside the room is blocked (fork runbook #4; the same rule applies here).
 
 **Windows (their side):**
 - **Start `CrealityScan.exe` and confirm the daemon is up before any test.** On Windows the app is
@@ -34,6 +36,11 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 - **Device-absent is a `SKIP` after `win #120`** (merged): both tests probe `CrealityScan.exe` and
   `VID_2BC5` and exit **2** with a specific reason. **A SKIP is not a measurement** — the operator must
   attach the device and start the daemon, and the record must never present a SKIP as a run.
+- **The hardware guard is armed for the room** (`-wt-hw`): the rules are scoped to it and a listener test
+  outside it is blocked (runbook #4).
+- **The page is served and the WebSocket upgrades**: `GET /` → **200 `text/html`** (not a zero-byte
+  close) and a WS upgrade → **101** (runbook #2/#3). Without both, the UI `data`/`render` fields compare
+  against nothing — this is the #115 failure.
 - After the cable move, `Get-PnpDevice -PresentOnly` shows `VID_2BC5` with Depth/IR/RGB.
 
 ## Sequence
@@ -44,10 +51,14 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 4. Windows: start `CrealityScan.exe`; confirm the daemon; record the app/UI state chosen.
 5. Windows: `scripts/hw-preflight.ps1 scan_server` — prints the **load PASS/FAIL** and the
    **daemon PASS/FAIL** (process proxy), each with a reason.
-6. Windows: the run — the six **conditions** × the six **result fields**.
-7. Windows: postflight; the record written to `tests/results/`.
-8. Operator returns the cable; Mac: restart the daemon and confirm enumeration.
-9. The fork's `win #114` reconcile runs **before any board move** is claimed from the record.
+6. Windows: **synthetic dry run** — `scan_server <port>` (synthetic is the default; there is no
+   `--synthetic` flag). Confirm `GET /` → **200 `text/html`**, a WebSocket upgrade → **101**, and the
+   UI's `data`/`render` fields producing numbers with **no device**. This validates the server/UI path
+   before the live run, and it is the step whose absence produced the #115 failure.
+7. Windows: the run — the six **conditions** × the six **result fields**.
+8. Windows: postflight; the record written to `tests/results/`.
+9. Operator returns the cable; Mac: restart the daemon and confirm enumeration.
+10. The fork's `win #114` reconcile runs **before any board move** is claimed from the record.
 
 ## Conditions (six, 30 s each)
 
