@@ -153,3 +153,10 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
   sha). The Windows-side evidence is the fork's `win #119` run (the SDK loads and its bootstrap
   exports resolve) — **this side compiles only the `#else` branch**, so the macOS build and
   `ctest` prove the non-Windows path is unaffected and do **not** exercise `LoadLibraryExA`.
+- `[mac]` 2026-10-19 — **the fork's `win #122` loader fix is folded in** (parent row #133): `PathExists()` now uses
+  `GetFileAttributesA` on Windows and `::stat` elsewhere, so a directory probe works on both platforms. Applied
+  **verbatim**: `engine/src/obscan_loader.cpp` = `efa7931463b6080995d364d133b241965a85a766` (sha256 `dd7d51b6…d2149`),
+  byte-identical to the fork's `build/win-path-exists` @ `af31ff1`; the next `engine/` take is a no-op. The macOS
+  `dlopen` path, the candidate list and the suffix logic are untouched. **Contract note for the record:**
+  `input_algo_dependent_files_dir` accepts **null or empty** as equivalent — the live path passes empty and works, and
+  the fork's tests were changed to pass empty; the fork-local test half is not part of the parent patch.
