@@ -433,10 +433,12 @@ correction.
   builder queue.
 - **`#91`/`#92` still read `BUILD`** although their code has landed. The row move is pending — noted
   so the next sweep does not read it as open work.
-- **`#94` and `#95` are one subject across two rows.** `#94` (`OQ-S15` — *where* the calibration
-  lives) was dispatched to recon and has **no findings doc on main**; `#95` (the payloads decoded)
-  draws on its open questions. If `#94`'s locating pass is what produced those questions, `#94` closes
-  when `#95` opens its findings — otherwise they read as two open rows doing one job.
+- **`#94` closed while this revision was being written.** At the moment of my sweep it read `RECON`
+  with **no findings doc on main**; `calibration-store.md` then landed and `#94` → `DONE`. So the
+  claim I would otherwise have made — two open rows doing one job — is **not** the case: `#94`
+  located the calibration, `#95` decodes its payloads, and `#95`'s open questions are the hand-off
+  between them. Recorded because the check ran a few minutes too early, which is the general hazard
+  with row claims.
 
 ## rev 15 close-out — the walls, and the builder agent
 
