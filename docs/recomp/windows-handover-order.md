@@ -26,8 +26,9 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
   what starts the daemon, so "vendor app not running" cannot be assumed: **launch the app, confirm
   the daemon, then either close the UI if the daemon survives, or leave it idle — and the record
   states which**, because it affects the raw numbers.
-- The preflight must print a **load PASS/FAIL**, not a path. `Test-Path` on the DLL is not enough
-  (`win #121`); a present-but-unloadable SDK is a **FAIL**.
+- The preflight must print **both** a **load PASS/FAIL** *and* a **daemon PASS/FAIL**, with a reason.
+  `Test-Path` on the DLL is not enough; a present-but-unloadable SDK is a **FAIL**. Both assertions
+  come from `win #121` — **not merged yet**; until it lands, step 5 below is only half-covered.
 - **Device-absent is currently `FAIL`, not `SKIP`** — after `win #119` the SDK loads, so the old
   return-2 load-failure path is unreachable; with no daemon/device the tests exit **1** at
   `obscan_context_create()` and ctest records **FAILED**. Do not read a device-absent run as a
@@ -40,7 +41,8 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 2. Operator moves the cable to Windows.
 3. Windows: confirm enumeration (`VID_2BC5`, Depth/IR/RGB).
 4. Windows: start `CrealityScan.exe`; confirm the daemon; record the app/UI state chosen.
-5. Windows: `scripts/hw-preflight.ps1 scan_server` — must print the **load PASS/FAIL**.
+5. Windows: `scripts/hw-preflight.ps1 scan_server` — must print the **load PASS/FAIL** and the
+   **daemon PASS/FAIL**, each with a reason (`win #121`).
 6. Windows: the run — the six **conditions** × the six **result fields**.
 7. Windows: postflight; the record written to `tests/results/`.
 8. Operator returns the cable; Mac: restart the daemon and confirm enumeration.
@@ -73,8 +75,6 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 - Scanner variant + serial: `<fill at go-ahead>`; USB link (3.x).
 - `CrealityScan` **4.3.2**; `lib_orbbec_scan` build **3.5.3.260921**; `OrbbecSDK.dll` (unversioned).
 - **No update or reinstall** of the vendor app during the window; if either changes, the comparison is void.
-- Machine spec: Ryzen 9 5900X, 31.9 GB, Windows 11 Pro 26200, RTX 2080 Ti 11 GB (WMI under-reports
-  the video memory to 4 GB — record the WMI value and the true one).
 - Build provenance: compiler/MSVC, CMake and Ninja versions, and the configured `start_stream` profile.
 
 ## The record
@@ -82,12 +82,29 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 - **Header: the parent's eight fields, identical** — Date / Worktree / Branch / Target / Other copy /
   Preflight / Interposer / Run start.
 - **Windows preconditions block, after them**: build SHA + compiler/CMake/Ninja; device variant +
-  serial + USB link; vendor versions as pinned; app/daemon state (which was chosen, per the
-  precondition above); browser used for the HUD.
+  serial + USB link; vendor versions as pinned; **machine spec** (Ryzen 9 5900X, 31.9 GB,
+  Windows 11 Pro 26200, RTX 2080 Ti 11 GB — WMI under-reports the video memory to 4 GB, so record
+  both); app/daemon state (which was chosen, per the precondition above); **browser** used for the HUD.
 - **Raw log and HUD evidence committed beside the record in the same PR** — the gate's
   `record-provenance` requires it. The record is **agent-tier**.
 - Conditions and result fields as two separate tables; the record states the condition when each
   result field was taken.
+
+## SKIP wording when a precondition is not met
+
+The fork's `win #120` (not merged yet — the strings below are its intended contract) exits **2**
+with a reason line on the test's captured **stdout** that is specific, not a generic
+"precondition not met":
+
+```
+precondition not met: CrealityScan.exe (RPC daemon host) is not running
+precondition not met: no VID_2BC5 device enumerated
+precondition probe failed (...)
+```
+
+Exit 2 is what `SKIP_RETURN_CODE` records as skipped; a genuine init failure stays **1**. The parent
+row `#130` adopts the same contract: match the **device** substring literally, and the daemon
+substring with the platform's process name (`CrealityScan.exe` there, `CrealityScan` here).
 
 ## Reference
 
