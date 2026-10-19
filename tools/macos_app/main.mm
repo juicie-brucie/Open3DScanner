@@ -32,23 +32,25 @@
 
 @implementation OpenScannerAppDelegate
 
-- (NSArray<NSString*>*)librarySearchPaths {
+// The explicit override, or nil when unset. The missing-SDK dialog names
+// only what was actually probed.
+- (NSString*)libraryOverridePath {
     const char* env = std::getenv("OPENSCANNER_LIBRARY");
-    NSMutableArray<NSString*>* paths = [NSMutableArray array];
-    if (env != nullptr && env[0] != '\0') [paths addObject:[NSString stringWithUTF8String:env]];
-    [paths addObject:@"/Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib"];
-    return paths;
+    return (env != nullptr && env[0] != '\0') ? [NSString stringWithUTF8String:env] : nil;
+}
+
+- (NSString*)installedLibraryPath {
+    return @"/Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib";
 }
 
 - (NSString*)resolveLibraryPath {
-    const char* env = std::getenv("OPENSCANNER_LIBRARY");
-    if (env != nullptr && env[0] != '\0') {
+    NSString* override = [self libraryOverridePath];
+    if (override != nil) {
         // An explicit override is authoritative: set-but-missing is fatal
-        // (the missing-SDK dialog lists it), never a silent fall-through.
-        NSString* override = [NSString stringWithUTF8String:env];
+        // (the missing-SDK dialog names it), never a silent fall-through.
         return [[NSFileManager defaultManager] fileExistsAtPath:override] ? override : @"";
     }
-    NSString* installed = @"/Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib";
+    NSString* installed = [self installedLibraryPath];
     return [[NSFileManager defaultManager] fileExistsAtPath:installed] ? installed : @"";
 }
 
@@ -111,10 +113,20 @@
     }
     NSString* library = [self resolveLibraryPath];
     if (library.length == 0) {
-        NSMutableString* msg = [NSMutableString stringWithString:
-            @"CrealityScan's liborbbec_scan.dylib was not found.\n\nSearched:\n"];
-        for (NSString* p in [self librarySearchPaths]) [msg appendFormat:@"  • %@\n", p];
-        [msg appendString:@"\nInstall CrealityScan, or set OPENSCANNER_LIBRARY to the dylib."];
+        NSString* override = [self libraryOverridePath];
+        NSString* msg;
+        if (override != nil) {
+            // Only the override was probed; do not name a path we did not check.
+            msg = [NSString stringWithFormat:
+                @"OPENSCANNER_LIBRARY is set but does not exist:\n\n  • %@\n\n"
+                 @"Correct it, or unset OPENSCANNER_LIBRARY to use %@.",
+                override, [self installedLibraryPath]];
+        } else {
+            msg = [NSString stringWithFormat:
+                @"CrealityScan's liborbbec_scan.dylib was not found.\n\nSearched:\n\n  • %@\n\n"
+                 @"Install CrealityScan, or set OPENSCANNER_LIBRARY to the dylib.",
+                [self installedLibraryPath]];
+        }
         [self surfaceError:msg];
         return;
     }
