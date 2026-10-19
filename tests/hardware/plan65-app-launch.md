@@ -1,6 +1,6 @@
 # PLAN #65 — `A3`'s live launch (the app lifecycle)
 
-**Goal**: row #65's acceptance — the app, launched for real. Four observations:
+**Goal**: row #65's acceptance — the app, launched for real. Four observations, plus A4's steps 5-6:
 
 > **#65**: "lifecycle: spawn and supervise the worker, surface a crash, quit = graceful
 > `pause`/`stop`/`destroy`."
@@ -58,10 +58,23 @@ build/tools/macos_app/OpenScanner.app/Contents/MacOS/OpenScanner 2>&1 | tee /tmp
    observed teardown duration and that the worker process is gone afterwards
    (`pgrep -fl live-worker`).
 
+## A4's steps (settings and failure paths — merged as #192)
+
+5. **Settings** — open Cmd-,: set a different port and a short session length. Expect: the dialog
+   says the page reloads on a port change; the worker restarts through the same teardown chain
+   (the SIGTERM → `pause`/`mesh`/`stop`/`session_destroy`/`context_destroy` tail shows in the
+   log); the page reloads and reconnects on the new port (the HUD's `backend` and `scan:` state).
+   Then set the length back and confirm the title carries it ("… (N s)").
+6. **Missing SDK** — relaunch with `OPENSCANNER_LIBRARY=/nonexistent` in the environment. **Conditional on
+   #74**: today a set-but-missing override is *skipped* — `resolveLibraryPath` returns the first
+   candidate that exists, so the installed SDK still resolves and no dialog appears. Once #74 lands (a
+   set-but-missing override is fatal), the step is runnable. Expect: the dialog names every path it
+   searched, the override included — no opaque failure, no crash. Record the dialog's text verbatim.
+
 ## Record
 
 Write `<YYYY-MM-DD>-plan65-app-launch.md` + the raw log
-(`<YYYY-MM-DD>-plan65-app-launch.log`) under `tests/results/`, one file per run: the four
+(`<YYYY-MM-DD>-plan65-app-launch.log`) under `tests/results/`, one file per run: the
 observations above, observed vs expected, and anything unexpected — the unexpected is the
 point. Attach the app's log verbatim; if the app crashed, keep its `.ips` beside the record.
 
