@@ -1,0 +1,4 @@
+# Regression (row #105 parser bug): a delay immediately followed by hex digits
+# that are also ASCII decimal characters. The space after the delay must not be
+# stripped before the delay is parsed.
++25429 94000db66f625f7270635f6765745f6672616d65302d322d313290
