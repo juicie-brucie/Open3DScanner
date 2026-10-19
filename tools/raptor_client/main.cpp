@@ -493,7 +493,8 @@ int DryRunLive() {
 // --replay: send recon's captured request frames, unchanged, in order
 //
 // Input format (text, one frame per line):
-//   [+<ms> ]<hex bytes>      optional delay before the frame, then hex
+//   [+<ms> ]<hex bytes>      optional delay; the space after the delay is
+//                            required (it separates it from the hex payload)
 //   # comment / blank lines are ignored
 // Bytes are the raw msgpack-RPC request frame as captured (e.g. the 0x94…
 // [0, msgid, method, params] frame). We do not re-encode; this is the vendor's
@@ -507,19 +508,40 @@ bool ParseReplayFile(const std::string& path, std::vector<Bytes>* frames, std::v
     int lineno = 0;
     while (std::getline(in, line)) {
         ++lineno;
-        // strip comments and whitespace
+        // strip comments, then trim the line (do NOT strip the space that
+        // separates the '+<ms>' prefix from the hex payload).
         size_t hash = line.find('#');
         if (hash != std::string::npos) line = line.substr(0, hash);
-        std::string cleaned;
-        for (char c : line) if (!std::isspace((unsigned char)c)) cleaned += c;
-        if (cleaned.empty()) continue;
+        size_t first = line.find_first_not_of(" \t\r\n");
+        if (first == std::string::npos) continue;
+        size_t last = line.find_last_not_of(" \t\r\n");
+        line = line.substr(first, last - first + 1);
         int delay = 0;
-        std::string hex = cleaned;
+        std::string hex = line;
         if (hex[0] == '+') {
-            size_t i = 1;
-            while (i < hex.size() && std::isdigit((unsigned char)hex[i])) delay = delay * 10 + (hex[i++] - '0');
-            hex = hex.substr(i);
+            // Split on the first whitespace: "+<ms>" is the delay, the rest
+            // is the hex payload. Scanning digits across the space was the
+            // bug (hex bytes 94/00… are also decimal characters).
+            size_t sp = hex.find_first_of(" \t");
+            if (sp == std::string::npos) {
+                *err = "line " + std::to_string(lineno) + ": '+<ms>' must be followed by whitespace and hex";
+                return false;
+            }
+            std::string prefix = hex.substr(1, sp - 1);
+            if (prefix.empty()) { *err = "line " + std::to_string(lineno) + ": empty delay"; return false; }
+            for (char c : prefix) {
+                if (!std::isdigit((unsigned char)c)) {
+                    *err = "line " + std::to_string(lineno) + ": non-digit in delay";
+                    return false;
+                }
+                delay = delay * 10 + (c - '0');
+            }
+            hex = hex.substr(sp + 1);
         }
+        std::string payload;
+        for (char c : hex) if (!std::isspace((unsigned char)c)) payload += c;
+        hex = payload;
+        if (hex.empty()) continue;
         if (hex.size() % 2 != 0) { *err = "line " + std::to_string(lineno) + ": odd hex length"; return false; }
         Bytes b;
         auto nib = [](char c) -> int {
@@ -538,6 +560,28 @@ bool ParseReplayFile(const std::string& path, std::vector<Bytes>* frames, std::v
         delays->push_back(delay);
     }
     return true;
+}
+
+// Regression for the row #105 parser bug: '+25429 94000d…' — the space after
+// the delay must delimit it, or the digit scanner eats 94000 (hex chars that
+// are also decimal digits).
+int ReplayParserSelftest() {
+    const char* line = "+25429 94000db66f625f7270635f6765745f6672616d65302d322d313290\n";
+    char path[] = "/tmp/raptor_replay_XXXXXX";
+    int fd = mkstemp(path);
+    if (fd < 0) { std::printf("[replay-selftest] SKIP (mkstemp failed)\n"); return 0; }
+    ssize_t ignored = write(fd, line, std::strlen(line));
+    (void)ignored;
+    close(fd);
+    std::vector<Bytes> frames;
+    std::vector<int> delays;
+    std::string err;
+    bool ok = ParseReplayFile(path, &frames, &delays, &err);
+    unlink(path);
+    bool pass = ok && frames.size() == 1 && delays.size() == 1 && delays[0] == 25429 && !frames[0].empty();
+    std::printf("[replay-selftest] delay-then-hex-digits %s%s%s\n", pass ? "PASS" : "FAIL",
+                pass ? "" : ": ", pass ? "" : err.c_str());
+    return pass ? 0 : 1;
 }
 
 int Replay(const std::string& host, uint16_t port, const std::string& path, bool dry_run, bool log) {
@@ -594,7 +638,11 @@ int Replay(const std::string& host, uint16_t port, const std::string& path, bool
 }  // namespace
 
 int main(int argc, char** argv) {
-    if (argc >= 2 && std::string(argv[1]) == "--dry-run") return DryRun();
+    if (argc >= 2 && std::string(argv[1]) == "--dry-run") {
+        int rc = DryRun();
+        if (rc) return rc;
+        return ReplayParserSelftest();
+    }
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
