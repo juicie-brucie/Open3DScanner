@@ -7,7 +7,11 @@ what, where the walls are, and how work moves between them.
 
 OpenScanner is a clean-room reimplementation of the OBScan SDK's C ABI. We recover
 the interface by decompiling vendor binaries, then write **original** code against
-it. Everything below exists to make this single principle enforced, not aspirational:
+it. Everything below exists to make this single principle enforced, not aspirational — and,
+as of rev 15's audit of the **loaded** config, parts of it are not yet: the shell denies are
+text-pattern mitigations, and the physical `.recon-cache` separation — the only genuinely
+enforced control — has not landed. Where a rule below is a mitigation, it says so, and the
+roadmap's change-set tracks the gap:
 
 > **Recon produces specs, not code. Builder consumes specs, not binaries.**
 
