@@ -1,14 +1,25 @@
 # Windows handover order — the first cross-machine run (`mac #115` / `win #113`)
 
-**Status: DRAFT — the go-ahead is not given.** The operator chose **A (Windows first)** on 2026-10-19: the
-device stays on Windows, `#127` waits, and the **replug is the only open physical step**. It waits on an
-**enumerated device** and on: the Mac's **#127 live reply dump**
-(the client landed as #327; the live run waits on the device) and on the fork's **`win #122`/`win #123`**
-(the loader fix and the vendor crash) plus a replug. **#124's container identification is done** — the
-container is named from the 11 captured frames, no device needed. **`win #114` is not a wait**:
-`RECONCILE.md` is merged (`ea740c2`) and has been applied once (producing `win #122`–`#124`); it runs on the
-first `win #113` record before any board move is claimed, as step 10 says. `win #120`/`win #121` have merged
-too — PR #28 @ `4d893d5`.
+**Status: DRAFT — the go-ahead is the operator's.** The operator schedules the run; it waits on
+`win #122`/`win #123` (the loader fix and the vendor crash) and on the device being **enumerated on the
+target host when the operator runs it**. `#127` is a Mac-side diagnostic and does not gate this run.
+
+## Who runs this — agents prepare, the operator executes
+
+**No agent is dispatched a hardware run.** The Windows lane prepares the tree, the preflight/readiness
+checks and the record template, and verifies the evidence afterwards; **the operator, from Claude Code on
+the Windows host, executes the six conditions and the `scan_server` device session** (fork
+`WINDOWS-FORK.md` §7, the live-rate runbook's "Who runs this", `win #113`'s note). The go-ahead is
+addressed to the **operator**, not to a Windows agent. The same rule holds on the Mac: the operator runs
+the device tests from the hw session, and agents only prepare and verify.
+
+## Placement — the operator owns it
+
+The **operator owns the scanner and decides its placement and timing**; it moves between hosts on their
+priorities. This order does **not** allocate the cable, assume a host, or record an ownership claim.
+When a run is scheduled, the only physical precondition is: **the device is enumerated on the host the
+operator is running on** (`VID_2BC5`, Depth/IR/RGB; replug after any drop). An unenumerated device is a
+precondition failure, **not a test result**.
 
 ## Who runs this — agents prepare, the operator executes
 
