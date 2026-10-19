@@ -746,8 +746,8 @@ typedef ObScanStatus (*fn_obscan_scan_reconfig_scan_mode_config)(ObScanScanHandl
 // three toggles are live-callable at any step (the wrappers check only the
 // scan handle); their state lives on the data-management subobject at
 // scan+0xf0 (enabled@+0x4f, the plane@+0x50). `obscan_scan_get_manaul_remove_plane`
-// is NOT declared here: its config argument reads as a {pointer, count}
-// point-list shape, unlike the setter's — a residual (findings §4).
+// takes a different 0x18-byte struct — now declared below as
+// ObScanManualRPPoints (row #70; findings §4).
 typedef struct ObScanPlane {
     float a;            // 0x00
     float b;            // 0x04
@@ -765,6 +765,22 @@ typedef struct ObScanManualRPConfig {
 typedef ObScanStatus (*fn_obscan_scan_plane_remove)(ObScanScanHandle scan, bool enabled);
 typedef ObScanStatus (*fn_obscan_scan_turntable_plane_remove)(ObScanScanHandle scan, bool enabled);
 typedef ObScanStatus (*fn_obscan_scan_config_manaul_remove_plane)(ObScanScanHandle scan, const ObScanManualRPConfig* config);
+
+// The manual-plane GETTER (row #70; findings plane-removal.md §4): its argument
+// is the SDK's own OBScanManualRPConfig_ — the same 0x18 bytes as
+// ObScanManualRPConfig above but a DIFFERENT shape: a {pointer, count} view of
+// the manual plane's defining points (16-byte {x,y,z,pad} records, scaled
+// x1000 when read). The two exports' structs are not interchangeable despite
+// the shared size. The native fills *out_plane (an ObScanPlane, 16 bytes)
+// derived from those points.
+typedef struct ObScanManualRPPoints {
+    uint32_t _reserved0;  // 0x00 — unread by the getter's native
+    uint32_t _reserved1;  // 0x04
+    const void* points;   // 0x08 — 16-byte {x,y,z,pad} records
+    uint32_t count;       // 0x10
+    uint32_t _reserved2;  // 0x14
+} ObScanManualRPPoints;   // 0x18 bytes
+typedef ObScanStatus (*fn_obscan_scan_get_manaul_remove_plane)(ObScanScanHandle scan, const ObScanManualRPPoints* config, ObScanPlane* out_plane);
 
 // ---------------------------------------------------------------------------
 // Frame and image payloads — the read side of the listener live path.
@@ -864,6 +880,9 @@ OBSCAN_ABI_ASSERT(offsetof(ObScanDistanceAdviceInfo, pair_second) == 0x04 &&
                   offsetof(ObScanDistanceAdviceInfo, histogram) == 0x08,
                   "ObScanDistanceAdviceInfo offsets (findings §15)");
 OBSCAN_ABI_ASSERT(sizeof(ObScanPlane) == 16, "ObScanPlane must be 16 bytes (findings plane-removal.md §4)");
+OBSCAN_ABI_ASSERT(sizeof(ObScanManualRPPoints) == 0x18, "ObScanManualRPPoints must be 0x18 bytes (findings plane-removal.md §4)");
+OBSCAN_ABI_ASSERT(offsetof(ObScanManualRPPoints, points) == 0x08 && offsetof(ObScanManualRPPoints, count) == 0x10,
+                  "ObScanManualRPPoints offsets (findings plane-removal.md §4)");
 OBSCAN_ABI_ASSERT(offsetof(ObScanManualRPConfig, plane) == 0x08, "ObScanManualRPConfig offsets (findings plane-removal.md §4)");
 OBSCAN_ABI_ASSERT(sizeof(ObScanManualRPConfig) == 0x18, "ObScanManualRPConfig must be 0x18 bytes (findings plane-removal.md §4)");
 OBSCAN_ABI_ASSERT(sizeof(ObScanPose) == 128, "ObScanPose must be 128 bytes (findings §17)");
