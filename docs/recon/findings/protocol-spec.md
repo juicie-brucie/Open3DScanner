@@ -2,7 +2,7 @@
 
 *Observation-derived from the 2026-10-18 capture set (five rotated pcapng on
 `lo0`, the `session2/`–`session4/` extras, and the 354,430-line
-`small_payloads.tsv` digest) and the public OrbbecSDK v2.10.6 MIT source
+`small_payloads.tsv` digest) and the public OrbbecSDK v2.10.6 source (the checkout's `src-read/LICENSE.txt` claims MIT; the upstream license is not confirmed — see the erratum in `FULL-INDEPENDENCE.md`)
 (`src-read/src_device_protocol_Protocol.hpp`). **Wire observation only — no
 vendor binary was read.** Every substantive claim is `[inferred]`
 (capture-derived); nothing here is a gated run. This is what the builder
@@ -16,10 +16,10 @@ implements from; the captures themselves stay outside the repo.*
   (217 MB) plus its `small_payloads.tsv` (t, srcport, dstport, hex payload —
   payloads up to ~1 KB; the big frame segments are only in the pcap).
 - The public header cross-reference: the framing, opcode enum and request /
-  response structs in `Protocol.hpp` (MIT) match the wire exactly where cited
+  response structs in `Protocol.hpp` match the wire exactly where cited
   below; the one opcode used for calibration reads is **not** in that header
   (§2).
-- Clean-room posture: facts are the wire bytes and the MIT header; no vendor
+- Clean-room posture: facts are the wire bytes and the public header; no vendor
   binary, no decompiled output. All `[inferred]` until a gated run re-confirms.
 
 ## 1. The RPC method set
@@ -82,7 +82,7 @@ field names are not on the wire.
 
 ## 2. The vendor-command framing inside `ob_rpc_send_data`
 
-### 2.1 The framing (public `Protocol.hpp`, MIT — matches the wire)
+### 2.1 The framing (public `Protocol.hpp` — matches the wire)
 
 ```c
 #define HP_REQUEST_MAGIC  0x4d47   // "MG" (wire bytes 47 4d)
