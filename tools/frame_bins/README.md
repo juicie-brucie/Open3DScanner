@@ -48,10 +48,25 @@ are not committed.
 | `method` | the RPC method the response's msgid maps to |
 | `source` | the input path |
 | `file` | the bin's file name (inside `<port>/`) |
+| `slot` | where the bin was found inside the result: `.` = the result itself (a top-level bin); otherwise a dotted index/key path (`4`, `6`, `8`, `4.0`) |
 
 Determinism: the same input yields the same file names and bytes. Names carry
 no timestamps, `sequence` is the capture order within a port, and bins are
 written byte-for-byte as captured.
+
+## The frame shape (why a payload is not simply "index 3")
+
+`ob_rpc_get_frame` returns `[1, msgid, nil, [0, 0, 0, 255, bin, 0, bin, 0, bin,
+u32, -1]]` — the payload is a **bin nested inside the result array** (all-empty
+slots is the no-frame metadata reply). Some calls return a bin directly as the
+result. The extractor **walks the result recursively** (arrays and maps, deeper
+than one level) and writes **every non-empty bin**, recording the slot it came
+from. Indices 4/6/8 are *not* hard-coded: on `session4` the frame lands in slot
+`4` (~12 KB) while slots `6`/`8` hold tiny blobs (tens of bytes, 6 B), so a
+consumer can tell a frame bin from metadata by its slot and size.
+
+A frame is ~10–12 KB, so its message spans several TCP segments — the pcap path
+reassembles contiguous segments (a sequence gap drops that message).
 
 ## Sources
 
