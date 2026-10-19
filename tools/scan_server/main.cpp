@@ -251,6 +251,10 @@ constexpr int kExposureMin = 1;
 constexpr int kExposureMax = 1000;
 constexpr int kDefaultExposure = 900;  // Matches the value this file already drove live scans with.
 
+// Last per-frame tracking status (row #75 findings §2), surfaced in the
+// status JSON so the HUD can show the vendor's per-pose reason value.
+std::atomic<int> g_last_tracking_status{-1};
+
 // Shared between the WS reader thread(s) (writer, via HandleControlMessage)
 // and whichever thread owns the scan loop (reader, via its tick) — hence
 // all-atomic, no locking. Mirrors the synthetic/live scan lifecycle: a
@@ -326,6 +330,8 @@ std::string BuildStatusJson(const char* mode, const ControlState& state, bool fo
     json += state.fov_wide.load() ? "wide" : "normal";
     json += "\",\"fovControllable\":";
     json += fov_controllable ? "true" : "false";
+    json += ",\"tracking\":";
+    json += std::to_string(g_last_tracking_status.load());
     json += "}";
     return json;
 }
@@ -469,6 +475,13 @@ std::atomic<bool> g_got_connect_message{false};
 std::atomic<int> g_frame_ready_count{0};
 std::atomic<uint64_t> g_cloud_frames_broadcast{0};
 std::atomic<uint64_t> g_full_detail_chunks_broadcast{0};
+// Per-frame tracking status (row #75 findings §2): the getter is exported
+// but the numeric enum mapping is not yet pinned, so we record raw values
+// and a histogram rather than guessing names.
+fn_obscan_frame_get_frame_tracking_status g_frame_tracking_status_fn = nullptr;
+fn_obscan_frame_release g_frame_release_fn = nullptr;
+std::atomic<uint64_t> g_tracking_samples{0};
+std::atomic<uint64_t> g_tracking_hist[16];
 
 // Set by a SIGINT/SIGTERM handler so Ctrl+C (or a plain `kill`/pkill, which
 // sends SIGTERM by default) breaks out of the streaming loop into the
@@ -529,6 +542,17 @@ void OnDataMessage(ObScanDataMessage msg) {
     std::fflush(stdout);
     if (msg.msg_id == OB_SCAN_MESSAGE_ID_FRAME_READY) {
         ++g_frame_ready_count;
+        if (g_frame_tracking_status_fn != nullptr && msg.data != nullptr) {
+            int32_t tracking = -1;
+            if (g_frame_tracking_status_fn(msg.data, &tracking) == OB_SCAN_SUCCESS) {
+                g_last_tracking_status.store(tracking);
+                g_tracking_samples.fetch_add(1);
+                if (tracking >= 0 && tracking < 16) g_tracking_hist[tracking].fetch_add(1);
+                std::printf("[worker][data] FRAME_READY tracking_status=%d\n", tracking);
+                std::fflush(stdout);
+            }
+            if (g_frame_release_fn != nullptr) g_frame_release_fn(msg.data);
+        }
     }
 }
 
@@ -668,6 +692,8 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     std::fflush(stdout);
 
     openscanner::ObscanLibrary lib(library_path);
+    g_frame_tracking_status_fn = lib.obscan_frame_get_frame_tracking_status;
+    g_frame_release_fn = lib.obscan_frame_release;
 
     std::string algo_dir = openscanner::ObscanLibrary::FindStreamingAssetsDirForLibraryPath(library_path);
     ObScanContextConfig context_config = {};
@@ -1130,6 +1156,15 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                 openscanner::frame_protocol::VERSION,
                 (unsigned long long)g_cloud_frames_broadcast.load(),
                 (unsigned long long)g_full_detail_chunks_broadcast.load());
+    {
+        std::printf("[worker] tracking_status samples=%llu histogram:",
+                    (unsigned long long)g_tracking_samples.load());
+        for (int i = 0; i < 16; ++i) {
+            uint64_t n = g_tracking_hist[i].load();
+            if (n > 0) std::printf(" %d=%llu", i, (unsigned long long)n);
+        }
+        std::printf("\n");
+    }
     std::fflush(stdout);
 
     server.Stop();

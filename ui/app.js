@@ -480,6 +480,8 @@
       '<span class="label">render</span>   <span class="value">' + renderFps.toFixed(1) + " fps</span>\n" +
       '<span class="label">points</span>   <span class="value">' + pointCount + "</span>\n" +
       '<span class="label">coverage</span> <span class="value">' + coverageText() + "</span>\n" +
+      '<span class="label">tracking</span> <span class="value">' +
+        (latestStatus && latestStatus.tracking !== undefined ? latestStatus.tracking : "--") + "</span>\n" +
       '<span class="label">frame</span>    <span class="value">#' + lastFrameId + "</span>";
   }
 
