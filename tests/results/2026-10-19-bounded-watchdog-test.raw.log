@@ -1,0 +1,1 @@
+[bounded_watchdog_test] PASS: deterministic — disarmed never fires, fires only past the grace, a fired bound is consumed, re-arm is a fresh bound
