@@ -28,10 +28,11 @@ Gating checks
                   in place (addenda *-correction.md / *-analysis.md / *-addendum.md excepted)
   record-provenance
                   an added tests/results/*.md record must be accompanied, in the
-                  same PR, by an added raw artifact sharing its stem (typically
-                  its .log, non-.md); addenda/corrections/analyses are exempt, and
-                  so are `_`-prefixed support files (e.g. _TEMPLATE.md) — a
-                  support file describes runs, it does not report one.
+                  same PR, by raw evidence: a file whose name starts with the
+                  record's stem, **or** a raw artifact the record cites in
+                  backticks (so multi-condition runs can name their logs
+                  `<slug>-baseline.log` / `<slug>-enabled.log`). Addenda,
+                  corrections, analyses and `_`-prefixed support files are exempt.
   plan            PLAN.md row syntax: unique numbers, valid statuses, well-formed.
                   Status moves and new rows are reported, not gated.
   archives        cited `sha256 <hex>` values in changed tests/results/*.md must
@@ -159,6 +160,26 @@ def is_run_record(path):
             and not re.search(r"-(correction|analysis|addendum)\.md$", path))
 
 
+def cited_evidence(text):
+    """Raw-artifact filenames a record cites in backticks (.log/.txt/.csv/.ips/.py).
+
+    Multi-condition runs legitimately name their logs `<slug>-baseline.log` and
+    `<slug>-enabled.log`, which cannot share a prefix with a record named for its
+    verdict (`<slug>-confirmed.md`). The provenance rule therefore also accepts a
+    citation, provided that artifact is added in the same PR."""
+    return {os.path.basename(m.group(1).strip())
+            for m in re.finditer(r"`(?:tests/results/)?([A-Za-z0-9_.\-]+\.(?:log|txt|csv|ips|py))`", text)}
+
+
+def record_accompanied(record, others, text):
+    """True when an added record has raw evidence in the same PR: a companion
+    whose name starts with the record's stem, or a cited artifact that was added."""
+    stem = os.path.basename(record)[:-3]
+    if any(o.startswith(stem) for o in others):
+        return True
+    return bool(cited_evidence(text) & set(others))
+
+
 def selftest():
     bad = []
     for path, want in TIER_CASES:
@@ -184,9 +205,20 @@ def selftest():
         bad.append("record-provenance: _-prefixed support files must not be records")
     if is_run_record("tests/results/x-correction.md"):
         bad.append("record-provenance: corrections must not be records")
+    # record-provenance: a stem companion, or a cited artifact added in the PR
+    if not record_accompanied("tests/results/x.md", ["x.log"], ""):
+        bad.append("record-provenance: a stem companion must satisfy")
+    if record_accompanied("tests/results/x-confirmed.md", ["x-baseline.log"], ""):
+        bad.append("record-provenance: an unrelated companion alone must not satisfy")
+    if not record_accompanied("tests/results/x-confirmed.md", ["x-baseline.log"],
+                              "raw log `tests/results/x-baseline.log`"):
+        bad.append("record-provenance: a cited added artifact must satisfy")
+    if record_accompanied("tests/results/x-confirmed.md", [],
+                          "raw log `tests/results/x-baseline.log`"):
+        bad.append("record-provenance: a citation of a file not in the PR must not satisfy")
     for b in bad:
         print("SELFTEST FAIL:", b)
-    print(f"selftest: {len(TIER_CASES) + 8} cases, {'FAIL' if bad else 'ok'}")
+    print(f"selftest: {len(TIER_CASES) + 12} cases, {'FAIL' if bad else 'ok'}")
     return 1 if bad else 0
 
 
@@ -422,11 +454,16 @@ def main():
     records = [p for p in added_res if is_run_record(p)]
     others = [os.path.basename(p) for p in added_res
               if p not in records and not p.endswith(".md")]
-    missing = [p for p in records
-               if not any(o.startswith(os.path.basename(p)[:-3]) for o in others)]
+    missing = []
+    for p in records:
+        stem_ok = any(o.startswith(os.path.basename(p)[:-3]) for o in others)
+        text = "" if stem_ok else git("show", f"{head_ref}:{p}").stdout
+        if not record_accompanied(p, others, text):
+            missing.append(p)
     add("record-provenance", not missing,
-        "; ".join(f"no companion raw artifact in this PR: {p}" for p in missing) if missing
-        else (f"{len(records)} record(s) with companion(s)" if records
+        "; ".join(f"no raw evidence in this PR (companion or cited artifact): {p}" for p in missing)
+        if missing
+        else (f"{len(records)} record(s) with evidence" if records
               else "no records added"))
 
     # 3. plan: syntax gated; status moves and new rows reported only
