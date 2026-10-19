@@ -7,6 +7,10 @@
 //
 //   scan_server --live [port] [path] [seconds] [--record <file>]
 //       Drives a real OBScan session; --record writes V1 frames to <file>.
+//       Plane removal (findings plane-removal.md §3), env-driven:
+//         OPENSCANNER_PLANE_REMOVE=1            auto plane removal on
+//         OPENSCANNER_TURNTABLE_PLANE_REMOVE=1  turntable plane removal on
+//         OPENSCANNER_MANUAL_PLANE=a,b,c,d      manual plane for the SDK
 //
 //   scan_server --replay <file> [port]
 //       Replays a recorded session (V1 frames) without a device.
@@ -766,6 +770,49 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     Report("obscan_scan_start", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
+    // Plane-removal bind (findings plane-removal.md §3): the three toggles
+    // are live-callable and gate-free, so enabling them is lawful at any
+    // step. The vendor's own per-frame executor then does the work; the
+    // effect is only observable through the cloud getters (compare point
+    // counts). Env-driven surface (inherited by the worker):
+    // OPENSCANNER_PLANE_REMOVE=1, OPENSCANNER_TURNTABLE_PLANE_REMOVE=1,
+    // OPENSCANNER_MANUAL_PLANE="a,b,c,d".
+    //
+    // Persistence is unconfirmed: whether the toggles survive a pause is
+    // not stated in the findings, so re-assert them after every successful
+    // resume rather than assuming they persist. Re-calling is lawful
+    // (gate-free), and the log shows each re-assert.
+    auto apply_plane_config = [&lib, scan]() {
+        if (const char* pr = std::getenv("OPENSCANNER_PLANE_REMOVE");
+            pr != nullptr && std::string(pr) == "1") {
+            Report("obscan_scan_plane_remove(true)", lib.obscan_scan_plane_remove(scan, true));
+        }
+        if (const char* tpr = std::getenv("OPENSCANNER_TURNTABLE_PLANE_REMOVE");
+            tpr != nullptr && std::string(tpr) == "1") {
+            Report("obscan_scan_turntable_plane_remove(true)",
+                   lib.obscan_scan_turntable_plane_remove(scan, true));
+        }
+        if (const char* mp = std::getenv("OPENSCANNER_MANUAL_PLANE"); mp != nullptr && mp[0] != '\0') {
+            float a = 0, b = 0, c = 0, d = 0;
+            if (std::sscanf(mp, "%f,%f,%f,%f", &a, &b, &c, &d) == 4) {
+                // Setter's layout: {int state, bool enabled, pad, plane}
+                // (findings §4); state==2 is the native's observed int read.
+                ObScanManualRPConfig cfg = {};
+                cfg.state = 2;
+                cfg.enabled = true;
+                cfg.plane.a = a;
+                cfg.plane.b = b;
+                cfg.plane.c = c;
+                cfg.plane.d = d;
+                Report("obscan_scan_config_manaul_remove_plane(a,b,c,d)",
+                       lib.obscan_scan_config_manaul_remove_plane(scan, &cfg));
+            } else {
+                std::fprintf(stderr, "[worker] OPENSCANNER_MANUAL_PLANE must be \"a,b,c,d\"\n");
+            }
+        }
+    };
+    apply_plane_config();
+
     ControlState control;
     control.scanning = true;  // obscan_scan_start above has already run.
     control.auto_exposure = false;  // Matches the unconditional 900 re-assert this loop already did.
@@ -833,7 +880,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             ObScanStatus toggle_status = want_paused ? lib.obscan_scan_pause(scan) : lib.obscan_scan_start(scan);
             Report(want_paused ? "obscan_scan_pause (control)" : "obscan_scan_start (resume, control)",
                    toggle_status);
-            if (toggle_status == OB_SCAN_SUCCESS) hardware_paused = want_paused;
+            if (toggle_status == OB_SCAN_SUCCESS) {
+                hardware_paused = want_paused;
+                if (!want_paused) apply_plane_config();  // toggles may not survive pause
+            }
         }
 
         ObScanPointColorClouds cloud = {};
