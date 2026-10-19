@@ -9,76 +9,95 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-19 (rev 16 — the walls are real and probed, so the objective returns to the
-reconstruction workstream: **`G3`'s build row**, the one unstarted capability left. Carries rev 15's
-close-out, and leads with a hard blocker: **`openscanner/builder` does not load**. rev 15 closed the
-walls audit and the repo-side change-set; rev 14 moved the objective to `G1`'s bind half and added
-`H4`; rev 13 corrected the `G1` misread and added `H3`; rev 12 recorded the `A2` decision; rev 11
-added the app workstream; rev 10 moved the objective; rev 9/8/7/6/5/4/3/2/1 are superseded — see
-**Superseded plans**)._
+_Last planned: 2026-10-19 (rev 17 — **the pivot**: the operator has set full host-side independence
+from Creality Scan as the priority target, and the objective becomes its Phase A–D chain. rev 16's
+objective landed (`G3`'s build row, `#91`/`#92`); rev 15 closed the walls audit; rev 14 moved the
+objective to `G1`'s bind half and added `H4`; rev 13 corrected the `G1` misread and added `H3`; rev 12
+recorded the `A2` decision; rev 11 added the app workstream; rev 10 moved the objective;
+rev 9/8/7/6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
-**Open `G3`'s build row — owned tracking — and get the owed reruns their observations.**
+**The pivot: own the host stack. Spec the protocol (Phase A), then the C1 client, then the scanning
+math, then the daemon.**
 
-`G3` is the last goal with no build row. Its recon is done: `#80` derived the mechanism (which
-vendor path produces the per-frame tracking status) and `#81` found the HUD's hysteresis, so the
-semantics exist on the board; `#82` carries the single named residual — the fresh-value origin.
-What is missing is the row that *builds* on it: per-pose rejection reasons surfaced to the UI, on
-top of `G2`'s feedback layer. **File it.**
+The operator has set **full host-side independence from Creality Scan** as the priority target —
+replacing OBScan's algorithms, then the Orbbec device library and the Creality daemon. It is assessed
+as feasible and well-bounded in
+[`FULL-INDEPENDENCE.md`](FULL-INDEPENDENCE.md), on two enabling findings: the device is **dumb**
+(laser sequencing and auto-exposure are *host* loops, ~890 property SETs each, and depth is computed
+on the host) and the app↔daemon protocol is **fully observed** on the wire. So the whole effort is
+**observation-derived** — the cleanest provenance this project has had, and the reason the wall
+posture below does not relax.
 
-**But the round's first action is not a row — it is unblocking the builder** (see **`B1`**).
-`openscanner/builder` does not load at all, so *no* build work can run: that gates `G3`'s row,
-`#73`, `#89`, and every fix the builder owes.
+The order is fixed by dependency, not preference: **spec → C1 client → own the math → replace the
+daemon** (§6, Phases A–D). Each phase leaves a working product, so the pivot is incremental by
+construction, and the vendor path stays alive as an A/B reference until Phase D.
 
-**The cheap evidence work rides alongside.** `#65`, `#66`, `#71`, `#76` each sit at `HW` owing a
-rerun, and `#77` — `G1`'s reimplement half, which merged — owes an observation. That is one hardware
-session's worth of work, not new code.
+**Two rows gate it out of proportion to their size.** `#97` — the macOS privileged-access **decision**
+(G-B) — can reshape C2 entirely; it is a decision rather than a build, so take it early and cheaply.
+`#95` — the calibration payloads (G-C) — is the difference between a Phase C that uses *our*
+parameters and one that uses the vendor's.
 
 ## Critical path
 
 ```
-B1  openscanner/builder does not load ─► NO BUILDER WORK CAN RUN
-      └─► gates G3's build row, #73, #89, and every fix the builder owes
+PHASE A            PHASE B                    PHASE C              PHASE D
+#96 protocol spec ─G-A─► #98 C1 RPC client ──► #99 own the math ──► #100 replace the daemon
+   (RECON)                    (msgpack+GVCP)     (gated by #95)        (gated by #97)
 
-G3: #80 mechanism ✅ · #81 hysteresis ✅ · #82 the fresh-value origin (RECON) ─► G3's BUILD ROW (unfiled)
-G1: #71 bind half (HW) · #77 reimplement half (HW) ─► one observation each
-G2: #76 build (HW) · #75 semantics ✅ ─► one rerun
-
-the owed reruns ─► #65 · #66 · #71 · #76 · #77        (one hardware session, five rows)
-
-The six OQ rows (83–88) sit at TODO with triggers recorded — parked work, not queue.
+#95 calibration payloads ──G-C──┘  (gates a CORRECT C, not C's start)
+#97 the macOS privileged-access DECISION ──G-B──┘                     (the biggest unknown)
+#101 OQ-F2 · #102 OQ-F3 ──► capture-driven recon feeding A and D
 ```
+
+The gates, and what each one blocks (§8):
+
+| gate | is | blocks | owner |
+| --- | --- | --- | --- |
+| **G-A** | the protocol spec exists in findings | B — `#98` | recon, `#96` |
+| **G-B** | the macOS UVC-claim mechanism decided | D / C2 — `#100` | operator, `#97` |
+| **G-C** | the calibration payloads decoded | a *correct* C — `#99` (not C's start) | recon, `#95` |
+| **G-D** | the laser + exposure loop inputs fully mapped | B's control half | mostly done; `#101` closes it |
 
 Ranked by what it frees, not by board order:
 
-1. **`B1` — make `openscanner/builder` load.** Nothing builder-side can run until it does. The cause
-   is exact and it is three lines; see **rev 15 close-out**.
-2. **`G3`'s build row.** The last goal without one, and its recon is already on the board — `#80`
-   derived the mechanism, `#81` the hysteresis, `#82` the one residual.
-3. **The owed reruns** (`#65`, `#66`, `#71`, `#76`, `#77`). One session, five rows, no new code —
-   the cheapest rows-cleared on the board, and they queue only behind the room.
-4. **`#82`.** The tracking status's fresh-value origin; the only open recon on the `G3` chain.
-5. **`#73` / `#89`.** Both `BUILD` with fixes in verification — and both blocked on `B1` before their
-   reruns can even be attempted.
+1. **`#96` (G-A).** The pivot's only hard prerequisite — nothing in A–D moves without the spec, and it
+   needs no new capture.
+2. **`#97` (G-B).** The **single biggest unknown**, and a *decision*, not a build: own privileged
+   helper vs system extension vs a thin remaining daemon. Cheap now, expensive if discovered late —
+   it can reshape C2 entirely.
+3. **`#95` (G-C).** Does not gate C's *start*; it gates C's *correctness*. Without it the owned
+   pipeline runs on the vendor's parameters.
+4. **`#98` → `#99`.** The build spine, in that order. At the end of B, OBScan and libOrbbecSDK are
+   gone; at the end of C, so is the vendor's scanning math.
+5. **`#101` / `#102`.** Capture-driven recon: `#101` closes G-D with three short single-action
+   captures (a capture request for the operator), `#102` confirms no flash *writes* are required
+   before C2 claims the device.
+6. **`#100`.** Last, and gated on both `#98` and `#97`.
 
 ## Ready now
 
 | Item | Role | What it needs |
 | --- | --- | --- |
-| `B1` — the builder agent | operator | Three lines in `builder.md`. **Blocks every item below it.** |
-| `G3`'s build row (unfiled) | builder | Per-pose rejection reasons on `G2`'s feedback layer; `#80`'s mechanism is the spec. |
-| the owed reruns | hardware | `#65`, `#66`, `#71`, `#76`, `#77` — one session, five rows. |
-| `#82` | recon | The tracking status's fresh-value origin. One target, no hardware. |
-| `#73`, `#89` | builder | Fixes in verification; `B1` first. |
-| the six OQ rows (`#83`–`#88`) | — | Parked, with triggers and cheapest retirements already recorded. Not queue. |
+| `#96` — Phase A | recon | The protocol spec, from the captures. G-A. **The pivot's first work item.** |
+| `#97` — G-B | operator | The macOS privileged-access decision, with reasoning. Cheap; it gates `#100`. |
+| `#95` — G-C | recon | The calibration payloads: plane struct, thermal entries, the checksum (not CRC-32 or XOR). |
+| `#98` — Phase B | builder | The C1 msgpack-RPC + GVCP client, after G-A. |
+| `#101`, `#102` | recon / operator | Single-action captures for `#101`; a read-only capture audit for `#102`. |
+| `#90`, `#92`, `#93` | builder | Wall-edit validation; two tracking-status drift fixes (`#93` is a live UI bug). |
+| the owed reruns | hardware | `#65`, `#66`, `#71`, `#73`, `#76`, `#77`, `#89` — evidence on already-merged work; one room. |
 
 ## Blocked, and on what
 
 | Row | Blocked on |
 | --- | --- |
-| every builder row (`G3`, `#73`, `#89`) | **`B1`** — the agent does not load at all. |
-| G4, G5 | A fusion feature actually being planned; a denoise/fusion harness measures something that does not exist yet. |
+| `#98` | **G-A** — the protocol spec (`#96`). |
+| `#99` | `#98`; and **G-C** (`#95`) for correctness rather than for start. |
+| `#100` | `#98` **and** **G-B** (`#97`) — the privileged-access decision. |
+| `#101` | Operator captures: one pause/resume, one mode switch, one slider. |
+| G4, G5 | A fusion feature actually being planned — and **the pivot subsumes this**: Phase C replaces fusion. |
+| the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
 | G3's build | Nothing — `G2`'s feedback layer exists (`#76` is at `HW`). The row is **unfiled, not blocked**, which is why it is the objective. |
 | the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
 
@@ -342,6 +361,85 @@ live"). So it is **not a PR**: whoever owns the harness applies it. **Order matt
 instruction file, then compact**, because a compaction re-baselines the session against the current
 instructions.
 
+## The pivot — posture, parity, and what parks
+
+### Clean-room posture (standing; §9)
+
+Three constraints carry the whole effort's defensibility, and they do not relax because the target
+changed:
+
+- **Recon writes specs from observation** — the wire captures and the MIT-licensed public-SDK
+  headers. That is the cleanest provenance this project has had, and it stays the method.
+- **The builder never sees captures or vendor code.** It implements from `docs/recon/findings`
+  specs, exactly as it does today. Protocol facts live in findings, tagged `[inferred]` until a run
+  confirms them.
+- **The extracted firmware and any OBScan/libOrbbecSDK analysis are recon-side, read-only inputs.**
+  They inform specs; they never reach the builder or the committed implementation.
+
+**The captures are evidence, not spec.** `raptor-protocol-capture/` is the observation record; what
+ships is the findings doc derived from it. That keeps the wall where it has always been — and it is
+why `#96` is a **recon** row, not a build row.
+
+### What parks, and why
+
+The pivot re-ranks everything on the board. Ranked against it:
+
+| workstream | verdict | why |
+| --- | --- | --- |
+| `#96` → `#98` → `#99` → `#100` | **the queue** | the pivot, in dependency order |
+| `#95`, `#97`, `#101`, `#102` | **stays — they gate the pivot** | G-C, G-B, G-D |
+| `#90`, `#92`, `#93` | **stays** | small and live: `#90` is the `B1` guard, `#93` a real UI debounce bug |
+| the owed reruns (`#65`/`#66`/`#71`/`#73`/`#76`/`#77`/`#89`) | **stays, low priority** | evidence debts on merged work; one room, no new code |
+| `#82` | **parks** | the tracking status's fresh-value origin — the `G3` chain stops mattering if the pipeline is replaced |
+| `#83`–`#88` (six OQs) | **parks** | each already carries its trigger; none is on the pivot's path |
+| `G1`/`G2` goals (`#71`/`#76`/`#77`) | **parks after their reruns** | Phase C replaces the pipeline they patch |
+| `G7` ("keep laser extraction behind the SDK") | **superseded by the pivot** | the pivot *is* replacing it; the goal's own condition has been met by decision |
+| the Windows lane | unchanged | still handed off; the pivot makes cross-platform *possible* (Linux needs a udev rule, §5 L3), which is a later benefit |
+
+**"Parks" means noted, not abandoned — and the condition is specific.** The `G`-goals patch the
+vendor's pipeline; **Phase C replaces that same pipeline**. Building on the vendor's output while
+planning to replace it would be work done twice, so the parking is causal, not a demotion. That is
+the pivot's real cost and it should be stated plainly rather than left implied.
+
+**One honest asymmetry.** The owed reruns stay *above* the parked work but *below* the pivot: they
+are the only open items that can still fail — `#73`, `#77`, `#89` all landed code whose hardware
+behaviour is unproven. Parking them would bank unverified work; running them costs one room.
+
+### Firmware — explicitly off the critical path (§7)
+
+Firmware replacement is **a future research track, not in scope now**. The value is low — §2 showed
+the device is dumb, so the scanning smarts are host-side — and the risk is qualitatively different
+from every other step: a failed write can brick the unit and is **not reversible by killing a
+process**. It is also **not required for host-side independence**.
+
+**Pre-gates, if it is ever pursued:** a recovery path proven on *this* unit **before** any write; the
+full flash map, so calibration, serial and boot are preserved; and ideally a second unit.
+
+**The extracted image is useful now, read-only and off-device**: it confirms the SoC and the
+camera/laser driver details that inform the host loops, and cross-checks the vendor-command opcode
+semantics. That is recon-side input (see the posture above), never builder-side.
+
+## rev 16 close-out, and the board sweep
+
+**rev 16's objective landed.** `G3`'s build row was filed and built — `#91`, with `#92` — so the last
+`G`-goal without a build row now has one. `B1` was fixed, and **`#90`** puts the guard on the board so
+a malformed permission list can no longer remove an agent silently; `#93` followed as a live UI
+correction.
+
+**Swept per `H3` — three corrections:**
+
+- **`#73` and `#89` are `HW`, not `BUILD`.** Rev 16 recorded them as "`BUILD` with fixes in
+  verification"; the board has since moved them, so they belong in the owed-rerun set rather than the
+  builder queue.
+- **`#91`/`#92` still read `BUILD`** although their code has landed. The row move is pending — noted
+  so the next sweep does not read it as open work.
+- **`#94` closed while this revision was being written.** At the moment of my sweep it read `RECON`
+  with **no findings doc on main**; `calibration-store.md` then landed and `#94` → `DONE`. So the
+  claim I would otherwise have made — two open rows doing one job — is **not** the case: `#94`
+  located the calibration, `#95` decodes its payloads, and `#95`'s open questions are the hand-off
+  between them. Recorded because the check ran a few minutes too early, which is the general hazard
+  with row claims.
+
 ## rev 15 close-out — the walls, and the builder agent
 
 **What landed.** The walls are real and were *probed*, not merely configured: `W1` (the dispatcher's
@@ -544,27 +642,43 @@ is set there. **Do not open Windows rows from this roadmap.**
 
 For the dispatcher to expand — not dispatches in themselves.
 
-1. **`B1` — fix `openscanner/builder`** → operator: complete the two missing `{resource, effect}`
-   pairs (`opencode_list_mcp_resources`, the bare `shell`) and split the duplicated
-   `resource`/`effect` pair in the `*.recon-cache*` entry. Then confirm all six agents appear in
-   `debug agents`. **This blocks every builder row in the queue** — `G3`, `#73`, `#89`.
-2. **`G3`'s build row** → file it, then builder: per-pose rejection reasons surfaced to the UI, on
-   `G2`'s feedback layer. `#80`'s mechanism is the spec (`#80`, `#81` are `DONE`); `#82` is the one
-   open residual. **Wall:** builder edits `engine/`, `ui/`, `tools/`.
-3. **The owed reruns** → hardware: one session covering `#65`, `#66`, `#71`, `#76`, `#77`. Five
-   rows, no new code. **Wall:** `tests/results/**`.
-4. **`#82`** → recon: the tracking status's fresh-value origin, the named follow-up from `#80` §1.
-   One target, no hardware, so it does not contend with the reruns.
-5. **The remaining wall items + the validation step** → operator: the shell-pattern denies, the
-   physical `.recon-cache` separation, **and a completeness check on permission entries** — `B1`
-   shows a malformed list removes an agent silently rather than weakening it.
-6. **`#73` / `#89`** → builder, after `B1`: both fixes are in verification; their reruns follow.
+1. **`#96` — Phase A, the protocol spec** → recon: the RPC method set, the vendor-command framing
+   (magic `0x47`/'MG', the 8-byte header, GET/SET_PROPERTY, the v1.1 list ops, memory-read opcode
+   25), the property map, and the flash-read transport — from the captures. **G-A**, and the pivot's
+   only hard prerequisite. **Wall:** `docs/recon/**`; the captures are evidence, the findings are
+   what ships.
+2. **`#98` — Phase B, the C1 client** → builder (after G-A): a msgpack-RPC + GVCP client reproducing
+   a scan — open streams, pull IR, drive the laser and exposure loops, stop. At the end, OBScan and
+   libOrbbecSDK are gone. **Wall:** `tools/`; no header change.
+3. **`#95` — G-C, the calibration payloads** → recon: the laser-plane struct, the thermal entries,
+   and the checksum (not CRC-32 or XOR — the device's lookup table is the lead). Gates a *correct*
+   `#99`. **Wall:** `docs/recon/**`.
+4. **`#97` — G-B, the macOS privileged-access decision** → operator: own helper vs system extension
+   vs a thin daemon, with reasoning. **The single biggest unknown**, and cheap as a decision. Gates
+   `#100`.
+5. **`#99` — Phase C, own the math** → builder (after `#98`): laser-line extraction → triangulation →
+   fusion → tracking, each A/B-tested against the vendor's output while it still exists.
+6. **`#100` — Phase D, replace the daemon** → builder (after `#98` **and** `#97`): UVC + HID + the
+   vendor channel, behind `#97`'s chosen shape.
+7. **`#101` / `#102`** → operator + recon: three short single-action captures (pause/resume, mode
+   switch, slider) to close G-D; a read-only capture audit to confirm no flash *writes* are required.
 
-**Ordering note.** `B1` is first because it is the only item that blocks others; the reruns (3) are
-the cheapest rows-cleared and queue only behind the hardware room; the row work (2, 4) is
-builder/recon and contends with neither.
+Also live and small: `#90` (the guard), `#92`, `#93` (a real UI debounce bug). And the **owed
+reruns** — one hardware session covering `#65`, `#66`, `#71`, `#73`, `#76`, `#77`, `#89` — which stay
+queued because they are the only open items that can still *fail*.
+
+**Ordering note.** A→B→C→D is dependency, not preference. `#97` is deliberately placed early despite
+gating D, because a late answer reshapes C2; `#95` runs parallel to A/B because it gates C's
+correctness, not its start.
 
 ## Superseded plans
+
+- **2026-10-19 rev 16 → rev 17 — the pivot.** The operator set **full host-side independence from
+  Creality Scan** as the priority target, so the objective becomes the Phase A–D chain
+  (`FULL-INDEPENDENCE.md` §6) and everything else is re-ranked against it: the `G`-goals park
+  *causally* — Phase C replaces the pipeline they patch — and firmware is explicitly off the path.
+  Rev 16's objective landed (`G3`'s build row, `#91`/`#92`; `B1` fixed, with `#90` guarding it). The
+  sweep corrected three row claims. Reversal reason: an operator priority change, not a drift.
 
 - **2026-10-18 rev 15 → rev 16 — sweep, not a reversal.** Rev 15's walls work landed and was probed,
   so the objective returns to the reconstruction workstream: `G3`'s build row is the last unstarted
