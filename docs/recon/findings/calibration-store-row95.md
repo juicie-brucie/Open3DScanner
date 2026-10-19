@@ -1,7 +1,7 @@
 # Calibration Store Analysis - Row #95 Findings
 
-**Date**: 2026-10-19  
-**Status**: Partially Complete  
+**Date**: 2026-10-19
+**Status**: Partially Complete
 **Scope**: Static analysis of calibration data storage and retrieval mechanisms
 
 ---
@@ -39,9 +39,9 @@ Offset  Size  Field           Description
 
 ### 2. Checksum Algorithm
 
-**Table Location**: 0x2ceb980 in vendor binary  
-**Polynomial**: 0xEDB88320 (standard CRC-32, reflected)  
-**Initialization**: 0xFFFFFFFF  
+**Table Location**: 0x2ceb980 in vendor binary
+**Polynomial**: 0xEDB88320 (standard CRC-32, reflected)
+**Initialization**: 0xFFFFFFFF
 **Final XOR**: 0xFFFFFFFF
 
 **Implementation** (from disassembly at 0x23f3a0-0x23f3d4):
@@ -76,7 +76,7 @@ return crc ^ 0xFFFFFFFF;
 **Sensor Monitoring**:
 ```
 Offset 0xa0: Sensor 1 temperature
-Offset 0xa4: Sensor 2 temperature  
+Offset 0xa4: Sensor 2 temperature
 Offset 0xa8: Sensor 3 temperature
 ```
 
@@ -86,31 +86,31 @@ Offset 0xa8: Sensor 3 temperature
 - Primary: 0x211000 (5180 bytes)
 - Backup: 0x213000 (5180 bytes)
 
-**Session Directory**: ❌ NOT stored in session directories  
+**Session Directory**: ❌ NOT stored in session directories
 **Verification**: Checked all session directories under `~/Library/CrealityScan/Projects/` - no plane parameter records found
 
 **Implication**: Plane parameters are device-specific calibration data that persists across sessions, not session-specific artifacts.
 
 ### 5. User Plane Parameter Struct
 
-**Size**: 5120 bytes (0x1400)  
-**Location**: Device parameter cache at offset 0x10  
+**Size**: 5120 bytes (0x1400)
+**Location**: Device parameter cache at offset 0x10
 **Source**: Copied from flash record 0x211000
 
 **Status**: ⚠️ Structure layout unknown - requires runtime data or deeper static analysis to map fields
 
 ### 6. Backup/Resume Blob
 
-**Entry Point**: `backup_device_param()` function  
+**Entry Point**: `backup_device_param()` function
 **Implementation**: Dispatches to libOrbbecSDK (vendor SDK)
 
-**Status**: ❌ Outside scope of pinned snapshot  
+**Status**: ❌ Outside scope of pinned snapshot
 **Requirement**: Runtime capture or libOrbbecSDK binary analysis needed
 
 ### 7. Packed Field Semantics
 
-**Structure**: 41 fields packed into device parameters  
-**Status**: ❌ Unknown field mapping  
+**Structure**: 41 fields packed into device parameters
+**Status**: ❌ Unknown field mapping
 **Requirement**: Device-params hexdump alongside session record to correlate fields with known calibration values
 
 ---
@@ -121,7 +121,7 @@ Offset 0xa8: Sensor 3 temperature
 - **Status**: Partially answered
 - **Known**: Size (5120 bytes), flash location (0x211000/0x213000)
 - **Unknown**: Field mapping and semantics
-- **Next Steps**: 
+- **Next Steps**:
   - Runtime hexdump of struct during active scan
   - Compare with known calibration parameters
   - Static analysis of struct access patterns
@@ -233,7 +233,7 @@ Offset 0xa8: Sensor 3 temperature
       resources.obscan           # SQLite database
       result/                    # Scan results
       temp/                      # Temporary files
-      
+
 # Database schema:
 # - files table: metadata only
 # - editDatas table: no plane parameter records
@@ -241,6 +241,6 @@ Offset 0xa8: Sensor 3 temperature
 
 ---
 
-**Report Generated**: 2026-10-19  
-**Analyst**: Claude Code (Recon Agent)  
+**Report Generated**: 2026-10-19
+**Analyst**: Claude Code (Recon Agent)
 **Review Status**: Pending peer review
