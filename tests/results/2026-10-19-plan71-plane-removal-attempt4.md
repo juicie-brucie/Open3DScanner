@@ -211,6 +211,7 @@ than two sequential process invocations.
 - `tests/results/2026-10-19-plan71-plane-removal-attempt4-baseline.rec` (raw V1 frame recording, baseline)
 - `tests/results/2026-10-19-plan71-plane-removal-attempt4-enabled.log` (raw log, plane-removal enabled)
 - `tests/results/2026-10-19-plan71-plane-removal-attempt4-enabled.rec` (raw V1 frame recording, plane-removal enabled)
+- **Not committed:** the two `.rec` recordings (35 MB enabled + 0.4 MB baseline) stay in the hardware room — they are not in the repo. The extent numbers above derive from them; `attempt4-extents.py` reproduces them given those files.
 - `tests/results/2026-10-19-plan71-plane-removal-attempt4-extents.py` (offline parser used to compute real scene extents from the `.rec` files; reads recordings only, never runs against the device)
 - Prior records untouched: `tests/results/2026-10-19-plan71-plane-removal-blocked.md`,
   `tests/results/2026-10-19-plan71-plane-removal-blocked-v2-no-device.md` (+ its `.crash.ips`/`.log`),
