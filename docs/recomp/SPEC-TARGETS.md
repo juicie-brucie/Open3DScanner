@@ -30,7 +30,9 @@ repo is a 60 fps observation yet.
   client calls `ob_rpc_start_stream` with `[streamtype, 9, 1920, 1200, 50]` on both interfaces
   (streamtype 6 = IR on port 10013, 7 = depth on 10010), and the flash profile tuple read by
   op-31 is `{7,9,1920,1200,50}` — `protocol-spec.md` §3 and §7.
-- The vendor client polled `ob_rpc_get_frame` at **~51.2 Hz** (0.01952 s mean interval) —
+- The vendor client polled `ob_rpc_get_frame` at **~85–86 Hz** across the capture (IR 7,420/86.08 s = 86.2 Hz; depth
+  7,260/86.05 s = 84.4 Hz, steady over nine 10 s buckets). The earlier ~51.2 Hz figure was the first ten intervals only.
+  The *profile* is 50 fps; the poll rate is faster than the frames arrive (`stream-profiles-row114.md` §5).
   consistent with the requested 50 fps (`streaming-replay-payloads.md`).
 - The observed **UI data rate is 2–8 fps** on the M1 16 GB host against our own 10 Hz tick
   ceiling (`#111`, `#112`).
@@ -44,7 +46,12 @@ repo is a 60 fps observation yet.
 2. **The advertised 60 fps is a mode/profile we have not exercised.** The only profile list
    observed so far (23 entries, `[0,0,1280,800,30]` … `[0,0,640,400,10]`) was the RGB
    interface; the IR/depth lists still need enumerating (`#114`).
-3. **The 2–8 fps gap is host-side**, two orders below both the advertised rate and the
+3. **60 fps profiles exist, but not at the resolution the scan modes used.** The IR and depth profile lists offer 60 fps at
+   1520×1200 and 1320×1040 (and 90 fps at 960×600); at **1920×1200 in format 9 the ceiling is 50**, which is exactly the
+   profile every captured scan used. The device-side mode table (flash structure 4035) names the three rows
+   (`stream-profiles-row114.md` §2–§4). So the margin goal (#113) is **per resolution/mode**, not one number.
+
+4. **The 2–8 fps gap is host-side**, two orders below both the advertised rate and the
    configured 50 fps feed. That is what `#111`/`#112` measure.
 
 ## Test hosts
