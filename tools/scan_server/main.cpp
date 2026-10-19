@@ -225,6 +225,7 @@ void ConfigureStatic(openscanner::WsBroadcastServer& server) {
 }
 
 std::string g_record_path;
+std::atomic<bool> g_context_destroy_timed_out{false};
 uint64_t g_recorded_frame_count = 0;
 constexpr int kPointGridSize = 48;        // kPointGridSize^2 points on a sphere.
 constexpr double kFrameIntervalMs = 1000.0 / 30.0;  // ~30 Hz.
@@ -1284,9 +1285,31 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
         int polls = 0;
         int refusals = 0;
         auto started = std::chrono::steady_clock::now();
+        const int kContextDestroyCallTimeoutMs = 5000;
+        bool timed_out = false;
         do {
             ++polls;
-            status = lib.obscan_context_destroy(&context);
+            ObScanStatus this_status = OB_SCAN_ERROR_FATAL;
+            std::atomic<bool> finished{false};
+            std::thread worker([&]() {
+                this_status = lib.obscan_context_destroy(&context);
+                finished.store(true, std::memory_order_release);
+            });
+            auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(kContextDestroyCallTimeoutMs);
+            while (!finished.load(std::memory_order_acquire) && std::chrono::steady_clock::now() < deadline) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+            if (!finished.load(std::memory_order_acquire)) {
+                timed_out = true;
+                worker.detach();
+                status = OB_SCAN_ERROR_DEADLINE_EXCEEDED;
+                std::printf("[worker] obscan_context_destroy: TIMED OUT after %d ms on poll %d; abandoning context (not joined)\n",
+                            kContextDestroyCallTimeoutMs, polls);
+                std::fflush(stdout);
+                break;
+            }
+            worker.join();
+            status = this_status;
             if (status == OB_SCAN_ERROR_MULTI_CALLED) {
                 ++refusals;
                 if (refusals == 1 || refusals % 10 == 0) {
@@ -1295,10 +1318,16 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
-        } while (status == OB_SCAN_ERROR_MULTI_CALLED && polls < 3000);
+        } while (!timed_out && status == OB_SCAN_ERROR_MULTI_CALLED && polls < 3000);
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
-        std::printf("[worker] obscan_context_destroy: %d poll(s), %d refusal(s), %.1fs, final %s\n",
-                    polls, refusals, elapsed / 1000.0, StatusName(status));
+        if (timed_out) {
+            g_context_destroy_timed_out.store(true);
+            std::printf("[worker] obscan_context_destroy: ABANDONED after %.1fs (context left for process exit to reclaim)\n",
+                        elapsed / 1000.0);
+        } else {
+            std::printf("[worker] obscan_context_destroy: %d poll(s), %d refusal(s), %.1fs, final %s\n",
+                        polls, refusals, elapsed / 1000.0, StatusName(status));
+        }
         std::fflush(stdout);
         Report("obscan_context_destroy", status);
         QuitTrace("teardown: context_destroy poll loop done");
@@ -1339,7 +1368,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
 
     server.Stop();
     QuitTrace("RunLiveServer returning (worker about to exit)");
-    return 0;
+    return g_context_destroy_timed_out.load() ? 2 : 0;
 }
 
 int RunLiveMode(int argc, char** argv) {
