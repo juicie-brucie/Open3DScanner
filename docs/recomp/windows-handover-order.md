@@ -5,6 +5,23 @@
 and the fork's **`win #114`** (reconcile). The fork's `win #120` (precondition SKIP) and `win #121`
 (preflight load **and** daemon) have **merged** — PR #28 @ `4d893d5` — so they are no longer waits.
 
+## Physical state and cable allocation (2026-10-19)
+
+**The scanner is not on the Mac.** It was moved to Windows on 2026-10-19 (Raptor Pro, serial
+`CR0886100SN`), verified enumerated there, then the vendor worker crashed during the first smoke and
+the device **dropped off enumeration** (`VID_2BC5` = 0); the app is not running and **a replug is
+required**. No power-cycle, driver change or vendor update was performed.
+
+**Allocation — explicit, one SDK user at a time:**
+
+1. **The cable returns to the Mac first**, for #127's live reply dump. Windows is blocked on its own
+   `win #123` (the vendor crash) and on re-enumeration, so holding the device there buys nothing
+   meanwhile; the Mac has three ready runs (#127, #112, #71).
+2. **Then back to Windows** once `win #122` and `win #123` clear and a replug enumerates the device —
+   that is when the go-ahead is sent.
+3. The go-ahead line must state the device's **current host and enumeration state**; it must not
+   assume the Mac holds it.
+
 ## Vocabulary — read this first
 
 Two different axes, both in the record:
@@ -41,7 +58,9 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 - **The page is served and the WebSocket upgrades**: `GET /` → **200 `text/html`** (not a zero-byte
   close) and a WS upgrade → **101** (runbook #2/#3). Without both, the UI `data`/`render` fields compare
   against nothing — this is the #115 failure.
-- After the cable move, `Get-PnpDevice -PresentOnly` shows `VID_2BC5` with Depth/IR/RGB.
+- After the cable move — and after any drop such as the 2026-10-19 crash — a **replug** and
+  `Get-PnpDevice -PresentOnly` showing `VID_2BC5` with Depth/IR/RGB. A device that is not enumerated
+  is a precondition failure, not a test result.
 
 ## Sequence
 
