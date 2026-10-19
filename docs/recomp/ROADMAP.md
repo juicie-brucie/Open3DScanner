@@ -9,96 +9,90 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-19 (rev 18 — retires the README staging block, which was applied verbatim as
-#252, and records the ownership fix; sweeps rows #95–#104 (`#96` `DONE`, `#98` `BUILD`); narrows the
-`FULL-INDEPENDENCE.md` licensing erratum to a fact; and raises one new open question — the Raptor
-Pro's USB protocol family — that shapes `#100`. rev 17 was **the pivot**; rev 16's objective landed
-(`G3`'s build row); rev 15 closed the walls audit; rev 14/13/12/11/10 are superseded — see
-**Superseded plans**)._
+_Last planned: 2026-10-19 (rev 19 — **the pivot's first live run changed the picture**: Phase B's
+code landed but its first session pulled **zero frames**, so `#105` now gates `#98`'s acceptance and
+everything downstream. This revision re-ranks around it, reframes the capture work from
+*re-derivation* to *verbatim replay*, sweeps the night's moves (#73/#95/#104 `DONE`, #89 a failed
+observation, #105 filed), and records the session-model lesson under `H2`. rev 18 retired the README
+staging block; rev 17 was **the pivot**; rev 16's objective landed; rev 15 closed the walls audit;
+rev 14/13/12/11/10 are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
-**The pivot: own the host stack. Spec the protocol (Phase A), then the C1 client, then the scanning
-math, then the daemon.**
+**Get frames out of our own client — `#105` — because it gates `#98`'s acceptance and therefore the
+whole pivot.**
 
-The operator has set **full host-side independence from Creality Scan** as the priority target —
-replacing OBScan's algorithms, then the Orbbec device library and the Creality daemon. It is assessed
-as feasible and well-bounded in
-[`FULL-INDEPENDENCE.md`](FULL-INDEPENDENCE.md), on two enabling findings: the device is **dumb**
-(laser sequencing and auto-exposure are *host* loops, ~890 property SETs each, and depth is computed
-on the host) and the app↔daemon protocol is **fully observed** on the wire. So the whole effort is
-**observation-derived** — the cleanest provenance this project has had, and the reason the wall
-posture below does not relax.
+Phase A closed (`#96` → `G-A` cleared) and Phase B's code landed (`#98`, `tools/raptor_client`). Its
+first live session was **mechanically clean and empirically empty**: connect, `start_stream` accepted
+with no error, a full five seconds, a clean stop — and **zero frames**, with `ob_rpc_get_frame` never
+returning data. That is the pivot's first real result, and it is a *negative* one: the client speaks
+the protocol without speaking it correctly.
 
-The order is fixed by dependency, not preference: **spec → C1 client → own the math → replace the
-daemon** (§6, Phases A–D). Each phase leaves a working product, so the pivot is incremental by
-construction, and the vendor path stays alive as an A/B reference until Phase D.
+**The decisive evidence is already in hand.** The vendor path streams **245,235 points** through the
+same daemon (the operator's live screenshot), so the daemon *does* serve frames to a client that asks
+properly. `#105` is our request shape or our sequencing — not the daemon, not the device, and not the
+protocol spec.
 
-**Two rows gate it out of proportion to their size.** `#97` — the macOS privileged-access **decision**
-(G-B) — can reshape C2 entirely; it is a decision rather than a build, so take it early and cheaply.
-`#95` — the calibration payloads (G-C) — is the difference between a Phase C that uses *our*
-parameters and one that uses the vendor's.
+**That reframes the two in-flight efforts, which are not alternatives.** Per-call status logging must
+land **first**: without accepted-vs-rejected visibility nothing else can be validated, because the
+symptom *is* a call that succeeds and does nothing. The capture work then deserves a different *first
+step* than re-derivation — see below.
 
 ## Critical path
 
 ```
-PHASE A ✅ DONE (#96 — G-A cleared)        PHASE B (live)          PHASE C          PHASE D
-                                     ──► #98 C1 RPC client ──────► #99 own math ──► #100 replace the daemon
-                                         (BUILD)                    (gated by #95)   (gated by #97)
+PHASE A ✅ DONE (#96 — G-A cleared)
+PHASE B: code ✅ (#98)   acceptance ✗ on #105  ──►  PHASE C (#99)  ──►  PHASE D (#100)
+              │                                          ▲                 ▲
+        #105 ZERO FRAMES ← the blocker         #95 G-C ───┘      #97 G-B ──┘
 
-#95 calibration payloads ──G-C──┘  (gates a CORRECT C, not C's start)
-#97 the macOS privileged-access DECISION ──G-B──┘                     (the biggest unknown)
-#101 OQ-F2 · #102 OQ-F3 ──► capture-driven recon feeding B and D
+#105's route, in order:  1 logging (the prerequisite, not a parallel track)
+                         2 VERBATIM REPLAY of the vendor's request bytes (falsification, not re-derivation)
+                         3 retire "5 s was too short" from the captures, not from another run
+                         4 only then interpret — and #101 is what settles the values
 ```
 
-The gates, and what each one blocks (§8):
-
-| gate | is | blocks | owner |
-| --- | --- | --- | --- |
-| **G-A** | the protocol spec exists in findings | B — `#98` | recon, `#96` |
-| **G-B** | the macOS UVC-claim mechanism decided | D / C2 — `#100` | operator, `#97` |
-| **G-C** | the calibration payloads decoded | a *correct* C — `#99` (not C's start) | recon, `#95` |
-| **G-D** | the laser + exposure loop inputs fully mapped | B's control half | mostly done; `#101` closes it |
+**The gates are unchanged; one of them is now on the critical path.** G-A is cleared. G-B (`#97`) and
+G-C (`#95`) still gate D and a-correct-C respectively — but **`#101` (`OQ-F2`, the vendor properties'
+semantics) has moved from parked to on-path**, because `#105`'s leading hypothesis is the
+laser/exposure property sequence and `#101` is the row that exists to settle those values.
 
 Ranked by what it frees, not by board order:
 
-1. **`#96` (G-A).** The pivot's only hard prerequisite — nothing in A–D moves without the spec, and it
-   needs no new capture.
-2. **`#97` (G-B).** The **single biggest unknown**, and a *decision*, not a build: own privileged
-   helper vs system extension vs a thin remaining daemon. Cheap now, expensive if discovered late —
-   it can reshape C2 entirely.
-3. **`#95` (G-C).** Does not gate C's *start*; it gates C's *correctness*. Without it the owned
-   pipeline runs on the vendor's parameters.
-4. **`#98` → `#99`.** The build spine, in that order. At the end of B, OBScan and libOrbbecSDK are
-   gone; at the end of C, so is the vendor's scanning math.
-5. **`#101` / `#102`.** Capture-driven recon: `#101` closes G-D with three short single-action
-   captures (a capture request for the operator), `#102` confirms no flash *writes* are required
-   before C2 claims the device.
-6. **`#100`.** Last, and gated on both `#98` and `#97`.
-
+1. **`#105` — per-call status logging, then verbatim replay.** It gates `#98`'s acceptance, and `#98`
+   gates C and D. Nothing else on the board has that reach. The logging is the precondition for
+   believing any subsequent result; the replay is the cheapest *decisive* test available.
+2. **`#101` (`OQ-F2`).** Promoted. It settles the property values that `#105`'s leading hypothesis
+   turns on, and it is capture-driven — no hardware needed.
+3. **`#97` (`G-B`).** Still the single biggest unknown and still cheap: a decision that can reshape C2.
+   It has not become less important by being third — it has become *later*.
+4. **`#89`'s fix.** Its 5 s bound never fired, so the observation **failed** — recorded honestly as
+   such. It needs a fix, not a rerun.
+5. **The one hardware session.** Six `HW` rows (`#65`, `#66`, `#71`, `#76`, `#77`, `#91`) owe reruns on
+   already-merged work. One room clears all six; `#98`'s acceptance does **not** sit behind that room —
+   it sits behind `#105`.
+6. **`#99` → `#100`.** Unblocked by `#105` and `#97` respectively, in that order.
 ## Ready now
 
 | Item | Role | What it needs |
 | --- | --- | --- |
-| `#96` — Phase A | recon | The protocol spec, from the captures. G-A. **The pivot's first work item.** |
-| `#97` — G-B | operator | The macOS privileged-access decision, with reasoning. Cheap; it gates `#100`. |
-| `#95` — G-C | recon | The calibration payloads: plane struct, thermal entries, the checksum (not CRC-32 or XOR). |
-| `#98` — Phase B | builder | The C1 msgpack-RPC + GVCP client, after G-A. |
-| `#101`, `#102` | recon / operator | Single-action captures for `#101`; a read-only capture audit for `#102`. |
-| `#90`, `#92`, `#93` | builder | Wall-edit validation; two tracking-status drift fixes (`#93` is a live UI bug). |
-| the owed reruns | hardware | `#65`, `#66`, `#71`, `#73`, `#76`, `#77`, `#89` — evidence on already-merged work; one room. |
+| `#105` — the blocker | builder, then recon | **Per-call status logging first**, then **verbatim replay** of the vendor's captured request bytes. Gates `#98`'s acceptance, and `#98` gates C and D. |
+| `#101` — `OQ-F2` | recon + operator | The vendor properties' semantics, from three single-action captures. **Promoted onto `#105`'s path.** |
+| `#97` — `G-B` | operator | The macOS privileged-access decision, with reasoning. Cheap; gates `#100`. |
+| `#89`'s fix | builder | Its 5 s bound never fired — the observation **failed**, so this is a fix rather than a rerun. |
+| the one hardware session | hardware | `#65`, `#66`, `#71`, `#76`, `#77`, `#91` — six reruns on merged work, one room, no new code. |
+| `#102`, `#103` | recon / dispatch | The flash-write audit (gates `#100`); the README's Status/Known-issues pass. |
+| `#93` | builder | A live UI debounce bug in `ui/app.js`. |
 
 ## Blocked, and on what
 
 | Row | Blocked on |
 | --- | --- |
-| `#98` | **G-A** — the protocol spec (`#96`). |
-| `#99` | `#98`; and **G-C** (`#95`) for correctness rather than for start. |
+| `#98`'s **acceptance** | **`#105`** — zero frames. It previously read "blocked on G-A"; G-A is cleared, so the blocker moved. |
+| `#99` | `#98`'s acceptance, and **G-C** (`#95`) for correctness rather than for start. |
 | `#100` | `#98` **and** **G-B** (`#97`) — the privileged-access decision. |
-| `#101` | Operator captures: one pause/resume, one mode switch, one slider. |
-| G4, G5 | A fusion feature actually being planned — and **the pivot subsumes this**: Phase C replaces fusion. |
-| the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
-| G3's build | Nothing — `G2`'s feedback layer exists (`#76` is at `HW`). The row is **unfiled, not blocked**, which is why it is the objective. |
+| the six `HW` reruns | The hardware room, and nothing else. |
+| G4, G5 | **The pivot subsumes them** — Phase C replaces fusion. No longer a separate wait. |
 | the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
 
 ## Orphaned open questions
@@ -289,13 +283,27 @@ already performs, and it is deliberately not a "reviewing layer": a layer that r
 dispatcher's transcript inherits the same bloat, so layers relocate context rather than
 remove it.
 
-### H2 — Reconcile the dispatcher's documented model
+### H2 — Model drift: the doc, and the mechanism underneath it
 
-`ARCHITECTURE.md` documents the dispatcher's model as `opencode/nemotron-3-ultra-free`,
-justified by a long-context tier. The live dispatch session is running
-`deepseek-v4.1-flash#max`. One of the two is stale. It matters more than a typo because the
-original choice was justified *by context capacity* — the same property `H1` protects. Fix
-the doc or the config, and record the reason where the choice is recorded.
+`ARCHITECTURE.md` documented the dispatcher's model as `opencode/nemotron-3-ultra-free` while the live
+session ran `deepseek-v4.1-flash#max`. That was the *symptom*; the mechanism is what matters, and
+`#104` has now landed the tooling and the explanation:
+
+**A session captures its model at creation and never re-reads the agent file.** Editing an agent's
+`model:` changes what *new* sessions get and nothing about a running one — so a corrected agent file
+and a stale session can coexist indefinitely, which is exactly how the doc drifted from reality.
+
+**A *disabled* model surfaces as a drain error, not a fallback.** The failure text is
+*"Model access is disabled"* — so a session on a withdrawn model does not quietly degrade, it fails in
+a way that reads as a transport problem. Worth knowing before diagnosing one.
+
+**The tooling.** `scripts/check-agents.py` validates the agent files (and `#104`'s extension now knows
+that a malformed permission list makes an agent vanish silently — see `B1`). `--sessions` reports
+session/agent model drift; `--fix` switches a drifting session to its agent's configured model.
+
+**The rule this implies:** a model change is not done when the file is edited. It is done when the
+sessions that should carry it have been switched — and the check belongs in the round, not in a
+correction afterwards.
 
 ### H3 — Check the board before claiming a row is unactioned
 
@@ -418,6 +426,72 @@ full flash map, so calibration, serial and boot are preserved; and ideally a sec
 **The extracted image is useful now, read-only and off-device**: it confirms the SoC and the
 camera/laser driver details that inform the host loops, and cross-checks the vendor-command opcode
 semantics. That is recon-side input (see the posture above), never builder-side.
+
+## rev 19 — the pivot's first live run, and what it re-ranks
+
+### `#105` — what leads, and in what order
+
+The failure is a call that returns **success and produces nothing**, so the first requirement is
+*legibility*, not a fix:
+
+1. **Per-call status logging** (build-1, in flight) — the **prerequisite**, not a parallel track.
+   Nothing downstream can be believed until accepted-vs-rejected is observable rather than inferred.
+2. **Verbatim replay from the captures** (recon-1, **reframed**). Not "re-derive the shapes" —
+   *extract the vendor's own request bytes and send them unchanged*. Replay **falsifies**;
+   re-derivation **interprets**. A replay that streams proves the shapes are wrong; a replay that does
+   not rules the shapes *out* and moves the weight to sequencing and cadence.
+3. **Retire candidate (d) from evidence.** The captures carry the vendor's time-to-first-frame; if it
+   falls inside 5 s, "5 s was too short" dies without another run.
+4. **Only then interpret.** Candidate (b) — the laser/exposure sequence — leads, and the client already
+   sends `SetProperty` for props 3/152/153/154/155 every iteration, so the open question is the
+   **values and the ordering**. That is `#101`'s subject, which is why `#101` is promoted, not parked.
+
+**This is a good failure.** The cheapest thing that could go wrong went wrong in the cheapest possible
+way: a clean run that returns nothing, with the captures *and a working vendor client* in hand as the
+comparison. Nothing was bricked, nothing is ambiguous, and the falsifying test is already on disk.
+
+### What parks, and one promotion
+
+| workstream | verdict | why |
+| --- | --- | --- |
+| `#105`, `#101` | **the queue** | `#105` gates acceptance; `#101` settles the values it turns on |
+| `#97` (`G-B`) | **stays** | gates `#100`; a decision, and cheap |
+| `#89`'s fix | **stays** | a *failed* observation, not a passed one |
+| the six `HW` reruns | **stays** | evidence on merged work; one room, no new code |
+| `#102`, `#103`, `#93` | **stays, low** | an audit, a doc pass, and a live UI bug |
+| `#83`–`#88` (six OQs) | **parks** | each carries its trigger; none is on the pivot's path |
+
+**`#101` moves the other way** — parked to on-path. It was filed as a completeness item, "vendor
+properties' semantics"; `#105` turned it into a **diagnostic input**. Worth recording as the first
+time a parked OQ has been *promoted by evidence* rather than by priority.
+
+### The sweep (`H3`)
+
+| this file said | board now | correction |
+| --- | --- | --- |
+| `#73` `HW` | **`DONE`** | the rerun passed — idempotent guard, the app's 120 s deadline, no orphan |
+| `#89` `HW`, "a rerun owed" | **`BUILD`** | the run was **inconclusive** — its 5 s bound never fired, so the task is a *fix* |
+| `#95` `TODO` | **`DONE`** | the calibration decode landed, with **run-dependent residuals** |
+| `#98` `BUILD` | **`HW`** | code landed; the acceptance run failed → `#105` |
+| `#104` — | **`DONE`** | session-model drift, with `check-agents.py --sessions/--fix` |
+| — | **`#105` (new)** | the zero-frames blocker |
+
+**Two of these were in open PRs, not on `main`, when I read.** `#73`'s move and `#95`'s `DONE` sit in
+**#261**/**#262**, in flight; I planned against their imminent state and marked where the board has not
+caught up. The alternative was a sweep that would be stale within the hour.
+
+### Still open from rev 18: the README's licence claim
+
+`README.md` still says **"MIT-licensed public-SDK headers"**, and the erratum still says "not confirmed
+MIT". #260 corrected these in `docs/recon/findings/protocol-spec.md` instead — which now says the
+accurate thing: *"the checkout's `src-read/LICENSE.txt` claims MIT; the upstream license is not
+confirmed"*.
+
+My rev-18 reading **corroborates and narrows** that: `OrbbecSDK_v2`'s own README §5 claims MIT *with
+third-party exceptions* — which is also why GitHub reports the repo as **"Other"**. So two independent
+in-repo statements now claim MIT, and the residual is a review of the specific files relied on, not the
+question "is it MIT?". Both the README's sentence and the erratum should be brought to that wording;
+it belongs with `#103`.
 
 ## rev 18 — README close-out, the sweep, and one new open question
 
@@ -755,6 +829,19 @@ gating D, because a late answer reshapes C2; `#95` runs parallel to A/B because 
 correctness, not its start.
 
 ## Superseded plans
+
+- **2026-10-19 rev 18 → rev 19 — the pivot's first live run re-ranks the board.** Phase B's code
+  landed (`#98`) and its first session pulled **zero frames**, so `#105` now gates `#98`'s acceptance
+  and therefore C and D. Rev 19 puts `#105` first, **reframes the capture work from re-derivation to
+  verbatim replay**, promotes `#101` from parked to on-path, and sweeps the night's moves — two of
+  which were in open PRs rather than on `main` when the sweep ran. It also records the session-model
+  mechanism under `H2`. Reversal reason: the pivot's own evidence, not a change of target.
+
+- **2026-10-19 rev 17 → rev 18 — README close-out, sweep, and one new open question.** The staged
+  README text was applied verbatim as #252 and the file gained an owner, so the staging block was
+  retired to a short record; `W2`'s enumeration-based builder wall was kept as a standing finding;
+  `#96` closing moved the critical path's head to `#98`; and reading the SDK's own docs narrowed the
+  licensing erratum and raised the Raptor Pro's USB protocol family as a new unknown for `#100`.
 
 - **2026-10-19 rev 16 → rev 17 — the pivot.** The operator set **full host-side independence from
   Creality Scan** as the priority target, so the objective becomes the Phase A–D chain
