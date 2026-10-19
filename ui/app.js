@@ -208,6 +208,22 @@
   let ws = null;
   let latestStatus = null;
 
+  // Tracking-status hysteresis (row #81; findings tracking-mechanism.md §1):
+  // the vendor reports FAILURE_MARKERLESS (5) as LOST (1) for its first two
+  // consecutive occurrences and 5 from the third; any non-5 resets. We
+  // mirror the same window client-side so the HUD's reason is deliberate.
+  const kTrackingNames = ["SUCCESS", "LOST", "AMBIGUOUS_PLANE", "FAILURE_INSUFF_VALID_POINTS",
+                          "FAILURE_TEXTURELESS", "FAILURE_MARKERLESS", "FAILURE_MOVING_TOO_FAST"];
+  let markerlessRun = 0;
+  function effectiveTracking(raw) {
+    if (raw === 5) {
+      markerlessRun += 1;
+      return markerlessRun >= 3 ? 5 : 1;
+    }
+    markerlessRun = 0;
+    return raw;
+  }
+
   function sendCommand(cmd) {
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(cmd));
@@ -348,6 +364,9 @@
       return;
     }
     if (!status || status.type !== "status") return;
+    if (typeof status.tracking === "number") {
+      status.effectiveTracking = effectiveTracking(status.tracking);
+    }
     latestStatus = status;
 
     // FOV is a real two-position switch on the actual scanner hardware
@@ -452,6 +471,15 @@
     requestAnimationFrame(draw);
   }
 
+  function trackingText() {
+    if (!latestStatus || latestStatus.tracking === undefined) return "--";
+    const raw = latestStatus.tracking;
+    const eff = latestStatus.effectiveTracking !== undefined ? latestStatus.effectiveTracking : raw;
+    const name = kTrackingNames[eff] !== undefined ? kTrackingNames[eff] : ("status " + eff);
+    if (eff !== raw) return name + " (raw " + raw + ", markerless window " + markerlessRun + "/3)";
+    return name + " (" + raw + ")";
+  }
+
   function coverageText() {
     if (coverageSeen.size === 0) return "--";
     let visited = 0;
@@ -480,8 +508,7 @@
       '<span class="label">render</span>   <span class="value">' + renderFps.toFixed(1) + " fps</span>\n" +
       '<span class="label">points</span>   <span class="value">' + pointCount + "</span>\n" +
       '<span class="label">coverage</span> <span class="value">' + coverageText() + "</span>\n" +
-      '<span class="label">tracking</span> <span class="value">' +
-        (latestStatus && latestStatus.tracking !== undefined ? latestStatus.tracking : "--") + "</span>\n" +
+      '<span class="label">tracking</span> <span class="value">' + trackingText() + "</span>\n" +
       '<span class="label">frame</span>    <span class="value">#' + lastFrameId + "</span>";
   }
 
