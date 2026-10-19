@@ -58,7 +58,7 @@ implements from; the captures themselves stay outside the repo.*
 | `ob_rpc_start_imu_stream` / `ob_rpc_stop_imu_stream` | `90` | `true` |
 | `ob_rpc_get_pu` | `[2002]` | uint16 `6000` |
 | `ob_rpc_get_pu_range` | `[2002]` | array of four `bin8(4)` values: `[1000, 15000, 100, 1000]` |
-| `ob_rpc_set_pu` | `[2003, 1]` | (ack) |
+| `ob_rpc_set_pu` | `[2002, <value>]` where value varies (observed 1000–6000) | (ack) |
 | `ob_set_ir_frame_light_type` | `[streamtype, 65535]` (streamtype 6 on IR, 7 on depth — same as `start_stream`'s first param) | (ack) |
 | `ob_rpc_send_data` | `[<vendor frame bytes>, <expected response size>]` | the vendor response (§2) |
 
@@ -149,8 +149,8 @@ single-action captures (the plan's OQ-F2). `[inferred]`
 ### 3.3 The PU channel (a parallel id space)
 
 `get_pu` / `get_pu_range` / `set_pu` use their own ids — observed **2002**
-(read: 6000; range `[1000, 15000, 100, 1000]`) and **2003** (set to 1).
-69 get_pu / 9 get_pu_range / 45 set_pu calls, on the IR interface. `[inferred]`
+(read: 6000; range `[1000, 15000, 100, 1000]`) for both read and set operations.
+`set_pu` values vary (observed 1000–6000 across 45 calls). 69 get_pu / 9 get_pu_range / 45 set_pu calls, on the IR interface. `[inferred]`
 
 ## 4. The flash-read transport (op 25) — cross-ref, not duplicated
 
