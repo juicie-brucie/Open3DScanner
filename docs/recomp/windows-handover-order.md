@@ -26,7 +26,10 @@ smoke and the device **dropped off enumeration** (`VID_2BC5` = 0); the app is no
 required before any further run on either host**. No power-cycle, driver change or vendor update was performed.
 
 **Ordering:** no forced sequence. Windows cannot run `win #113` until `win #122`/`win #123` clear, so the
-device may stay there while that is worked; it returns to the Mac when the operator needs it (#127's live
+device may stay there while that is worked. **If no isolation works for `win #123`** (a different USB
+port/cable, a lower-bandwidth or slower-start profile, a smaller frameset budget), it is a **hard vendor
+blocker** and `win #113` waits on the vendor — the run is **not attempted on a link that has not been shown
+stable**. it returns to the Mac when the operator needs it (#127's live
 dump is a five-second run; #112/#71 are ready) and comes back for the go-ahead. One SDK user at a time, and
 the go-ahead line states the current host and enumeration state.
 
