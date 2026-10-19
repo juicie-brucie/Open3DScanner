@@ -172,7 +172,7 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
         // NSTask fires this off the main thread; every AppKit call below
         // must hop back to the main queue.
         int status = task.terminationStatus;
-        QuitTrace("app", "worker terminationHandler: status=%d reason=%ld", status,
+        QuitTrace("app", "worker terminationHandler: pid=%d status=%d reason=%ld", task.processIdentifier, status,
                   (long)task.terminationReason);
         dispatch_async(dispatch_get_main_queue(), ^{
             OpenScannerAppDelegate* self = weakSelf;
@@ -402,6 +402,7 @@ int main(int argc, const char* argv[]) {
         OpenScannerAppDelegate* delegate = [[OpenScannerAppDelegate alloc] init];
         app.delegate = delegate;
         [app run];
+        QuitTrace("app", "main: [NSApp run] returned; process about to exit");
     }
     return 0;
 }

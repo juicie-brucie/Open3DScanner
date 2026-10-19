@@ -1203,6 +1203,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     std::fflush(stdout);
 
     server.Stop();
+    QuitTrace("RunLiveServer returning (worker about to exit)");
     return 0;
 }
 
