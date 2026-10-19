@@ -40,6 +40,16 @@ make a test pass.
     that directory for the run's time window. If a report is found only after the
     record was written, add a dated `<record-slug>-crash-report-correction.md`
     naming the record and the archived file; never edit the record in place.
+12. **Confirm the binary is fresh before you trust a run.** A bundled copy can be
+    stale: the app bundle's `scan_server` is refreshed by a build step that a
+    worker-only rebuild does not re-fire (#107), so a "regression" can be an old
+    binary. Check the binary under test against its source (mtime, or `strings`
+    for a string the change should contain) and say which you checked.
+13. **Any process or conflict check must be name-anchored** (`pgrep -x
+    scan_server`), never a substring match on command lines — a path to a test
+    binary contains `scan_server` too, so a substring check both misses real runs
+    and refuses on innocent ones (a `sync-to-main.sh` false positive cost a
+    debugging detour).
 
 ## Evidence
 
@@ -55,4 +65,7 @@ target program, exact command, exit code, verdict (PASS/FAIL/SKIP/BLOCKED), a
 table of each `[PASS]`/`[FAIL]` check, and any question the run leaves open.
 
 Use `[hw-confirmed: <run>]` / `[hw-contradicted: <run>]` when citing a result.
-Move only your own board row, and only after the run completes.
+
+**Do not edit `PLAN.md`.** Report your row move (from → to, and why) in the record
+and its log entry; the dispatcher applies it. A working agent's board edit goes
+stale the moment `main` moves, and the dispatcher is the board's single writer.

@@ -188,6 +188,23 @@ merge, push, or edit. The checker is deterministic and runs in CI, and the agent
 comes from a session other than the dispatcher; the GitHub account is shared, so that
 separation is process-level, not cryptographic.
 
+### The loop's own stability rules
+
+The pipeline is machinery too, and its failures look like incidents — an agent that
+vanishes, a session that speaks nonsense, a gate that fires only after the push. Each rule
+below exists because one of those happened; the incident record is the dated log under
+`docs/recomp/log/` (notably `2026-10-19-winddown.md`).
+
+| Rule | Where it lives | What enforces it |
+| --- | --- | --- |
+| Run the deterministic gate on the branch **before** reporting | each role's agent file and command (recon carries it; builders follow it in their orders) | `scripts/verify-pr.py` in CI, plus a pre-commit check (row #110) |
+| A whitespace fix changes **only** whitespace — never a file's structure | the recon agent's rules | the branch-level diff review (a 246-line findings file was collapsed to 1, and caught there) |
+| Reap your own load generators **in the same turn** | the builder's agent file | the name-anchored process check in `scripts/pipeline-status.sh` (row #108) |
+| A verdict is a **PR comment naming the head sha**; a subagent's report goes to its parent, so a builder-launched read is not a verdict | the verifier agent file | `verdict-gate` — a PR with no anchored verdict cannot merge |
+| The **dispatcher is the board's single writer**; working agents report row moves instead of editing `PLAN.md` | every working agent's file (the hw tester's is `.claude/agents/hw-test.md`) | the landing conflict itself — a stale board edit is superseded |
+| One watcher per **dispatch**, re-armed on each fire | the dispatcher agent file | `scripts/watch-sessions.sh` |
+| Retire a session before its context degrades | the dispatcher's routine | `check-agents.py --sessions`, once it reports the threshold (row #109) |
+
 ## Claude Pro's place
 
 The Anthropic integration in OpenCode offers only API-key and environment
