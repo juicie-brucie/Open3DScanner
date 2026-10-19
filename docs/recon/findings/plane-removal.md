@@ -14,7 +14,7 @@ Four exports exist (all four reject a NULL scan with `0x32620107`):
 | `obscan_scan_plane_remove` (`0xf4b8`) | `(scan, bool)` | `+0x50` | `OrbbecScanSpeckle/Laser::frame_remove_plane(bool)` `0x5c5a4`/`0xc3afc` → `add x0, x0, #0xf0` → **`OBScanDataManagement::update_realtime_auto_rm_plane(bool)`** `0x7016b8`; returns `0` |
 | `obscan_scan_turntable_plane_remove` (`0xf560`) | `(scan, bool)` | `+0x60` | `frame_remove_turntable_plane(bool)` `0x5ca30`/`0xc3f88` → `update_realtime_rm_turntable_plane(bool)` `0x70169c` |
 | `obscan_scan_config_manaul_remove_plane` (`0xf8cc`) | `(scan, const ObScanManualRPConfig_*)` | `+0x58` | `config_manaul_remove_plane(bool, OBScanPlane_&, int&)` `0x5c5c0`/`0xc3b18` (row #58) |
-| `obscan_scan_get_manaul_remove_plane` (`0xf830`) | `(scan, const config*, ObScanPlane_* out)` — the config passed **by value** (a `0x18`-byte copy); its observed shape differs from the setter's (see §4) | direct | `OBScanBase::get_manaul_remove_plane(config, plane*)` `0x6fbe94` |
+| `obscan_scan_get_manaul_remove_plane` (`0xf830`) | `(scan, const ObScanManualRPPoints*, ObScanPlane_* out)` — the config passed **by value** (a `0x18`-byte copy) and it is a **distinct struct** from the setter's: a pointer at `+0x08`, the count at `+0x10` (§4) | direct | `OBScanBase::get_manaul_remove_plane(config, plane*)` `0x6fbe94` |
 
 **The re-homing question — same object, two layers.** The scan-class vtable
 methods are thin forwarders to the data-management subobject: `frame_remove_plane`
@@ -127,7 +127,8 @@ hook to substitute its decision.
   point list is the *input* the SDK derives a plane from — points in, plane
   out (a compute helper, not a state read).
 - **G1 needs the plane layout** (to construct one for the setter) — it is now
-  recovered; the header declarations for the three toggles + the two structs
+  recovered; the header declarations for the three toggles + the three structs
+  (`ObScanPlane`, `ObScanManualRPConfig`, `ObScanManualRPPoints`)
   are added alongside this spec.
 
 ## Evidence

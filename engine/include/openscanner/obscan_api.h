@@ -746,8 +746,8 @@ typedef ObScanStatus (*fn_obscan_scan_reconfig_scan_mode_config)(ObScanScanHandl
 // three toggles are live-callable at any step (the wrappers check only the
 // scan handle); their state lives on the data-management subobject at
 // scan+0xf0 (enabled@+0x4f, the plane@+0x50). `obscan_scan_get_manaul_remove_plane`
-// is NOT declared here: its config argument reads as a {pointer, count}
-// point-list shape, unlike the setter's — a residual (findings §4).
+// takes a different 0x18-byte struct — now declared below as
+// ObScanManualRPPoints (row #70; findings §4).
 typedef struct ObScanPlane {
     float a;            // 0x00
     float b;            // 0x04
