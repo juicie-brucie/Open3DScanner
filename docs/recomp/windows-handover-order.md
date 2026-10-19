@@ -1,25 +1,24 @@
 # Windows handover order — the first cross-machine run (`mac #115` / `win #113`)
 
 **Status: DRAFT — the go-ahead is not given.** It waits on: the Mac's **#127 live reply dump**
-(the client landed as #327; the live run is still owed) and **#124's container identification**;
-and the fork's **`win #114`** (reconcile). The fork's `win #120` (precondition SKIP) and `win #121`
-(preflight load **and** daemon) have **merged** — PR #28 @ `4d893d5` — so they are no longer waits.
+(the client landed as #327; the live run waits on the device) and on the fork's **`win #122`/`win #123`**
+(the loader fix and the vendor crash) plus a replug. **#124's container identification is done** — the
+container is named from the 11 captured frames, no device needed. **`win #114` is not a wait**:
+`RECONCILE.md` is merged (`ea740c2`) and has been applied once (producing `win #122`–`#124`); it runs on the
+first `win #113` record before any board move is claimed, as step 10 says. `win #120`/`win #121` have merged
+too — PR #28 @ `4d893d5`.
 
 ## Physical state and cable allocation (2026-10-19)
 
-**The scanner is not on the Mac.** It was moved to Windows on 2026-10-19 (Raptor Pro, serial
-`CR0886100SN`), verified enumerated there, then the vendor worker crashed during the first smoke and
-the device **dropped off enumeration** (`VID_2BC5` = 0); the app is not running and **a replug is
-required**. No power-cycle, driver change or vendor update was performed.
+**The scanner is temporarily on Windows** — moved there for initial testing on 2026-10-19 (Raptor Pro,
+serial `CR0886100SN`), verified enumerated and exercised. The vendor worker then crashed during the first
+smoke and the device **dropped off enumeration** (`VID_2BC5` = 0); the app is not running and **a replug is
+required before any further run on either host**. No power-cycle, driver change or vendor update was performed.
 
-**Current state:** the device is **temporarily on Windows** for initial testing — it was verified enumerated
-(Raptor Pro, serial `CR0886100SN`) and exercised there, then the vendor worker crashed and it dropped off
-enumeration; it is unenumerated now and a **replug is required before any further run on either host**.
-
-**Ordering:** there is no forced sequence. Windows cannot run `win #113` until its own `win #123` (the vendor
-crash) clears, so the device may stay there while that is worked; it returns to the Mac when the operator needs
-it — #127's live dump is a five-second run, and #112/#71 are ready — and comes back for the go-ahead. One SDK
-user at a time, and the go-ahead line states the current host and enumeration state.
+**Ordering:** no forced sequence. Windows cannot run `win #113` until `win #122`/`win #123` clear, so the
+device may stay there while that is worked; it returns to the Mac when the operator needs it (#127's live
+dump is a five-second run; #112/#71 are ready) and comes back for the go-ahead. One SDK user at a time, and
+the go-ahead line states the current host and enumeration state.
 
 ## Vocabulary — read this first
 
