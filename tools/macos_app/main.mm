@@ -10,12 +10,36 @@
 #import <WebKit/WebKit.h>
 
 #include <arpa/inet.h>
+#include <cerrno>
 #include <csignal>
+#include <cstdarg>
+#include <cstdio>
 #include <cstdlib>
+#include <ctime>
 #include <netinet/in.h>
 #include <string>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
+
+// Quit-path instrumentation (row #79). Always-on, append-only, low volume:
+// every step of the terminate path lands in one file both the app and the
+// worker append to. Purely diagnostic — it does not change the path.
+static void QuitTrace(const char* who, const char* fmt, ...) {
+    const char* path = std::getenv("OPENSCANNER_QUIT_LOG");
+    if (path == nullptr || path[0] == '\0') path = "/tmp/openscanner-quit.log";
+    FILE* f = std::fopen(path, "a");
+    if (f == nullptr) return;
+    struct timeval tv = {};
+    gettimeofday(&tv, nullptr);
+    std::fprintf(f, "%ld.%06d [%s pid %d] ", (long)tv.tv_sec, (int)tv.tv_usec, who, getpid());
+    va_list ap;
+    va_start(ap, fmt);
+    std::vfprintf(f, fmt, ap);
+    va_end(ap);
+    std::fprintf(f, "\n");
+    std::fclose(f);
+}
 
 @interface OpenScannerAppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate>
 @property(nonatomic, strong) NSWindow* window;
@@ -148,10 +172,15 @@
         // NSTask fires this off the main thread; every AppKit call below
         // must hop back to the main queue.
         int status = task.terminationStatus;
+        QuitTrace("app", "worker terminationHandler: pid=%d status=%d reason=%ld", task.processIdentifier, status,
+                  (long)task.terminationReason);
         dispatch_async(dispatch_get_main_queue(), ^{
             OpenScannerAppDelegate* self = weakSelf;
             if (self == nil) return;
+            QuitTrace("app", "terminationHandler on main queue; quitting=%d restarting=%d", self.quitting,
+                      self.restarting);
             if (self.quitting) {
+                QuitTrace("app", "replying NSTerminateNow (worker exited)");
                 [NSApp replyToApplicationShouldTerminate:YES];
             } else if (self.restarting) {
                 self.restarting = NO;
@@ -170,7 +199,10 @@
     };
     @try {
         [self.worker launch];
+        QuitTrace("app", "worker launched pid=%d path=%s", self.worker.processIdentifier,
+                  [workerPath UTF8String]);
     } @catch (NSException* e) {
+        QuitTrace("app", "worker launch threw: %s", [e.reason UTF8String]);
         [self surfaceError:[NSString stringWithFormat:@"Could not start the capture worker: %@", e.reason]];
     }
 }
@@ -259,6 +291,7 @@
 
 - (void)applicationWillFinishLaunching:(NSNotification*)notification {
     (void)notification;
+    QuitTrace("app", "applicationWillFinishLaunching");
     // Install the menu before launch completes so Quit exists even if a
     // later startup path is slow or shows an error.
     NSMenu* menuBar = [[NSMenu alloc] init];
@@ -274,6 +307,7 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
     (void)notification;
+    QuitTrace("app", "applicationDidFinishLaunching");
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     NSInteger savedPort = [defaults integerForKey:@"OpenScannerPort"];
     self.port = (savedPort >= 1 && savedPort <= 65535) ? savedPort : 8787;
@@ -326,14 +360,24 @@
 // non-modal sheets, and the worker has an orphan guard.
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
     (void)sender;
+    QuitTrace("app", "applicationShouldTerminate entered; worker=%p running=%d",
+              (__bridge void*)self.worker, (self.worker != nil && self.worker.running));
     // Quit = graceful teardown: SIGTERM makes the worker break its loop and
     // run pause -> mesh -> stop -> session_destroy -> context_destroy.
     if (self.worker != nil && self.worker.running) {
         self.quitting = YES;
-        kill(self.worker.processIdentifier, SIGTERM);
+        int rc = kill(self.worker.processIdentifier, SIGTERM);
+        QuitTrace("app", "kill(SIGTERM, pid=%d) -> %d errno=%d", self.worker.processIdentifier, rc, errno);
+        QuitTrace("app", "returning NSTerminateLater");
         return NSTerminateLater;
     }
+    QuitTrace("app", "returning NSTerminateNow (no running worker)");
     return NSTerminateNow;
+}
+
+- (void)applicationWillTerminate:(NSNotification*)notification {
+    (void)notification;
+    QuitTrace("app", "applicationWillTerminate (process about to exit)");
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
@@ -343,6 +387,7 @@
 
 - (void)windowWillClose:(NSNotification*)notification {
     (void)notification;
+    QuitTrace("app", "windowWillClose -> terminate:");
     [NSApp terminate:nil];
 }
 
@@ -357,6 +402,7 @@ int main(int argc, const char* argv[]) {
         OpenScannerAppDelegate* delegate = [[OpenScannerAppDelegate alloc] init];
         app.delegate = delegate;
         [app run];
+        QuitTrace("app", "main: [NSApp run] returned; process about to exit");
     }
     return 0;
 }
