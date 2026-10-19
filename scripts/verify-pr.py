@@ -13,8 +13,8 @@ PR's base branch, then checks the diff. Exit 0 = all gating checks passed;
 Tiers (printed with the report; used by verdict-gate.yml to decide whether a PR
 is script-gated or needs an agent verdict):
     agent tier   engine/**, tools/**, mesh/**, ui/**, scripts/**, tests/hardware/**,
-                 any CMakeLists.txt, .github/**, .claude/**, docs/recon/**,
-                 docs/recomp/{WINDOWS-FORK,FORK-COORDINATION}.md,
+                 any CMakeLists.txt, .github/**, .claude/**, opencode.json(c),
+                 docs/recon/**, docs/recomp/{WINDOWS-FORK,FORK-COORDINATION}.md,
                  tests/results/** (records, logs, addenda — #21)
     script tier  everything else (PLAN.md, docs/recomp/** except the two fork
                  documents above, CLAUDE.md, README.md, ...)
@@ -70,6 +70,10 @@ AGENT_PATTERNS = [
     r"^engine/", r"^tools/", r"^mesh/", r"^ui/", r"^scripts/",
     r"^tests/hardware/", r"CMakeLists\.txt$",
     r"^\.github/", r"^\.claude/",
+    # The config that steers every agent in this repo (permissions, compaction,
+    # MCP): script-tier would let it auto-merge with no judgment pass (rev 14's
+    # H4 finding — verified against this script).
+    r"^opencode\.jsonc?$",
     r"^docs/recon/", r"^docs/architecture/",
     # Contract-bearing docs under the otherwise script-tier docs/recomp/:
     # the Windows-fork charter and coordination file carry rules (the contract
@@ -109,6 +113,8 @@ TIER_CASES = [
     ("tests/results/2026-10-18-old-addendum.md", "agent"),
     (".github/workflows/verify.yml", "agent"),
     (".claude/hooks/guard-hw-run.sh", "agent"),
+    ("opencode.json", "agent"),
+    ("opencode.jsonc", "agent"),
     ("CMakeLists.txt", "agent"),
     ("docs/recomp/PLAN.md", "script"),
     ("docs/recomp/ROADMAP.md", "script"),
