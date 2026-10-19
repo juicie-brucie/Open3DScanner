@@ -29,7 +29,9 @@ Gating checks
   record-provenance
                   an added tests/results/*.md record must be accompanied, in the
                   same PR, by an added raw artifact sharing its stem (typically
-                  its .log, non-.md); addenda/corrections/analyses are exempt.
+                  its .log, non-.md); addenda/corrections/analyses are exempt, and
+                  so are `_`-prefixed support files (e.g. _TEMPLATE.md) — a
+                  support file describes runs, it does not report one.
   plan            PLAN.md row syntax: unique numbers, valid statuses, well-formed.
                   Status moves and new rows are reported, not gated.
   archives        cited `sha256 <hex>` values in changed tests/results/*.md must
@@ -148,6 +150,15 @@ TIER_CASES = [
 ]
 
 
+def is_run_record(path):
+    """An added tests/results/*.md is a run record unless it is an addendum or an
+    underscore-prefixed support file (_TEMPLATE.md, _NOTES.md, ...). Support files
+    describe how to run; they do not report a run, so they need no companion log."""
+    return (path.endswith(".md")
+            and not os.path.basename(path).startswith("_")
+            and not re.search(r"-(correction|analysis|addendum)\.md$", path))
+
+
 def selftest():
     bad = []
     for path, want in TIER_CASES:
@@ -166,9 +177,16 @@ def selftest():
         bad.append("fork-log: header + its log line must pass")
     if fork_log_problem(["ui/app.js"]) is not None:
         bad.append("fork-log: no header must pass")
+    # record-provenance: what counts as a run record
+    if not is_run_record("tests/results/2026-10-19-x.md"):
+        bad.append("record-provenance: a plain record must be a record")
+    if is_run_record("tests/results/_TEMPLATE.md"):
+        bad.append("record-provenance: _-prefixed support files must not be records")
+    if is_run_record("tests/results/x-correction.md"):
+        bad.append("record-provenance: corrections must not be records")
     for b in bad:
         print("SELFTEST FAIL:", b)
-    print(f"selftest: {len(TIER_CASES) + 5} cases, {'FAIL' if bad else 'ok'}")
+    print(f"selftest: {len(TIER_CASES) + 8} cases, {'FAIL' if bad else 'ok'}")
     return 1 if bad else 0
 
 
@@ -401,8 +419,7 @@ def main():
     # 2b. added records need a companion raw artifact in the same PR (#21)
     r = git("diff", "--name-status", f"{base_ref}...{head_ref}", "--", "tests/results/")
     added_res = [l.split("\t")[-1] for l in r.stdout.splitlines() if l.startswith("A")]
-    records = [p for p in added_res if p.endswith(".md")
-               and not re.search(r"-(correction|analysis|addendum)\.md$", p)]
+    records = [p for p in added_res if is_run_record(p)]
     others = [os.path.basename(p) for p in added_res
               if p not in records and not p.endswith(".md")]
     missing = [p for p in records
