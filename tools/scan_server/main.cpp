@@ -37,13 +37,19 @@
 #include <functional>
 #include <fstream>
 #include <iterator>
+#include <limits.h>
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
+#include <mach-o/dyld.h>
 #endif
 
 #include "openscanner/capture_source.h"
@@ -54,18 +60,62 @@
 
 namespace {
 
-// UI directory served on the same port as the WebSocket. Checked relative
-// to the cwd and the usual build-dir depths so the tool works from build/.
+// Directory containing the running binary (with trailing '/'), or "".
+std::string ExecutableDir() {
+#if defined(__APPLE__)
+    char buf[PATH_MAX];
+    uint32_t size = sizeof(buf);
+    if (_NSGetExecutablePath(buf, &size) != 0) return "";
+    char resolved[PATH_MAX];
+    if (realpath(buf, resolved) == nullptr) return "";
+    std::string p(resolved);
+#else
+    char buf[PATH_MAX];
+    ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+    if (n <= 0) return "";
+    buf[n] = '\0';
+    std::string p(buf);
+#endif
+    size_t slash = p.find_last_of('/');
+    return slash == std::string::npos ? std::string() : p.substr(0, slash + 1);
+}
+
+// UI directory served on the same port as the WebSocket. Resolved relative
+// to the running binary first (a bundled .app's cwd is "/"), then the cwd
+// for dev-tree runs. Returns "" if none is found (caller warns loudly).
 std::string FindUiDir() {
-    const char* candidates[] = {"ui", "../ui", "../../ui"};
-    for (const char* c : candidates) {
-        std::string index = std::string(c) + "/index.html";
+    std::vector<std::string> candidates;
+    std::string exe = ExecutableDir();
+    if (!exe.empty()) {
+        candidates.push_back(exe + "ui");                    // exe dir has ui/
+        candidates.push_back(exe + "../Resources/ui");       // .app: MacOS -> Resources/ui
+        candidates.push_back(exe + "../../../ui");           // build/tools/scan_server -> repo/ui
+    }
+    candidates.push_back("ui");
+    candidates.push_back("../ui");
+    candidates.push_back("../../ui");
+    for (const std::string& c : candidates) {
+        std::string index = c + "/index.html";
         if (FILE* f = std::fopen(index.c_str(), "rb")) {
             std::fclose(f);
             return c;
         }
     }
-    return "ui";
+    return "";
+}
+
+// Loud at startup rather than a silent 404 per request: a missing ui/
+// means the page cannot load, and the app's retry sees 404 as success.
+void ConfigureStatic(openscanner::WsBroadcastServer& server) {
+    std::string ui = FindUiDir();
+    if (ui.empty()) {
+        std::fprintf(stderr,
+                     "[worker] WARNING: ui/ directory not found (checked next to the binary and cwd); "
+                     "static serving disabled — the page will 404.\n");
+    } else {
+        std::printf("[worker] Serving UI from: %s\n", ui.c_str());
+    }
+    server.SetStaticRoot(ui);
 }
 
 std::string g_record_path;
@@ -324,7 +374,7 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
 
 void RunSyntheticServer(uint16_t port) {
     openscanner::WsBroadcastServer server;
-    server.SetStaticRoot(FindUiDir());
+    ConfigureStatic(server);
     ControlState control;
     control.scanning = true;  // Streams immediately, as before, if no UI ever sends a command.
 
@@ -723,7 +773,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     control.fov_wide = (scan_config.mode_config.scan_fov == OB_SCAN_FOV_WIDE);
 
     openscanner::WsBroadcastServer server;
-    server.SetStaticRoot(FindUiDir());
+    ConfigureStatic(server);
     server.SetTextMessageHandler([&control, &server](const std::string& msg) {
         HandleControlMessage(msg, &control);
         if (control.finish_requested.load()) g_stop_requested = 1;
@@ -1118,7 +1168,7 @@ int RunReplayMode(int argc, char** argv) {
     }
 
     openscanner::WsBroadcastServer server;
-    server.SetStaticRoot(FindUiDir());
+    ConfigureStatic(server);
     if (!server.Start(port)) {
         std::fprintf(stderr, "[worker] Failed to start WebSocket server on port %u\n", port);
         return 1;
