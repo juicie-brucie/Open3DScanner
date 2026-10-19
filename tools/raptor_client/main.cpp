@@ -12,6 +12,8 @@
 //   raptor_client --dry-run                  # framing selftest, no device
 //   raptor_client --dry-run-live             # bytes each call would send
 //   raptor_client --discover                 # GVCP discovery only
+//   raptor_client --replay <file> [host] [port] [--dry-run] [--quiet]
+//       recon's captured request frames, unchanged, in order (hex lines)
 //   raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]
 //       per-call logging is on by default: every get_frame result (bin size /
 //       empty / error) and every SET_PROPERTY (prop, value, ACCEPT/REJECT).
@@ -26,6 +28,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
@@ -249,6 +252,11 @@ public:
     }
 
     static Value Error(const std::string& s) { Value v; v.kind = Value::Kind::Error; v.error = s; return v; }
+
+    // Raw send/receive for --replay: the bytes come from recon's dump, not
+    // from our own encoder.
+    bool sendRaw(const Bytes& frame) { return WriteAll(frame); }
+    Value readReply() { return ReadMessage(); }
 
 private:
     int fd_ = -1;
@@ -481,12 +489,126 @@ int DryRunLive() {
     return failures ? 1 : 0;
 }
 
+// ---------------------------------------------------------------------------
+// --replay: send recon's captured request frames, unchanged, in order
+//
+// Input format (text, one frame per line):
+//   [+<ms> ]<hex bytes>      optional delay before the frame, then hex
+//   # comment / blank lines are ignored
+// Bytes are the raw msgpack-RPC request frame as captured (e.g. the 0x94…
+// [0, msgid, method, params] frame). We do not re-encode; this is the vendor's
+// own bytes.
+// ---------------------------------------------------------------------------
+bool ParseReplayFile(const std::string& path, std::vector<Bytes>* frames, std::vector<int>* delays,
+                     std::string* err) {
+    std::ifstream in(path);
+    if (!in) { *err = "cannot open " + path; return false; }
+    std::string line;
+    int lineno = 0;
+    while (std::getline(in, line)) {
+        ++lineno;
+        // strip comments and whitespace
+        size_t hash = line.find('#');
+        if (hash != std::string::npos) line = line.substr(0, hash);
+        std::string cleaned;
+        for (char c : line) if (!std::isspace((unsigned char)c)) cleaned += c;
+        if (cleaned.empty()) continue;
+        int delay = 0;
+        std::string hex = cleaned;
+        if (hex[0] == '+') {
+            size_t i = 1;
+            while (i < hex.size() && std::isdigit((unsigned char)hex[i])) delay = delay * 10 + (hex[i++] - '0');
+            hex = hex.substr(i);
+        }
+        if (hex.size() % 2 != 0) { *err = "line " + std::to_string(lineno) + ": odd hex length"; return false; }
+        Bytes b;
+        auto nib = [](char c) -> int {
+            if (c >= '0' && c <= '9') return c - '0';
+            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+            if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+            return -1;
+        };
+        for (size_t i = 0; i < hex.size(); i += 2) {
+            int hi = nib(hex[i]), lo = nib(hex[i + 1]);
+            if (hi < 0 || lo < 0) { *err = "line " + std::to_string(lineno) + ": bad hex"; return false; }
+            b.push_back((uint8_t)((hi << 4) | lo));
+        }
+        if (b.empty()) continue;
+        frames->push_back(b);
+        delays->push_back(delay);
+    }
+    return true;
+}
+
+int Replay(const std::string& host, uint16_t port, const std::string& path, bool dry_run, bool log) {
+    std::vector<Bytes> frames;
+    std::vector<int> delays;
+    std::string err;
+    if (!ParseReplayFile(path, &frames, &delays, &err)) {
+        std::fprintf(stderr, "[replay] %s\n", err.c_str());
+        return 2;
+    }
+    std::printf("[replay] %zu frame(s) from %s%s\n", frames.size(), path.c_str(),
+                dry_run ? " (dry-run: not sent)" : "");
+    if (frames.empty()) return 2;
+    if (dry_run) {
+        for (size_t i = 0; i < frames.size(); ++i) {
+            std::printf("[replay] frame %zu: +%dms %zu B: %s\n", i + 1, delays[i], frames[i].size(),
+                        HexHead(frames[i]).c_str());
+        }
+        return 0;
+    }
+    RpcClient rpc;
+    if (!rpc.connect(host, port)) {
+        std::fprintf(stderr, "[replay] cannot connect to %s:%u (is RPCServer running?)\n", host.c_str(), port);
+        return 1;
+    }
+    std::printf("[replay] connected %s:%u; sending unchanged request frames\n", host.c_str(), port);
+    uint64_t bins = 0, empties = 0, errors = 0;
+    for (size_t i = 0; i < frames.size(); ++i) {
+        if (delays[i] > 0) std::this_thread::sleep_for(std::chrono::milliseconds(delays[i]));
+        if (!rpc.sendRaw(frames[i])) {
+            std::fprintf(stderr, "[replay] frame %zu: send failed\n", i + 1);
+            ++errors;
+            break;
+        }
+        Value reply = rpc.readReply();
+        if (reply.kind == Value::Kind::Bin) {
+            ++bins;
+            if (log) std::printf("[replay] frame %zu -> bin(%zu) head=[%s]\n", i + 1, reply.bin.size(),
+                                 HexHead(reply.bin).c_str());
+        } else if (reply.kind == Value::Kind::Error) {
+            ++errors;
+            if (log) std::printf("[replay] frame %zu -> ERROR: %s\n", i + 1, reply.error.c_str());
+        } else {
+            ++empties;
+            if (log) std::printf("[replay] frame %zu -> kind=%d\n", i + 1, (int)reply.kind);
+        }
+        std::fflush(stdout);
+    }
+    std::printf("[replay] done: bin=%llu empty=%llu error=%llu\n", (unsigned long long)bins,
+                (unsigned long long)empties, (unsigned long long)errors);
+    return bins > 0 ? 0 : 1;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--dry-run") return DryRun();
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
+    if (argc >= 2 && std::string(argv[1]) == "--replay") {
+        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [port] [--dry-run] [--quiet]\n"); return 2; }
+        std::string path = argv[2];
+        std::string host = argc > 3 ? argv[3] : "127.0.0.1";
+        uint16_t port = argc > 4 ? (uint16_t)std::atoi(argv[4]) : 10013;
+        bool dry_run = false, log = true;
+        for (int i = 3; i < argc; ++i) {
+            if (std::string(argv[i]) == "--dry-run") dry_run = true;
+            if (std::string(argv[i]) == "--quiet") log = false;
+        }
+        return Replay(host, port, path, dry_run, log);
+    }
     if (argc >= 2 && std::string(argv[1]) == "--live") {
         std::string host = argc > 2 ? argv[2] : "127.0.0.1";
         uint16_t port = argc > 3 ? (uint16_t)std::atoi(argv[3]) : 10013;
@@ -506,6 +628,10 @@ int main(int argc, char** argv) {
         "  raptor_client --dry-run                  framing selftest, no device\n"
         "  raptor_client --dry-run-live             print the bytes each call would send\n"
         "  raptor_client --discover                 GVCP discovery only\n"
+        "  raptor_client --replay <file> [host] [port] [--dry-run] [--quiet]\n"
+        "      sends recon's captured request frames unchanged, in order; file\n"
+        "      format: one hex frame per line, optional '+<ms> ' delay prefix,\n"
+        "      '#' comments/blank lines ignored\n"
         "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
         "      per-call logging is ON by default (--quiet disables it); --pull-ms 0 = as fast\n");
     return 0;

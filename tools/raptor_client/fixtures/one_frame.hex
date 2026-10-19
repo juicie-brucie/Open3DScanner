@@ -1,0 +1,4 @@
+# Sample replay fixture (row #105b): one captured-style request frame.
+# Format: one hex msgpack-RPC frame per line; optional '+<ms> ' delay prefix.
+# This frame is [0, 1, "ob_rpc_get_frame", []]: 94 00 01 <str16 len17> … 90
+94 00 01 b1 6f 62 5f 72 70 63 5f 67 65 74 5f 66 72 61 6d 65 90
