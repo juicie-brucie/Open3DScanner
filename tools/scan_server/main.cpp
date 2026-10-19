@@ -1058,48 +1058,47 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
                     // Our own decision layer (row #77): fit a dominant plane
-                    // and cut below it. Runs on the cloud the vendor path
-                    // published, so it composes with (or replaces) #71.
-                    const ObScanPoint* pts = cloud.points;
-                    uint32_t npts = cloud.num_points;
-                    std::vector<ObScanPoint> kept;
+                    // from a bounded sample and cut below it. Fitting and
+                    // filtering both stay O(budget), like the #32 broadcast.
+                    constexpr uint32_t kLiveBroadcastPointBudget = 20000;
+                    bool use_plane = false;
+                    OurPlane plane;
+                    double margin = 0.0;
                     const char* our_env = std::getenv("OPENSCANNER_OUR_PLANE_REMOVE");
                     if (our_env != nullptr && std::string(our_env) == "1") {
-                        double extent = std::max(view_radius_guess(cloud.points, cloud.num_points), 1e-6);
-                        double inlier = extent * 0.01;
                         const char* margin_env = std::getenv("OPENSCANNER_PLANE_MARGIN");
-                        double margin = margin_env != nullptr ? std::atof(margin_env) : 0.0;
-                        OurPlane plane = FitDominantPlane(cloud.points, cloud.num_points, 60, inlier);
-                        if (plane.valid) {
-                            kept.reserve(cloud.num_points);
-                            for (uint32_t t = 0; t < cloud.num_points; ++t) {
-                                double dist = plane.a * cloud.points[t].x + plane.b * cloud.points[t].y +
-                                              plane.c * cloud.points[t].z + plane.d;
-                                if (dist >= margin) kept.push_back(cloud.points[t]);
-                            }
-                            g_our_plane_cut.fetch_add(cloud.num_points - (uint32_t)kept.size());
-                            g_our_plane_kept.fetch_add((uint32_t)kept.size());
-                            ++g_our_plane_fits;
-                            pts = kept.data();
-                            npts = (uint32_t)kept.size();
+                        margin = margin_env != nullptr ? std::atof(margin_env) : 0.0;
+                        uint32_t sample_stride = 1;
+                        if (cloud.num_points > kLiveBroadcastPointBudget) {
+                            sample_stride = (cloud.num_points + kLiveBroadcastPointBudget - 1) / kLiveBroadcastPointBudget;
                         }
+                        std::vector<ObScanPoint> sample;
+                        sample.reserve(kLiveBroadcastPointBudget);
+                        for (uint32_t s = 0; s < cloud.num_points && sample.size() < kLiveBroadcastPointBudget; s += sample_stride) {
+                            sample.push_back(cloud.points[s]);
+                        }
+                        double extent = std::max(view_radius_guess(sample.data(), (uint32_t)sample.size()), 1e-6);
+                        plane = FitDominantPlane(sample.data(), (uint32_t)sample.size(), 60, extent * 0.01);
+                        if (plane.valid) { use_plane = true; ++g_our_plane_fits; }
                     }
-                    // Bound the per-tick cost: broadcast a fixed-size sample
-                    // instead of copying/broadcasting the whole accumulated
-                    // cloud every tick (O(points) -> O(kLiveBroadcastPointBudget)).
-                    constexpr uint32_t kLiveBroadcastPointBudget = 20000;
                     uint32_t stride = 1;
-                    uint32_t broadcast_count = npts;
-                    if (broadcast_count > kLiveBroadcastPointBudget) {
-                        stride = (broadcast_count + kLiveBroadcastPointBudget - 1) / kLiveBroadcastPointBudget;
-                        broadcast_count = (npts + stride - 1) / stride;
+                    if (cloud.num_points > kLiveBroadcastPointBudget) {
+                        stride = (cloud.num_points + kLiveBroadcastPointBudget - 1) / kLiveBroadcastPointBudget;
                     }
-                    std::vector<float> xyz(static_cast<size_t>(broadcast_count) * 3);
-                    for (uint32_t i = 0, src = 0; i < broadcast_count; ++i, src += stride) {
-                        xyz[i * 3 + 0] = pts[src].x;
-                        xyz[i * 3 + 1] = pts[src].y;
-                        xyz[i * 3 + 2] = pts[src].z;
+                    std::vector<float> xyz;
+                    xyz.reserve(static_cast<size_t>(kLiveBroadcastPointBudget) * 3);
+                    for (uint32_t src = 0; src < cloud.num_points; src += stride) {
+                        if (use_plane) {
+                            double dist = plane.a * cloud.points[src].x + plane.b * cloud.points[src].y +
+                                          plane.c * cloud.points[src].z + plane.d;
+                            if (dist < margin) { g_our_plane_cut.fetch_add(1); continue; }
+                            g_our_plane_kept.fetch_add(1);
+                        }
+                        xyz.push_back(cloud.points[src].x);
+                        xyz.push_back(cloud.points[src].y);
+                        xyz.push_back(cloud.points[src].z);
                     }
+                    uint32_t broadcast_count = static_cast<uint32_t>(xyz.size() / 3);
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
                     server.BroadcastBinary(buf.data(), buf.size());
             RecordFrame(buf);
