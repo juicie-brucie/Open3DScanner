@@ -1,0 +1,14 @@
+#!/bin/sh
+# Pre-commit: refuse a commit whose *staged* content has whitespace errors.
+#
+# The rule is not reimplemented here — this hook only triggers it. It runs the
+# same `git diff --check` (with the same exclusions) that `verify-pr.py`'s
+# whitespace check runs in CI, via `--staged`, so the hook and the gate cannot
+# disagree. `git commit --no-verify` remains the escape hatch.
+#
+# Installed by scripts/install-hooks.sh (core.hooksPath, so it is versioned and
+# every worktree of this repo uses it).
+set -eu
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+exec python3 "$root/scripts/verify-pr.py" --staged
