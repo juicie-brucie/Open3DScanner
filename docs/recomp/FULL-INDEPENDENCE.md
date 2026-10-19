@@ -8,6 +8,12 @@ protocol captures of a full CrealityScan session, the public OrbbecSDK v2 source
 and recon's calibration-store findings (row #94 / OQ-S15). Nothing here was read
 from a Creality binary; it is wire observation plus MIT-licensed public source.
 
+> **Erratum (2026-10-18, post-landing).** The "MIT-licensed public source" attributions in this
+> assessment are **unverified**: Orbbec's GitHub org shows `orbbec/OrbbecSDK` as the *pre-compiled*
+> v1&v2 repo and `orbbec/OrbbecSDK_v2` as the open-source one — a different codebase that does not
+> list this device, whose license is not confirmed MIT. Nothing in the path below depends on it: the
+> replacement is observation-derived. Recorded in `ROADMAP.md`'s rev-17 addendum.
+
 A note on the firmware line item: the user has extracted the latest Raptor
 firmware. This report treats firmware replacement as a stated goal and assesses
 it, but see section 7 — it is a different kind of undertaking from the host-side
