@@ -1,0 +1,30 @@
+=== STEP 1: raptor_client --dry-run ===
+cmd start: 2026-10-19 01:02:54
+EXIT:0
+cmd end: 2026-10-19 01:02:55
+--stdout--
+[dry-run] start_stream params [6,9,1920,1200,50]               PASS
+[dry-run] vendor ReqHeader magic/size/opcode/id                PASS
+[dry-run] frame response decodes as bin(3)                     PASS
+[dry-run] vendor response magic 0x4252                         PASS
+[dry-run] GVCP DISCOVERY_CMD                                   PASS
+[dry-run] ok (0 failure(s))
+--stderr--
+
+=== STEP 2: raptor_client --discover ===
+cmd start: 2026-10-19 01:03:03
+EXIT:0
+cmd end: 2026-10-19 01:03:03
+--stdout--
+[gvcp] reply 256 bytes: 00 00 00 03 00 f8 00 01 00 01 00 02 00 00 00 01 00 00 30 30 34 30 35 30 80 00 00 07 00 00 00 05 00 00 00 00 00 00 00 00 00 00 00 00 7f 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 4f 72 62 62 65 63 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 72 65 61 6c 69 74 79 20 52 61 70 74 6f 72 20 50 72 6f 00 00 00 00 00 00 00 00 00 00 00 0c 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 4f 72 62 62 65 63 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 30 38 38 36 31 30 30 53 4e 00 00 00 00 00 23 31 30 30 31 30 23 55 53 42 33 2e 30 00 00 00
+--stderr--
+
+=== STEP 3: raptor_client --live 127.0.0.1 10013 5 ===
+cmd start: 2026-10-19 01:03:11
+EXIT:1
+cmd end: 2026-10-19 01:03:16
+--stdout--
+[live] connected 127.0.0.1:10013
+[live] stream started; pulling frames for 5s
+[live] pulled 0 frames; stream stopped
+--stderr--
