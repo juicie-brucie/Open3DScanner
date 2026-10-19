@@ -25,7 +25,8 @@ Gating checks
   whitespace      `git diff --check` (the same rule `scripts/git-hooks/pre-commit`
                   runs on the staged set via `--staged`)
   run-records     tests/results/: no existing record modified, deleted or renamed
-                  in place (addenda *-correction.md / *-analysis.md / *-addendum.md excepted)
+                  in place (addenda *-correction.md / *-analysis.md / *-addendum.md
+                  and `_`-prefixed support files excepted)
   record-provenance
                   an added tests/results/*.md record must be accompanied, in the
                   same PR, by raw evidence: a file whose name starts with the
@@ -151,12 +152,18 @@ TIER_CASES = [
 ]
 
 
+def is_support_file(path):
+    """tests/results/_TEMPLATE.md and friends: they describe how to run, they are
+    not records — exempt from the in-place rule and from provenance."""
+    return os.path.basename(path).startswith("_")
+
+
 def is_run_record(path):
     """An added tests/results/*.md is a run record unless it is an addendum or an
     underscore-prefixed support file (_TEMPLATE.md, _NOTES.md, ...). Support files
     describe how to run; they do not report a run, so they need no companion log."""
     return (path.endswith(".md")
-            and not os.path.basename(path).startswith("_")
+            and not is_support_file(path)
             and not re.search(r"-(correction|analysis|addendum)\.md$", path))
 
 
@@ -431,22 +438,22 @@ def main():
     # 2. run records never edited, deleted or renamed in place
     r = git("diff", "--name-status", f"{base_ref}...{head_ref}", "--", "tests/results/")
     bad = []
-    addenda = 0
+    exempted = 0
     for line in r.stdout.splitlines():
         st, path = line.split("\t")[0], line.split("\t")[-1]
         bn = os.path.basename(path)
         is_addendum = (bn.endswith("-correction.md") or bn.endswith("-analysis.md")
                        or bn.endswith("-addendum.md"))
         if st.startswith("M"):
-            if is_addendum:
-                addenda += 1
+            if is_addendum or is_support_file(path):
+                exempted += 1
             else:
                 bad.append(f"modified in place: {path}")
         elif st.startswith(("D", "R")):
             bad.append(f"deleted/renamed: {path}")
     add("run-records", not bad,
         "; ".join(bad) if bad else
-        (f"{addenda} modified addenda allowed" if addenda else "no modifications"))
+        (f"{exempted} modified addendum/support file(s) allowed" if exempted else "no modifications"))
 
     # 2b. added records need a companion raw artifact in the same PR (#21)
     r = git("diff", "--name-status", f"{base_ref}...{head_ref}", "--", "tests/results/")
