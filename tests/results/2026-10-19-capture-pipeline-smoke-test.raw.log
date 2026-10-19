@@ -1,0 +1,4 @@
+mesh path OK: captured 8 verts/12 tris -> bridged -> boolean union -> 8 verts/12 tris
+point cloud path OK: 4 captured points bridged intact
+validation OK: bridge rejects malformed vendor meshes/clouds
+OK: capture -> mesh-tools data path verified (synthetic data, no hardware)

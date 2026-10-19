@@ -1,0 +1,21 @@
+[dry-run] start_stream params [6,9,1920,1200,50]               PASS
+[dry-run] vendor ReqHeader magic/size/opcode/id                PASS
+[dry-run] frame response decodes as bin(3)                     PASS
+[dry-run] vendor response magic 0x4252                         PASS
+[dry-run] GVCP DISCOVERY_CMD                                   PASS
+[dry-run] ok (0 failure(s))
+[replay-selftest] delay-then-hex-digits PASS
+[replay-selftest] parses three frames with absolute stamps             PASS
+[replay-selftest] stamps are the absolute capture timestamps           PASS
+[replay-selftest] deltas are 25259, 2, 20 ms (not 25259 three times)   PASS
+[replay-selftest] no backward steps in a monotonic file                PASS
+[replay-selftest] first-frame wait is capped                           PASS
+[replay-selftest] a small first delta is not inflated                  PASS
+[replay-selftest] a backward stamp clamps to 0 ms                      PASS
+[replay-selftest] backward steps are counted                           PASS
+[replay-selftest] a frame with no timestamp waits 0 ms                 PASS
+[replay-selftest] ok (0 failure(s))
+[replay-selftest] connects to the silent loopback peer                 PASS
+[replay-selftest] the bounded read reports a timeout                   PASS
+[replay-selftest] the timeout fires near the deadline (not instantly, not late) PASS
+[replay-selftest] ok (0 failure(s))
