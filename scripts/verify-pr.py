@@ -5,6 +5,7 @@ Usage:
     scripts/verify-pr.py <pr-number> [--build] [--no-build]
     scripts/verify-pr.py --tier <pr-number>      # print: script | agent
     scripts/verify-pr.py --selftest              # assert the tier table and the fork-log rule (CI runs this)
+    scripts/verify-pr.py --staged                # pre-commit mode: check the staged set only (the git hook calls this)
 
 Works on git refs (no checkout required): fetches `refs/pull/<n>/head` and the
 PR's base branch, then checks the diff. Exit 0 = all gating checks passed;
@@ -21,7 +22,8 @@ is script-gated or needs an agent verdict):
     pinned by `--selftest`; edit the table and the patterns together.
 
 Gating checks
-  whitespace      `git diff --check`
+  whitespace      `git diff --check` (the same rule `scripts/git-hooks/pre-commit`
+                  runs on the staged set via `--staged`)
   run-records     tests/results/: no existing record modified, deleted or renamed
                   in place (addenda *-correction.md / *-analysis.md / *-addendum.md excepted)
   record-provenance
@@ -182,6 +184,35 @@ def git_bytes(*args):
     return subprocess.run(["git"] + list(args), capture_output=True).stdout
 
 
+# The whitespace rule, in one place: `scripts/git-hooks/pre-commit` runs this
+# too, via `verify-pr.py --staged`, so the hook and CI cannot disagree.
+# Verbatim run captures are exempt — a raw log is the device's own output
+# (trailing spaces and all) and must never be edited to satisfy a linter.
+WHITESPACE_EXCLUDES = (":(exclude)tests/results/*.log", ":(exclude)tests/results/*.ips")
+
+
+def whitespace_check(range_args):
+    """`git diff --check` with the repo's exclusions.
+
+    `range_args` is e.g. `["origin/main...HEAD"]` for a PR or `["--cached"]`
+    for the staged set. Returns (ok, raw report).
+    """
+    r = git("diff", "--check", *range_args, "--", ".", *WHITESPACE_EXCLUDES)
+    out = (r.stdout + r.stderr).strip()
+    return (not out), out
+
+
+def staged_whitespace():
+    """Pre-commit entry point: refuse a commit whose staged content is dirty."""
+    ok, out = whitespace_check(["--cached"])
+    if ok:
+        return 0
+    print("pre-commit: whitespace errors in the staged content — refusing the commit:", file=sys.stderr)
+    print(out, file=sys.stderr)
+    print("Fix the lines above and re-stage. `git commit --no-verify` bypasses this check.", file=sys.stderr)
+    return 1
+
+
 def sha256_bytes(b):
     return hashlib.sha256(b).hexdigest()
 
@@ -272,6 +303,10 @@ def status_of(line):
 
 def main():
     argv = sys.argv[1:]
+    # Pre-commit mode: the staged set, no PR/network. Kept first so the hook is
+    # independent of gh and of any PR state.
+    if "--staged" in argv:
+        return staged_whitespace()
     build_flag = "--build" in argv
     no_build = "--no-build" in argv
     tier_mode = "--tier" in argv
@@ -338,13 +373,10 @@ def main():
         if not ok:
             fails.append(name)
 
-    # 1. whitespace — verbatim run captures are exempt. A raw log is the device's
-    #    own output (trailing spaces and all) and must never be edited to satisfy a
-    #    linter; the records and everything authored stay checked.
-    r = git("diff", "--check", f"{base_ref}...{head_ref}", "--", ".",
-            ":(exclude)tests/results/*.log", ":(exclude)tests/results/*.ips")
-    add("whitespace", not (r.stdout.strip() or r.stderr.strip()),
-        (r.stdout + r.stderr).strip()[:400] or "clean")
+    # 1. whitespace — the shared rule (see whitespace_check; the pre-commit
+    #    hook runs the same code on the staged set).
+    ws_ok, ws_out = whitespace_check([f"{base_ref}...{head_ref}"])
+    add("whitespace", ws_ok, ws_out[:400] or "clean")
 
     # 2. run records never edited, deleted or renamed in place
     r = git("diff", "--name-status", f"{base_ref}...{head_ref}", "--", "tests/results/")
