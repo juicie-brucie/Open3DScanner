@@ -104,13 +104,15 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 
 ## SKIP wording when a precondition is not met
 
-Merged in `win #120` (fork PR #28 @ `4d893d5`): exit **2**, on the test's **captured output** (stdout
+Merged in `win #120` (fork PR #28: merge commit `4d893d5`, final head `11c84fc`; `e5b15cd` was an
+intermediate head whose test files and strings are byte-identical): exit **2**, on the test's **captured output** (stdout
 there; the parent may use stderr — **the contract is the exit code and the text**), specific rather
 than generic:
 
 ```
 [worker] SKIP: precondition not met: CrealityScan.exe (RPC daemon host) is not running; listener checks NOT exercised.
 [worker] SKIP: precondition not met: no VID_2BC5 device enumerated; listener checks NOT exercised.
+[worker] SKIP: precondition probe failed (CrealityScan.exe: <state>; VID_2BC5: <state>); listener checks NOT exercised.
 ```
 
 **The cross-machine grep token is `(RPC daemon host) is not running`.** The parent emits
