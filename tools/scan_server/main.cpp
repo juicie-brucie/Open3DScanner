@@ -67,6 +67,7 @@
 #include "openscanner/obscan_loader.h"
 #include "openscanner/ws_broadcast_server.h"
 #include "openscanner/worker_process.h"
+#include "tracking_status.h"  // the vendor's per-frame verdict, by pinned name (row #91)
 
 namespace {
 
@@ -357,9 +358,16 @@ constexpr int kExposureMin = 1;
 constexpr int kExposureMax = 1000;
 constexpr int kDefaultExposure = 900;  // Matches the value this file already drove live scans with.
 
-// Last per-frame tracking status (row #75 findings §2), surfaced in the
-// status JSON so the HUD can show the vendor's per-pose reason value.
+// Last per-frame tracking status (findings scan-quality-gate.md §2), surfaced
+// in the status JSON so a consumer can show the vendor's per-pose verdict.
+// The value is the SDK's own — see findings tracking-mechanism.md §1 for what
+// it carries. -1 means no FRAME_READY sample has been seen yet.
 std::atomic<int> g_last_tracking_status{-1};
+// The per-reason tally across the poses seen so far, surfaced alongside the
+// last status so the UI can show the accumulated rejection reasons (row #91).
+// One slot per declared ObScanTrackingStatus value (index = status value).
+std::atomic<uint64_t> g_tracking_samples{0};
+std::atomic<uint64_t> g_tracking_hist[16];
 
 // Shared between the WS reader thread(s) (writer, via HandleControlMessage)
 // and whichever thread owns the scan loop (reader, via its tick) — hence
@@ -436,8 +444,13 @@ std::string BuildStatusJson(const char* mode, const ControlState& state, bool fo
     json += state.fov_wide.load() ? "wide" : "normal";
     json += "\",\"fovControllable\":";
     json += fov_controllable ? "true" : "false";
-    json += ",\"tracking\":";
-    json += std::to_string(g_last_tracking_status.load());
+    json += openscanner::tracking::TrackingStatusJsonTail(g_last_tracking_status.load());
+    uint64_t tracking_counts[openscanner::tracking::kTrackingStatusCount];
+    for (int32_t i = 0; i < openscanner::tracking::kTrackingStatusCount; ++i) {
+        tracking_counts[i] = g_tracking_hist[i].load();
+    }
+    json += openscanner::tracking::TrackingCountsJsonTail(tracking_counts,
+                                                          openscanner::tracking::kTrackingStatusCount);
     json += "}";
     return json;
 }
@@ -581,13 +594,12 @@ std::atomic<bool> g_got_connect_message{false};
 std::atomic<int> g_frame_ready_count{0};
 std::atomic<uint64_t> g_cloud_frames_broadcast{0};
 std::atomic<uint64_t> g_full_detail_chunks_broadcast{0};
-// Per-frame tracking status (row #75 findings §2): the getter is exported
-// but the numeric enum mapping is not yet pinned, so we record raw values
-// and a histogram rather than guessing names.
+// Per-frame tracking status: the getter is exported and the numeric mapping
+// is pinned (findings scan-quality-gate.md §2 / row #78), so samples are
+// recorded and rendered by name (tracking_status.h). See row #92 for the
+// comment this replaces.
 fn_obscan_frame_get_frame_tracking_status g_frame_tracking_status_fn = nullptr;
 fn_obscan_frame_release g_frame_release_fn = nullptr;
-std::atomic<uint64_t> g_tracking_samples{0};
-std::atomic<uint64_t> g_tracking_hist[16];
 
 // Set by a SIGINT/SIGTERM handler so Ctrl+C (or a plain `kill`/pkill, which
 // sends SIGTERM by default) breaks out of the streaming loop into the
@@ -655,7 +667,8 @@ void OnDataMessage(ObScanDataMessage msg) {
                 g_last_tracking_status.store(tracking);
                 g_tracking_samples.fetch_add(1);
                 if (tracking >= 0 && tracking < 16) g_tracking_hist[tracking].fetch_add(1);
-                std::printf("[worker][data] FRAME_READY tracking_status=%d\n", tracking);
+                std::printf("[worker][data] FRAME_READY tracking_status=%d (%s)\n", tracking,
+                            openscanner::tracking::TrackingStatusName(tracking));
                 std::fflush(stdout);
             }
             if (g_frame_release_fn != nullptr) g_frame_release_fn(msg.data);
@@ -1371,7 +1384,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     (unsigned long long)g_tracking_samples.load());
         for (int i = 0; i < 16; ++i) {
             uint64_t n = g_tracking_hist[i].load();
-            if (n > 0) std::printf(" %d=%llu", i, (unsigned long long)n);
+            if (n > 0) std::printf(" %s=%llu", openscanner::tracking::TrackingStatusName(i), (unsigned long long)n);
         }
         std::printf("\n");
     }
