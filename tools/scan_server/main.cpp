@@ -226,6 +226,9 @@ void ConfigureStatic(openscanner::WsBroadcastServer& server) {
 
 std::string g_record_path;
 std::atomic<bool> g_context_destroy_timed_out{false};
+// Exit code for the context_destroy deadline, distinct from the room's
+// rule-10 "skipped, no dylib" exit 2 and from the worker's "no device" 2.
+constexpr int kExitContextDestroyTimeout = 4;
 uint64_t g_recorded_frame_count = 0;
 constexpr int kPointGridSize = 48;        // kPointGridSize^2 points on a sphere.
 constexpr double kFrameIntervalMs = 1000.0 / 30.0;  // ~30 Hz.
@@ -1289,17 +1292,22 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
         bool timed_out = false;
         do {
             ++polls;
-            ObScanStatus this_status = OB_SCAN_ERROR_FATAL;
-            std::atomic<bool> finished{false};
-            std::thread worker([&]() {
-                this_status = lib.obscan_context_destroy(&context);
-                finished.store(true, std::memory_order_release);
+            // The thread owns its state: on the detached (timeout) path it
+            // may still be inside the vendor call after this scope ends, so
+            // shared_ptr captures keep status/finished/context alive.
+            auto destroy_fn = lib.obscan_context_destroy;
+            auto ctx = std::make_shared<ObScanContextHandle>(context);
+            auto finished = std::make_shared<std::atomic<bool>>(false);
+            auto result = std::make_shared<ObScanStatus>(OB_SCAN_ERROR_FATAL);
+            std::thread worker([destroy_fn, ctx, finished, result]() {
+                *result = destroy_fn(ctx.get());
+                finished->store(true, std::memory_order_release);
             });
             auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(kContextDestroyCallTimeoutMs);
-            while (!finished.load(std::memory_order_acquire) && std::chrono::steady_clock::now() < deadline) {
+            while (!finished->load(std::memory_order_acquire) && std::chrono::steady_clock::now() < deadline) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
-            if (!finished.load(std::memory_order_acquire)) {
+            if (!finished->load(std::memory_order_acquire)) {
                 timed_out = true;
                 worker.detach();
                 status = OB_SCAN_ERROR_DEADLINE_EXCEEDED;
@@ -1309,7 +1317,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                 break;
             }
             worker.join();
-            status = this_status;
+            status = *result;
             if (status == OB_SCAN_ERROR_MULTI_CALLED) {
                 ++refusals;
                 if (refusals == 1 || refusals % 10 == 0) {
@@ -1329,7 +1337,14 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                         polls, refusals, elapsed / 1000.0, StatusName(status));
         }
         std::fflush(stdout);
-        Report("obscan_context_destroy", status);
+        if (timed_out) {
+            // The vendor call never returned; do not let a record cite a
+            // Report line as if it had.
+            std::printf("[worker] obscan_context_destroy -> ABANDONED (no vendor return)\n");
+            std::fflush(stdout);
+        } else {
+            Report("obscan_context_destroy", status);
+        }
         QuitTrace("teardown: context_destroy poll loop done");
     }
     QuitTrace("teardown complete");
@@ -1368,7 +1383,12 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
 
     server.Stop();
     QuitTrace("RunLiveServer returning (worker about to exit)");
-    return g_context_destroy_timed_out.load() ? 2 : 0;
+    if (g_context_destroy_timed_out.load()) {
+        std::printf("[worker] Exit code 4 = context_destroy deadline exceeded (distinct from 2 = skipped/no dylib).\n");
+        std::fflush(stdout);
+        return kExitContextDestroyTimeout;
+    }
+    return 0;
 }
 
 int RunLiveMode(int argc, char** argv) {
