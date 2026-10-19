@@ -46,7 +46,7 @@ git switch -q -c "$branch" "$base"
 echo "land.sh: $branch cut from $base at $(git rev-parse --short HEAD)"
 if [ "$base" != "origin/main" ]; then
   echo "land.sh: NOTE base is not origin/main; this landing carries its commits:"
-  git log --oneline "origin/main..HEAD" | head -5 | sed 's/^/    /'
+  git log --oneline "origin/main..HEAD" | sed -n '1,5p' | sed 's/^/    /'
   echo "land.sh: and it sits $(git rev-list --count "HEAD..origin/main") commit(s) behind main"
 fi
 

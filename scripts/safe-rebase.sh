@@ -25,7 +25,12 @@ if [ -n "$(git -C "$room" status --porcelain --untracked-files=no)" ]; then
   echo "safe-rebase: $room has uncommitted tracked changes - refusing (commit or stash first)" >&2
   exit 2
 fi
-if [ -d "$room/.git/rebase-merge" ] || [ -d "$room/.git/rebase-apply" ]; then
+# Resolve the git dir properly: in a linked worktree $room/.git is a FILE, so
+# testing "$room/.git/rebase-merge" would silently never fire - and a pending
+# rebase would then be misread as our own conflict and aborted (the exact
+# cross-session abort this script exists to prevent).
+gitdir=$(git -C "$room" rev-parse --absolute-git-dir 2>/dev/null || true)
+if [ -n "$gitdir" ] && { [ -d "$gitdir/rebase-merge" ] || [ -d "$gitdir/rebase-apply" ]; }; then
   echo "safe-rebase: $room already has a rebase in progress - refusing (finish or abort it first)" >&2
   exit 2
 fi
@@ -38,8 +43,10 @@ before=$(git -C "$room" rev-parse HEAD)
 err=$(mktemp -t safe-rebase.XXXXXX)
 if ! git -C "$room" rebase "$target" 2>"$err"; then
   echo "safe-rebase: conflict rebasing onto $target - aborting" >&2
-  grep -E 'CONFLICT|^error:' "$err" | head -10 >&2 || true
-  git -C "$room" rebase --abort >/dev/null 2>&1 || true
+  grep -E 'CONFLICT|^error:' "$err" | sed -n '1,10p' >&2 || true
+  if [ -d "$gitdir/rebase-merge" ] || [ -d "$gitdir/rebase-apply" ]; then
+    git -C "$room" rebase --abort >/dev/null 2>&1 || true
+  fi
   rm -f "$err"
   now=$(git -C "$room" rev-parse HEAD)
   if [ "$now" = "$before" ]; then
@@ -53,8 +60,7 @@ fi
 rm -f "$err"
 
 if git -C "$room" grep -n -E '^(<<<<<<< |>>>>>>> )' -- . >/dev/null 2>&1; then
-  echo "safe-rebase: conflict markers found in the tree after the rebase - aborting" >&2
-  git -C "$room" rebase --abort >/dev/null 2>&1 || true
+  echo "safe-rebase: the rebase completed but left conflict markers in the tree - NOT pushing; inspect the branch" >&2
   exit 1
 fi
 
