@@ -164,7 +164,13 @@
     alert.messageText = @"OpenScanner";
     alert.informativeText = message;
     [alert addButtonWithTitle:@"OK"];
-    [alert runModal];
+    // A sheet, not runModal: a modal session blocks the app's own Quit
+    // (the observed "worker already dead, quit does nothing" case).
+    if (self.window != nil) {
+        [alert beginSheetModalForWindow:self.window completionHandler:nil];
+    } else {
+        [alert runModal];
+    }
 }
 
 - (void)reloadPageIfNeeded {
@@ -234,15 +240,10 @@
     [self restartWorker];
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification*)notification {
+- (void)applicationWillFinishLaunching:(NSNotification*)notification {
     (void)notification;
-    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    NSInteger savedPort = [defaults integerForKey:@"OpenScannerPort"];
-    self.port = (savedPort >= 1 && savedPort <= 65535) ? savedPort : 8787;
-    NSInteger savedSecs = [defaults integerForKey:@"OpenScannerSessionSeconds"];
-    self.sessionSeconds = (savedSecs >= 1 && savedSecs <= 3600) ? savedSecs : 300;
-
-    // Programmatic menu (no storyboard): app menu with Settings… and Quit.
+    // Install the menu before launch completes so Quit exists even if a
+    // later startup path is slow or shows an error.
     NSMenu* menuBar = [[NSMenu alloc] init];
     NSMenuItem* appItem = [[NSMenuItem alloc] init];
     [menuBar addItem:appItem];
@@ -252,6 +253,15 @@
     [appMenu addItemWithTitle:@"Quit OpenScanner" action:@selector(terminate:) keyEquivalent:@"q"];
     appItem.submenu = appMenu;
     [NSApp setMainMenu:menuBar];
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification*)notification {
+    (void)notification;
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    NSInteger savedPort = [defaults integerForKey:@"OpenScannerPort"];
+    self.port = (savedPort >= 1 && savedPort <= 65535) ? savedPort : 8787;
+    NSInteger savedSecs = [defaults integerForKey:@"OpenScannerSessionSeconds"];
+    self.sessionSeconds = (savedSecs >= 1 && savedSecs <= 3600) ? savedSecs : 300;
 
     NSRect frame = NSMakeRect(0, 0, 1200, 800);
     self.window = [[NSWindow alloc] initWithContentRect:frame
@@ -277,11 +287,26 @@
     [self.window makeKeyAndOrderFront:nil];
     [NSApp activateIgnoringOtherApps:YES];
 
-    // Spawn first; the navigation retries until the listener answers.
-    [self startWorker];
-    [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+    // Spawn after launch has completed; the navigation retries until the
+    // listener answers. Any error dialog then happens in a fully launched
+    // app (menu and Quit already present) rather than blocking the launch.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self startWorker];
+        [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+    });
 }
 
+// Diagnosis status (row #73): the room's hang could not be reproduced
+// outside its launch. Controlled local runs (app launched directly with a
+// fake worker, then `osascript -e 'tell application "OpenScanner" to quit'`)
+// showed applicationShouldTerminate reached, kill(SIGTERM) delivered, and
+// the app exiting once the worker did — for both a responsive worker and an
+// already-dead one. The record's decisive clue (the app absent from Force
+// Quit's own list) points at a launch/session without a window-server
+// connection, which this environment cannot reproduce; the #65 rerun
+// re-tests the original case. Hardening below is independent of that
+// diagnosis: the menu exists from willFinishLaunching, startup errors are
+// non-modal sheets, and the worker has an orphan guard.
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
     (void)sender;
     // Quit = graceful teardown: SIGTERM makes the worker break its loop and

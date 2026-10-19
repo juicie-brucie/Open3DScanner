@@ -854,7 +854,20 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     // sequence. Pausing again (or clicking Start again) is still a fresh,
     // deliberate single attempt.
     bool last_requested_paused = false;
+#if !defined(_WIN32)
+    // Orphan guard: if the supervising app dies without sending SIGTERM,
+    // the worker is reparented (ppid changes); tear down gracefully rather
+    // than lingering as a second SDK user.
+    const pid_t original_parent = getppid();
+#endif
     for (int tick = 0; tick < total_ticks; ++tick) {
+#if !defined(_WIN32)
+        if (getppid() != original_parent) {
+            std::printf("[worker] parent exited — stopping and tearing down cleanly.\n");
+            std::fflush(stdout);
+            g_stop_requested = 1;
+        }
+#endif
         if (g_stop_requested) {
             std::printf(
                 "[worker] Stop requested (Ctrl+C or UI \"finish\") — ending the live loop and tearing down "
