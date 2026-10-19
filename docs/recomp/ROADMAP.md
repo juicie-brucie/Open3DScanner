@@ -22,10 +22,12 @@ rev 9/8/7/6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
 The capture/ABI phase and the app shell are both closed: `A1`/`A2` are `DONE`, and `#72`/`#73`/`#74`
 — the defects that only appeared once the app ran — landed while this revision was being written.
-`#71` is the only **unstarted capability** left on the board: the three plane toggles reachable from
-the live path, per `#59`'s verdict (**bind the toggles**, decision left to the vendor). It is
-`BUILD`, unblocked, and the G-thread has been the stated aim of four revisions without a row until
-now.
+That empties the app family and leaves the **reconstruction workstream as the live edge**, with two
+unstarted build rows: **`G1`'s bind half** (`#71` — the three plane toggles reachable from the live
+path, per `#59`'s verdict, decision left to the vendor) and **`G2`'s build** (`#76` — the coverage
+heatmap). If only one runs, **`#71` first**: it is the row the G-thread took four revisions to
+reach, and `#76` explicitly does *not* wait on its recon — `#75` sharpens the alignment rather than
+gating it.
 
 **The round's cheap evidence work rides alongside it: the app launch rerun.** `#72`/`#73` landed
 *unverified on hardware*, and that rerun is their gate. It closes **`A3`** (`#65` — blocked on
@@ -38,8 +40,8 @@ Non-competing: **`G2`'s semantics** (`#75`, `RECON`) and **G1's reimplement half
 ## Critical path
 
 ```
-#71 (BUILD — G1's bind half: the toggles into the live path) ─► the reconstruction workstream's
-                                                                first landed capability
+#71 (BUILD — G1's bind half) ─┐
+#76 (BUILD — G2's build)     ─┴─► the reconstruction workstream's first landed capabilities
 the app launch rerun ─► gates #72/#73 (landed, unverified) and closes A3 (#65) + A4 (#66)
 #75 (RECON — G2's semantics)          G1's REIMPLEMENT half — still UNFILED
 
@@ -63,6 +65,7 @@ Ranked by what it frees, not by board order:
 | Row | Role | What it needs |
 | --- | --- | --- |
 | `#71` | builder | G1's bind half — the toggles into the live path. The header already declares them (`#59`). |
+| `#76` | builder | G2's build — the coverage heatmap, from our own cloud and poses. **Not gated by `#75`** (its note says so explicitly). |
 | `A3` (`#65`) | — | **Its block is cleared**: it was blocked on `#72` + `#73`, both landed. It needs the launch rerun; the row itself has not moved. |
 | the launch rerun | hardware / browser | Gates the just-landed `#72`/`#73` and carries `#66`'s live check — one run, two rows. |
 | `#75` | recon | G2's semantics, re-derived — the corpus is frozen. No hardware. |
