@@ -1,0 +1,4 @@
+box_a: 8 verts / 12 tris, box_b: 8 verts / 12 tris
+box_a - box_b: 16 verts / 24 tris
+decimated to target 12 tris: 10 verts / 12 tris
+OK: Manifold boolean + libigl decimate both wired up correctly
