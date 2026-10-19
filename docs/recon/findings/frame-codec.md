@@ -3,8 +3,10 @@
 *Status: **PLAN ONLY.** The corpus (row #123's `tools/frame_bins` output) is not
 available yet, so **no test in §2 has been run** and this file contains no
 measurement. Every claim below is `[inferred]` — derived from the repo's own
-records and from the public MIT OrbbecSDK v2 headers. No capture was parsed and
-no vendor binary was read for this file.*
+records and from the public MIT OrbbecSDK v2 headers. The one decoding done
+here is of the repo's own recorded 24-byte frame head (§1.2), with the capture
+set's own msgpack reader; no capture file was parsed and no vendor binary was
+read for this file.*
 
 *Wall: `docs/recon/**`. This row does not touch
 `engine/include/openscanner/obscan_api.h` — the frame container is a **wire**
@@ -34,7 +36,7 @@ columns and the hypothesis table is resolved.
 
 | fact | source | tag |
 | --- | --- | --- |
-| response is `[1, msgid, nil, result]`; the result is the frame | `protocol-spec.md` §1.1, §1.3 | `[inferred]` |
+| response is `[1, msgid, nil, result]`; the result carries the frame | `protocol-spec.md` §1.1, §1.3 | `[inferred]` |
 | bins are **10–53 KB** for a 1920×1200 stream → not raw pixels; "the codec is **not settled**" | `protocol-spec.md` §1.3 | `[inferred]` |
 | IR = port 10013 (suffix `0-2-12`), depth = port 10010 (suffix `0-2-10`) | `protocol-spec.md` §1.1 | `[inferred]` |
 | the only profile ever streamed, on **both** interfaces: `[streamtype, **9**, 1920, 1200, 50]` | `protocol-spec.md` §7; `stream-profiles-row114.md` §4 | `[inferred]` |
@@ -51,7 +53,7 @@ Two consequences for the plan:
   That reconciliation is step 0's job (§2.1).
 * The **208-byte segments are not frames** and must not enter the corpus.
 
-### 1.2 The one recorded frame head — and a discrepancy
+### 1.2 The one recorded frame head — a whole message, and an array result
 
 `streaming-replay-payloads.md` §5 carries the repo's only frame-response head
 (the first IR `get_frame` answer, msgid 5, t=25.339836):
@@ -60,23 +62,75 @@ Two consequences for the plan:
 940105c09b000000ccffc40000c40000c400cea2c90618ff...
 ```
 
-A msgpack parse of those 24 bytes gives `[1, 5, nil, **fixarray(11)**]` whose
-elements begin `0, 0, 0, uint16(65476), 0, 0, bin8[0], 0, bin8[0], uint64…` —
-and the 24 recorded bytes **end inside element 9** (a `uint64` whose 8 payload
-bytes are cut after 5). So the repo holds a *prefix*, not a message. `[inferred]`
+**Those 24 bytes are a whole message, not a prefix.** Decoded with the capture
+set's own msgpack reader
+(`~/DevReposiMac/raptor-protocol-capture/msgpack_decode.py`) they consume
+**24 of 24** bytes, with no residue:
+
+```
+[1, 5, nil, [0, 0, 0, 255, b'', 0, b'', 0, b'', 2731083288, -1]]
+```
+
+and the daemon's segment for that reply is `tcp.len = 24` (measured with
+`tshark -r session4.pcapng`) — so the recorded head **is** the whole TCP
+segment. Nothing is cut. `[inferred]`
+
+The result is a **fixarray(11)** (`9b`); its elements are:
+
+| idx | value | bytes | type |
+| --- | --- | --- | --- |
+| 0 | 0 | `00` | positive fixint |
+| 1 | 0 | `00` | positive fixint |
+| 2 | 0 | `00` | positive fixint |
+| 3 | 255 | `cc ff` | uint8 |
+| 4 | `b''` | `c4 00` | **bin8**, length 0 — empty |
+| 5 | 0 | `00` | positive fixint |
+| 6 | `b''` | `c4 00` | **bin8**, length 0 — empty |
+| 7 | 0 | `00` | positive fixint |
+| 8 | `b''` | `c4 00` | **bin8**, length 0 — empty |
+| 9 | 2731083288 | `ce a2 c9 06 18` | uint32 (`0xA2C90618`) |
+| 10 | −1 | `ff` | int8 |
+
+**The result is an array, not a bin.** Three of its slots (indices 4, 6, 8) are
+**bin8** — the shape a frame payload takes — and all three are **empty** in
+this one sample. So the frame payload is **nested inside** the array: the
+payload's first bytes are *not* at offset 0 of the message, and the array's
+own layout is the frame *envelope*. Which slot(s) carry the payload, and what
+the non-bin fields mean, is **not settled** — step 0 (§2.1). `[inferred]`
+
+**Corroboration (live hardware).** The #120+#122 replay rerun
+(`tests/results/2026-10-19-plan120-122-replay-rerun.md`, on main) records the
+*unwrapped* result kind of every live reply: all **20** `get_frame` calls
+(frames 10–29 of the replay file) answer `kind=7` — **Array** — and none
+answers `kind=6` (Bin). The replay file's other 16 frames are not
+`get_frame` (`set_ir_frame_light_type` and `start_stream` → Bool,
+`send_data` → Str), so the Array kind is specific to `get_frame`.
+`[hw-confirmed: 2026-10-19-plan120-122-replay-rerun]`
+
+**A live extractor defect this exposes (reported to the board, not fixed
+here).** `tools/frame_bins` classifies a response only when the envelope's
+index 3 is a **top-level bin** (`isinstance(value[3], (bytes, bytearray))`),
+and writes `value[3]` as the bin. A `get_frame` result that is an **array** is
+therefore skipped outright — so the extractor writes **no** `get_frame` bins
+even when the response is reassembled whole. #128's multi-segment reassembly
+fix is **necessary but not sufficient**: the classifier must also descend into
+the result array and yield its bin elements. #128's row is not changed here.
+`[inferred]`
 
 **Discrepancy to settle, not to inherit:** `protocol-spec.md` §1.3 says the
-response is `[1, msgid, nil, bin(N)]` and glosses the observed head `9b 00 cf 00`
-as "`bin8(52,992)`". Under the msgpack grammar `9b` is *fixarray(11)* and `cf`
-is *int8*; 52,992 = 0xCF00 is a big-endian 16-bit **read** of the byte pair
-`cf 00`, not a msgpack length. The two repo records of the frame head
-therefore disagree with each other and with the grammar: one says "bin",
-the other says "array of 11". `[inferred]`
+response is `[1, msgid, nil, bin(N)]` and glosses the observed head `9b 00 cf
+00` as "`bin8(52,992)`". Under the msgpack grammar `9b` is *fixarray(11)* and
+`cf` is **uint64** (int8 is `d0`); 52,992 = 0xCF00 is a big-endian 16-bit
+**read** of the byte pair `cf 00`, not a msgpack length. The spec's `bin(N)`
+gloss is therefore invalid — and on the one point the two records can be
+compared on they **agree**: the result is an **array**. What the array
+*contains* is unsettled. `[inferred]`
 
-Nothing here is settled by argument — it is settled by the extractor's bytes
-(step 0, §2.1). But it changes what the container even *is*: the first bytes
-of the "bin" may be **msgpack**, not an image magic, and the image magic may
-sit at an offset inside a struct.
+Nothing here is settled by argument — it is settled by the corpus's bytes
+(step 0, §2.1), which requires the extractor to yield the nested bins
+(above). But it changes what the container even *is*: the first bytes of the
+"bin" may be **msgpack**, not an image magic, and the image magic may sit at
+an offset inside a struct.
 
 ### 1.3 The format field — a candidate prior (not a mapping)
 
@@ -122,7 +176,7 @@ and a sibling run shows the naming convention `<interface>/NNNNNN.bin`. **The
 contract questions that must be answered when the extractor lands** (they are
 inputs to the tests, not separate work):
 
-1. **What does a `.bin` contain** — the RPC *result* (which §1.2 shows may be
+1. **What does a `.bin` contain** — the RPC *result* (which §1.2 shows **is**
    a msgpack array, not a bin) or the *inner payload* the result carries? The
    magic scan must read the **payload's own first bytes**, so this must be
    stated in the extractor's output documentation.
@@ -131,6 +185,10 @@ inputs to the tests, not separate work):
    (10010) separately; mixed ports are how the replay tooling went wrong
    (row #120).
 4. **The per-port counts** — frames, not segments (§1.1).
+5. **Does the extractor yield the array's nested bins?** As landed it yields
+   only a **top-level** bin, so an array-shaped `get_frame` result yields
+   nothing (§1.2). Until it descends into the result array, the corpus for
+   §2 is empty and every test below is unrunnable.
 
 ### 1.5 What is already on disk for the "next evidence"
 
@@ -155,15 +213,22 @@ consecutive-frame tests (T5) are meaningful.
 * Re-parse the first N (≥50) frame messages with a msgpack reader and record
   the **result element's** shape: `bin` / `str` / `fixarray(n)` / `map`, the
   array's arity, and the type of each element.
+* **Which slots carry the payload.** The one complete recorded reply (§1.2) is
+  an 11-element array whose slots 4, 6 and 8 are bin8 — all **empty** in that
+  sample. Step 0 must say, for a *non-empty* frame reply, **which** of those
+  slots holds the payload, and whether the other two hold a second channel (a
+  plausible IR/depth pair) or are always empty.
 * Record the msgpack **header bytes of the payload** (the bytes that precede
   the image data, if any) and their offsets.
 * Reconcile the corpus size with the ~7.4k/interface `get_frame` count.
 
 **Implication.** If the result is a bare `bin`, the payload's first bytes are
-the container's first bytes and T1 runs at offset 0. If the result is an
-array (as the one recorded head suggests), the payload is at some **offset**
+the container's first bytes and T1 runs at offset 0. The recorded reply
+(§1.2) says the result is an **array**, so the payload sits at some **offset**
 inside it, and T1/T2 must be re-run at that offset — *and* the array's own
-layout becomes a second deliverable (it is the frame *envelope*).
+layout becomes a second deliverable (it is the frame *envelope*). If more
+than one slot carries a payload, the corpus is **per slot** and the tests run
+per slot.
 
 ### 2.2 T1 — magic / first-bytes scan
 
@@ -363,12 +428,15 @@ Ranked, with the exact artifact:
 
 ## 7. OPEN QUESTIONS
 
-1. **What is the frame result element?** The repo's two records disagree: a
-   `bin` (`protocol-spec.md` §1.3) vs a **fixarray(11)** whose 24 recorded
-   bytes truncate mid-element (`streaming-replay-payloads.md` §5). Step 0
-   settles it; until then, "the payload's first bytes" is not a defined
-   offset. **Carries to #122**: the client's "the inner bin at index 3"
-   assumption is only valid if the result *is* a bin.
+1. **What is the frame result element, and which of its slots carry the
+   payload?** The one complete recorded reply (§1.2) is an **11-element
+   array** whose slots 4, 6, 8 are bin8 and empty in that sample; the live
+   rerun shows every `get_frame` result is an Array. The result's *shape* is
+   settled — an array, not a bin — but its **field layout** is not: which slot
+   holds the frame payload (and what the other two hold) is step 0's job.
+   Until then, "the payload's first bytes" is not a defined offset.
+   **Carries to #122**: the client's "the inner bin at index 3" assumption
+   holds only if the result *is* a bin, and the live evidence says it is not.
 2. **Are the device's format ids the SDK's `OB_FORMAT_*` values?** The
    observed set {0, 5, 9, 24} is a subset of the SDK enum and 9 would be
    Y8 (uncompressed 8-bit) — which the 10–53 KB size forbids. Either the ids
