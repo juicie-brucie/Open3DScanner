@@ -87,12 +87,14 @@ This matters for C2 (#100): if there's a required persistent write we missed, cl
 - No flash operations follow within 0.5 s for any of the 45 calls
 - If persistent, the device would need to commit after each change — but we see no commit operation
 
-**Raw frame** (msgpack request):
+**Raw frame** (msgpack request, t=25.457239):
 ```
-94 00 <msgid> d9 1b 6f625f7270635f7365745f7075 302d322d3132 92 cd 07d2 01
-  ↑  ↑   ↑      ↑    ↑                           ↑           ↑   ↑    ↑  ↑
-  [0  msgid  "ob_rpc_set_pu"                   "0-2-12"    [2002  1]
+94 00 11 b3 6f625f7270635f7365745f7075302d322d3132 92 cd 07d2 cd 03e8
+  ↑  ↑  ↑  ↑  ↑                                        ↑      ↑
+ [0 msgid reqid 19-byte str "ob_rpc_set_pu0-2-12"      [2002  1000]
 ```
+
+The four `[2003, 0/1]` frames observed in the capture are on interface `0-2-14` (RGB), not IR (`0-2-12`), which explains why the old spec recorded parameter 2003.
 
 ### 3.3 `SET_STRUCTURE_DATA_V1_1` (opcode 28) — 1 call
 
