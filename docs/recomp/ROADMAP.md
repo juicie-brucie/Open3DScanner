@@ -9,86 +9,77 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-18 (rev 15 — the objective moves to **closing the clean-room walls**, after
-an audit of the loaded agent configuration found them partly aspirational; the audit and workflow
-change-sets are consolidated below with the planner's amendments to their proposals. rev 14 moved
-the objective to `G1`'s bind half and added `H4`; rev 13 corrected the `G1` misread and added `H3`;
-rev 12 recorded the `A2` decision; rev 11 added the app workstream; rev 10 moved the objective;
-rev 9/8/7/6/5/4/3/2/1 are superseded — see **Superseded plans**)._
+_Last planned: 2026-10-19 (rev 16 — the walls are real and probed, so the objective returns to the
+reconstruction workstream: **`G3`'s build row**, the one unstarted capability left. Carries rev 15's
+close-out, and leads with a hard blocker: **`openscanner/builder` does not load**. rev 15 closed the
+walls audit and the repo-side change-set; rev 14 moved the objective to `G1`'s bind half and added
+`H4`; rev 13 corrected the `G1` misread and added `H3`; rev 12 recorded the `A2` decision; rev 11
+added the app workstream; rev 10 moved the objective; rev 9/8/7/6/5/4/3/2/1 are superseded — see
+**Superseded plans**)._
 
 ## Objective for the next round
 
-**Close the clean-room walls. An audit of the *loaded* agent configuration found them partly
-aspirational, and that outranks every feature row.**
+**Open `G3`'s build row — owned tracking — and get the owed reruns their observations.**
 
-The audit read the rules opencode actually loaded — not what the `.md` files say — and the
-findings reproduce. The dispatcher can edit anything: its `edit * deny` base rule was lost in a
-recent edit, and its live allows are *broader* than the backup's. The builder's only edit wall is
-the header, so it may write the findings it is meant to consume, the hardware records, `PLAN.md`
-and the CI gate. `.recon-cache` is denied on the **read tool only**; no agent has a shell rule for
-it, so `cat ../Open3DScanner/.recon-cache/<file>` is allowed. The verifier is **not** walled from
-the vendor app, and the builder can launch the verifier as a subagent. `recon-sweep` has **no
-shell denies at all**.
+`G3` is the last goal with no build row. Its recon is done: `#80` derived the mechanism (which
+vendor path produces the per-frame tracking status) and `#81` found the HUD's hysteresis, so the
+semantics exist on the board; `#82` carries the single named residual — the fresh-value origin.
+What is missing is the row that *builds* on it: per-pose rejection reasons surfaced to the UI, on
+top of `G2`'s feedback layer. **File it.**
 
-For a clean-room reimplementation these are not hygiene items — they are the basis of the claim
-that `engine/src` is independently written. `ARCHITECTURE.md` says the walls are "enforced, not
-aspirational". They are not, and **that sentence is itself the drift a third party would rely
-on** — so correcting it is part of the fix, not a footnote to it.
+**But the round's first action is not a row — it is unblocking the builder** (see **`B1`**).
+`openscanner/builder` does not load at all, so *no* build work can run: that gates `G3`'s row,
+`#73`, `#89`, and every fix the builder owes.
 
-Feature work continues in parallel and contends with none of this: **`G1`'s bind half (`#71`)**
-and **`G2`'s build (`#76`)** are builder rows, **`G2`'s semantics (`#75`)** is recon, and the
-**app launch rerun** is hardware. None of them touches the agent configuration.
-
-**The round's cheap evidence work also rides alongside: the app launch rerun.** `#72`/`#73` landed
-*unverified on hardware*, and that rerun is their gate. It closes **`A3`** (`#65` — blocked on
-exactly those two, now landed, so the block is cleared and the row has not moved) and carries
-**`A4`**'s (`#66`) live check, which the spec folds into the same run. One run, two rows, no new
-code.
+**The cheap evidence work rides alongside.** `#65`, `#66`, `#71`, `#76` each sit at `HW` owing a
+rerun, and `#77` — `G1`'s reimplement half, which merged — owes an observation. That is one hardware
+session's worth of work, not new code.
 
 ## Critical path
 
 ```
-THE BOARD IS FULLY DONE — all rows, no queued feature work. What is left is the harness,
-not the product.
+B1  openscanner/builder does not load ─► NO BUILDER WORK CAN RUN
+      └─► gates G3's build row, #73, #89, and every fix the builder owes
 
-WALLS ─► 1 remove the shadow agents (A1) ─► 2 restore the edit denies (W1, W2)
-      ─► 3 shell denies, not on recon (W3, A5) ─► 4 wall the verifier (W4)
-      ─► 5 physical .recon-cache separation (A2)
-      └─► 6 correct ARCHITECTURE's "enforced" sentence
+G3: #80 mechanism ✅ · #81 hysteresis ✅ · #82 the fresh-value origin (RECON) ─► G3's BUILD ROW (unfiled)
+G1: #71 bind half (HW) · #77 reimplement half (HW) ─► one observation each
+G2: #76 build (HW) · #75 semantics ✅ ─► one rerun
+
+the owed reruns ─► #65 · #66 · #71 · #76 · #77        (one hardware session, five rows)
+
+The six OQ rows (83–88) sit at TODO with triggers recorded — parked work, not queue.
 ```
 
 Ranked by what it frees, not by board order:
 
-1. **Removing the shadow agents.** Seconds of work, and until it is done every other wall fix is
-   undermined by an agent that may be picked instead. See **A1**.
-2. **Restoring the edit walls** (W1, W2). The dispatcher can edit the header and product source
-   today; the builder can write the findings it is meant to consume. This is the clean-room claim's
-   integrity, not hygiene.
-3. **The `.recon-cache` shell hole** (W3) and **the unwalled verifier** (W4) — mitigation only until
-   the physical separation lands (**A2**), but the cheapest thing available now.
-4. **Correcting `ARCHITECTURE.md`'s walls sentence** — it asserts "enforced, not aspirational",
-   which is false, and it is the claim a third party would rely on.
-5. **Filing G1's reimplement half.** `#71` landed and bound the toggles; the vendor's *decision* —
-   the thing the operator complained about — is still unreimplemented and unrowed. **A board that
-   is fully `DONE` will otherwise read as "plane removal works".** That is the one risk this round
-   creates, and it is created by success.
+1. **`B1` — make `openscanner/builder` load.** Nothing builder-side can run until it does. The cause
+   is exact and it is three lines; see **rev 15 close-out**.
+2. **`G3`'s build row.** The last goal without one, and its recon is already on the board — `#80`
+   derived the mechanism, `#81` the hysteresis, `#82` the one residual.
+3. **The owed reruns** (`#65`, `#66`, `#71`, `#76`, `#77`). One session, five rows, no new code —
+   the cheapest rows-cleared on the board, and they queue only behind the room.
+4. **`#82`.** The tracking status's fresh-value origin; the only open recon on the `G3` chain.
+5. **`#73` / `#89`.** Both `BUILD` with fixes in verification — and both blocked on `B1` before their
+   reruns can even be attempted.
 
 ## Ready now
 
-Nothing on the board — every row is `DONE`. The open work is the harness:
-
 | Item | Role | What it needs |
 | --- | --- | --- |
-| the wall change-set (1–5 above) | operator | **Config only, no repo change**, and not dispatchable to a repo role — it lives in `~/.config/opencode/agents/**`. Start with the shadow agents (**A1**). |
-| the doc corrections (6, 9, 10) | dispatcher | `docs/recomp/**`, `CLAUDE.md`, the hardware hook's pattern, `builder.md`'s step numbering. |
-| G1's reimplement half (unfiled) | builder | Needs its own row, or a fully-`DONE` board reads as "plane removal works". |
+| `B1` — the builder agent | operator | Three lines in `builder.md`. **Blocks every item below it.** |
+| `G3`'s build row (unfiled) | builder | Per-pose rejection reasons on `G2`'s feedback layer; `#80`'s mechanism is the spec. |
+| the owed reruns | hardware | `#65`, `#66`, `#71`, `#76`, `#77` — one session, five rows. |
+| `#82` | recon | The tracking status's fresh-value origin. One target, no hardware. |
+| `#73`, `#89` | builder | Fixes in verification; `B1` first. |
+| the six OQ rows (`#83`–`#88`) | — | Parked, with triggers and cheapest retirements already recorded. Not queue. |
 
 ## Blocked, and on what
 
 | Row | Blocked on |
 | --- | --- |
-| G3 | `G2` — the feedback layer it needs to display per-pose reasons. |
+| every builder row (`G3`, `#73`, `#89`) | **`B1`** — the agent does not load at all. |
 | G4, G5 | A fusion feature actually being planned; a denoise/fusion harness measures something that does not exist yet. |
+| G3's build | Nothing — `G2`'s feedback layer exists (`#76` is at `HW`). The row is **unfiled, not blocked**, which is why it is the objective. |
 | the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
 
 ## Orphaned open questions
@@ -351,6 +342,50 @@ live"). So it is **not a PR**: whoever owns the harness applies it. **Order matt
 instruction file, then compact**, because a compaction re-baselines the session against the current
 instructions.
 
+## rev 15 close-out — the walls, and the builder agent
+
+**What landed.** The walls are real and were *probed*, not merely configured: `W1` (the dispatcher's
+blanket `edit * deny`), `W2` (the builder's edit walls), `W4` (the verifier's vendor read denies) and
+`W5` (`recon-sweep`'s shell denies) are fixed, and the dispatcher's wall was verified **empirically**
+— an edit to `docs/recon/**` is refused while `scripts/**` and `docs/recomp/**` still work. That is
+the strongest form this check can take, and it is the standard the remaining items should meet. The
+shadow agents are gone. The repo-side change-set landed too: the root `opencode.json`, the corrected
+`ARCHITECTURE.md` sentence (which now names the gap honestly — *edit walls enforced, shell patterns
+mitigations, physical separation still to come*), and the six live OQs as rows **`#83`–`#88`** with
+their triggers and cheapest retirements.
+
+**What remains of the change-set.** The two items the audit always ranked as the real controls:
+
+- **the shell-pattern denies** — mitigation only, since the audit conceded text patterns are
+  bypassable by a variable, a glob, or a `cd`; and
+- **the physical `.recon-cache` separation** — the version that holds if anyone challenges the
+  clean-room claim.
+
+Both are the operator's, both config-or-filesystem, and neither is dispatchable to a repo role.
+
+**`B1` — the builder agent does not load, and the cause is exact.** `openscanner/builder` is absent
+from the loaded agents list, and the server log says so on every attempt: `Error: Agent not found:
+openscanner/builder`. The file is present, and it parses under a lenient YAML reader. The difference
+is in its permission list — **it is the only agent with incomplete entries**:
+
+| agent | rules | issues |
+| --- | --- | --- |
+| **`builder`** | 21 | **2 incomplete entries**, plus a duplicated `resource`/`effect` pair |
+| dispatch · planner · recon · recon-sweep · verifier | 19 · 16 · 7 · 7 · 11 | none |
+
+Every other agent issues complete `{action, resource, effect}` triples. `builder.md` carries
+`- action: opencode_list_mcp_resources` and a bare `- action: shell`, each with **no `resource` and
+no `effect`**, and its `*.recon-cache*` entry repeats `resource`/`effect` inside one mapping.
+opencode then drops the agent **silently** — no error on the file, only "Agent not found" when a
+session tries to start. The fix is three lines: complete the two entries, split the duplicated pair.
+
+**That is itself a finding about the wall work.** A malformed permission list makes an agent
+*vanish*, with nothing pointing at the file — so a hand-edit to a wall can silently remove an agent
+rather than merely weaken it, and the failure surfaces far away, as "the agent doesn't exist".
+**Wall edits need a validation step**: every permission entry a complete triple, and all six agents
+present in `debug agents` after the edit. That belongs with the remaining change-set items, and it is
+cheaper than the items it protects.
+
 ## Wall integrity and the workflow change-set (rev 15)
 
 Two independent reports — a **workflow audit** (walls, models, drift) and an **optimization
@@ -509,27 +544,35 @@ is set there. **Do not open Windows rows from this roadmap.**
 
 For the dispatcher to expand — not dispatches in themselves.
 
-1. **The wall change-set** → operator: **config only, no repo change**, and it cannot be dispatched
-   to a repo role — it lives in `~/.config/opencode/agents/**`. Work it in the order given in
-   **Wall integrity**: shadow agents first (**A1**), then the edit denies (W1/W2), the shell denies
-   (W3, not on `recon` — **A5**), the verifier's vendor denies (W4), then start the physical
-   `.recon-cache` separation (W5/**A2**).
-2. **`ARCHITECTURE.md` corrections** → dispatcher: the walls sentence asserts "enforced, not
-   aspirational" and it is false; the model table is wrong in all six rows; the wall table omits
-   recon's `PLAN.md` allow and two dispatcher allows. `docs/recomp/**`.
-3. **The prompt drift** → dispatcher (`H4` item 1 is unlanded): either land the repo-root
-   `opencode.json` and `scripts/compact-session.sh`, or delete those lines from the dispatcher
-   prompt. Today the prompt states as fact a setting that is not applied. **Land the config *and*
-   the script, or remove both references** — half-landing is what produced the drift.
-4. **G1's reimplement half** → file it: `#71` bound the toggles and left the vendor's decision in
-   place, and the decision is what the operator complained about. **A fully-`DONE` board must not
-   read as "plane removal works".**
+1. **`B1` — fix `openscanner/builder`** → operator: complete the two missing `{resource, effect}`
+   pairs (`opencode_list_mcp_resources`, the bare `shell`) and split the duplicated
+   `resource`/`effect` pair in the `*.recon-cache*` entry. Then confirm all six agents appear in
+   `debug agents`. **This blocks every builder row in the queue** — `G3`, `#73`, `#89`.
+2. **`G3`'s build row** → file it, then builder: per-pose rejection reasons surfaced to the UI, on
+   `G2`'s feedback layer. `#80`'s mechanism is the spec (`#80`, `#81` are `DONE`); `#82` is the one
+   open residual. **Wall:** builder edits `engine/`, `ui/`, `tools/`.
+3. **The owed reruns** → hardware: one session covering `#65`, `#66`, `#71`, `#76`, `#77`. Five
+   rows, no new code. **Wall:** `tests/results/**`.
+4. **`#82`** → recon: the tracking status's fresh-value origin, the named follow-up from `#80` §1.
+   One target, no hardware, so it does not contend with the reruns.
+5. **The remaining wall items + the validation step** → operator: the shell-pattern denies, the
+   physical `.recon-cache` separation, **and a completeness check on permission entries** — `B1`
+   shows a malformed list removes an agent silently rather than weakening it.
+6. **`#73` / `#89`** → builder, after `B1`: both fixes are in verification; their reruns follow.
 
-**Ordering note.** Items 1–3 are integrity and drift; item 4 is a row for feature work that the
-board no longer represents. None of them competes for the same resource: 1 is config, 2–3 are repo
-docs, 4 is a filing.
+**Ordering note.** `B1` is first because it is the only item that blocks others; the reruns (3) are
+the cheapest rows-cleared and queue only behind the hardware room; the row work (2, 4) is
+builder/recon and contends with neither.
 
 ## Superseded plans
+
+- **2026-10-18 rev 15 → rev 16 — sweep, not a reversal.** Rev 15's walls work landed and was probed,
+  so the objective returns to the reconstruction workstream: `G3`'s build row is the last unstarted
+  capability. Rev 16 adds the close-out (what landed, what remains of the change-set) and leads with
+  a hard blocker the audit could not have caught — `openscanner/builder` does not load, because it is
+  the only agent with incomplete permission entries. Every row claim was re-read against the board
+  per **`H3`**; the six OQ rows (`#83`–`#88`) and the `G3` recon chain (`#78`–`#82`) are new since
+  rev 15.
 
 - **2026-10-18 rev 14 → rev 15 — the objective moves to the walls, and two outside reports are
   consolidated.** An audit of the loaded agent configuration found the clean-room walls partly
