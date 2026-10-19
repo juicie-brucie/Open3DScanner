@@ -1,0 +1,17 @@
+1792392078.655672 [app pid 26649] applicationWillFinishLaunching
+1792392078.722536 [app pid 26649] applicationDidFinishLaunching
+1792392079.074724 [app pid 26649] worker launched pid=26655 path=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/MacOS/scan_server
+1792392079.090825 [worker pid 26655] RunLiveServer: installing signal handlers
+1792392099.604391 [app pid 26649] applicationShouldTerminate entered; worker=0x7812faf5c0 running=1 quitting=0
+1792392099.604473 [app pid 26649] kill(SIGTERM, pid=26655) -> 0 errno=9
+1792392099.604502 [worker pid 26655] signal handler entered (g_stop_requested set)
+1792392099.604505 [app pid 26649] returning NSTerminateLater
+1792392099.689051 [worker pid 26655] live loop observed stop request -> breaking to teardown
+1792392105.395129 [worker pid 26655] teardown: calling obscan_scan_stop(is_block=false)
+1792392105.395172 [worker pid 26655] teardown: obscan_scan_stop returned
+1792392105.861617 [worker pid 26655] teardown: session_destroy poll loop done
+1792392105.861656 [worker pid 26655] teardown: starting context_destroy poll loop
+1792392225.523154 [app pid 26649] termination deadline reached; SIGKILL pid=26655
+1792392225.523204 [app pid 26649] deadline: replying NSTerminateNow
+1792392225.527862 [app pid 26649] applicationWillTerminate (process about to exit)
+1792392225.528160 [app pid 26649] windowWillClose during termination; ignoring (idempotent)

@@ -1,0 +1,22 @@
+=== PLAN #105 replay-parser-bug-blocked — companion log ===
+Date: 2026-10-19
+Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+Branch: hw/next
+
+$ cmake --build build --target raptor_client -j
+[100%] Built target raptor_client
+
+$ stat -f "%N: %Sm" -t "%Y-%m-%d %H:%M:%S" tools/raptor_client/main.cpp build/tools/raptor_client/raptor_client
+tools/raptor_client/main.cpp: 2026-10-19 02:40:32
+build/tools/raptor_client/raptor_client: 2026-10-19 02:41:08
+
+$ ps aux | grep -i -E "scan_server|smoke_test|live_capture_test|message_listener_test|OpenScanner|raptor_client" | grep -v grep
+(no output above means: none running)
+
+$ ./build/tools/raptor_client/raptor_client --replay docs/recon/findings/streaming-replay-payloads.hex --dry-run
+[replay] line 30: odd hex length
+Exit code: 2
+
+$ ./build/tools/raptor_client/raptor_client --replay docs/recon/findings/streaming-replay-payloads.hex 127.0.0.1 10013 --dry-run
+[replay] line 30: odd hex length
+Exit code: 2

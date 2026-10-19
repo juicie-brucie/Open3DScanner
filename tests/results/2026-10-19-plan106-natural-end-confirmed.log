@@ -1,0 +1,20 @@
+1792392573.094897 [app pid 29904] applicationWillFinishLaunching
+1792392573.139777 [app pid 29904] applicationDidFinishLaunching
+1792392573.320501 [app pid 29904] worker launched pid=29910 path=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/MacOS/scan_server
+1792392573.333313 [worker pid 29910] RunLiveServer: installing signal handlers
+1792392606.174775 [worker pid 29910] teardown: calling obscan_scan_stop(is_block=false)
+1792392606.174800 [worker pid 29910] teardown: obscan_scan_stop returned
+1792392606.541998 [worker pid 29910] teardown: session_destroy poll loop done
+1792392606.542038 [worker pid 29910] teardown: starting context_destroy poll loop
+1792392606.542064 [worker pid 29910] teardown: context_destroy: poll 1: entered the 5000 ms bound (before any allocation)
+1792392606.542072 [worker pid 29910] teardown: context_destroy: poll 1: state allocated; spawning the vendor call
+1792392606.542101 [worker pid 29910] teardown: context_destroy: poll 1: vendor call thread spawned; wait started (5000 ms)
+1792392611.566352 [worker pid 29910] teardown: context_destroy: poll 1: wait TIMED OUT after 5000 ms; abandoning context (not joined)
+1792392611.566389 [worker pid 29910] teardown: context_destroy: ABANDONED after 5.0s (context left for process exit to reclaim)
+1792392611.566395 [worker pid 29910] teardown: context_destroy -> ABANDONED (no vendor return); exiting 4
+1792392611.566399 [worker pid 29910] teardown: context_destroy poll loop done
+1792392611.599734 [worker pid 29910] teardown complete
+1792392611.599931 [worker pid 29910] RunLiveServer returning (worker about to exit)
+1792392611.599940 [worker pid 29910] teardown: Exit code 4 = context_destroy deadline exceeded (distinct from 2 = skipped/no dylib)
+1792392611.615836 [app pid 29904] worker terminationHandler: pid=29910 status=4 reason=1
+1792392611.615912 [app pid 29904] terminationHandler on main queue; quitting=0 restarting=0
