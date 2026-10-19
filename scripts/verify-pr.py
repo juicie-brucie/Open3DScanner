@@ -16,8 +16,7 @@ is script-gated or needs an agent verdict):
                  any CMakeLists.txt, .github/**, .claude/**, opencode.json(c),
                  docs/recon/**, docs/recomp/{WINDOWS-FORK,FORK-COORDINATION,ARCHITECTURE}.md,
                  tests/results/** (records, logs, addenda — #21)
-    script tier  everything else (PLAN.md, docs/recomp/** except the two fork
-                 documents above, CLAUDE.md, README.md, ...)
+    script tier  everything else (PLAN.md, docs/recomp/** except the documents listed above, CLAUDE.md, README.md, ...)
     An empty or unreadable file list is treated as agent tier. The list is
     pinned by `--selftest`; edit the table and the patterns together.
 
