@@ -369,13 +369,16 @@ live"). So it is **not a PR**: whoever owns the harness applies it. **Order matt
 instruction file, then compact**, because a compaction re-baselines the session against the current
 instructions.
 
-## Agent structure — a proposed refactor (E1–E10), for the dispatcher's input
+## Agent structure — agreed refactor (E1–E10)
 
 Raised from the watcher thread: the dispatcher lost turns to a **foreground blocking call**, which is
 a *usage* rule rather than a tooling gap. That opened the larger question — whether the agent
 structure itself carries duplicated rules and hand-rolled checks that the platform, or a maintained
-tool, already does better. **This is a proposal, not a plan of record: the dispatcher reviews it and
-decides what, if anything, to route.**
+tool, already does better.
+
+**The dispatcher answered all four open points on 2026-10-19 and the decisions are recorded below —
+this is no longer a proposal awaiting input.** Only `E5` moves now; the rest parks behind `#105`, and
+the board sweep waits for `#294` to adjudicate so it is **one revision, not two**.
 
 ### What is measurably wrong
 
@@ -398,11 +401,11 @@ blocks diverge, and the copies that diverge are the ones nobody re-reads.
 | **E1** | `AGENTS.md` *(new)* | the repo-wide rules currently duplicated: clean-room principle, walls in prose, Secrets, pre-run step, *point at rows*, the blocking-call rule | parked |
 | **E2** | `opencode.json` | `"instructions": ["AGENTS.md"]` — **same commit as E1** | parked |
 | **E3** | all six agent files | delete the duplicated Secrets + pre-run blocks; keep role, permissions, procedure | parked |
-| **E4** | `commands/reconcile.md` | add an `agent:` line, or retire the command | parked |
-| **E5** | `dispatch.md` | **`wait`, not `/api/event`, for completion; backgrounded or timeout-bounded, never foreground; the PR half backgrounded too** | **now** |
+| **E4** | `commands/reconcile.md` | **give it an agent** — read-only on the repo, no device, no vendor artifacts; `reconcile` stays as the command that launches it. **Closes W7** (decided: the role is not retired) | parked |
+| **E5** | `dispatch.md` | **`wait`, not `/api/event`, for completion; backgrounded or timeout-bounded, never foreground; the PR half backgrounded too.** Read as covering **product** code as well — *any blocking read gets a deadline* — which is what `#117` already carries, so rule and row agree rather than duplicate | **now** |
 | **E6** | `builder.md` permissions | restore `edit * deny` plus the audit's allow list | **operator's call** |
 | **E7** | `scripts/check-agents.py` | verify `AGENTS.md` exists; drift-check that no agent re-introduces a shared block; every command carries `agent:` | parked, after E3 |
-| **E8** | `scripts/verify-pr.py` | delegate generic checks to `markdownlint-cli2` / `lychee` / `shellcheck` / `actionlint`; **keep** the tier gate, record provenance, archive hashes, plan syntax | parked |
+| **E8** | `scripts/verify-pr.py` | **`shellcheck`** (`scripts/*.sh`, `.claude/hooks/*.sh`) + **`actionlint`** (`.github/workflows/**`) + **`lychee` offline/internal only** (network checks are a flake source). **`markdownlint` declined** — the whitespace gate already owns trailing whitespace, and a second home for one class is the drift this project exists to remove. Each adopted tool **replaces** a hand-rolled check in the same PR; the tier gate, record provenance, archive hashes and plan syntax stay | parked |
 | **E9** | `scripts/watch-sessions.sh` | drop the PR half (`gh`, backgrounded, already maintained) | parked |
 | **E10** | `.opencode/plugins/` *(optional)* | `ctx.event.subscribe` + `ctx.session.synthetic` — wake the dispatcher server-side, no tool call | optional |
 
@@ -414,13 +417,12 @@ blocks diverge, and the copies that diverge are the ones nobody re-reads.
   audit's §5.4 warns against.
 - **The board/roadmap split.** E1 must not become a third place where row state is written.
 
-### Why `AGENTS.md` rather than drift-checked copies
+### `AGENTS.md` — decided
 
-Both are viable. `aicers/agent-instructions` renders blocks into copies and *detects* drift, which is
-the more conservative option. The reason to prefer one file here is that the shared text is short,
-repo-wide and unparameterised — nothing per-role to interpolate, so a copy buys nothing an include
-does not. **If the dispatcher disagrees, the drift-check path is a fine fallback, and E7 is the
-load-bearing piece either way.**
+**One file, natively read** (dispatcher, 2026-10-19). The shared text is short and unparameterised, so
+drift-detected copies would buy a *detector* for a problem the single file **removes**. Each agent file
+stays thin — its role and its walls — and points at `AGENTS.md` for the shared blocks. The dispatcher
+owns its maintenance.
 
 ### Sequencing, and the one split that matters
 
@@ -430,9 +432,29 @@ E5 — independent, now
 E4, E6, E8, E9, E10 — independent, park behind the pivot
 ```
 
-**E5 is the only item that should move now.** It costs the dispatcher turns tonight; everything else
-buys drift prevention, not capability, while `#105` blocks the whole pivot. If the dispatcher takes
-exactly one thing from this proposal, it is the blocking-call rule.
+**Confirmed: only `E5` moves now.** It costs the dispatcher turns; everything else buys drift
+prevention, not capability, while `#105` blocks the whole pivot. `E4` stays in the parked group even
+though it is now *decided* — it is a config edit in the operator's reach, not a round item.
+
+### The four answers, recorded
+
+| | question | answer |
+| --- | --- | --- |
+| **I1** | `AGENTS.md`, or drift-checked copies? | **single file**; the dispatcher owns its maintenance |
+| **I2** | which external linters? | **`shellcheck` + `actionlint` + `lychee` offline-only**; **`markdownlint` declined**; each adopted tool replaces a hand-rolled check in the same PR |
+| **I3** | sequencing | **only `E5` now**; `E1`–`E4`/`E7`–`E9` park behind `#105`; `E5` also covers product code, agreeing with `#117` |
+| **D1** | `analyze`/`reconcile`: agent or retire? | **agent** — the spec/impl/test classification must not move into the hardware record template, or the classifier becomes the party under test. W7 closes |
+
+### The sweep is deferred, by agreement
+
+Wait for **#294** to adjudicate, then fold `#111`–`#117` (the tick-latency thread, the stream-profile
+question, portability) **and** the corrected ledger into **one** pass, not two. Expected once `#294`
+lands: **`DONE`** `#65`/`#66`/`#77`/`#91` · **`HW`** `#71`/`#76`/`#98`/`#105`/`#112` ·
+**`BLOCKED`** `#113` · **`BUILD`** `#117`.
+
+**One caution carried forward:** `#112`'s `BLOCKED` is **stale** — its blockers (`#111` landed, the
+hardware room synced) are gone, which is why `#294` moves it to `HW`. Do not carry `BLOCKED` forward
+if `#294` has landed when the sweep runs.
 
 ### Reach — who can actually apply each
 
