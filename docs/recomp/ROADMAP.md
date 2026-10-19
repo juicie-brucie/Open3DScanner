@@ -9,72 +9,69 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-18 (rev 14 — the app is built and running, so the objective becomes the
-defects that *running* it exposed (`#72`/`#73`/`#74`); adds **`H4`**, session compaction, with the
-measured cycles and the `opencode.json` decision; and refreshes every row claim against the board,
-per `H3`. rev 13 corrected the `G1` misread and added `H3`; rev 12 recorded the `A2` decision;
-rev 11 added the app workstream; rev 10 moved the objective; rev 9/8/7/6/5/4/3/2/1 are superseded —
-see **Superseded plans**)._
+_Last planned: 2026-10-18 (rev 14 — the app's run-discovered defects landed, so the objective moves
+to **`G1`'s bind half (`#71`)**, the reconstruction workstream's first capability; adds **`H4`**,
+session compaction, with the measured cycles and the `opencode.json` decision; and re-reads every
+row claim against the board, per `H3`. rev 13 corrected the `G1` misread and added `H3`; rev 12
+recorded the `A2` decision; rev 11 added the app workstream; rev 10 moved the objective;
+rev 9/8/7/6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
-**Make the app behave like an app: the three defects that only appeared once it ran (`#72`, `#73`,
-`#74`).**
+**Land `G1`'s bind half (`#71`) — the reconstruction workstream's first capability.**
 
-`A1` and `A2` are `DONE`, so the shell exists and launches. What it does *not* do yet is behave
-like an application: **`#72`** — bundled, its own `ui/` lookup resolves relative to a cwd of `/`,
-so every request 404s forever, silently; **`#73`** — ⌘Q does not terminate it and the SIGTERM
-teardown never fires; **`#74`** — a set-but-missing `OPENSCANNER_LIBRARY` is silently skipped, so
-the missing-SDK dialog cannot name it. Three `BUILD` rows, all found by *running* the thing rather
-than reading it, and two of them are the app's most basic contract with the OS.
+The capture/ABI phase and the app shell are both closed: `A1`/`A2` are `DONE`, and `#72`/`#73`/`#74`
+— the defects that only appeared once the app ran — landed while this revision was being written.
+`#71` is the only **unstarted capability** left on the board: the three plane toggles reachable from
+the live path, per `#59`'s verdict (**bind the toggles**, decision left to the vendor). It is
+`BUILD`, unblocked, and the G-thread has been the stated aim of four revisions without a row until
+now.
 
-**`#73` also unblocks `A3`** (`#65`, `BLOCKED`): the lifecycle row *is* the teardown path that
-never fires, so it waits on the fix rather than on design.
+**The round's cheap evidence work rides alongside it: the app launch rerun.** `#72`/`#73` landed
+*unverified on hardware*, and that rerun is their gate. It closes **`A3`** (`#65` — blocked on
+exactly those two, now landed, so the block is cleared and the row has not moved) and carries
+**`A4`**'s (`#66`) live check, which the spec folds into the same run. One run, two rows, no new
+code.
 
-Two threads queue behind it, non-competing: **`G1`'s bind half** (`#71`, `BUILD` — the toggles into
-the live path, per `#59`'s verdict) and **`G2`'s semantics** (`#75`, `RECON`).
+Non-competing: **`G2`'s semantics** (`#75`, `RECON`) and **G1's reimplement half** (unfiled).
 
 ## Critical path
 
 ```
-#72 · #73 · #74 (BUILD — the defects running the app exposed) ─► it behaves like an app
-                                    └─ #73 ─► A3 (#65, BLOCKED — the lifecycle teardown)
+#71 (BUILD — G1's bind half: the toggles into the live path) ─► the reconstruction workstream's
+                                                                first landed capability
+the app launch rerun ─► gates #72/#73 (landed, unverified) and closes A3 (#65) + A4 (#66)
+#75 (RECON — G2's semantics)          G1's REIMPLEMENT half — still UNFILED
 
-#71 (BUILD — G1's bind half: the toggles into the live path)     #75 (RECON — G2's semantics)
-#66 (HW — A4, awaiting its run)
-
-A1 · A2 ✅ DONE     H1 ✅ landed     #53 · #59 · #62 · #64 · #67 ✅ DONE
-G1's REIMPLEMENT half is still UNFILED — #71 binds the toggles; the decision stays the vendor's.
+A1 · A2 ✅ DONE      H1 · H4 ✅ landed      #53 · #59 · #62 · #64 · #67 · #72 · #73 · #74 ✅ DONE
 ```
 
 Ranked by what it frees, not by board order:
 
-1. **`#73`.** ⌘Q not terminating is the app's most basic failure — and it is the blocker on `A3`,
-   so one fix frees two rows.
-2. **`#72`.** The bundled app cannot find its own UI; every request 404s silently, with no error
-   to chase. Fixing it is what makes the other two observable.
-3. **`#74`.** Small, but it is the difference between "the missing-SDK dialog names the problem"
-   and "the override silently does nothing".
-4. **`#71`.** G1's bind half, per `#59`'s verdict — the reconstruction workstream's first
-   landed capability.
-5. **`#75`.** G2's semantics, re-derived because the corpus is frozen. Recon; no hardware.
-6. **`#66`.** A4's acceptance run — hardware, and it queues behind nothing above.
+1. **`#71`.** The only unstarted capability, unblocked, and the first thing the G-thread has
+   actually reached a build row for across four revisions.
+2. **The app launch rerun.** The evidence gate for two just-landed fixes, and it closes two more
+   rows (`A3` unblocked, `A4` folded in) with no new code. Cheapest rows-cleared on the board.
+3. **`#75`.** G2's semantics, re-derived because the corpus is frozen. Recon; no hardware, so it
+   does not contend with the rerun.
+4. **G1's reimplement half — file it.** `#71` binds the toggles and leaves the vendor's decision in
+   place, and the decision is precisely what the operator complained about. If it stays unfiled it
+   will read as "G1 done" the moment `#71` lands.
 
 ## Ready now
 
 | Row | Role | What it needs |
 | --- | --- | --- |
-| `#72`, `#73`, `#74` | builder | The app's run-discovered defects: the `ui/` cwd lookup, ⌘Q not terminating, the silent library override. |
 | `#71` | builder | G1's bind half — the toggles into the live path. The header already declares them (`#59`). |
+| `A3` (`#65`) | — | **Its block is cleared**: it was blocked on `#72` + `#73`, both landed. It needs the launch rerun; the row itself has not moved. |
+| the launch rerun | hardware / browser | Gates the just-landed `#72`/`#73` and carries `#66`'s live check — one run, two rows. |
 | `#75` | recon | G2's semantics, re-derived — the corpus is frozen. No hardware. |
-| `#66` | hardware | A4's acceptance run. |
-| G1's **reimplement** half (unfiled) | builder | The verdict says the vendor's *decision* is what the operator complained about. Needs its own row, or `#71` will quietly absorb it. |
+| G1's **reimplement** half (unfiled) | builder | The verdict says the vendor's *decision* is what the operator complained about. Needs its own row, or `#71` will quietly read as "G1 done". |
 
 ## Blocked, and on what
 
 | Row | Blocked on |
 | --- | --- |
-| `A3` (`#65`) | `#73` — the teardown path that never fires *is* the row's subject. |
 | G3 | `G2` — the feedback layer it needs to display per-pose reasons. |
 | G4, G5 | A fusion feature actually being planned; a denoise/fusion harness measures something that does not exist yet. |
 | the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
@@ -169,12 +166,12 @@ the dispatcher files the rows.
 | --- | --- | --- | --- |
 | **A1** | Serve `ui/` from the capture process — one origin, no external static server | **`#61`** | **`DONE`** |
 | **A2** | The `.app` bundle + a WKWebView window (`MACOSX_BUNDLE`, `Info.plist`, icon) | **`#63`** | **`DONE`** — gate answered (see **The `A2` decision**) |
-| **A3** | Lifecycle: spawn and supervise the worker, surface a crash, and make **quit = graceful `pause`/`stop`/`destroy`** | **`#65`** | **`BLOCKED` on `#73`** — the teardown path that never fires is the row's own subject |
-| **A4** | Settings and failure paths — missing-SDK dialog, port, session length | **`#66`** | **`HW`** — built, awaiting its run |
+| **A3** | Lifecycle: spawn and supervise the worker, surface a crash, and make **quit = graceful `pause`/`stop`/`destroy`** | **`#65`** | **block cleared** — `#72`/`#73` landed; needs the launch rerun |
+| **A4** | Settings and failure paths — missing-SDK dialog, port, session length | **`#66`** | **`HW`** — its live check rides the `#65` launch rerun |
 
-**Running the app found the rest.** `#72` / `#73` / `#74` are not design gaps: they are what a real
-bundle discovers when it resolves its own paths and answers the OS. They are the family's next work,
-ahead of `A3` and `A4`.
+**Running the app found the rest, and they landed.** `#72` / `#73` / `#74` were not design gaps:
+they were what a real bundle discovers when it resolves its own paths and answers the OS. All three
+are `DONE`; their hardware verification is the launch rerun, and that is what `A3` was waiting on.
 
 ### The `A2` decision — no SDK in the bundle
 
@@ -291,6 +288,11 @@ board for the row's own words first** — `grep -i "<distinctive phrase>" PLAN.m
 proposes rows; the board records what became of them; the two drift independently. **A claim
 about a row's state is a claim about the board, and must be read from the board.**
 
+**And prefer families to row numbers.** Rev 14 needed three passes to write, because the board moved
+67 commits mid-write and each pass invalidated the previous numbering. Where an objective can name a
+*family* — "G1's bind half", "the app's run-discovered defects" — the board owns which numbers those
+are, and the roadmap stops going stale on every landing.
+
 ### H4 — Session compaction (the dispatcher's memory)
 
 **The measurement.** The dispatcher is one long-lived session on a **1,000,000-token** window, and
@@ -384,23 +386,19 @@ is set there. **Do not open Windows rows from this roadmap.**
 
 For the dispatcher to expand — not dispatches in themselves.
 
-1. **`#73`** → builder: make ⌘Q and window-close reach the graceful `pause`/`stop`/`destroy`
-   path. **Wall:** builder edits the app shell (`tools/macos_app/`) and `engine/`. It is the
-   blocker on `A3` (`#65`), so landing it frees two rows.
-2. **`#72`** → builder: resolve `ui/` from the bundle rather than the process cwd, so a launched
-   `.app` (cwd `/`) serves its own files instead of 404ing silently.
-3. **`#74`** → builder: make a set-but-missing `OPENSCANNER_LIBRARY` fatal, so the missing-SDK
-   dialog can name it. Small, and it is what makes `A4`'s dialog useful.
-4. **`#71`** → builder: G1's bind half — the three plane toggles into the live path, per `#59`'s
+1. **`#71`** → builder: G1's bind half — the three plane toggles into the live path, per `#59`'s
    verdict. **Wall:** `tools/` + `engine/`; read the header (`obscan_api.h:748-767`), do not edit
-   it. **And file G1's reimplement half separately** — `#71` binds the toggles only, and the
-   operator's complaint is about the vendor's decision, which `#71` leaves untouched.
-5. **`#75`** → recon: G2's semantics, re-derived — the corpus is frozen. No hardware; one target.
-6. **`#66`** → hardware: A4's acceptance run. Batches with nothing above.
+   it. **And file G1's reimplement half separately** — `#71` leaves the vendor's decision in place,
+   and that decision is exactly what the operator complained about.
+2. **The launch rerun** → hardware / browser: the `#65` spec, which folds in `#66`'s steps 5–6.
+   Gates the just-landed `#72`/`#73`, closes `A3`, and carries `A4`'s live check. **Wall:**
+   `tests/results/**`.
+3. **`#75`** → recon: G2's semantics, re-derived because the corpus is frozen. One target, no
+   hardware, so it does not contend with the rerun.
 
 And one repo-side housekeeping order — **`H4`'s change-set**, which the dispatcher lands:
 
-7. **`opencode.json` + the tier fix** → dispatcher: add the repo-root `opencode.json`
+4. **`opencode.json` + the tier fix** → dispatcher: add the repo-root `opencode.json`
    (`compaction.auto: true`, `keep.tokens: 60000`; no mode change, no `buffer`) and add
    `opencode.json`/`opencode.jsonc` to `scripts/verify-pr.py`'s agent tier **in the same PR**, so
    the config that steers every agent here does not auto-merge with no judgment pass. **Wall:** a
@@ -412,13 +410,13 @@ And one repo-side housekeeping order — **`H4`'s change-set**, which the dispat
 
 ## Superseded plans
 
-- **2026-10-18 rev 13 → rev 14 — the objective moves to the running app, plus `H4`.** `A1`/`A2`
-  landed, so "ship the shell" is done; what is open is the defects *running* it exposed
-  (`#72`/`#73`/`#74`), and `#73` blocks `A3`. Rev 14 also adds **`H4`** — the measured compaction
-  cycles, the `opencode.json` decision, the `verify-pr.py` tier fix, and the cycle-3 test — and
-  replaces Risk 8's prose with a pointer to it. Every row claim was re-read against the board first
-  (`H3`), because rev 13's were stale by 61 commits. Reversal reason: the app moved from "built" to
-  "run", which changed what the next work is.
+- **2026-10-18 rev 13 → rev 14 — the objective moves to `G1`'s bind half, plus `H4` and a full row
+  re-read.** The app shell and its run-discovered defects (`#72`/`#73`/`#74`) all landed while this
+  revision was being written, so the only unstarted capability left is `#71`. Rev 14 adds **`H4`** —
+  the measured compaction cycles, the `opencode.json` decision, the `verify-pr.py` tier fix, and the
+  cycle-3 test — and replaces Risk 8's prose with a pointer to it. Every row claim was re-read
+  against the board first (`H3`); this took **three** passes, because the board moved 61 commits and
+  then 6 more during the write. Reversal reason: the work landed faster than the plan could name it.
 - **2026-10-18 rev 12 → rev 13 — a correction, not a direction change.** Rev 12 claimed three
   times that `G1`'s adoption row had never been filed. It had: **`#59`, `DONE`** (`e842e71`, PR
   #169). Rev 13 corrects that, records the verdict (**bind the toggles; reimplement the
