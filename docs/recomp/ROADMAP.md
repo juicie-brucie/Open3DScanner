@@ -9,67 +9,79 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-18 (rev 14 — the app's run-discovered defects landed, so the objective moves
-to **`G1`'s bind half (`#71`)**, the reconstruction workstream's first capability; adds **`H4`**,
-session compaction, with the measured cycles and the `opencode.json` decision; and re-reads every
-row claim against the board, per `H3`. rev 13 corrected the `G1` misread and added `H3`; rev 12
-recorded the `A2` decision; rev 11 added the app workstream; rev 10 moved the objective;
+_Last planned: 2026-10-18 (rev 15 — the objective moves to **closing the clean-room walls**, after
+an audit of the loaded agent configuration found them partly aspirational; the audit and workflow
+change-sets are consolidated below with the planner's amendments to their proposals. rev 14 moved
+the objective to `G1`'s bind half and added `H4`; rev 13 corrected the `G1` misread and added `H3`;
+rev 12 recorded the `A2` decision; rev 11 added the app workstream; rev 10 moved the objective;
 rev 9/8/7/6/5/4/3/2/1 are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
-**Land `G1`'s bind half (`#71`) — the reconstruction workstream's first capability.**
+**Close the clean-room walls. An audit of the *loaded* agent configuration found them partly
+aspirational, and that outranks every feature row.**
 
-The capture/ABI phase and the app shell are both closed: `A1`/`A2` are `DONE`, and `#72`/`#73`/`#74`
-— the defects that only appeared once the app ran — landed while this revision was being written.
-That empties the app family and leaves the **reconstruction workstream as the live edge**, with two
-unstarted build rows: **`G1`'s bind half** (`#71` — the three plane toggles reachable from the live
-path, per `#59`'s verdict, decision left to the vendor) and **`G2`'s build** (`#76` — the coverage
-heatmap). If only one runs, **`#71` first**: it is the row the G-thread took four revisions to
-reach, and `#76` explicitly does *not* wait on its recon — `#75` sharpens the alignment rather than
-gating it.
+The audit read the rules opencode actually loaded — not what the `.md` files say — and the
+findings reproduce. The dispatcher can edit anything: its `edit * deny` base rule was lost in a
+recent edit, and its live allows are *broader* than the backup's. The builder's only edit wall is
+the header, so it may write the findings it is meant to consume, the hardware records, `PLAN.md`
+and the CI gate. `.recon-cache` is denied on the **read tool only**; no agent has a shell rule for
+it, so `cat ../Open3DScanner/.recon-cache/<file>` is allowed. The verifier is **not** walled from
+the vendor app, and the builder can launch the verifier as a subagent. `recon-sweep` has **no
+shell denies at all**.
 
-**The round's cheap evidence work rides alongside it: the app launch rerun.** `#72`/`#73` landed
+For a clean-room reimplementation these are not hygiene items — they are the basis of the claim
+that `engine/src` is independently written. `ARCHITECTURE.md` says the walls are "enforced, not
+aspirational". They are not, and **that sentence is itself the drift a third party would rely
+on** — so correcting it is part of the fix, not a footnote to it.
+
+Feature work continues in parallel and contends with none of this: **`G1`'s bind half (`#71`)**
+and **`G2`'s build (`#76`)** are builder rows, **`G2`'s semantics (`#75`)** is recon, and the
+**app launch rerun** is hardware. None of them touches the agent configuration.
+
+**The round's cheap evidence work also rides alongside: the app launch rerun.** `#72`/`#73` landed
 *unverified on hardware*, and that rerun is their gate. It closes **`A3`** (`#65` — blocked on
 exactly those two, now landed, so the block is cleared and the row has not moved) and carries
 **`A4`**'s (`#66`) live check, which the spec folds into the same run. One run, two rows, no new
 code.
 
-Non-competing: **`G2`'s semantics** (`#75`, `RECON`) and **G1's reimplement half** (unfiled).
-
 ## Critical path
 
 ```
-#71 (BUILD — G1's bind half) ─┐
-#76 (BUILD — G2's build)     ─┴─► the reconstruction workstream's first landed capabilities
-the app launch rerun ─► gates #72/#73 (landed, unverified) and closes A3 (#65) + A4 (#66)
-#75 (RECON — G2's semantics)          G1's REIMPLEMENT half — still UNFILED
+THE BOARD IS FULLY DONE — all rows, no queued feature work. What is left is the harness,
+not the product.
 
-A1 · A2 ✅ DONE      H1 · H4 ✅ landed      #53 · #59 · #62 · #64 · #67 · #72 · #73 · #74 ✅ DONE
+WALLS ─► 1 remove the shadow agents (A1) ─► 2 restore the edit denies (W1, W2)
+      ─► 3 shell denies, not on recon (W3, A5) ─► 4 wall the verifier (W4)
+      ─► 5 physical .recon-cache separation (A2)
+      └─► 6 correct ARCHITECTURE's "enforced" sentence
 ```
 
 Ranked by what it frees, not by board order:
 
-1. **`#71`.** The only unstarted capability, unblocked, and the first thing the G-thread has
-   actually reached a build row for across four revisions.
-2. **The app launch rerun.** The evidence gate for two just-landed fixes, and it closes two more
-   rows (`A3` unblocked, `A4` folded in) with no new code. Cheapest rows-cleared on the board.
-3. **`#75`.** G2's semantics, re-derived because the corpus is frozen. Recon; no hardware, so it
-   does not contend with the rerun.
-4. **G1's reimplement half — file it.** `#71` binds the toggles and leaves the vendor's decision in
-   place, and the decision is precisely what the operator complained about. If it stays unfiled it
-   will read as "G1 done" the moment `#71` lands.
+1. **Removing the shadow agents.** Seconds of work, and until it is done every other wall fix is
+   undermined by an agent that may be picked instead. See **A1**.
+2. **Restoring the edit walls** (W1, W2). The dispatcher can edit the header and product source
+   today; the builder can write the findings it is meant to consume. This is the clean-room claim's
+   integrity, not hygiene.
+3. **The `.recon-cache` shell hole** (W3) and **the unwalled verifier** (W4) — mitigation only until
+   the physical separation lands (**A2**), but the cheapest thing available now.
+4. **Correcting `ARCHITECTURE.md`'s walls sentence** — it asserts "enforced, not aspirational",
+   which is false, and it is the claim a third party would rely on.
+5. **Filing G1's reimplement half.** `#71` landed and bound the toggles; the vendor's *decision* —
+   the thing the operator complained about — is still unreimplemented and unrowed. **A board that
+   is fully `DONE` will otherwise read as "plane removal works".** That is the one risk this round
+   creates, and it is created by success.
 
 ## Ready now
 
-| Row | Role | What it needs |
+Nothing on the board — every row is `DONE`. The open work is the harness:
+
+| Item | Role | What it needs |
 | --- | --- | --- |
-| `#71` | builder | G1's bind half — the toggles into the live path. The header already declares them (`#59`). |
-| `#76` | builder | G2's build — the coverage heatmap, from our own cloud and poses. **Not gated by `#75`** (its note says so explicitly). |
-| `A3` (`#65`) | — | **Its block is cleared**: it was blocked on `#72` + `#73`, both landed. It needs the launch rerun; the row itself has not moved. |
-| the launch rerun | hardware / browser | Gates the just-landed `#72`/`#73` and carries `#66`'s live check — one run, two rows. |
-| `#75` | recon | G2's semantics, re-derived — the corpus is frozen. No hardware. |
-| G1's **reimplement** half (unfiled) | builder | The verdict says the vendor's *decision* is what the operator complained about. Needs its own row, or `#71` will quietly read as "G1 done". |
+| the wall change-set (1–5 above) | operator | **Config only, no repo change**, and not dispatchable to a repo role — it lives in `~/.config/opencode/agents/**`. Start with the shadow agents (**A1**). |
+| the doc corrections (6, 9, 10) | dispatcher | `docs/recomp/**`, `CLAUDE.md`, the hardware hook's pattern, `builder.md`'s step numbering. |
+| G1's reimplement half (unfiled) | builder | Needs its own row, or a fully-`DONE` board reads as "plane removal works". |
 
 ## Blocked, and on what
 
@@ -339,6 +351,114 @@ live"). So it is **not a PR**: whoever owns the harness applies it. **Order matt
 instruction file, then compact**, because a compaction re-baselines the session against the current
 instructions.
 
+## Wall integrity and the workflow change-set (rev 15)
+
+Two independent reports — a **workflow audit** (walls, models, drift) and an **optimization
+proposal** (rewrite rates, landing load, context) — were checked against the *live* configuration.
+Every claim the planner spot-checked reproduced from the loaded rules
+(`opencode-cli debug agents`), not merely from the `.md` files. This section consolidates them into
+one change-set, states the planner's amendments and why, and separates what is repo-editable from
+what lives in the harness.
+
+**Provenance.** Both source reports live outside the repo. They are not reproduced here; the
+findings below are the parts that drive rows. If they are wanted as repo artifacts, the dispatcher
+lands them.
+
+### What was verified
+
+| # | Finding | Ground truth (loaded config) |
+| --- | --- | --- |
+| W1 | the dispatcher can edit anything | 4 `edit` allows, **no `edit * deny`** — and the 04:16 backup *had* it |
+| W2 | the builder's edit wall is the header only | one rule: `deny obscan_api.h`; findings, `tests/results`, `PLAN.md`, `.github`, `.claude` all editable |
+| W3 | `.recon-cache` is walled on the **read tool** only | all four agents carry the read deny; none has a shell rule for it, and shell denies match command text alone |
+| W4 | the verifier is not walled from the vendor app | its read denies are `.recon-cache/**` **alone** — no CrealityScan, no `/Library/Creality/` |
+| W5 | `recon-sweep` can start Ghidra through the shell | `shellN: 0` — no shell denies at all, on the fan-out agent |
+| W6 | six shadow agents are live | `agents/openscanner.backup-20261018-041651/` loads as selectable agents |
+| M1 | the model table is wrong in every row | the doc says nemotron/glm/beam/space-bunny; the loop runs deepseek×3 + qwen×2 |
+
+**W1 and W6 are regressions, not omissions.** The `edit * deny` existed in the backup, and the live
+allows are *broader* than the backup's — something dropped a base rule, and the backup preserves a
+copy of the rules that still had it.
+
+### The change-set, ordered
+
+1. **Remove the shadow agents** — `agents/openscanner.backup-*/` out of `agents/`. *(operator, seconds)*
+2. **Restore the edit walls** — `edit * deny` above the allows on dispatch and builder, then
+   builder's allows (`engine/src`, `mesh`, `ui`, `tools`, `tests/hardware`, `**/CMakeLists.txt`).
+   *(operator, config)*
+3. **Shell denies for the vendor/Ghidra patterns**, on every agent **except `recon`**. *(operator)*
+4. **Wall the verifier from the vendor app** — the two read denies plus the rea MCP resource denies
+   the builder already has. *(operator)*
+5. **Make the clean-room wall physical** — move `.recon-cache` out of the repo tree, reachable only
+   by recon. *(operator, larger)*
+6. **Correct `ARCHITECTURE.md`** — the "enforced" sentence, the model table, and the wall-table
+   omissions (recon's `PLAN.md` allow; the dispatcher's `scripts/**` and `/private/var/folders/**`).
+   *(dispatcher, `docs/recomp/**`)*
+7. **Give `analyze`/`reconcile` an agent, or retire the role.** *(operator + `commands/`)*
+8. **Align the models** with the stated reasoning — or rewrite the reasoning. *(operator)*
+9. **Resolve the prompt drift** — land the compaction config and `compact-session.sh`, or delete
+   those lines from the prompt. *(dispatcher)*
+10. **Repo-doc drift** — `CLAUDE.md`'s stale interposer line; the hardware hook's match pattern;
+    `builder.md`'s duplicate step 6. *(dispatcher)*
+11. **One shared instructions file** for the duplicated Secrets / Pre-run blocks. *(operator + repo)*
+12. **A fresh dispatcher session per round.** *(operator)*
+
+### The planner's amendments, and why
+
+**A1 — the shadow agents go first, not third.** The audit ranks them third. Removing them takes
+seconds, and until it is done every wall fix is partly undone by an agent that may be *picked
+instead* — carrying older rules and, in the backup `recon-sweep`, a different model. Fixing the
+front door while a second door stands open.
+
+**A2 — the physical wall is the control, not a hardening step.** The audit concedes that text-pattern
+shell denies are bypassable. That makes step 3 *mitigation* and step 5 the only thing genuinely
+enforced. Do 3 today; start 5 immediately; and **stop describing the walls as enforced** until 5
+lands — which is why amendment 6 is a fix, not a nicety.
+
+**A3 — the recon variant bump has a cost the audit doesn't weigh.** It recommends recon → high or
+max, and the reasoning is sound: spec errors are the most expensive to get wrong. But recon's
+session measured **16.9M input tokens — the largest in the loop**, ~2.7× the dispatcher. Raising the
+variant raises that directly. The honest framing is *"recon at max **and** keep the one-row-per-
+session rule tight"* — the cost driver is the context, not the variant.
+
+**A4 — the two reports conflict on the builder's self-check, and the PR must say which wins.** The
+optimization report (§2.4) wants the builder to run the `/openscanner/verify` checklist exactly; the
+audit (P3) wants the real gate kept independent. Both are right. State the reconciliation in one
+line: **the builder runs the checklist, does not post a verdict, and the independent session still
+posts the SHA-pinned one.**
+
+**A5 — an implementation trap: the Ghidra shell-deny must not reach `recon`.** "Every agent except
+recon" is correct and easy to get wrong. `recon` has `shellN: 0` *by design* — it is the only agent
+that must run Ghidra; `recon-sweep`'s `shellN: 0` is the hole. Name the difference, or someone will
+"fix" recon and remove the loop's only decompile path.
+
+**A6 — the verifier's GitHub identity is a credential.** Wanting one is right, but the change must
+say where it lives — operator credential store, or a GitHub App — and that it never enters the repo,
+a PR body or a comment. Same rule as the OpenCode service password.
+
+**A7 — the optimization report's §2.1 overstates its own effect.** "About half of today's blocking
+findings never reach a PR": the largest single mechanical bucket is stale prose (~7 of ~14), which
+is **not mechanically checkable** — it is §2.3's sweep, a procedure, not a gate. Scriptable are the
+template/`Head` check and the citation checks: perhaps 4–5 of 14. The realistic effect is **a third,
+not a half**, which moves the emphasis onto §2.3 and demotes §2.1 from first place.
+
+**A8 — §5.1 folds the classifier into the party under test.** Folding "spec wrong / impl wrong / test
+wrong" into the hardware record template asks the hw-test agent — which *wrote* the observation — to
+adjudicate whose fault a mismatch is. The audit's own fallback (give `analyze` an agent and a wall)
+preserves the independence. **Retire the role if you like; do not retire the independence.**
+
+**A9 — the planner's own churn, measured this session.** Absent from both reports because it is
+mid-round and pre-PR: **three stale passes on one revision, 9 commits ahead of main, and three
+`rev 14` commits because a pushed hand-off was amended.** Three rules, all cheap: *land a revision
+before starting the next*; *never amend a pushed hand-off* — it rewrites the SHA the branch is
+identified by, and `git cherry` can then never match it; *prefer families to row numbers*, already
+recorded in **`H3`**.
+
+**A10 — §1's `node --check` is already implemented.** `verify-pr.py` carries `ui-js-syntax`, and the
+template/`Head` check exists as **INFO** — so the real work is promoting an existing check to a
+failure. Worth stating because it makes §2.1 cheaper, and because it shows both reports are
+snapshots of a fast-moving loop: **re-check their top-ranked items against the code before landing.**
+
 ## Windows fork — handed off
 
 **Out of scope for the macOS lane.** By operator rule (2026-10-18): Mac sessions work the
@@ -389,30 +509,35 @@ is set there. **Do not open Windows rows from this roadmap.**
 
 For the dispatcher to expand — not dispatches in themselves.
 
-1. **`#71`** → builder: G1's bind half — the three plane toggles into the live path, per `#59`'s
-   verdict. **Wall:** `tools/` + `engine/`; read the header (`obscan_api.h:748-767`), do not edit
-   it. **And file G1's reimplement half separately** — `#71` leaves the vendor's decision in place,
-   and that decision is exactly what the operator complained about.
-2. **The launch rerun** → hardware / browser: the `#65` spec, which folds in `#66`'s steps 5–6.
-   Gates the just-landed `#72`/`#73`, closes `A3`, and carries `A4`'s live check. **Wall:**
-   `tests/results/**`.
-3. **`#75`** → recon: G2's semantics, re-derived because the corpus is frozen. One target, no
-   hardware, so it does not contend with the rerun.
+1. **The wall change-set** → operator: **config only, no repo change**, and it cannot be dispatched
+   to a repo role — it lives in `~/.config/opencode/agents/**`. Work it in the order given in
+   **Wall integrity**: shadow agents first (**A1**), then the edit denies (W1/W2), the shell denies
+   (W3, not on `recon` — **A5**), the verifier's vendor denies (W4), then start the physical
+   `.recon-cache` separation (W5/**A2**).
+2. **`ARCHITECTURE.md` corrections** → dispatcher: the walls sentence asserts "enforced, not
+   aspirational" and it is false; the model table is wrong in all six rows; the wall table omits
+   recon's `PLAN.md` allow and two dispatcher allows. `docs/recomp/**`.
+3. **The prompt drift** → dispatcher (`H4` item 1 is unlanded): either land the repo-root
+   `opencode.json` and `scripts/compact-session.sh`, or delete those lines from the dispatcher
+   prompt. Today the prompt states as fact a setting that is not applied. **Land the config *and*
+   the script, or remove both references** — half-landing is what produced the drift.
+4. **G1's reimplement half** → file it: `#71` bound the toggles and left the vendor's decision in
+   place, and the decision is what the operator complained about. **A fully-`DONE` board must not
+   read as "plane removal works".**
 
-And one repo-side housekeeping order — **`H4`'s change-set**, which the dispatcher lands:
-
-4. **`opencode.json` + the tier fix** → dispatcher: add the repo-root `opencode.json`
-   (`compaction.auto: true`, `keep.tokens: 60000`; no mode change, no `buffer`) and add
-   `opencode.json`/`opencode.jsonc` to `scripts/verify-pr.py`'s agent tier **in the same PR**, so
-   the config that steers every agent here does not auto-merge with no judgment pass. **Wall:** a
-   new root file plus `scripts/**` — agent-tier, so it needs a verifier verdict.
-   The `## Context` section for the **global** `dispatch.md` is **not** part of that PR: the repo
-   does not carry agent definitions, so whoever owns the harness applies it, **editing the agent
-   file before the next compaction** (a compaction re-baselines the session against current
-   instructions).
+**Ordering note.** Items 1–3 are integrity and drift; item 4 is a row for feature work that the
+board no longer represents. None of them competes for the same resource: 1 is config, 2–3 are repo
+docs, 4 is a filing.
 
 ## Superseded plans
 
+- **2026-10-18 rev 14 → rev 15 — the objective moves to the walls, and two outside reports are
+  consolidated.** An audit of the loaded agent configuration found the clean-room walls partly
+  aspirational — verified here against `opencode-cli debug agents`, not the `.md` files — so the
+  walls outrank the feature rows. Rev 15 folds that audit and an optimization report into one
+  change-set, states **ten amendments with reasoning** (`A1`–`A10`), and reorders the proposals
+  (shadow agents first, §2.1 demoted, §5.1's independence preserved). Reversal reason: a new input
+  that changes what the most important work is, not a change of direction in the features.
 - **2026-10-18 rev 13 → rev 14 — the objective moves to `G1`'s bind half, plus `H4` and a full row
   re-read.** The app shell and its run-discovered defects (`#72`/`#73`/`#74`) all landed while this
   revision was being written, so the only unstarted capability left is `#71`. Rev 14 adds **`H4`** —
