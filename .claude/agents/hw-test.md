@@ -120,8 +120,11 @@ and the file; never edit the record in place.
 
 - Record the exact command, the exit code, and the full stdout/stderr.
 - Quote failures verbatim; never paraphrase a failure into a softer claim.
-- Distinguish "not observed in this run" from "does not happen".
 - A partial or aborted run reports only what it observed.
+- **A record is write-once once it is handed over.** Once a record has gone to the dispatcher — it is in a PR
+  or on `main` — do not edit that file again, not even a typo. The dispatcher applies pre-merge corrections
+  (one line, with a verifier's wording); after landing, a correction is a dated addendum. A new run is a new
+  record. The worktree sync refuses a record that differs from `main` for exactly this reason.
 
 ## Output
 
