@@ -1,8 +1,10 @@
 # OpenScanner
 
 An open-source macOS/Windows application for Creality (Orbbec-based) 3D
-scanners, built as a clean-room replacement for CrealityScan's app layer.
-Development is starting on MacOS with a Creality Raptor Pro
+scanners, built as a clean-room replacement for CrealityScan. Development is
+starting on MacOS with a Creality Raptor Pro; the project's current aim is
+**full host-side independence** from Creality's closed stack — see
+[Direction](#direction-full-host-side-independence) below.
 
 ## What this is, concretely
 
@@ -227,34 +229,49 @@ The app's cloud/account/analytics layer (model upload, device
 registration/verification, telemetry) is intentionally **not** part of this
 project. OpenScanner is local-only.
 
-## Possible future direction: dropping OBScan entirely
+## Direction: full host-side independence
 
-The vendor stack actually splits into two layers, and only one of them is
-closed. The low-level camera/USB layer (`libOrbbecSDK.1.7.1.dylib`) is
-Orbbec's own **public, open-source** SDK — the same one published on
-GitHub for their other camera lines, built on `rpclib`/msgpack-RPC, not
-Creality- or CrealityScan-specific code. Only `liborbbec_scan` (OBScan) —
-the scanning-specific depth fusion, laser calibration (`camera_user_calib`,
-a separate OpenCV-based tool bundled in the app), and mesh pipeline built
-*on top of* that open SDK — is the closed, OEM-licensed part this project
-currently binds against.
+The project's aim is no longer to bind Creality's closed stack well — it is to
+remove it from the host entirely. The roadmap's objective and the feasibility
+assessment behind it live in `docs/recomp/ROADMAP.md` and
+`docs/recomp/FULL-INDEPENDENCE.md`; the short version:
 
-That means there's a real, scoped alternative to reverse-engineering
-OBScan's ABI if its remaining bugs (see "Known issues") turn out to be
-unfixable from the outside, or if full independence from Creality/Orbbec's
-closed code becomes a goal in its own right: talk to the Raptor Pro
-directly via the public OrbbecSDK for raw stereo IR/depth frames (bypassing
-`obscan_*` entirely), and implement our own laser-line triangulation and
-point-cloud fusion on top — open-source and auditable, instead of a
-black-box reimplementation of Creality's algorithms. This is a materially
-bigger undertaking than the current binding approach (it means owning
-calibration and depth reconstruction, not just device I/O and lifecycle
-management), so it's not the current plan — but it's the right next step
-if OBScan's own bugs prove unfixable, not a full rewrite starting from raw
-USB protocol work.
+- **Replace OBScan** — the scanning algorithms (laser-line extraction,
+  triangulation, tracking, fusion, meshing) — with our own implementation,
+  built incrementally on top of the vendor's own output so the product stays
+  usable throughout.
+- **Replace the Orbbec device library and Creality's RPC daemon** with our own
+  client, then our own USB layer.
 
-Not yet verified: whether the public OrbbecSDK's device list actually
-includes the Raptor Pro's PID (`0x0c03`/`3075`) as supported.
+Two findings make this feasible, both from wire observation (protocol captures
+of a full CrealityScan session; no vendor binary was read):
+
+1. **The device is a dumb sensor.** Laser pattern sequencing and auto-exposure
+   are host-side software loops, and depth is computed on the host from raw
+   stereo IR — the scanner's firmware streams cameras, drives the laser on
+   command, and serves flash.
+2. **The protocol is fully observed.** The daemon speaks msgpack-RPC over TCP
+   (GigE-Vision discovery on UDP 3956), and the device-facing vendor commands
+   use Orbbec's standard framing, defined in the public SDK's protocol
+   headers. Calibration is readable from device flash over that same observed
+   transport; the camera intrinsics are already readable from the host session
+   cache.
+
+The path runs **spec → own RPC client → own the scanning math → replace the
+daemon**, each phase leaving a working product. Firmware replacement is
+explicitly **not** part of it: the device's intelligence lives on the host, and
+reflashing carries a real bricking risk for little gain — it stays a future
+research track, gated on a proven recovery path.
+
+On the licensing question this section used to get wrong: the Orbbec
+repositories on GitHub are **not** interchangeable. `orbbec/OrbbecSDK` is the
+*pre-compiled* v1&v2 repo; `orbbec/OrbbecSDK_v2` is the open-source one — a
+different codebase that does not list this device (its PID is absent from
+every family's table, and a live enumeration probe saw zero devices). Its
+license is also not verified as MIT. Nothing here depends on either: the
+replacement path is built from wire observation and our own code, and the
+clean-room posture — recon writes specs from observation, the builder never
+sees captures or vendor code — is a standing constraint.
 
 ## Building
 

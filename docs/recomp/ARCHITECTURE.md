@@ -22,7 +22,7 @@ artifact: the only thing both sides agree on, and the thing a human reviews.
 
 | Agent | Mode | Writes | Model |
 | --- | --- | --- | --- |
-| `openscanner/dispatch` | primary | `docs/recomp/**`, `.claude/**` | `opencode/nemotron-3-ultra-free` |
+| `openscanner/dispatch` | primary | `docs/recomp/**`, `.claude/**`, `README.md` | `opencode/nemotron-3-ultra-free` |
 | `openscanner/planner` | primary | `docs/recomp/ROADMAP.md` | `opencode/nemotron-3-ultra-free` |
 | `openscanner/recon` | primary | `obscan_api.h`, `docs/recon/**` | `opencode/glm-5.3-flash-free#max` |
 | `openscanner/builder` | primary | `engine/src`, `mesh`, `ui`, `tools` | `opencode/beam-free#high` |
@@ -60,7 +60,7 @@ explicitly — otherwise fan-out would run on recon's `#max` model, which is bac
 
 | | `edit` | `read .recon-cache` | `rea_*` | may launch |
 | --- | --- | --- | --- | --- |
-| `dispatch` | `docs/recomp` + `.claude` | **deny** | **deny** | `verifier` only |
+| `dispatch` | `docs/recomp` + `.claude` + `README.md` | **deny** | **deny** | `verifier` only |
 | `planner` | `docs/recomp/ROADMAP.md` | **deny** | **deny** | `verifier` only |
 | `recon` | header + `docs/recon` | allow | allow | `recon-sweep`, `verifier` |
 | `builder` | src dirs; **deny header** | **deny** | **deny** | `verifier` only |
@@ -82,8 +82,9 @@ Three rules carry the design:
 
 The dispatcher is walled the same way and for the same reason: it orchestrates the
 round but cannot touch vendor code, the header, or product source. Its `edit` reach is
-the board and the harness guardrails — so nothing about who is coordinating the work
-widens the wall around `engine/src/`.
+the board, the harness guardrails, and the README — the doc surfaces it already watches
+for drift — so nothing about who is coordinating the work widens the wall around
+`engine/src/`.
 
 The planner keeps the identical wall: it sequences the work, so it has even less reason
 than the dispatcher to see the vendor's code, and a plan that leaned on vendor access
