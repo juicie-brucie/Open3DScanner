@@ -1,12 +1,22 @@
 # Windows handover order — the first cross-machine run (`mac #115` / `win #113`)
 
-**Status: DRAFT — the go-ahead is not given.** It waits on: the Mac's **#127 live reply dump**
+**Status: DRAFT — the go-ahead is not given.** It waits on the **operator's explicit cable decision**
+(A: Windows first / B: Mac #127 first) and on an **enumerated device**; and on: the Mac's **#127 live reply dump**
 (the client landed as #327; the live run waits on the device) and on the fork's **`win #122`/`win #123`**
 (the loader fix and the vendor crash) plus a replug. **#124's container identification is done** — the
 container is named from the 11 captured frames, no device needed. **`win #114` is not a wait**:
 `RECONCILE.md` is merged (`ea740c2`) and has been applied once (producing `win #122`–`#124`); it runs on the
 first `win #113` record before any board move is claimed, as step 10 says. `win #120`/`win #121` have merged
 too — PR #28 @ `4d893d5`.
+
+## Who runs this — agents prepare, the operator executes
+
+**No agent is dispatched a hardware run.** The Windows lane prepares the tree, the preflight/readiness
+checks and the record template, and verifies the evidence afterwards; **the operator, from Claude Code on
+the Windows host, executes the six conditions and the `scan_server` device session** (fork
+`WINDOWS-FORK.md` §7, the live-rate runbook's "Who runs this", `win #113`'s note). The go-ahead is
+addressed to the **operator**, not to a Windows agent. The same rule holds on the Mac: the operator runs
+the device tests from the hw session, and agents only prepare and verify.
 
 ## Physical state and cable allocation (2026-10-19)
 
@@ -64,15 +74,16 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 
 1. Mac: stop the daemon; confirm nothing holds the device; release the cable.
 2. Operator moves the cable to Windows.
-3. Windows: confirm enumeration (`VID_2BC5`, Depth/IR/RGB).
+3. **Operator**: confirm enumeration (`VID_2BC5`, Depth/IR/RGB). **Do not run against an empty host** —
+   `VID_2BC5` = 0 is a precondition failure, not a test result.
 4. Windows: start `CrealityScan.exe`; confirm the daemon; record the app/UI state chosen.
-5. Windows: `scripts/hw-preflight.ps1 scan_server` — prints the **load PASS/FAIL** and the
-   **daemon PASS/FAIL** (process proxy), each with a reason.
-6. Windows: **synthetic dry run** — `scan_server <port>` (synthetic is the default; there is no
+5. **Operator, on the Windows host**: `scripts/hw-preflight.ps1 scan_server` (prepared by the lane) —
+   prints the **load PASS/FAIL** and the **daemon PASS/FAIL** (process proxy), each with a reason.
+6. **Operator**: the **synthetic dry run** — `scan_server <port>` (synthetic is the default; there is no
    `--synthetic` flag). Confirm `GET /` → **200 `text/html`**, a WebSocket upgrade → **101**, and the
    UI's `data`/`render` fields producing numbers with **no device**. This validates the server/UI path
    before the live run, and it is the step whose absence produced the #115 failure.
-7. Windows: the run — the six **conditions** × the six **result fields**.
+7. **Operator**: the run — the six **conditions** × the six **result fields**.
 8. Windows: postflight; the record written to `tests/results/`.
 9. Operator returns the cable; Mac: restart the daemon and confirm enumeration.
 10. The fork's `win #114` reconcile runs **before any board move** is claimed from the record.
