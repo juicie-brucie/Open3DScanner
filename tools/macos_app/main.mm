@@ -1,4 +1,4 @@
-// Programmatic macOS shell for the OpenScanner viewer (rows A2 + A3).
+// Programmatic macOS shell for the OpenScanner viewer (rows A2–A4).
 // No storyboard, no asset catalog: an NSWindow + WKWebView pointed at the
 // worker's origin (A1 serves ui/ on the same port as the WebSocket).
 // The app spawns and supervises the capture worker, and quitting sends it
@@ -9,29 +9,40 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 
+#include <arpa/inet.h>
 #include <csignal>
 #include <cstdlib>
+#include <netinet/in.h>
 #include <string>
+#include <sys/socket.h>
+#include <unistd.h>
 
 @interface OpenScannerAppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate>
 @property(nonatomic, strong) NSWindow* window;
 @property(nonatomic, strong) WKWebView* webView;
 @property(nonatomic, strong) NSTask* worker;
 @property(nonatomic, assign) BOOL quitting;
+@property(nonatomic, assign) BOOL restarting;
+@property(nonatomic, assign) BOOL reloadAfterRestart;
 @property(nonatomic, assign) NSInteger retryCount;
 @property(nonatomic, copy) NSURL* pageURL;
+@property(nonatomic, assign) NSInteger port;
+@property(nonatomic, assign) NSInteger sessionSeconds;
 @end
 
 @implementation OpenScannerAppDelegate
 
-- (NSString*)resolveLibraryPath {
+- (NSArray<NSString*>*)librarySearchPaths {
     const char* env = std::getenv("OPENSCANNER_LIBRARY");
-    if (env != nullptr && env[0] != '\0') return [NSString stringWithUTF8String:env];
-    NSArray<NSString*>* candidates = @[
-        @"/Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib",
-    ];
-    for (NSString* c in candidates) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:c]) return c;
+    NSMutableArray<NSString*>* paths = [NSMutableArray array];
+    if (env != nullptr && env[0] != '\0') [paths addObject:[NSString stringWithUTF8String:env]];
+    [paths addObject:@"/Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib"];
+    return paths;
+}
+
+- (NSString*)resolveLibraryPath {
+    for (NSString* p in [self librarySearchPaths]) {
+        if ([[NSFileManager defaultManager] fileExistsAtPath:p]) return p;
     }
     return @"";
 }
@@ -68,6 +79,25 @@
     self.retryCount = 0;
 }
 
+// Bounded pre-flight: is something already listening on the configured
+// port? If so the worker's server.Start() would fail; report it with the
+// port number instead of letting the worker exit opaquely.
+- (BOOL)isPortInUse:(NSInteger)port {
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0) return NO;
+    struct sockaddr_in addr = {};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons((uint16_t)port);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    struct timeval tv = {};
+    tv.tv_sec = 0;
+    tv.tv_usec = 200000;
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    BOOL in_use = connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == 0;
+    close(fd);
+    return in_use;
+}
+
 - (void)startWorker {
     NSString* workerPath = [self resolveWorkerPath];
     if (workerPath.length == 0) {
@@ -76,13 +106,21 @@
     }
     NSString* library = [self resolveLibraryPath];
     if (library.length == 0) {
-        [self surfaceError:@"CrealityScan's liborbbec_scan.dylib was not found. Install CrealityScan "
-                           @"or set OPENSCANNER_LIBRARY."];
+        NSMutableString* msg = [NSMutableString stringWithString:
+            @"CrealityScan's liborbbec_scan.dylib was not found.\n\nSearched:\n"];
+        for (NSString* p in [self librarySearchPaths]) [msg appendFormat:@"  • %@\n", p];
+        [msg appendString:@"\nInstall CrealityScan, or set OPENSCANNER_LIBRARY to the dylib."];
+        [self surfaceError:msg];
         return;
     }
-    const char* port_env = std::getenv("OPENSCANNER_PORT");
-    NSString* port = port_env != nullptr ? [NSString stringWithUTF8String:port_env] : @"8787";
-    NSString* seconds = @"300";
+    if ([self isPortInUse:self.port]) {
+        [self surfaceError:[NSString stringWithFormat:
+            @"Port %ld is already in use by another process.\n\nUse Settings (Cmd-,) to choose a "
+            @"different port, or quit the other program.", (long)self.port]];
+        return;
+    }
+    NSString* port = [NSString stringWithFormat:@"%ld", (long)self.port];
+    NSString* seconds = [NSString stringWithFormat:@"%ld", (long)self.sessionSeconds];
 
     self.worker = [[NSTask alloc] init];
     self.worker.launchPath = workerPath;
@@ -97,10 +135,15 @@
             if (self == nil) return;
             if (self.quitting) {
                 [NSApp replyToApplicationShouldTerminate:YES];
+            } else if (self.restarting) {
+                self.restarting = NO;
+                [self startWorker];
+                [self reloadPageIfNeeded];
             } else if (status == 0) {
                 // A designed session end (bounded session length) is a clean
                 // exit, not a crash.
-                self.window.title = @"OpenScanner — session ended";
+                self.window.title = [NSString stringWithFormat:@"OpenScanner — session ended (%ld s)",
+                                                               (long)self.sessionSeconds];
             } else {
                 [self surfaceError:[NSString stringWithFormat:@"Capture worker exited unexpectedly (status %d).",
                                                               status]];
@@ -123,8 +166,92 @@
     [alert runModal];
 }
 
+- (void)reloadPageIfNeeded {
+    if (!self.reloadAfterRestart) return;
+    self.reloadAfterRestart = NO;
+    self.retryCount = 0;
+    [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+}
+
+- (void)restartWorker {
+    if (self.worker != nil && self.worker.running) {
+        self.restarting = YES;
+        kill(self.worker.processIdentifier, SIGTERM);
+    } else {
+        [self startWorker];
+        [self reloadPageIfNeeded];
+    }
+}
+
+- (void)showSettings:(id)sender {
+    (void)sender;
+    NSAlert* alert = [[NSAlert alloc] init];
+    alert.messageText = @"OpenScanner Settings";
+    alert.informativeText = @"Applied on OK; the worker restarts and the page reloads for a port change. "
+                             @"Quit always runs the full teardown.";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    NSView* accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 260, 56)];
+    NSTextField* portLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 32, 80, 20)];
+    portLabel.stringValue = @"Port";
+    portLabel.editable = NO;
+    portLabel.bezeled = NO;
+    portLabel.drawsBackground = NO;
+    NSTextField* portField = [[NSTextField alloc] initWithFrame:NSMakeRect(90, 30, 160, 24)];
+    portField.stringValue = [NSString stringWithFormat:@"%ld", (long)self.port];
+    NSTextField* secsLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 4, 80, 20)];
+    secsLabel.stringValue = @"Session (s)";
+    secsLabel.editable = NO;
+    secsLabel.bezeled = NO;
+    secsLabel.drawsBackground = NO;
+    NSTextField* secsField = [[NSTextField alloc] initWithFrame:NSMakeRect(90, 2, 160, 24)];
+    secsField.stringValue = [NSString stringWithFormat:@"%ld", (long)self.sessionSeconds];
+    [accessory addSubview:portLabel];
+    [accessory addSubview:portField];
+    [accessory addSubview:secsLabel];
+    [accessory addSubview:secsField];
+    alert.accessoryView = accessory;
+
+    if ([alert runModal] != NSAlertFirstButtonReturn) return;
+    NSInteger oldPort = self.port;
+    NSInteger port = portField.stringValue.integerValue;
+    NSInteger secs = secsField.stringValue.integerValue;
+    if (port < 1 || port > 65535 || secs < 1 || secs > 3600) {
+        [self surfaceError:@"Port must be 1–65535 and session length 1–3600 seconds."];
+        return;
+    }
+    self.reloadAfterRestart = (oldPort != port);
+    self.port = port;
+    self.sessionSeconds = secs;
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setInteger:port forKey:@"OpenScannerPort"];
+    [defaults setInteger:secs forKey:@"OpenScannerSessionSeconds"];
+    self.pageURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%ld/", (long)port]];
+    self.window.title = [NSString stringWithFormat:@"OpenScanner — port %ld, session %ld s",
+                                                   (long)port, (long)secs];
+    [self restartWorker];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
     (void)notification;
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    NSInteger savedPort = [defaults integerForKey:@"OpenScannerPort"];
+    self.port = (savedPort >= 1 && savedPort <= 65535) ? savedPort : 8787;
+    NSInteger savedSecs = [defaults integerForKey:@"OpenScannerSessionSeconds"];
+    self.sessionSeconds = (savedSecs >= 1 && savedSecs <= 3600) ? savedSecs : 300;
+
+    // Programmatic menu (no storyboard): app menu with Settings… and Quit.
+    NSMenu* menuBar = [[NSMenu alloc] init];
+    NSMenuItem* appItem = [[NSMenuItem alloc] init];
+    [menuBar addItem:appItem];
+    NSMenu* appMenu = [[NSMenu alloc] init];
+    [appMenu addItemWithTitle:@"Settings…" action:@selector(showSettings:) keyEquivalent:@","];
+    [appMenu addItem:[NSMenuItem separatorItem]];
+    [appMenu addItemWithTitle:@"Quit OpenScanner" action:@selector(terminate:) keyEquivalent:@"q"];
+    appItem.submenu = appMenu;
+    [NSApp setMainMenu:menuBar];
+
     NSRect frame = NSMakeRect(0, 0, 1200, 800);
     self.window = [[NSWindow alloc] initWithContentRect:frame
                                               styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
@@ -140,10 +267,10 @@
     self.webView.navigationDelegate = self;
     self.window.contentView = self.webView;
 
-    const char* port_env = std::getenv("OPENSCANNER_PORT");
-    NSString* port = port_env != nullptr ? [NSString stringWithUTF8String:port_env] : @"8787";
-    self.pageURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%@/", port]];
+    self.pageURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%ld/", (long)self.port]];
     self.retryCount = 0;
+    self.window.title = [NSString stringWithFormat:@"OpenScanner — port %ld, session %ld s",
+                                                   (long)self.port, (long)self.sessionSeconds];
 
     [self.window center];
     [self.window makeKeyAndOrderFront:nil];
