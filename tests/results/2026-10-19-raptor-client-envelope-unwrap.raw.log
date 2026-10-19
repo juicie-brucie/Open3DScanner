@@ -1,0 +1,54 @@
+=== row #122 envelope unwrap: device-free checks ===
+--- date: 2026-10-19 17:25:53 EDT ---
+
+### 1. the selftests (ctest) ###
+Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build3/build
+    Start 3: raptor_client_selftest
+1/2 Test #3: raptor_client_selftest ...........   Passed    0.01 sec
+    Start 4: raptor_client_reply_timeout
+2/2 Test #4: raptor_client_reply_timeout ......   Passed    0.31 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.33 sec
+exit: 0
+
+### 2. the dry-run against the capture file ###
+[replay] 36 frame(s) from docs/recon/findings/streaming-replay-payloads.hex (dry-run: not sent)
+[replay] cadence: 36 frame(s), capture span 256 ms, mean gap 10.74 ms, first-frame wait 250 ms (backward stamps clamped to 0)
+[replay] interfaces: IR 13 (span 256 ms) / depth 23 (span 211 ms)
+exit: 0
+
+### 3. the replay against a mock answering [1, msgid, nil, bin(3)] ###
+[replay] frame 35 (0-2-10) -> bin(3) head=[0a 0b 0c]
+[replay] frame 36 (0-2-10) -> bin(3) head=[0a 0b 0c]
+[replay] done: bin=36 empty=0 error=0
+exit: 
+--- what each port received ---
+IR(0-2-12) listening on 19990
+depth(0-2-10) listening on 19991
+IR(0-2-12) accepted
+depth(0-2-10) accepted
+IR(0-2-12) received all 13 frames
+depth(0-2-10) received all 23 frames
+
+### 4. the live path against a mock answering [1, msgid, nil, bin(3)] ###
+[live] connected 127.0.0.1:19992 (pull_ms=0, per-call logging=on)
+[live] start_stream -> true
+[live] saved first frame: /private/var/folders/pm/qtldpwfn5rd4jb7bz747zbnm0000gn/T/opencode/env_frame.raw (3 bytes)
+[live] GET_FRAME #1 -> bin(3) head=[0a 0b 0c]
+exit: 
+
+### 5. the live path against a mock answering the ERROR reply [1, msgid, 'boom', nil] ###
+[live] start_stream failed: boom
+[live] connected 127.0.0.1:19993 (pull_ms=0, per-call logging=on)
+
+### 6. the same two mocks against the PRE-#122 build (the contrast) ###
+-- replay, pre-#122 build:
+[replay] frame 36 (0-2-10) -> kind=7
+[replay] done: bin=0 empty=36 error=0
+-- live, pre-#122 build, against the error mock:
+[live] connected 127.0.0.1:19996 (pull_ms=0, per-call logging=on)
+[live] start_stream -> non-error
+[live] GET_FRAME #1 -> empty (kind=0)
+[live] SET prop=3 value=0 reqid=1 -> rpc kind=0
