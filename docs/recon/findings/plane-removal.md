@@ -77,11 +77,11 @@ work.
 
 **Risks of binding:** (a) the *quality* is the vendor's — the operator's "it
 does not work at all" is a quality complaint, and binding changes nothing
-about it; (b) the manual-plane semantics are opaque: the setter takes a
-`{int, bool, plane}` config but the *getter* reads a `{pointer, count}`
-point-list shape at the same offsets (§4), so what the plane *means* to the
-removal is not fully pinned; (c) the removal's effect is only observable
-through the cloud getters.
+about it; (b) the manual-plane semantics are **reconciled (row #70)**: the
+setter's `{int, bool, plane}` and the getter's `{pointer, count}` are two
+distinct 0x18-byte structs (§4), and the plane is the cut plane (live at
+`dataMgmt+0x50`, persisted for the executor); (c) the removal's effect is only
+observable through the cloud getters.
 
 **Reimplement (our own RANSAC/signed-distance) is the right call for the
 *decision*, not for the plumbing** — if and when the goal is removal *quality*
@@ -100,12 +100,32 @@ hook to substitute its decision.
 - **`OBScanManualRPConfig_` = 0x18 bytes**, the setter's shape
   `{int32_t @0x00; bool enabled @0x04; pad; OBScanPlane_ plane @0x08}` (row
   #58; the wrapper reads `+0x4` as the bool and passes `&+0x8` as the plane).
-- **Discrepancy to carry:** the *getter*'s config copy is the same `0x18`
-  bytes but read as `{…; pointer @0x08; uint32 count @0x10}` — an array of
-  16-byte `{3×f32, pad}` points scaled ×1000.0 (`0x6fbee0`–`0x6fbf1c`). So the
-  getter's argument is a *point list* (the manual plane's defining points)
-  while the setter's is a *plane + flags*: same size, different shapes. Until
-  that is reconciled, the getter stays undeclared (a residual).
+- **Reconciled (row #70): two distinct structs of the same size — and the
+  getter is now declared.** The setter's `+0x08` is an `OBScanPlane_` **by
+  value**: the native (`0x5c5c0`) passes `&config+0x8` straight to
+  `update_realtime_manual_rm_plane(bool, OBScanPlane_ const&)` (`0x5c624`),
+  which copies 16 bytes into the state (`0x7016e8`). The getter's `+0x08` is a
+  **pointer**: its native (`0x6fbe94`) reads `[config+0x08]` as the base of a
+  16-byte-stride `{3×f32, pad}` array with `[config+0x10]` as the count, scales
+  ×1000.0 and iterates (`0x6fbee0`–`0x6fbf1c`); the getter's wrapper copies the
+  caller's 0x18 bytes **without inspecting them** (`0xf870`–`0xf87c`). So the
+  two exports' C structs are the same size but **not interchangeable** — the
+  SDK's own `OBScanManualRPConfig_` (the getter's) is a point-list view, while
+  the C API's setter struct is `{state, enabled, plane}`. The getter's out is
+  written as an `OBScanPlane_` (4 floats at `+0x00`–`+0x0c`;
+  `0x6fc318`/`0x6fc360`). Declared in the header as `ObScanManualRPPoints` +
+  `fn_obscan_scan_get_manaul_remove_plane` (with the ABI asserts); the prefix
+  (`+0x00`/`+0x04`) is unread on the getter's path and is declared reserved.
+
+- **What the plane means to the per-frame removal:** the setter's plane is the
+  **cut plane**, held live at `dataMgmt+0x50` (the realtime config
+  `get_realtime_config` reads back, `0x7016f8`); the per-frame executor
+  (`remove_plane_each_frame_data`, §3) works from the **persisted**
+  `SerializableRemovePlaneManualInfo`, so the live plane is the app-facing
+  state and the persisted manual info is what the executor replays
+  `[inferred: the executor's exact use of the persisted plane]`. The getter's
+  point list is the *input* the SDK derives a plane from — points in, plane
+  out (a compute helper, not a state read).
 - **G1 needs the plane layout** (to construct one for the setter) — it is now
   recovered; the header declarations for the three toggles + the two structs
   are added alongside this spec.
