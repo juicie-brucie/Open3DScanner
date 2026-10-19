@@ -1,0 +1,27 @@
+# raw: frame_decode over the 11 extracted bands (row #125)
+# cmd: tools/frame_decode/frame_decode.py --index /tmp/fb-a --slot 4 --out /tmp/fd_real
+name                                   rows  partial  len     rows*1920  min  max  mean   0xFF%   bytes-close
+depth_000001_slot4                         6      730   12250     11520    0  255  38.97   1.62%  yes
+depth_000004_slot4                         6      737   12257     11520    0  255 172.63  49.96%  yes
+depth_000007_slot4                         6      730   12250     11520    0  255 179.92  48.40%  yes
+depth_000010_slot4                         6      723   12243     11520    0  255 199.62  65.53%  yes
+depth_000013_slot4                         6      724   12244     11520    0  255 192.08  60.13%  yes
+depth_000016_slot4                         6      720   12240     11520    0  255 190.40  61.48%  yes
+depth_000019_slot4                         6      714   12234     11520    0  255 189.18  58.66%  yes
+depth_000022_slot4                         6      721   12241     11520    0  255 190.11  57.94%  yes
+depth_000025_slot4                         6      601   12121     11520    0  255 186.24  59.05%  yes
+depth_000028_slot4                         6      598   12118     11520    0  255 144.88   8.01%  yes
+ir_000001_slot4                            6      756   12276     11520   15   51  16.50   0.00%  yes
+frame_decode: 11 band(s); assembly rule is OPEN — --band-offset is a hook, not a rule
+# exit=0
+# --- fixture sha256 ---
+559699c7563cad8d03d3cbc300fb621c17c837e12b4ad1bf59024ed2d016ef40  tools/frame_decode/fixtures/depth_band.bin
+c25c9f365f78ba6fe085822beb311bf371dd8aec98206b1cbcaf6afdca696b5b  tools/frame_decode/fixtures/ir_band.bin
+# --- rendered pgm sha256 (fixtures) ---
+23bf39c66f2e37a41096c2e4fbde2adb2d824ce28b4cc4d6d87b16335166e4a4  /tmp/fd_fix2/depth_band.pgm
+5aaf4fe599436e976ae49c9d72c31db58a19d94dacc84f3aec1ecf343dfe9073  /tmp/fd_fix2/ir_band.pgm
+# --- ctest ---
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.28 sec
