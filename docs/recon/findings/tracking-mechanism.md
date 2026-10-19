@@ -38,9 +38,12 @@ the SCANNING_FAILED emitters) for a `+0x98` initializer/other accessor.
 const&, ProgressReporter const&)` (`0x933294`) is called from the three global
 optimization paths — `OrbbecScanSpeckle::marker_global_optimization`
 (`0x6e2f4`), `laser::OBScanLaserMarkerOptimization::global_optimization`
-(`0xa51b8`), `OrbbecScanLaser::global_optimization` (`0xd1558`) — the same
-paths that read `BaSolverContext::get_ba_info()` (2–3 reads each) and enforce
-row #75's `>= 60` valid-frame gate. `_opt_reassociate_markers` (`0x9301dc`) is
+(`0xa51b8`), `OrbbecScanLaser::global_optimization` (`0xd1558`). Each cite is
+**the `solve()` call site** inside that function (~0x100 past
+`scan-quality-gate.md` §1's cites of the same functions, which are the "too few
+frames" gate instructions) — the same paths that read
+`BaSolverContext::get_ba_info()` (2–3 reads each) and enforce row #75's
+`>= 60` valid-frame gate. `_opt_reassociate_markers` (`0x9301dc`) is
 the outlier/re-association step.
 
 **Consumes** — the Ceres residuals (all `mkscan::`):
@@ -84,7 +87,10 @@ interfaces to align with are ours already: the pose convention
 tracking-status enum (row #78) — so an owned tracker can feed the same getters'
 data model without new ABI.
 
-**Cannot be settled statically:** the BA's internal validity criterion (which
-poses it trusts — inside the Ceres solve; named, not derivable), the status's
-fresh-value origin (§1's follow-up), and `MkPublicOptions`' contents (the BA's
-configuration).
+**Not settled — one follow-up read named (see §1):** the status's fresh-value
+origin is the one item with a static next step (the `RingBufferFrameMsgImpl`
+constructor and the realtime scan loop's frame building).
+
+**Not statically settleable:** the BA's internal validity criterion (which
+poses it trusts — a runtime-numeric decision inside the Ceres solve; named, not
+derivable) and `MkPublicOptions`' contents (runtime configuration).
