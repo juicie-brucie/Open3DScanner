@@ -461,6 +461,39 @@ their triggers and cheapest retirements.
 
 Both are the operator's, both config-or-filesystem, and neither is dispatchable to a repo role.
 
+**One correction to "fixed" — verified 2026-10-19, and it is the wall's mechanism, not its named
+paths.** `W2`'s *named* leaks are closed: the builder can no longer write the findings it consumes,
+the hardware records, `PLAN.md`, `.github/**` or `.claude/**`. But it is **not the mechanism the audit
+specified**. The audit asked for `edit * deny` plus allows; what landed is **seven denies, zero
+allows, and no blanket deny** (`blanket_deny: 0`). An enumeration closes the paths it names and
+**nothing else** — so the builder still reaches `README.md`, `CLAUDE.md`, `docs/research/**`,
+`docs/architecture/**`, `docs/tooling/**` and `THIRD_PARTY_LICENSES.md`, silently, by the **absence**
+of a rule rather than by a decision.
+
+**That is why the root README still carries a factual error.** No role *owns* it: it appears in no
+agent's allow list, and the only reason anything can write it is that absent deny — so the drift is
+**structural, not accidental**. It is the third unowned artifact after `docs/research/**` and
+`docs/architecture/**`, and the first to produce a user-visible wrong claim (see the README
+correction below). **Two fixes belong together:** restore `deny:*` on the builder with the audit's
+allow list, and give the repo-level docs an owner.
+
+### The root README's factual error (open — no role can own the fix)
+
+`README.md`'s "Possible future direction" section claimed the low-level layer
+(`libOrbbecSDK.1.7.1.dylib`) is "Orbbec's own **public, open-source** SDK … the same one published on
+GitHub". **Verified wrong against Orbbec's own GitHub org.** `orbbec/OrbbecSDK` describes itself as
+*"Orbbec SDK v1&v2 **Pre-Compiled** Repo"* — **binaries, not source** — while
+`orbbec/OrbbecSDK_v2` is *"Orbbec SDK v2 **Open-Source** Repo"*, and it is a **different** codebase.
+
+So: **the open-source SDK starts at v2**, and v2 does not list the Raptor Pro's `0x0c03` (a live
+enumeration probe saw zero devices). **The layer we actually bind has no source to read** — which is
+the strongest argument for the pivot, not against it: the observed protocol is the only route to
+independence, because the SDK route was never open.
+
+The corrected section is handed to the operator with the verification. It is **not applied here**
+because no role has edit reach on `README.md` — see the correction above. That is also why a claim
+this wrong survived: nobody could fix it.
+
 **`B1` — the builder agent does not load, and the cause is exact.** `openscanner/builder` is absent
 from the loaded agents list, and the server log says so on every attempt: `Error: Agent not found:
 openscanner/builder`. The file is present, and it parses under a lenient YAML reader. The difference
@@ -747,3 +780,104 @@ correctness, not its start.
 - **Landed elsewhere, no longer tracked here:** the Windows fork drafts (`WINDOWS-FORK.md`,
   `FORK-COORDINATION.md`) and the scan-viewer architecture doc
   (`docs/architecture/scan-viewer.md`) — each keeps one home.
+
+---
+
+# STAGING — `README.md` changes
+
+**Dispatcher: this is staged text, not roadmap content, and it is a routing job rather than a PR you
+can open yourself.**
+
+**Why you cannot apply it.** `README.md` is outside *your* edit reach as well as the planner's —
+dispatch's `edit` allows are `scripts/**`, `/private/var/folders/**`, `docs/recomp/**` and
+`.claude/**`; the planner's is this file. The **only** agent that can write it is
+`openscanner/builder`, and only because it carries **no blanket `edit * deny`** — by the *absence* of
+a rule, not by anyone's decision. So **route it deliberately**, and say which route you took:
+a **builder session** (with the text below), or the **operator** applying it directly.
+
+**This is also the evidence for two rows' worth of follow-up** (already argued above): restore
+`deny:*` on the builder with the audit's allow list, and give the repo-level docs an owner. Fixing the
+text without those two leaves the next error permanent for the same reason this one was.
+
+**Boundaries.** Two independent edits. `--- BEGIN EDIT 1` … `--- END EDIT 1` replaces the README's
+opening description. `--- BEGIN EDIT 2` … `--- END EDIT 2` replaces the whole
+`## Possible future direction: dropping OBScan entirely` section, heading included.
+
+**Why the substantive change.** That section called `libOrbbecSDK.1.7.1.dylib` "Orbbec's own public,
+open-source SDK". Verified wrong against Orbbec's own GitHub org: `orbbec/OrbbecSDK` is *"Orbbec SDK
+v1&v2 **Pre-Compiled** Repo"* — binaries, not source — while `orbbec/OrbbecSDK_v2` is the *open-source*
+repo, a **different** codebase that does not list this device's `0x0c03`. The layer we bind has no
+source to read, which is the argument *for* the pivot. Full finding in the roadmap above.
+
+--- BEGIN EDIT 1
+
+An open-source macOS/Windows application for Creality (Orbbec-based) 3D
+scanners, built as a clean-room replacement for **Creality's entire host
+stack** — the CrealityScan app layer, the OBScan scanning library, Orbbec's
+device library, and Creality's RPC daemon. Development is starting on macOS
+with a Creality Raptor Pro.
+
+--- END EDIT 1
+
+--- BEGIN EDIT 2
+
+## Direction: full host-side independence
+
+**OpenScanner's target is to replace Creality's closed host stack entirely** — no OBScan, no Orbbec
+device library, no Creality daemon. The feasibility assessment is
+[`docs/recomp/FULL-INDEPENDENCE.md`](docs/recomp/FULL-INDEPENDENCE.md); this is its summary.
+
+| layer | what it is | status |
+| --- | --- | --- |
+| **L4 — OBScan** (`liborbbec_scan`) | the closed scanning library: laser-line extraction, triangulation, tracking, fusion, meshing, plane removal | **replaced by our own math** (Phase C) |
+| **L3 — Creality RPCServer** | a root daemon that owns the USB device and exposes it on localhost as msgpack-RPC | **replaced by our own client, then our own device layer** (Phases B, D) |
+| **L2 — Orbbec device library** (`libOrbbecSDK.1.7.1.dylib`) | the device-I/O layer OBScan sits on | **replaced**, folded into Phase D |
+| **L1 — firmware** | runs the sensors, the laser driver, the flash store | **out of scope** — a later research track |
+
+### A correction to what this README used to claim
+
+Earlier revisions called `libOrbbecSDK.1.7.1.dylib` "Orbbec's own **public, open-source** SDK". That
+was wrong, and the distinction is load-bearing. Orbbec publishes two GitHub repos, and they are not
+the same codebase:
+
+- [`orbbec/OrbbecSDK`](https://github.com/orbbec/OrbbecSDK) — *"Orbbec SDK v1&v2 **Pre-Compiled**
+  Repo"*. **Binaries, not source.** This is the generation the Raptor Pro's `1.7.1` dylib belongs to.
+- [`orbbec/OrbbecSDK_v2`](https://github.com/orbbec/OrbbecSDK_v2) — *"Orbbec SDK v2 **Open-Source**
+  Repo"*. This is where the source actually is, and it is a **different** codebase.
+
+**The open-source SDK starts at v2, and v2 does not support this device.** Its PID tables do not list
+the Raptor Pro's `0x0c03`, and a live enumeration probe against it saw zero devices. So v2 is a
+reference for the UVC/HID/vendor-command mechanics, not a drop-in path — and **the layer we actually
+bind has no source to read.**
+
+### Why the route to independence is the protocol, not the SDK
+
+The transport between the app and the Creality daemon has been **fully observed** on the wire:
+GigE-Vision discovery, msgpack-RPC over TCP, roughly fourteen methods, and Orbbec's own
+vendor-command framing inside `send_data`. And the device is **dumb** — laser sequencing and
+auto-exposure are *host* loops, and depth is computed on the host, not on the scanner.
+
+Together those make an observation-derived replacement feasible **without ever reading a vendor
+binary**, which is also the cleanest possible provenance for the result.
+
+### The path
+
+In dependency order, and each phase leaves a working product:
+
+- **Phase A** — spec the protocol from the captures. Recon only; findings, no code.
+- **Phase B** — our own RPC client to the daemon. At the end, OBScan and the Orbbec library are gone.
+- **Phase C** — own the scanning math on raw frames, incrementally, A/B-tested against the vendor's
+  output while it still exists.
+- **Phase D** — replace the daemon with our own UVC + HID + vendor-channel layer, behind a privileged
+  helper on macOS. **At the end, no Creality or Orbbec code runs on the host.**
+
+**Firmware replacement is deliberately not on that path.** It buys little — the device is dumb, so
+the scanning smarts are host-side — and a failed write can brick the unit irreversibly. It stays a
+research track, gated on a proven recovery path, the full flash map, and ideally a second unit.
+
+**Clean-room posture.** Everything above is **observation-derived**: wire captures plus the
+MIT-licensed public-SDK headers. Recon writes specs from observation; the builder implements from
+specs, never from captures or vendor binaries. The extracted firmware, where it is used at all, is
+recon-side read-only input and never reaches the implementation.
+
+--- END EDIT 2
