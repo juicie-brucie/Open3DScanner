@@ -88,6 +88,32 @@ three** interfaces — 23 entries (RGB, port 10012), 54 (IR, 10013), 89 (depth,
 - Whether each response is a *new* frame or the latest frame re-sent on a
   fast poll is not settled (needs payload comparison). `[inferred]`
 
+**Correction (row #124's pre-flight — the `bin(N)` gloss is not a valid
+msgpack reading).** The head `9b 00 cf 00` above does not decode to
+`bin8(52,992)`: in the msgpack grammar `9b` is *fixarray(11)* and `cf` is
+**uint64** (int8 is `d0`); 52,992 = 0xCF00 is a big-endian 16-bit **read** of
+the byte pair `cf 00`, not a length field. The one frame-response head
+recorded in this repo (`streaming-replay-payloads.md` §5, 24 bytes) decodes
+**completely** — 24 of 24 bytes, no residue — as
+
+```
+[1, 5, nil, [0, 0, 0, 255, b'', 0, b'', 0, b'', 2731083288, -1]]
+```
+
+so the repo holds a **whole** message, not a prefix: the daemon's segment for
+that reply is `tcp.len = 24` (measured with `tshark -r session4.pcapng`), the
+result is an **11-element array** (element 9 is a complete uint32, `ce a2 c9
+06 18` = 2,731,083,288 — nothing is truncated), and the array's bin-shaped
+slots (4, 6, 8) are **empty** in that one sample. The live replay rerun
+(`tests/results/2026-10-19-plan120-122-replay-rerun.md`) shows the same shape
+live: every `get_frame` reply's unwrapped result is an **Array**, never a Bin.
+So the `bin(N)` gloss is invalid, the result **is** an array, and the array's
+**field layout** — which slot carries the frame payload — is not settled.
+"The payload's first bytes" is therefore not yet a defined offset. The
+identification plan and the step that settles this are in `frame-codec.md`
+§2.1; the container itself is row #124's deliverable. `[inferred]`
+`[hw-confirmed: 2026-10-19-plan120-122-replay-rerun]`
+
 ## 2. The vendor-command framing inside `ob_rpc_send_data`
 
 ### 2.1 The framing (public `Protocol.hpp` — matches the wire)
@@ -197,6 +223,10 @@ single-action captures (the plan's OQ-F2). `[inferred]`
    8-bit stream, so they are encoded; the codec/container is not derivable
    from these captures alone. Phase B/C need this (a targeted capture with
    known content, plus the vendor's own output as the A/B reference).
+   **In progress (row #124):** the identification plan, the hypothesis table
+   and the acceptance are in `frame-codec.md`; the corpus is row #123's
+   extractor output. The result element's *shape* is also open here — see
+   §1.3's correction.
 2. **The small (208-B) segments** on the frame ports (146k on 10010, 147k on
    10013, ~30 MB each) — role unsettled (a second sub-stream? a preview? a
    segmentation artifact?).
@@ -252,7 +282,8 @@ median 5.45 ms, p90 23.8 ms). See `stream-profiles-row114.md` §5.
    start/stop; the parameter array is `[streamtype, format, width, height, fps]`.
 
 4. **First frame response** (t=25.340): IR port 10013 returns a bin at
-   25.339836, 45.76 ms after start_stream request. The client immediately
+   25.339836, 45.76 ms after start_stream request. (The reply's *result* is an
+   **array**, not a bin — §1.3's correction.) The client immediately
    begins `get_frame`, at ~85–86 Hz over the whole capture (the 51.2 Hz in
    `streaming-replay-payloads.md` §2 is a nine-interval window artifact —
    `stream-profiles-row114.md` §5).
