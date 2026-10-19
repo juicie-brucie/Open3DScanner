@@ -38,6 +38,7 @@
 #include <chrono>
 #include <cmath>
 #include <csignal>
+#include <cstdarg>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -68,6 +69,7 @@
 #include "openscanner/ws_broadcast_server.h"
 #include "openscanner/worker_process.h"
 #include "tracking_status.h"  // the vendor's per-frame verdict, by pinned name (row #91)
+#include "bounded_watchdog.h"  // the per-call bound that survives a stuck caller (row #89)
 
 namespace {
 
@@ -91,6 +93,29 @@ void QuitTrace(const char* msg) {
         ssize_t ignored = write(g_quit_log_fd, buf, static_cast<size_t>(n));
         (void)ignored;
     }
+}
+
+// The formatted sibling of QuitTrace. Same write(2) path — no stdout FILE, no
+// allocator — so a diagnostic printed here cannot be swallowed by a lock the
+// hung vendor teardown thread is holding (row #89). Keep messages short.
+void QuitTracef(const char* fmt, ...) {
+    if (g_quit_log_fd < 0) return;
+    struct timeval tv = {};
+    gettimeofday(&tv, nullptr);
+    char buf[256];
+    int n = std::snprintf(buf, sizeof(buf), "%ld.%06d [worker pid %d] ", (long)tv.tv_sec, (int)tv.tv_usec,
+                          (int)getpid());
+    if (n < 0 || n >= static_cast<int>(sizeof(buf))) return;
+    va_list ap;
+    va_start(ap, fmt);
+    int m = std::vsnprintf(buf + n, sizeof(buf) - static_cast<size_t>(n), fmt, ap);
+    va_end(ap);
+    if (m < 0) return;
+    size_t used = static_cast<size_t>(n) + std::min(static_cast<size_t>(m), sizeof(buf) - static_cast<size_t>(n) - 1);
+    if (used >= sizeof(buf) - 1) used = sizeof(buf) - 2;  // make room for the newline
+    buf[used++] = '\n';
+    ssize_t ignored = write(g_quit_log_fd, buf, used);
+    (void)ignored;
 }
 
 // Our own removal decision (row #77): fit a dominant plane from the live
@@ -230,6 +255,13 @@ std::atomic<bool> g_context_destroy_timed_out{false};
 // Exit code for the context_destroy deadline, distinct from the room's
 // rule-10 "skipped, no dylib" exit 2 and from the worker's "no device" 2.
 constexpr int kExitContextDestroyTimeout = 4;
+// Row #89: the per-call bound around obscan_context_destroy(). It is a file
+// scope constant because a watchdog thread must enforce it independently of
+// the thread that made the call.
+constexpr int kContextDestroyCallTimeoutMs = 5000;
+// The watchdog's grace past the bound: a little slack so the caller's own
+// timeout path (which disarms the watchdog) wins the race and exits cleanly.
+constexpr int kContextDestroyWatchdogGraceMs = 500;
 uint64_t g_recorded_frame_count = 0;
 constexpr int kPointGridSize = 48;        // kPointGridSize^2 points on a sphere.
 constexpr double kFrameIntervalMs = 1000.0 / 30.0;  // ~30 Hz.
@@ -1301,10 +1333,29 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
         int polls = 0;
         int refusals = 0;
         auto started = std::chrono::steady_clock::now();
-        const int kContextDestroyCallTimeoutMs = 5000;
         bool timed_out = false;
+        // Row #89: the bound must hold even when the thread that made the
+        // vendor call cannot itself make progress. The rerun showed the block
+        // entered and then no diagnostic at all (not even the lock-free
+        // "poll loop done" trace) for 119 s, so a bound enforced only by the
+        // calling thread is not a bound. This watchdog enforces it from a
+        // thread the hung vendor teardown cannot block, and exits with the
+        // timeout code if the caller never completes the wait.
+        openscanner::bounded::Watchdog watchdog(
+            []() {
+                QuitTracef("teardown: context_destroy: WATCHDOG fired (%d ms bound + %d ms grace exceeded); "
+                           "the caller never completed the wait - exiting %d",
+                           kContextDestroyCallTimeoutMs, kContextDestroyWatchdogGraceMs, kExitContextDestroyTimeout);
+                std::_Exit(kExitContextDestroyTimeout);
+            },
+            kContextDestroyWatchdogGraceMs);
         do {
             ++polls;
+            // Arm the watchdog before anything that can block, so "the caller
+            // is stuck" is observable from here until the wait completes.
+            watchdog.Arm(kContextDestroyCallTimeoutMs);
+            QuitTracef("teardown: context_destroy: poll %d: entered the %d ms bound (before any allocation)",
+                       polls, kContextDestroyCallTimeoutMs);
             // The thread owns its state: on the detached (timeout) path it
             // may still be inside the vendor call after this scope ends, so
             // shared_ptr captures keep status/finished/context alive.
@@ -1312,23 +1363,29 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             auto ctx = std::make_shared<ObScanContextHandle>(context);
             auto finished = std::make_shared<std::atomic<bool>>(false);
             auto result = std::make_shared<ObScanStatus>(OB_SCAN_ERROR_FATAL);
+            QuitTracef("teardown: context_destroy: poll %d: state allocated; spawning the vendor call", polls);
             std::thread worker([destroy_fn, ctx, finished, result]() {
                 *result = destroy_fn(ctx.get());
                 finished->store(true, std::memory_order_release);
             });
+            QuitTracef("teardown: context_destroy: poll %d: vendor call thread spawned; wait started (%d ms)",
+                       polls, kContextDestroyCallTimeoutMs);
             auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(kContextDestroyCallTimeoutMs);
             while (!finished->load(std::memory_order_acquire) && std::chrono::steady_clock::now() < deadline) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
+            // The wait is over either way: the caller is alive and owns the
+            // outcome from here. Stand the watchdog down before any output.
+            watchdog.Disarm();
             if (!finished->load(std::memory_order_acquire)) {
                 timed_out = true;
-                worker.detach();
                 status = OB_SCAN_ERROR_DEADLINE_EXCEEDED;
-                std::printf("[worker] obscan_context_destroy: TIMED OUT after %d ms on poll %d; abandoning context (not joined)\n",
-                            kContextDestroyCallTimeoutMs, polls);
-                std::fflush(stdout);
+                QuitTracef("teardown: context_destroy: poll %d: wait TIMED OUT after %d ms; abandoning context (not joined)",
+                           polls, kContextDestroyCallTimeoutMs);
+                worker.detach();
                 break;
             }
+            QuitTracef("teardown: context_destroy: poll %d: wait returned (%s)", polls, StatusName(*result));
             worker.join();
             status = *result;
             if (status == OB_SCAN_ERROR_MULTI_CALLED) {
@@ -1342,20 +1399,21 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
         } while (!timed_out && status == OB_SCAN_ERROR_MULTI_CALLED && polls < 3000);
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
         if (timed_out) {
+            // The vendor call never returned and its abandoned thread still
+            // holds whatever locks it grabbed. Every line on the abandon path
+            // goes through write(2), never stdout, so the outcome is reported
+            // even when the hung thread holds the stdio lock — which is the
+            // failure the rerun showed. The exit-code flag is set first, so
+            // main() reaches the timeout exit even if a later call blocks.
             g_context_destroy_timed_out.store(true);
-            std::printf("[worker] obscan_context_destroy: ABANDONED after %.1fs (context left for process exit to reclaim)\n",
-                        elapsed / 1000.0);
+            QuitTracef("teardown: context_destroy: ABANDONED after %.1fs (context left for process exit to reclaim)",
+                       elapsed / 1000.0);
+            QuitTracef("teardown: context_destroy -> ABANDONED (no vendor return); exiting %d", kExitContextDestroyTimeout);
         } else {
+            // The vendor returned; stdout was never suspect on this path.
             std::printf("[worker] obscan_context_destroy: %d poll(s), %d refusal(s), %.1fs, final %s\n",
                         polls, refusals, elapsed / 1000.0, StatusName(status));
-        }
-        std::fflush(stdout);
-        if (timed_out) {
-            // The vendor call never returned; do not let a record cite a
-            // Report line as if it had.
-            std::printf("[worker] obscan_context_destroy -> ABANDONED (no vendor return)\n");
             std::fflush(stdout);
-        } else {
             Report("obscan_context_destroy", status);
         }
         QuitTrace("teardown: context_destroy poll loop done");
@@ -1397,8 +1455,11 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     server.Stop();
     QuitTrace("RunLiveServer returning (worker about to exit)");
     if (g_context_destroy_timed_out.load()) {
-        std::printf("[worker] Exit code 4 = context_destroy deadline exceeded (distinct from 2 = skipped/no dylib).\n");
-        std::fflush(stdout);
+        // Row #89: lock-free, like the abandon path above — the hung vendor
+        // thread may still hold the stdio lock, and a blocked printf here
+        // would stop the process from ever returning this code.
+        QuitTracef("teardown: Exit code %d = context_destroy deadline exceeded (distinct from 2 = skipped/no dylib)",
+                   kExitContextDestroyTimeout);
         return kExitContextDestroyTimeout;
     }
     return 0;

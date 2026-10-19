@@ -6,6 +6,11 @@ add_executable(tracking_status_test tracking_status_test.cpp)
 target_link_libraries(tracking_status_test PRIVATE openscanner_engine)
 add_test(NAME tracking_status_test COMMAND tracking_status_test)
 
+# Hardware-free smoke test for the per-call bound protocol (row #89).
+add_executable(bounded_watchdog_test bounded_watchdog_test.cpp)
+target_link_libraries(bounded_watchdog_test PRIVATE openscanner_engine)
+add_test(NAME bounded_watchdog_test COMMAND bounded_watchdog_test)
+
 if(APPLE)
     find_library(CORE_FOUNDATION_LIBRARY CoreFoundation REQUIRED)
     target_link_libraries(scan_server PRIVATE ${CORE_FOUNDATION_LIBRARY})
