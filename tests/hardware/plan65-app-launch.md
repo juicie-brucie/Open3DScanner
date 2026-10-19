@@ -31,7 +31,11 @@ Launch from a terminal so the app's stdout/stderr is captured (the run's raw log
 build/tools/macos_app/OpenScanner.app/Contents/MacOS/OpenScanner 2>&1 | tee /tmp/plan65-launch.log
 ```
 
-(`open build/tools/macos_app/OpenScanner.app` also works, but detaches the log.)
+**Launch it the way a user does, at least once** — `open build/tools/macos_app/OpenScanner.app`
+(Finder/Spotlight/double-click). The terminal form above is for capturing the worker's stdout,
+but it runs with the build tree as its cwd and **masks cwd-dependent bugs** — it masked #72
+(the bundled app's `ui/` lookup, which only fails under a real `.app` launch). If a run can do
+only one, choose `open` and capture what you can from process state and the SDK's own log.
 
 ## Procedure
 
