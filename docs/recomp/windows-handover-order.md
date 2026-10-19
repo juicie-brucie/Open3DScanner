@@ -12,15 +12,14 @@ and the fork's **`win #114`** (reconcile). The fork's `win #120` (precondition S
 the device **dropped off enumeration** (`VID_2BC5` = 0); the app is not running and **a replug is
 required**. No power-cycle, driver change or vendor update was performed.
 
-**Allocation — explicit, one SDK user at a time:**
+**Current state:** the device is **temporarily on Windows** for initial testing — it was verified enumerated
+(Raptor Pro, serial `CR0886100SN`) and exercised there, then the vendor worker crashed and it dropped off
+enumeration; it is unenumerated now and a **replug is required before any further run on either host**.
 
-1. **The cable returns to the Mac first**, for #127's live reply dump. Windows is blocked on its own
-   `win #123` (the vendor crash) and on re-enumeration, so holding the device there buys nothing
-   meanwhile; the Mac has three ready runs (#127, #112, #71).
-2. **Then back to Windows** once `win #122` and `win #123` clear and a replug enumerates the device —
-   that is when the go-ahead is sent.
-3. The go-ahead line must state the device's **current host and enumeration state**; it must not
-   assume the Mac holds it.
+**Ordering:** there is no forced sequence. Windows cannot run `win #113` until its own `win #123` (the vendor
+crash) clears, so the device may stay there while that is worked; it returns to the Mac when the operator needs
+it — #127's live dump is a five-second run, and #112/#71 are ready — and comes back for the go-ahead. One SDK
+user at a time, and the go-ahead line states the current host and enumeration state.
 
 ## Vocabulary — read this first
 
