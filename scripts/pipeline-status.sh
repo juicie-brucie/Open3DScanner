@@ -34,7 +34,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    sed -n '2,42p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '2,26p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     exit 0
 fi
 
@@ -96,7 +96,10 @@ else
         pass=$(jq -r '.password // empty' "$SERVICE" 2>/dev/null) || return 1
         [ -n "$pass" ] || return 1
         # Credential goes through curl's stdin config; never echoed.
-        printf 'user = "opencode:%s"\n' "$pass" | curl -sS -m 5 -K - "http://127.0.0.1:$PORT$1"
+        # -f: a non-2xx (e.g. a rotated password's 401) must yield an empty
+        # body, so the caller takes its "unavailable" path instead of reading
+        # the error JSON as a session list.
+        printf 'user = "opencode:%s"\n' "$pass" | curl -fsS -m 5 -K - "http://127.0.0.1:$PORT$1"
     }
     all=$(api /api/session 2>/dev/null)
     active=$(api /api/session/active 2>/dev/null)
