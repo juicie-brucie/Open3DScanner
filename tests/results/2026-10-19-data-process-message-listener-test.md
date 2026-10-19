@@ -21,7 +21,7 @@ build/tests/hardware/data_process_message_listener_test/data_process_message_lis
 - Exit code: `0`
 - Verdict: **PASS**
 - Raw log: `2026-10-19-data-process-message-listener-test.raw.log` (same directory)
-- Interposer confirmation: `[launcher] DYLD_INSERT_LIBRARIES=/Applications/CrealityScan.app/Contents/PlugIns/libMoltenVK.dylib:/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/engine/libvulkan_disable_interpose.dylib` (line 1); `[vulkan_disable_interpose] loaded` not printed as a separate line for this target, but the interposer did intercept at teardown: `[vulkan_disable_interpose] intercepted vkGetInstanceProcAddr lookup of a create function` / `blocked vkCreateInstance`.
+- Interposer confirmation: `[launcher] DYLD_INSERT_LIBRARIES=/Applications/CrealityScan.app/Contents/PlugIns/libMoltenVK.dylib:/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/engine/libvulkan_disable_interpose.dylib` (line 1); `[vulkan_disable_interpose] loaded` printed at line 2; the interposer also intercepted at teardown: `[vulkan_disable_interpose] intercepted vkGetInstanceProcAddr lookup of a create function` / `blocked vkCreateInstance`.
 
 ## Checks
 
