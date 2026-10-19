@@ -1,8 +1,9 @@
 # Windows handover order — the first cross-machine run (`mac #115` / `win #113`)
 
-**Status: DRAFT — the go-ahead is not given.** It waits on: the Mac's #127 live reply dump,
-#320's extractor and #124's container identification; and the fork's **`win #120`** (the
-precondition-vs-FAIL distinction) and **`win #121`** (the preflight load assertion) landing.
+**Status: DRAFT — the go-ahead is not given.** It waits on: the Mac's **#127 live reply dump**
+(the client landed as #327; the live run is still owed) and **#124's container identification**;
+and the fork's **`win #114`** (reconcile). The fork's `win #120` (precondition SKIP) and `win #121`
+(preflight load **and** daemon) have **merged** — PR #28 @ `4d893d5` — so they are no longer waits.
 
 ## Vocabulary — read this first
 
@@ -26,13 +27,13 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
   what starts the daemon, so "vendor app not running" cannot be assumed: **launch the app, confirm
   the daemon, then either close the UI if the daemon survives, or leave it idle — and the record
   states which**, because it affects the raw numbers.
-- The preflight must print **both** a **load PASS/FAIL** *and* a **daemon PASS/FAIL**, with a reason.
-  `Test-Path` on the DLL is not enough; a present-but-unloadable SDK is a **FAIL**. Both assertions
-  come from `win #121` — **not merged yet**; until it lands, step 5 below is only half-covered.
-- **Device-absent is currently `FAIL`, not `SKIP`** — after `win #119` the SDK loads, so the old
-  return-2 load-failure path is unreachable; with no daemon/device the tests exit **1** at
-  `obscan_context_create()` and ctest records **FAILED**. Do not read a device-absent run as a
-  skip until `win #120` lands.
+- The preflight prints **both** a **load PASS/FAIL** and a **daemon PASS/FAIL**, with a reason
+  (`win #121`, merged). The daemon probe is a **process proxy** (`Get-Process -Name CrealityScan`) —
+  there is no separate service to query, so the record says **process proxy**, never "daemon verified
+  as a service".
+- **Device-absent is a `SKIP` after `win #120`** (merged): both tests probe `CrealityScan.exe` and
+  `VID_2BC5` and exit **2** with a specific reason. **A SKIP is not a measurement** — the operator must
+  attach the device and start the daemon, and the record must never present a SKIP as a run.
 - After the cable move, `Get-PnpDevice -PresentOnly` shows `VID_2BC5` with Depth/IR/RGB.
 
 ## Sequence
@@ -41,8 +42,8 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 2. Operator moves the cable to Windows.
 3. Windows: confirm enumeration (`VID_2BC5`, Depth/IR/RGB).
 4. Windows: start `CrealityScan.exe`; confirm the daemon; record the app/UI state chosen.
-5. Windows: `scripts/hw-preflight.ps1 scan_server` — must print the **load PASS/FAIL** and the
-   **daemon PASS/FAIL**, each with a reason (`win #121`).
+5. Windows: `scripts/hw-preflight.ps1 scan_server` — prints the **load PASS/FAIL** and the
+   **daemon PASS/FAIL** (process proxy), each with a reason.
 6. Windows: the run — the six **conditions** × the six **result fields**.
 7. Windows: postflight; the record written to `tests/results/`.
 8. Operator returns the cable; Mac: restart the daemon and confirm enumeration.
@@ -92,19 +93,19 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 
 ## SKIP wording when a precondition is not met
 
-The fork's `win #120` (not merged yet — the strings below are its intended contract) exits **2**
-with a reason line on the test's captured **stdout** that is specific, not a generic
-"precondition not met":
+Merged in `win #120` (fork PR #28 @ `4d893d5`): exit **2**, on the test's **captured output** (stdout
+there; the parent may use stderr — **the contract is the exit code and the text**), specific rather
+than generic:
 
 ```
-precondition not met: CrealityScan.exe (RPC daemon host) is not running
-precondition not met: no VID_2BC5 device enumerated
-precondition probe failed (...)
+[worker] SKIP: precondition not met: CrealityScan.exe (RPC daemon host) is not running; listener checks NOT exercised.
+[worker] SKIP: precondition not met: no VID_2BC5 device enumerated; listener checks NOT exercised.
 ```
 
-Exit 2 is what `SKIP_RETURN_CODE` records as skipped; a genuine init failure stays **1**. The parent
-row `#130` adopts the same contract: match the **device** substring literally, and the daemon
-substring with the platform's process name (`CrealityScan.exe` there, `CrealityScan` here).
+**The cross-machine grep token is `(RPC daemon host) is not running`.** The parent emits
+`CrealityScan (RPC daemon host) is not running` (its process name), so both records grep alike. The
+device case is literal on both sides: `no VID_2BC5 device enumerated`. A genuine init failure stays
+**1**. The parent's row `#130` carries the same contract.
 
 ## Reference
 
