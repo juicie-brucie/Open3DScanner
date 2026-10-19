@@ -1,9 +1,13 @@
 // Streams point-cloud frames over a local WebSocket so the web UI
 // (ui/index.html) can render them. Three modes:
 //
-//   scan_server [port]
+//   scan_server [port]   (or: scan_server --synthetic [port])
 //       Synthetic, animated sphere — exists so the UI's render/latency
 //       pipeline can be built and measured without a physical scanner.
+//
+//   Per-tick latency instrumentation (row #111; measurement only) is on by
+//   default and prints a `[perf] window` line every 5 s plus a summary at
+//   teardown. Set OPENSCANNER_TICK_PERF=0 to disable it.
 //
 //   scan_server --live [port] [path] [seconds] [--record <file>]
 //       Drives a real OBScan session; --record writes V1 frames to <file>.
@@ -70,8 +74,11 @@
 #include "openscanner/worker_process.h"
 #include "tracking_status.h"  // the vendor's per-frame verdict, by pinned name (row #91)
 #include "bounded_watchdog.h"  // the per-call bound that survives a stuck caller (row #89)
+#include "perf_window.h"       // per-tick latency instrumentation (row #111)
 
 namespace {
+
+namespace perf = openscanner::perf;  // row #111 tick instrumentation
 
 // Quit-path instrumentation (row #79): append-only trace shared with the
 // app. write(2) on a pre-opened fd so the signal handler can log safely.
@@ -558,9 +565,17 @@ void RunSyntheticServer(uint16_t port) {
     uint32_t frame_id = 0;
     double angle = 0.0;
     double last_status_broadcast_ms = 0.0;
+    // Row #111: the same per-tick instrumentation as the live loop, so the
+    // baseline runnable without a device reports it too. Pose/getter are N/A.
+    perf::TickPerf tick_perf;
+    if (!tick_perf.enabled()) std::printf("[perf] per-tick timing disabled by OPENSCANNER_TICK_PERF=0\n");
 
     while (true) {
         auto tick_start = std::chrono::steady_clock::now();
+        tick_perf.BeginTick();
+        int64_t s_post_us = 0, s_bcast_us = 0;
+        uint32_t frame_points_count = 0;
+        uint64_t frame_bytes = 0;
 
         if (control.finish_requested.exchange(false)) {
             // "Finish" resets the demo back to a fresh idle sphere, ready
@@ -572,23 +587,37 @@ void RunSyntheticServer(uint16_t port) {
 
         double now_ms = NowMs();
         if (now_ms - last_status_broadcast_ms >= 1000.0) {
-            server.BroadcastText(BuildStatusJson("synthetic", control, /*fov_controllable=*/true));
+            std::string status_json = BuildStatusJson("synthetic", control, /*fov_controllable=*/true);
+            {
+                perf::SegTimer t(&s_bcast_us);
+                server.BroadcastText(status_json);
+            }
+            frame_bytes += status_json.size();
             last_status_broadcast_ms = now_ms;
         }
 
         if (control.scanning.load() && !control.paused.load()) {
-            std::vector<Vec3> frame_points = base_points;
-            RotateY(&frame_points, angle);
-            angle += 0.02;
-
-            std::vector<uint8_t> buf =
-                BuildFrame(frame_id++, now_ms, reinterpret_cast<const float*>(frame_points.data()),
-                           static_cast<uint32_t>(frame_points.size()));
-            if (server.ConnectedClientCount() > 0) {
-                server.BroadcastBinary(buf.data(), buf.size());
-            RecordFrame(buf);
+            std::vector<uint8_t> buf;
+            {
+                perf::SegTimer t(&s_post_us);
+                std::vector<Vec3> frame_points = base_points;
+                RotateY(&frame_points, angle);
+                angle += 0.02;
+                frame_points_count = static_cast<uint32_t>(frame_points.size());
+                buf = BuildFrame(frame_id++, now_ms, reinterpret_cast<const float*>(frame_points.data()),
+                                 frame_points_count);
             }
+            {
+                perf::SegTimer t(&s_bcast_us);
+                if (server.ConnectedClientCount() > 0) {
+                    server.BroadcastBinary(buf.data(), buf.size());
+                }
+            }
+            frame_bytes += buf.size();
+            RecordFrame(buf);
         }
+
+        tick_perf.EndTick(0, 0, s_post_us, s_bcast_us, frame_points_count, frame_bytes);
 
         auto elapsed = std::chrono::steady_clock::now() - tick_start;
         auto sleep_for = std::chrono::milliseconds(static_cast<int64_t>(kFrameIntervalMs)) -
@@ -1024,6 +1053,9 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
 
     uint32_t frame_id = 0;
     const int total_ticks = (g_live_session_seconds * 1000) / kLiveTickIntervalMs;
+    // Row #111: measurement only — the cadence and call order below are unchanged.
+    perf::TickPerf tick_perf;
+    if (!tick_perf.enabled()) std::printf("[perf] per-tick timing disabled by OPENSCANNER_TICK_PERF=0\n");
     uint32_t max_points_seen = 0;
     bool hardware_paused = false;
     // Separate from hardware_paused: records what we last *attempted*
@@ -1041,6 +1073,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     const pid_t original_parent = getppid();
 #endif
     for (int tick = 0; tick < total_ticks; ++tick) {
+        tick_perf.BeginTick();
+        int64_t s_pose_us = 0, s_getter_us = 0, s_post_us = 0, s_bcast_us = 0;
+        uint32_t frame_points = 0;
+        uint64_t frame_bytes = 0;
 #if !defined(_WIN32)
         if (getppid() != original_parent) {
             QuitTrace("orphan guard: parent changed -> stop requested");
@@ -1102,15 +1138,27 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             double scanner_x = 0, scanner_y = 0, scanner_z = 0;
             {
                 ObScanPose pose = {};
-                ObScanStatus pose_status = lib.obscan_scan_get_registration_pose(scan, &pose);
+                ObScanStatus pose_status;
+                {
+                    perf::SegTimer t(&s_pose_us);
+                    pose_status = lib.obscan_scan_get_registration_pose(scan, &pose);
+                }
                 if (pose_status == OB_SCAN_SUCCESS) {
                     have_scanner_pose = true;
                     scanner_x = pose.m[0][3];
                     scanner_y = pose.m[1][3];
                     scanner_z = pose.m[2][3];
-                    std::vector<uint8_t> pbuf = openscanner::frame_protocol::encode_pose(
-                        frame_id++, NowMs(), NowMs(), &pose.m[0][0]);
-                    server.BroadcastBinary(pbuf.data(), pbuf.size());
+                    std::vector<uint8_t> pbuf;
+                    {
+                        perf::SegTimer t(&s_post_us);
+                        pbuf = openscanner::frame_protocol::encode_pose(
+                            frame_id++, NowMs(), NowMs(), &pose.m[0][0]);
+                    }
+                    {
+                        perf::SegTimer t(&s_bcast_us);
+                        server.BroadcastBinary(pbuf.data(), pbuf.size());
+                    }
+                    frame_bytes += pbuf.size();
                     RecordFrame(pbuf);
                 }
             }
@@ -1121,10 +1169,14 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             // the UI finally see live points while scanning.
             // out_count is not validated by the wrapper, so pass a valid
             // pointer; out_bbox is required non-null.
-            status = lib.obscan_scan_get_model_point_color_clouds(scan, &cloud, &bbox, &published_count);
+            {
+                perf::SegTimer t(&s_getter_us);
+                status = lib.obscan_scan_get_model_point_color_clouds(scan, &cloud, &bbox, &published_count);
+            }
             if (status == OB_SCAN_SUCCESS) {
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
+                    perf::SegTimer post_timer(&s_post_us);
                     // Our own decision layer (row #77): fit a dominant plane
                     // from a bounded sample and cut below it. Fitting and
                     // filtering both stay O(budget), like the #32 broadcast.
@@ -1189,14 +1241,28 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     }
                     uint32_t broadcast_count = static_cast<uint32_t>(xyz.size() / 3);
                     std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
-                    server.BroadcastBinary(buf.data(), buf.size());
+                    post_timer.Stop();
+                    {
+                        perf::SegTimer bcast_timer(&s_bcast_us);
+                        server.BroadcastBinary(buf.data(), buf.size());
+                    }
+                    frame_points = broadcast_count;
+                    frame_bytes += buf.size();
             RecordFrame(buf);
                     ++g_cloud_frames_broadcast;
                 } else {
                     // Broadcast an empty frame too, so the UI's data-fps/HUD
                     // reflects a real, live connection rather than going idle.
-                    std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
-                    server.BroadcastBinary(buf.data(), buf.size());
+                    std::vector<uint8_t> buf;
+                    {
+                        perf::SegTimer t(&s_post_us);
+                        buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
+                    }
+                    {
+                        perf::SegTimer bcast_timer(&s_bcast_us);
+                        server.BroadcastBinary(buf.data(), buf.size());
+                    }
+                    frame_bytes += buf.size();
             RecordFrame(buf);
                     ++g_cloud_frames_broadcast;
                 }
@@ -1208,7 +1274,12 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
         }
 
         if (tick % 10 == 0) {  // ~every 1s
-            server.BroadcastText(BuildStatusJson("live", control, /*fov_controllable=*/false));
+            std::string status_json = BuildStatusJson("live", control, /*fov_controllable=*/false);
+            {
+                perf::SegTimer bcast_timer(&s_bcast_us);
+                server.BroadcastText(status_json);
+            }
+            frame_bytes += status_json.size();
         }
         if (tick % 50 == 0) {  // ~every 5s
             std::printf("[worker] tick %d/%d: color_cloud num_points=%u (max seen so far: %u), clients=%zu, paused=%d\n",
@@ -1216,7 +1287,11 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                         hardware_paused ? 1 : 0);
             std::fflush(stdout);
         }
+        tick_perf.EndTick(s_pose_us, s_getter_us, s_post_us, s_bcast_us, frame_points, frame_bytes);
     }
+
+    // Row #111: print before the teardown, which can hang (#89).
+    tick_perf.Summary();
 
     if (!hardware_paused) {
         status = lib.obscan_scan_pause(scan);
@@ -1710,6 +1785,12 @@ int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
         std::unique_ptr<openscanner::CaptureSource> src(new ReplayCaptureSource(argc, argv));
         return src->run();
+    }
+
+    if (argc >= 2 && std::string(argv[1]) == "--synthetic") {
+        uint16_t port = argc > 2 ? static_cast<uint16_t>(std::atoi(argv[2])) : 8787;
+        RunSyntheticServer(port);
+        return 0;
     }
 
     uint16_t port = argc > 1 ? static_cast<uint16_t>(std::atoi(argv[1])) : 8787;
