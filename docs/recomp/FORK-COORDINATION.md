@@ -124,3 +124,13 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
   **Audit on this side**: every room of the parent's carries only `origin` (no `upstream`), so the
   trap cannot fire here today; and every verifier order now names the repo explicitly
   (`--repo juicie-brucie/Open3DScanner`) so it stays that way.
+
+- `[win]` 2026-10-19 — **the wrong-repo writes' actual trigger is the remote NAME**: `gh` treats a
+  remote named `upstream` as a fork's base repo, so with `origin` (the fork) plus `upstream` (the
+  parent) every bare `gh` call resolved to the parent — the mechanism behind both incidents (the
+  watcher reading the parent's PR 7 as MERGED; the stray verdict on the parent's PR #11). **Proven,
+  not inferred**: with the remote named `upstream`, `gh repo view` returns the parent; renamed to
+  `parent`, it returns the fork. **Every fork room now carries `origin` + `parent`.** On the
+  parent's side no room carries an `upstream` remote (audited), and the rule to carry forward is
+  the negative one: if a parent remote is ever added here, do not name it `upstream`. The name is
+  now recorded in `WINDOWS-FORK.md` §1/§4 so the exception cannot quietly become the default.

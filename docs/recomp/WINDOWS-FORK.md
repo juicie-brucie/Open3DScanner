@@ -22,7 +22,8 @@ _Last planned: 2026-10-18._
 **Shape: standalone, not a GitHub *fork* relationship.** A GitHub fork shares history and
 routes PRs at the parent by default, which is wrong here — the fork's CI runs on Windows, its
 vendor artifacts differ, and it must not accidentally PR platform-specific changes into the
-parent's gate. Standalone, with the parent as a **pinned upstream**.
+parent's gate. Standalone, with the parent as a **pinned `parent` remote** (never named `upstream` — `gh` treats that name as a fork's base
+repo and resolves PRs, comments and verdicts there instead; see the coordination log).
 
 ## 2. What stays canonical in the parent
 
@@ -42,7 +43,8 @@ header in a second repo is a second contract, and two contracts drift. Therefore
   findings there; it does not fork the directory.
 
 Everything else — `mesh/`, `ui/`, most of `engine/`, `tools/` — is shared code with a platform
-split, and the fork tracks the parent as upstream.
+split, and the fork tracks the parent as a remote named `parent` (never `upstream`, for the reason
+in §1).
 
 ## 3. Portability map
 
@@ -70,7 +72,9 @@ Mirror the parent's mechanics, so an operator switching machines keeps one menta
   Windows reads *every* tree, including a plain clone, as `Is directory a git repo: no`),
   a room may be a full clone instead; the reason is named here so the exception cannot
   quietly become the default. One session per room holds either way, and each clone keeps
-  `origin` = its own repo, `upstream` = the other repo, and its submodule pins.
+  `origin` = its own repo, `parent` = the other repo (never `upstream` — `gh` treats that
+  name as a fork's base repo, so bare `gh` calls would write to the wrong repo), and its submodule
+  pins.
 - **Branches: `<role>/<thing>`** — `recon/win-plan1`, `build/win-loader`, `hw/win-plan2`,
   `dispatch/land-win-recon1`.
 - **Every change lands through a PR with a merge commit.** Never commit to `main`; never
