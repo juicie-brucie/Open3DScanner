@@ -48,16 +48,13 @@ code.
 ## Critical path
 
 ```
-WALLS ─► #1 remove shadow agents ─► #2 restore edit denies ─► #3 shell denies (not recon)
-      ─► #4 wall the verifier ─► #5 physical .recon-cache separation
-      └─► #6 correct ARCHITECTURE's "enforced" sentence (the drift a third party would rely on)
+THE BOARD IS FULLY DONE — all rows, no queued feature work. What is left is the harness,
+not the product.
 
-#71 (BUILD — G1's bind half) ─┐
-#76 (BUILD — G2's build)     ─┴─► the reconstruction workstream's first landed capabilities
-the app launch rerun ─► gates #72/#73 (landed, unverified) and closes A3 (#65) + A4 (#66)
-#75 (RECON — G2's semantics)          G1's REIMPLEMENT half — still UNFILED
-
-A1 · A2 ✅ DONE      H1 · H4 ✅ landed      #53 · #59 · #62 · #64 · #67 · #72 · #73 · #74 ✅ DONE
+WALLS ─► 1 remove the shadow agents (A1) ─► 2 restore the edit denies (W1, W2)
+      ─► 3 shell denies, not on recon (W3, A5) ─► 4 wall the verifier (W4)
+      ─► 5 physical .recon-cache separation (A2)
+      └─► 6 correct ARCHITECTURE's "enforced" sentence
 ```
 
 Ranked by what it frees, not by board order:
@@ -65,30 +62,26 @@ Ranked by what it frees, not by board order:
 1. **Removing the shadow agents.** Seconds of work, and until it is done every other wall fix is
    undermined by an agent that may be picked instead. See **A1**.
 2. **Restoring the edit walls** (W1, W2). The dispatcher can edit the header and product source
-   today; the builder can write the findings it is meant to consume. This is the integrity of the
-   clean-room claim, not hygiene.
-3. **The `.recon-cache` shell hole** (W3) and **the unwalled verifier** (W4). Mitigation only until
-   the physical separation lands — see **A2** — but the cheapest available now.
-4. **Correcting `ARCHITECTURE.md`'s walls sentence.** It currently asserts "enforced, not
-   aspirational", which is false, and it is the claim a third party would rely on.
-5. **`#71` / `#76`.** The reconstruction workstream's first capabilities; builder-side, and they
-   contend with none of the above.
-6. **The app launch rerun.** The evidence gate for two landed fixes, closing `A3` and carrying
-   `A4`'s check — no new code.
-7. **`#75`**, and **filing G1's reimplement half** before `#71` landing reads as "G1 done".
+   today; the builder can write the findings it is meant to consume. This is the clean-room claim's
+   integrity, not hygiene.
+3. **The `.recon-cache` shell hole** (W3) and **the unwalled verifier** (W4) — mitigation only until
+   the physical separation lands (**A2**), but the cheapest thing available now.
+4. **Correcting `ARCHITECTURE.md`'s walls sentence** — it asserts "enforced, not aspirational",
+   which is false, and it is the claim a third party would rely on.
+5. **Filing G1's reimplement half.** `#71` landed and bound the toggles; the vendor's *decision* —
+   the thing the operator complained about — is still unreimplemented and unrowed. **A board that
+   is fully `DONE` will otherwise read as "plane removal works".** That is the one risk this round
+   creates, and it is created by success.
 
 ## Ready now
 
-| Row | Role | What it needs |
+Nothing on the board — every row is `DONE`. The open work is the harness:
+
+| Item | Role | What it needs |
 | --- | --- | --- |
-| the wall change-set (1–5 above) | operator | Config-only, no repo change. **Start with the shadow agents** — see **A1**. |
-| the doc corrections (6, 9, 10) | dispatcher | `docs/recomp/**`, `CLAUDE.md`, the hook, `builder.md`. |
-| `#71` | builder | G1's bind half — the toggles into the live path. The header already declares them (`#59`). |
-| `#76` | builder | G2's build — the coverage heatmap, from our own cloud and poses. **Not gated by `#75`** (its note says so). |
-| `A3` (`#65`) | — | **Its block is cleared**: it was blocked on `#72` + `#73`, both landed. It needs the launch rerun; the row has not moved. |
-| the launch rerun | hardware / browser | Gates the just-landed `#72`/`#73` and carries `#66`'s live check — one run, two rows. |
-| `#75` | recon | G2's semantics, re-derived — the corpus is frozen. No hardware. |
-| G1's **reimplement** half (unfiled) | builder | The verdict says the vendor's *decision* is what the operator complained about. Needs its own row, or `#71` will quietly read as "G1 done". |
+| the wall change-set (1–5 above) | operator | **Config only, no repo change**, and not dispatchable to a repo role — it lives in `~/.config/opencode/agents/**`. Start with the shadow agents (**A1**). |
+| the doc corrections (6, 9, 10) | dispatcher | `docs/recomp/**`, `CLAUDE.md`, the hardware hook's pattern, `builder.md`'s step numbering. |
+| G1's reimplement half (unfiled) | builder | Needs its own row, or a fully-`DONE` board reads as "plane removal works". |
 
 ## Blocked, and on what
 
@@ -526,22 +519,15 @@ For the dispatcher to expand — not dispatches in themselves.
    recon's `PLAN.md` allow and two dispatcher allows. `docs/recomp/**`.
 3. **The prompt drift** → dispatcher (`H4` item 1 is unlanded): either land the repo-root
    `opencode.json` and `scripts/compact-session.sh`, or delete those lines from the dispatcher
-   prompt. Today the prompt states as fact a setting that is not applied. **Note the sequencing in
-   `H4`**: land the config *and* the script, or remove both references — half-landing is what
-   produced the drift.
-4. **`#71`** → builder: G1's bind half — the three plane toggles into the live path, per `#59`'s
-   verdict. **Wall:** `tools/` + `engine/`; read the header (`obscan_api.h:748-767`), do not edit
-   it. **And file G1's reimplement half separately** — `#71` leaves the vendor's decision in place,
-   and that decision is exactly what the operator complained about.
-5. **The launch rerun** → hardware / browser: the `#65` spec, which folds in `#66`'s steps 5–6.
-   Gates the just-landed `#72`/`#73`, closes `A3`, and carries `A4`'s live check. **Wall:**
-   `tests/results/**`.
-6. **`#75`** → recon: G2's semantics, re-derived because the corpus is frozen. One target, no
-   hardware, so it does not contend with the rerun.
+   prompt. Today the prompt states as fact a setting that is not applied. **Land the config *and*
+   the script, or remove both references** — half-landing is what produced the drift.
+4. **G1's reimplement half** → file it: `#71` bound the toggles and left the vendor's decision in
+   place, and the decision is what the operator complained about. **A fully-`DONE` board must not
+   read as "plane removal works".**
 
-**Ordering note.** Items 1–3 are integrity and drift; 4–6 are features. The change-set is ordered
-that way deliberately, but 1 does not compete for a repo reviewer and 4–6 do not compete for config
-— so they can run in parallel if the dispatcher has the hands.
+**Ordering note.** Items 1–3 are integrity and drift; item 4 is a row for feature work that the
+board no longer represents. None of them competes for the same resource: 1 is config, 2–3 are repo
+docs, 4 is a filing.
 
 ## Superseded plans
 
