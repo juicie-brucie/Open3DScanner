@@ -69,11 +69,11 @@ only one, choose `open` and capture what you can from process state and the SDK'
    (the SIGTERM → `pause`/`mesh`/`stop`/`session_destroy`/`context_destroy` tail shows in the
    log); the page reloads and reconnects on the new port (the HUD's `backend` and `scan:` state).
    Then set the length back and confirm the title carries it ("… (N s)").
-6. **Missing SDK** — relaunch with `OPENSCANNER_LIBRARY=/nonexistent` in the environment. **Conditional on
-   #74**: today a set-but-missing override is *skipped* — `resolveLibraryPath` returns the first
-   candidate that exists, so the installed SDK still resolves and no dialog appears. Once #74 lands (a
-   set-but-missing override is fatal), the step is runnable. Expect: the dialog names every path it
-   searched, the override included — no opaque failure, no crash. Record the dialog's text verbatim.
+6. **Missing SDK** — relaunch with `OPENSCANNER_LIBRARY=/nonexistent` in the environment. Since #74
+   (merged), a set-but-missing override is **fatal**: the dialog reads
+   `OPENSCANNER_LIBRARY is set but does not exist: • <override>` plus "Correct it, or unset
+   OPENSCANNER_LIBRARY to use <installed default>" — no "Searched:" list, since only the override was
+   probed. Expect no opaque failure and no crash. Record the dialog's text verbatim.
 
 ## Record
 
