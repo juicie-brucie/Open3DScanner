@@ -3,6 +3,9 @@
 **Status: DRAFT — the go-ahead is the operator's.** The operator schedules the run; it waits on
 `win #122`/`win #123` (the loader fix and the vendor crash) and on the device being **enumerated on the
 target host when the operator runs it**. `#127` is a Mac-side diagnostic and does not gate this run.
+**If no isolation works for `win #123`** (different USB port/cable, a lower-bandwidth or slower-start
+profile, a smaller frameset budget), it is a **hard vendor blocker** and `win #113` waits on the vendor —
+the run is **not attempted on a link that has not been shown stable**.
 
 ## Who runs this — agents prepare, the operator executes
 
@@ -20,30 +23,6 @@ priorities. This order does **not** allocate the cable, assume a host, or record
 When a run is scheduled, the only physical precondition is: **the device is enumerated on the host the
 operator is running on** (`VID_2BC5`, Depth/IR/RGB; replug after any drop). An unenumerated device is a
 precondition failure, **not a test result**.
-
-## Who runs this — agents prepare, the operator executes
-
-**No agent is dispatched a hardware run.** The Windows lane prepares the tree, the preflight/readiness
-checks and the record template, and verifies the evidence afterwards; **the operator, from Claude Code on
-the Windows host, executes the six conditions and the `scan_server` device session** (fork
-`WINDOWS-FORK.md` §7, the live-rate runbook's "Who runs this", `win #113`'s note). The go-ahead is
-addressed to the **operator**, not to a Windows agent. The same rule holds on the Mac: the operator runs
-the device tests from the hw session, and agents only prepare and verify.
-
-## Physical state and cable allocation (2026-10-19)
-
-**The scanner is temporarily on Windows** — moved there for initial testing on 2026-10-19 (Raptor Pro,
-serial `CR0886100SN`), verified enumerated and exercised. The vendor worker then crashed during the first
-smoke and the device **dropped off enumeration** (`VID_2BC5` = 0); the app is not running and **a replug is
-required before any further run on either host**. No power-cycle, driver change or vendor update was performed.
-
-**Ordering:** no forced sequence. Windows cannot run `win #113` until `win #122`/`win #123` clear, so the
-device may stay there while that is worked. **If no isolation works for `win #123`** (a different USB
-port/cable, a lower-bandwidth or slower-start profile, a smaller frameset budget), it is a **hard vendor
-blocker** and `win #113` waits on the vendor — the run is **not attempted on a link that has not been shown
-stable**. it returns to the Mac when the operator needs it (#127's live
-dump is a five-second run; #112/#71 are ready) and comes back for the go-ahead. One SDK user at a time, and
-the go-ahead line states the current host and enumeration state.
 
 ## Vocabulary — read this first
 
@@ -81,9 +60,8 @@ The order uses "conditions" and "result fields" so neither list is mapped onto t
 - **The page is served and the WebSocket upgrades**: `GET /` → **200 `text/html`** (not a zero-byte
   close) and a WS upgrade → **101** (runbook #2/#3). Without both, the UI `data`/`render` fields compare
   against nothing — this is the #115 failure.
-- After the cable move — and after any drop such as the 2026-10-19 crash — a **replug** and
-  `Get-PnpDevice -PresentOnly` showing `VID_2BC5` with Depth/IR/RGB. A device that is not enumerated
-  is a precondition failure, not a test result.
+- After any move or drop, a **replug** and `Get-PnpDevice -PresentOnly` showing `VID_2BC5` with
+  Depth/IR/RGB. A device that is not enumerated is a precondition failure, not a test result.
 
 ## Sequence
 
