@@ -220,6 +220,28 @@ def rows_from_pcap(path):
 
 # --- extraction ------------------------------------------------------------
 
+def iter_bins(value, path=""):
+    """Yield (slot, bytes) for every non-empty bin in a response result.
+
+    `ob_rpc_get_frame` returns `[0, 0, 0, 255, bin, 0, bin, 0, bin, u32, -1]`:
+    the payload is a **bin nested inside the result array** (all-empty slots is
+    the no-frame metadata reply). Some calls return a bin directly as the
+    result. Walk arrays and maps (deeper than one level) and take every
+    non-empty bin, recording the slot it came from: "." for a top-level bin,
+    else a dotted index/key path (`4`, `6`, `8`, `4.0`). 4/6/8 are NOT
+    hard-coded — the walk finds the bins wherever they are.
+    """
+    if isinstance(value, (bytes, bytearray)):
+        if len(value) > 0:
+            yield (path or ".", bytes(value))
+    elif isinstance(value, (list, tuple)):
+        for i, item in enumerate(value):
+            yield from iter_bins(item, ("%s.%d" % (path, i)) if path else str(i))
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            yield from iter_bins(item, ("%s.%s" % (path, key)) if path else str(key))
+
+
 def classify(rows):
     """Walk rows in capture order and yield (port, ts, method, payload).
 
@@ -232,22 +254,34 @@ def classify(rows):
         if dev is None:
             continue
         client = dp if sp == dev else sp
-        pos = 0
-        while pos < len(payload):
-            try:
-                value, end = unpack(payload, pos)
-            except Need:
-                break                      # incomplete tail (a split message) — drop it
-            except (ValueError, IndexError, TypeError):
-                pos += 1                   # resync past interleaved non-msgpack bytes
+        # Message boundaries, not a sequential walk: a run can begin mid-message
+        # (raw bin bytes at offset 0 often decode as a header claiming a huge
+        # length), and a sequential parse that stops on the first `Need` then
+        # discards every message after it — which is what lost ~99% of the
+        # frames. Scan for the two rpc array signatures instead, parse at each,
+        # and skip past a parsed message so its bin bytes cannot re-match.
+        starts = []
+        for signature in (b"\x94\x00", b"\x94\x01"):
+            at = payload.find(signature)
+            while at >= 0:
+                starts.append(at)
+                at = payload.find(signature, at + 1)
+        starts.sort()
+        skip_until = 0
+        for at in starts:
+            if at < skip_until:
                 continue
-            pos = end
+            try:
+                value, end = unpack(payload, at)
+            except (Need, ValueError, IndexError, TypeError):
+                continue                   # not a message at this offset; keep scanning
             if not (isinstance(value, list) and len(value) == 4):
                 continue
+            skip_until = end
             mid = value[1]
             if value[0] == 0 and isinstance(mid, int) and isinstance(value[2], (bytes, bytearray)):
                 methods[(dev, client)][mid] = value[2].decode("utf-8", "replace")
-            elif value[0] == 1 and isinstance(mid, int) and value[2] is None and isinstance(value[3], (bytes, bytearray)):
+            elif value[0] == 1 and isinstance(mid, int) and value[2] is None:
                 yield dev, ts, methods[(dev, client)].get(mid, "?"), value[3]
 
 
@@ -261,27 +295,35 @@ def run(args):
     sequences = collections.Counter()
 
     os.makedirs(args.out, exist_ok=True)
-    for dev, ts, method, payload in classify(rows):
+    by_method = collections.Counter()
+    biggest = (0, "")
+    for dev, ts, method, result in classify(rows):
         counts[("responses", dev)] += 1
+        by_method[(dev, method)] += 1
+        bins = list(iter_bins(result))
+        for _slot, payload in bins:
+            if len(payload) > biggest[0]:
+                biggest = (len(payload), method)
         if wanted is not None and not method.startswith(wanted):
             continue
-        if len(payload) < args.min_bytes:
-            continue
-        sequences[dev] += 1
-        seq = sequences[dev]
-        label = DEVICE_PORTS[dev]
-        port_dir = os.path.join(args.out, label)
-        os.makedirs(port_dir, exist_ok=True)
-        name = "%06d.bin" % seq
-        with open(os.path.join(port_dir, name), "wb") as f:
-            f.write(payload)
-        counts[("written", dev)] += 1
-        bytes_total[dev] += len(payload)
-        index.append((label, seq, ts, len(payload), method, args.input, name))
+        for slot, payload in bins:
+            if len(payload) < args.min_bytes:
+                continue
+            sequences[dev] += 1
+            seq = sequences[dev]
+            label = DEVICE_PORTS[dev]
+            port_dir = os.path.join(args.out, label)
+            os.makedirs(port_dir, exist_ok=True)
+            name = "%06d.bin" % seq
+            with open(os.path.join(port_dir, name), "wb") as f:
+                f.write(payload)
+            counts[("written", dev)] += 1
+            bytes_total[dev] += len(payload)
+            index.append((label, seq, ts, len(payload), method, args.input, name, slot))
 
     index_path = os.path.join(args.out, "index.tsv")
     with open(index_path, "w", encoding="utf-8") as f:
-        f.write("port\tsequence\ttimestamp\tbyte_length\tmethod\tsource\tfile\n")
+        f.write("port\tsequence\ttimestamp\tbyte_length\tmethod\tsource\tfile\tslot\n")
         for row in index:
             f.write("\t".join(str(x) for x in row) + "\n")
 
@@ -289,6 +331,10 @@ def run(args):
     for dev, label in sorted(DEVICE_PORTS.items()):
         print("  %-5s %-5s responses=%-6d written=%-6d bytes=%d"
               % (dev, label, counts[("responses", dev)], counts[("written", dev)], bytes_total[dev]))
+        for (port, method), n in sorted(by_method.items(), key=lambda kv: -kv[1]):
+            if port == dev:
+                print("      %-40s %d" % (method, n))
+    print("  largest bin result: %d B (%s)" % biggest)
     print("  index: %s (%d rows)" % (index_path, len(index)))
     return 0
 
