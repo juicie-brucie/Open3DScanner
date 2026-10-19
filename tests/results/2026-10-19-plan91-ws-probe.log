@@ -1,0 +1,41 @@
+HANDSHAKE:
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: 8cRmfTp7pYSlHsxcWFCFDOsXL1s=
+
+
+BINARY_FRAME[1]: 160 bytes
+TEXT_FRAME[1]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":332,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[21]: 160 bytes
+TEXT_FRAME[2]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":366,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[41]: 160 bytes
+TEXT_FRAME[3]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":399,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[61]: 160 bytes
+TEXT_FRAME[4]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":433,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[81]: 160 bytes
+TEXT_FRAME[5]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":466,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[101]: 160 bytes
+TEXT_FRAME[6]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":501,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[121]: 160 bytes
+TEXT_FRAME[7]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":534,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[141]: 160 bytes
+TEXT_FRAME[8]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":567,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[161]: 160 bytes
+TEXT_FRAME[9]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":601,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[181]: 160 bytes
+TEXT_FRAME[10]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":634,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[201]: 160 bytes
+TEXT_FRAME[11]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":667,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[221]: 160 bytes
+TEXT_FRAME[12]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":701,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[241]: 160 bytes
+TEXT_FRAME[13]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":735,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[261]: 160 bytes
+TEXT_FRAME[14]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":768,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[281]: 160 bytes
+TEXT_FRAME[15]: {"type":"status","mode":"live","state":"scanning","autoExposure":false,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":false,"tracking":0,"trackingName":"SUCCESS","trackingCounts":{"SUCCESS":801,"LOST":15,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+BINARY_FRAME[301]: 160 bytes
+TEXT_FRAME[16]: {"type":"full_mesh_start","total":12094}
+TEXT_FRAME[17]: {"type":"full_mesh_done"}
+SUMMARY: text_frames=17 binary_frames=310
