@@ -112,3 +112,15 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
 - `[mac]` 2026-10-18 — the trail, as agreed and now enforced: a parent header change logs its line
   here in the same PR (the `fork-log` gate check), the fork records the blob it consumes in its pin
   row when it syncs, and its `--pincheck` alarms on drift.
+
+- `[mac]` 2026-10-19 — a **stray write into this repo**, recorded as it happened: the fork lane's
+  verifier posted a `VERDICT: MERGEABLE @ 011f2787…` comment on **this** repo's PR #11
+  (`2026-10-19T01:16:25Z`) — its own fork's PR #11 head, not ours. It caught the error 29 s later
+  and posted the corrected verdict to the right repo. **Inert for the gate** (the named SHA never
+  equalled this repo's head, so no status was ever set), and the comment has been **deleted** here
+  (the parent's pen). The cause is exactly the bug the fork's #11 fixes: a clone carrying
+  `upstream`, `gh` preferring it, and a bare `gh pr comment` resolving to the parent — both
+  machines post as the same account, so the artifact was indistinguishable by author.
+  **Audit on this side**: every room of the parent's carries only `origin` (no `upstream`), so the
+  trap cannot fire here today; and every verifier order now names the repo explicitly
+  (`--repo juicie-brucie/Open3DScanner`) so it stays that way.
