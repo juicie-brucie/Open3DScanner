@@ -21,9 +21,9 @@ build/tools/raptor_client/raptor_client --dry-run
 - Raw log: `2026-10-19-raptor-client-selftest-rerun.raw.log` (same directory)
 - Verdict: **PASS**
 
-The `--dry-run` path runs four selftest blocks in sequence (`main.cpp:1423-1431`): `DryRun()`, `ReplayParserSelftest()`, `ReplayDeltaSelftest()`, `ReplayInterfaceSelftest()`, `ReplyResultSelftest()`. All four blocks print under the shared `[dry-run]`/`[replay-selftest]` prefix with no sub-label distinguishing which function produced which lines in the raw output, so the mapping below was confirmed by reading each function's `check(...)` call text in `tools/raptor_client/main.cpp` and matching it line-for-line against the printed output (not inferred from naming alone).
+The `--dry-run` path runs five selftest blocks in sequence (`main.cpp:1423-1431`): `DryRun()`, `ReplayParserSelftest()`, `ReplayDeltaSelftest()`, `ReplayInterfaceSelftest()`, `ReplyResultSelftest()`. All four blocks print under the shared `[dry-run]`/`[replay-selftest]` prefix with no sub-label distinguishing which function produced which lines in the raw output, so the mapping below was confirmed by reading each function's `check(...)` call text in `tools/raptor_client/main.cpp` and matching it line-for-line against the printed output (not inferred from naming alone).
 
-## #120's `ReplayInterfaceSelftest()` output (verbatim, 18 checks — confirmed by matching `main.cpp:994-1079`'s `check()` text 1:1 against each printed line)
+## #120's `ReplayInterfaceSelftest()` output (verbatim, 19 checks — confirmed by matching `main.cpp:994-1079`'s `check()` text 1:1 against each printed line)
 
 ```
 [replay-selftest] the captured frames parse to bytes                   PASS
@@ -48,16 +48,16 @@ The `--dry-run` path runs four selftest blocks in sequence (`main.cpp:1423-1431`
 [replay-selftest] ok (0 failure(s))
 ```
 
-(19 lines total: 18 checks + the summary `ok (0 failure(s))` line.)
+(20 lines total: 19 checks + the summary `ok (0 failure(s))` line.)
 
-## #122's `ReplyResultSelftest()` output (verbatim, 8 checks — confirmed by matching `main.cpp:1080-1130`'s `check()` text 1:1 against each printed line)
+## #122's `ReplyResultSelftest()` output (verbatim, 8 checks — confirmed by matching `main.cpp:1099-1142`'s `check()` text 1:1 against each printed line)
 
 ```
 [replay-selftest] the synthetic reply parses as an envelope            PASS
 [replay-selftest] the envelope itself is not a bin                     PASS
 [replay-selftest] an envelope with a payload yields the payload        PASS
 [replay-selftest] an envelope with an error slot is an error           PASS
-[replay-selftest] the error text is carried through                   PASS
+[replay-selftest] the error text is carried through                    PASS
 [replay-selftest] a bare payload is returned unchanged                 PASS
 [replay-selftest] a non-response array is left alone                   PASS
 [replay-selftest] a timeout survives the unwrap                        PASS
@@ -74,7 +74,7 @@ The `--dry-run` path runs four selftest blocks in sequence (`main.cpp:1423-1431`
 | 2 | `DryRun()` framing selftest (pre-existing, 5 checks) | **[PASS]** `[dry-run] ok (0 failure(s))` |
 | 3 | `ReplayParserSelftest()` (pre-existing, row #105b) | **[PASS]** `[replay-selftest] ok (0 failure(s))` |
 | 4 | `ReplayDeltaSelftest()` (pre-existing, row #117) | **[PASS]** `[replay-selftest] ok (0 failure(s))` |
-| 5 | `ReplayInterfaceSelftest()` (#120 — suffix parsing + routing table) | **[PASS]** all 18 checks, `[replay-selftest] ok (0 failure(s))` |
+| 5 | `ReplayInterfaceSelftest()` (#120 — suffix parsing + routing table) | **[PASS]** all 19 checks, `[replay-selftest] ok (0 failure(s))` |
 | 6 | `ReplyResultSelftest()` (#122 — envelope unwrap) | **[PASS]** all 8 checks, `[replay-selftest] ok (0 failure(s))` |
 
 ## Crash sweep
