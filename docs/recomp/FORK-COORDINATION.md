@@ -77,3 +77,18 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
 - `[mac]` 2026-10-18 — the fork was made **public** (operator's decision; it was created
   private). An unauthenticated check now returns 200, not 404. Its macOS CI is publicly
   visible while unported — a scheduling input for the fork's lane, not a defect.
+
+- `[mac]` 2026-10-18 — header change (row #70): the manual-plane **getter** is declared —
+  `ObScanManualRPPoints` (the SDK's point-list view of the getter's 0x18-byte config: `points` at
+  +0x08, `count` at +0x10) plus `fn_obscan_scan_get_manaul_remove_plane`, with ABI asserts. Blob
+  `fdf01bb11fae7510d87c3e8a4327d9217693d5cb`, sha256
+  `6c335a88fff83a54f68e9eadf834532a1cf11c72930ad5fd2b0ab28b1463f178` (parent `main` after #199).
+- `[mac]` 2026-10-18 — header change (row #78): the per-frame **tracking-status enum** is declared
+  (`OB_SCAN_TRACKING_SUCCESS` = 0 … `FAILURE_MOVING_TOO_FAST` = 6; out of range → `UNKNOWN`), pinned
+  from the vendor's own name/desc lookup functions. Blob
+  `9c73210f0a6f3868f52079794d4c8e7a30ea7d47`, sha256
+  `1ace2dc814acb68e5315aea8421e615d17e3fc776466d6cbd5f7fb6bf7546b2f` (parent `main` after #215).
+- `[mac]` 2026-10-18 — **routine agreed with the fork's lane**: from here, one line per header
+  change lands in this log as part of the landing itself; the fork syncs at its own cadence,
+  consumes the tip at push time, records the blob it consumed in the pin row, and treats a lagging
+  pin as expected — the drift alarm is the fork's `--pincheck`.
