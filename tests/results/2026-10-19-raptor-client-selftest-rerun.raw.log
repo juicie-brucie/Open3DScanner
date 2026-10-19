@@ -1,0 +1,46 @@
+[dry-run] start_stream params [6,9,1920,1200,50]               PASS
+[dry-run] vendor ReqHeader magic/size/opcode/id                PASS
+[dry-run] frame response decodes as bin(3)                     PASS
+[dry-run] vendor response magic 0x4252                         PASS
+[dry-run] GVCP DISCOVERY_CMD                                   PASS
+[dry-run] ok (0 failure(s))
+[replay-selftest] delay-then-hex-digits PASS
+[replay-selftest] parses three frames with absolute stamps             PASS
+[replay-selftest] stamps are the absolute capture timestamps           PASS
+[replay-selftest] deltas are 25259, 2, 20 ms (not 25259 three times)   PASS
+[replay-selftest] no backward steps in a monotonic file                PASS
+[replay-selftest] first-frame wait is capped                           PASS
+[replay-selftest] a small first delta is not inflated                  PASS
+[replay-selftest] a backward stamp clamps to 0 ms                      PASS
+[replay-selftest] backward steps are counted                           PASS
+[replay-selftest] a frame with no timestamp waits 0 ms                 PASS
+[replay-selftest] ok (0 failure(s))
+[replay-selftest] the captured frames parse to bytes                   PASS
+[replay-selftest] reads the IR method name                             PASS
+[replay-selftest] reads the depth method name                          PASS
+[replay-selftest] parsing does not alter the frame bytes               PASS
+[replay-selftest] extracts the IR suffix                               PASS
+[replay-selftest] extracts the depth suffix                            PASS
+[replay-selftest] a name with no suffix yields none                    PASS
+[replay-selftest] a name that is only the token still carries it       PASS
+[replay-selftest] the IR frame routes to the IR port                   PASS
+[replay-selftest] the depth frame routes to the depth port             PASS
+[replay-selftest] an unknown suffix is rejected                        PASS
+[replay-selftest] the error names the frame and the suffix             PASS
+[replay-selftest] a frame with no suffix is rejected                   PASS
+[replay-selftest] a frame that is not a request is rejected            PASS
+[replay-selftest] --ir-port overrides the IR port                      PASS
+[replay-selftest] --depth-port overrides the depth port                PASS
+[replay-selftest] the overridden IR port is used                       PASS
+[replay-selftest] the overridden depth port is used                    PASS
+[replay-selftest] an unknown interface name is rejected                PASS
+[replay-selftest] ok (0 failure(s))
+[replay-selftest] the synthetic reply parses as an envelope            PASS
+[replay-selftest] the envelope itself is not a bin                     PASS
+[replay-selftest] an envelope with a payload yields the payload        PASS
+[replay-selftest] an envelope with an error slot is an error           PASS
+[replay-selftest] the error text is carried through                    PASS
+[replay-selftest] a bare payload is returned unchanged                 PASS
+[replay-selftest] a non-response array is left alone                   PASS
+[replay-selftest] a timeout survives the unwrap                        PASS
+[replay-selftest] ok (0 failure(s))
