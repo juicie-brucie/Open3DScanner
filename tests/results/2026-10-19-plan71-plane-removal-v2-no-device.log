@@ -1,0 +1,47 @@
+[launcher] Running live scan server in a worker process (up to 30s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/19 14:59:46.238262][info][17999771][Context.cpp:67] Context created with config: default config!
+[10/19 14:59:46.238288][info][17999771][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/19 14:59:46.243806][info][17999771][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/19 14:59:46.243848][info][17999771][DeviceManager.cpp:15] Current found device(s): (0)
+[10/19 14:59:46.243857][info][17999771][Context.cpp:82] EnumerateNetDevice:true
+[10/19 14:59:46.244224][info][17999796][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/19 14:59:46.244256][info][17999796][GVCPClient.cpp:325] bind 0.0.0.0:56241
+[10/19 14:59:46.244301][info][17999796][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/19 14:59:46.244332][info][17999796][GVCPClient.cpp:325] bind 0.0.0.0:56262
+[10/19 14:59:46.244348][info][17999796][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/19 14:59:46.244362][info][17999796][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/19 14:59:46.244386][info][17999796][GVCPClient.cpp:325] bind 0.0.0.0:54531
+[10/19 14:59:46.244398][info][17999796][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/19 14:59:46.244521][error][17999797][GVCPClient.cpp:355] sendto failed with error:49
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/19 14:59:46.246211][info][17999797][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/19 14:59:46.246226][info][17999797][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/19 14:59:47.273277][info][17999796][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/19 14:59:47.273357][info][17999796][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/19 14:59:49.271394][info][17999809][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**2 logs in 3025ms, last: 14:59:46.273207**]
+[10/19 14:59:49.271542][info][17999808][GVCPClient.cpp:421] 0, 3, 248, 1 [**2 logs in 3025ms, last: 14:59:46.273205**]
+[10/19 14:59:49.283850][error][17999901][GVCPClient.cpp:355] sendto failed with error:49 [**2 logs in 3039ms**]
+[10/19 14:59:50.285522][info][17999796][Ethernet.cpp:60] NetDeviceWatcher detected device may be removed, uid:30:30:34:30:35:30
+[10/19 14:59:50.285596][info][17999796][NetDeviceEnumerator.cpp:233] Verifying device removal for UID: 30:30:34:30:35:30
+[10/19 14:59:52.288269][info][17999796][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/19 14:59:52.288387][info][17999796][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=0
+[worker] No device detected — nothing to stream.
+[*** LOG ERROR #0001 ***] [2026-10-19 14:59:53] [OrbbecSDK] {mutex lock failed: Invalid argument}
+libc++abi: terminating due to uncaught exception of type std::__1::system_error: mutex lock failed: Invalid argument
+[launcher] Worker crashed or timed out inside the vendor SDK (child killed by signal Abort trap: 6).

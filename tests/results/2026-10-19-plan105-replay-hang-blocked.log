@@ -1,0 +1,8 @@
+[replay] 36 frame(s) from docs/recon/findings/streaming-replay-payloads.hex
+[replay] connected 127.0.0.1:10013; sending unchanged request frames
+[replay] frame 1 -> kind=7
+[replay] frame 2 -> kind=7
+[replay] frame 3 -> kind=7
+[replay] frame 4 -> kind=7
+[replay] frame 5 -> kind=7
+EXIT: 143
