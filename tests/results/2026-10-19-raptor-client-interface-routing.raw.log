@@ -1,0 +1,164 @@
+=== row #120 routing check: two-port mock daemon, no device ===
+--- date: 2026-10-19 16:57:09 EDT ---
+
+### 1. dry-run against the capture file (per-interface split) ###
+[replay] 36 frame(s) from docs/recon/findings/streaming-replay-payloads.hex (dry-run: not sent)
+[replay] cadence: 36 frame(s), capture span 256 ms, mean gap 10.74 ms, first-frame wait 250 ms (backward stamps clamped to 0)
+[replay] interfaces: IR 13 (span 256 ms) / depth 23 (span 211 ms)
+[replay] frame 1: 0-2-12 (IR) -> port 10013, t=25259ms wait 250ms 42 B: 94 00 01 d9 20 6f 62 5f 73 65 74 5f 69 72 5f 66 …
+[replay] frame 2: 0-2-10 (depth) -> port 10010, t=25261ms wait 2ms 43 B: 94 00 cc 8c d9 20 6f 62 5f 73 65 74 5f 69 72 5f …
+[replay] frame 3: 0-2-10 (depth) -> port 10010, t=25281ms wait 20ms 46 B: 94 00 cc 9f b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 4: 0-2-10 (depth) -> port 10010, t=25282ms wait 1ms 46 B: 94 00 cc a0 b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 5: 0-2-10 (depth) -> port 10010, t=25283ms wait 1ms 46 B: 94 00 cc a1 b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 6: 0-2-12 (IR) -> port 10013, t=25292ms wait 9ms 42 B: 94 00 03 d9 20 6f 62 5f 73 65 74 5f 69 72 5f 66 …
+[replay] frame 7: 0-2-10 (depth) -> port 10010, t=25292ms wait 0ms 43 B: 94 00 cc a1 d9 20 6f 62 5f 73 65 74 5f 69 72 5f …
+[replay] frame 8: 0-2-12 (IR) -> port 10013, t=25294ms wait 2ms 39 B: 94 00 04 b9 6f 62 5f 72 70 63 5f 73 74 61 72 74 …
+[replay] frame 9: 0-2-10 (depth) -> port 10010, t=25339ms wait 45ms 40 B: 94 00 cc a2 b9 6f 62 5f 72 70 63 5f 73 74 61 72 …
+[replay] frame 10: 0-2-12 (IR) -> port 10013, t=25339ms wait 0ms 27 B: 94 00 05 b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 11: 0-2-12 (IR) -> port 10013, t=25359ms wait 20ms 27 B: 94 00 06 b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 12: 0-2-12 (IR) -> port 10013, t=25383ms wait 24ms 27 B: 94 00 07 b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 13: 0-2-12 (IR) -> port 10013, t=25407ms wait 24ms 27 B: 94 00 08 b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 14: 0-2-12 (IR) -> port 10013, t=25429ms wait 22ms 27 B: 94 00 0d b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 15: 0-2-12 (IR) -> port 10013, t=25452ms wait 23ms 27 B: 94 00 0e b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 16: 0-2-12 (IR) -> port 10013, t=25477ms wait 25ms 27 B: 94 00 15 b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 17: 0-2-12 (IR) -> port 10013, t=25489ms wait 12ms 27 B: 94 00 17 b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 18: 0-2-12 (IR) -> port 10013, t=25492ms wait 3ms 27 B: 94 00 18 b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 19: 0-2-12 (IR) -> port 10013, t=25515ms wait 23ms 27 B: 94 00 1c b6 6f 62 5f 72 70 63 5f 67 65 74 5f 66 …
+[replay] frame 20: 0-2-10 (depth) -> port 10010, t=25358ms wait 0ms 28 B: 94 00 cc a3 b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 21: 0-2-10 (depth) -> port 10010, t=25383ms wait 25ms 28 B: 94 00 cc c9 b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 22: 0-2-10 (depth) -> port 10010, t=25403ms wait 20ms 28 B: 94 00 cc ca b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 23: 0-2-10 (depth) -> port 10010, t=25425ms wait 22ms 28 B: 94 00 cc cd b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 24: 0-2-10 (depth) -> port 10010, t=25447ms wait 22ms 28 B: 94 00 cc d0 b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 25: 0-2-10 (depth) -> port 10010, t=25448ms wait 1ms 28 B: 94 00 cc d1 b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 26: 0-2-10 (depth) -> port 10010, t=25449ms wait 1ms 28 B: 94 00 cc d2 b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 27: 0-2-10 (depth) -> port 10010, t=25449ms wait 0ms 28 B: 94 00 cc d3 b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 28: 0-2-10 (depth) -> port 10010, t=25471ms wait 22ms 28 B: 94 00 cc d6 b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 29: 0-2-10 (depth) -> port 10010, t=25472ms wait 1ms 28 B: 94 00 cc d7 b6 6f 62 5f 72 70 63 5f 67 65 74 5f …
+[replay] frame 30: 0-2-10 (depth) -> port 10010, t=25358ms wait 0ms 46 B: 94 00 cc a4 b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 31: 0-2-10 (depth) -> port 10010, t=25359ms wait 1ms 46 B: 94 00 cc a5 b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 32: 0-2-10 (depth) -> port 10010, t=25360ms wait 1ms 46 B: 94 00 cc a6 b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 33: 0-2-10 (depth) -> port 10010, t=25360ms wait 0ms 46 B: 94 00 cc a7 b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 34: 0-2-10 (depth) -> port 10010, t=25362ms wait 2ms 46 B: 94 00 cc a8 b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 35: 0-2-10 (depth) -> port 10010, t=25363ms wait 1ms 46 B: 94 00 cc a9 b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+[replay] frame 36: 0-2-10 (depth) -> port 10010, t=25364ms wait 1ms 46 B: 94 00 cc aa b6 6f 62 5f 72 70 63 5f 73 65 6e 64 …
+exit: 0
+
+### 2. live replay against a TWO-PORT mock daemon ###
+    (the IR port and the depth port each accept one connection and
+     reply only on their own; a client that sent everything down one
+     connection could not complete this)
+[replay] 36 frame(s) from docs/recon/findings/streaming-replay-payloads.hex
+[replay] cadence: 36 frame(s), capture span 256 ms, mean gap 10.74 ms, first-frame wait 250 ms (backward stamps clamped to 0)
+[replay] interfaces: IR 13 (span 256 ms) / depth 23 (span 211 ms)
+[replay] connected 127.0.0.1:19950 for interface IR (0-2-12)
+[replay] connected 127.0.0.1:19951 for interface depth (0-2-10)
+[replay] sending unchanged request frames (reply timeout 2000 ms)
+[replay] frame 1 (0-2-12) -> kind=7
+[replay] frame 2 (0-2-10) -> kind=7
+[replay] frame 3 (0-2-10) -> kind=7
+[replay] frame 4 (0-2-10) -> kind=7
+[replay] frame 5 (0-2-10) -> kind=7
+[replay] frame 6 (0-2-12) -> kind=7
+[replay] frame 7 (0-2-10) -> kind=7
+[replay] frame 8 (0-2-12) -> kind=7
+[replay] frame 9 (0-2-10) -> kind=7
+[replay] frame 10 (0-2-12) -> kind=7
+[replay] frame 11 (0-2-12) -> kind=7
+[replay] frame 12 (0-2-12) -> kind=7
+[replay] frame 13 (0-2-12) -> kind=7
+[replay] frame 14 (0-2-12) -> kind=7
+[replay] frame 15 (0-2-12) -> kind=7
+[replay] frame 16 (0-2-12) -> kind=7
+[replay] frame 17 (0-2-12) -> kind=7
+[replay] frame 18 (0-2-12) -> kind=7
+[replay] frame 19 (0-2-12) -> kind=7
+[replay] frame 20 (0-2-10) -> kind=7
+[replay] frame 21 (0-2-10) -> kind=7
+[replay] frame 22 (0-2-10) -> kind=7
+[replay] frame 23 (0-2-10) -> kind=7
+[replay] frame 24 (0-2-10) -> kind=7
+[replay] frame 25 (0-2-10) -> kind=7
+[replay] frame 26 (0-2-10) -> kind=7
+[replay] frame 27 (0-2-10) -> kind=7
+[replay] frame 28 (0-2-10) -> kind=7
+[replay] frame 29 (0-2-10) -> kind=7
+[replay] frame 30 (0-2-10) -> kind=7
+[replay] frame 31 (0-2-10) -> kind=7
+[replay] frame 32 (0-2-10) -> kind=7
+[replay] frame 33 (0-2-10) -> kind=7
+[replay] frame 34 (0-2-10) -> kind=7
+[replay] frame 35 (0-2-10) -> kind=7
+[replay] frame 36 (0-2-10) -> kind=7
+[replay] done: bin=0 empty=36 error=0
+exit: 1
+
+### 3. what each port received ###
+IR(0-2-12) listening on 19950
+depth(0-2-10) listening on 19951
+IR(0-2-12) accepted one connection
+depth(0-2-10) accepted one connection
+IR(0-2-12): received frame 1 of 13
+depth(0-2-10): received frame 1 of 23
+depth(0-2-10): received frame 2 of 23
+depth(0-2-10): received frame 3 of 23
+depth(0-2-10): received frame 4 of 23
+IR(0-2-12): received frame 2 of 13
+depth(0-2-10): received frame 5 of 23
+IR(0-2-12): received frame 3 of 13
+depth(0-2-10): received frame 6 of 23
+IR(0-2-12): received frame 4 of 13
+IR(0-2-12): received frame 5 of 13
+IR(0-2-12): received frame 6 of 13
+IR(0-2-12): received frame 7 of 13
+IR(0-2-12): received frame 8 of 13
+IR(0-2-12): received frame 9 of 13
+IR(0-2-12): received frame 10 of 13
+IR(0-2-12): received frame 11 of 13
+IR(0-2-12): received frame 12 of 13
+IR(0-2-12): received frame 13 of 13
+IR(0-2-12): received all 13 frames
+depth(0-2-10): received frame 7 of 23
+depth(0-2-10): received frame 8 of 23
+depth(0-2-10): received frame 9 of 23
+depth(0-2-10): received frame 10 of 23
+depth(0-2-10): received frame 11 of 23
+depth(0-2-10): received frame 12 of 23
+depth(0-2-10): received frame 13 of 23
+depth(0-2-10): received frame 14 of 23
+depth(0-2-10): received frame 15 of 23
+depth(0-2-10): received frame 16 of 23
+depth(0-2-10): received frame 17 of 23
+depth(0-2-10): received frame 18 of 23
+depth(0-2-10): received frame 19 of 23
+depth(0-2-10): received frame 20 of 23
+depth(0-2-10): received frame 21 of 23
+depth(0-2-10): received frame 22 of 23
+depth(0-2-10): received frame 23 of 23
+depth(0-2-10): received all 23 frames
+
+### 4. a stall names the frame AND its interface (silent peers on both ports) ###
+[replay] frame 1 (0-2-12): no reply within 1200 ms
+[replay] 36 frame(s) from docs/recon/findings/streaming-replay-payloads.hex
+[replay] cadence: 36 frame(s), capture span 256 ms, mean gap 10.74 ms, first-frame wait 250 ms (backward stamps clamped to 0)
+[replay] interfaces: IR 13 (span 256 ms) / depth 23 (span 211 ms)
+[replay] connected 127.0.0.1:19952 for interface IR (0-2-12)
+[replay] connected 127.0.0.1:19953 for interface depth (0-2-10)
+[replay] sending unchanged request frames (reply timeout 1200 ms)
+exit: 1
+
+### 5. an unknown interface suffix is an error naming the frame ###
+[replay] frame 1: unknown interface suffix '0-2-23' (known: 0-2-12, 0-2-10)
+[replay] 1 frame(s) from /private/var/folders/pm/qtldpwfn5rd4jb7bz747zbnm0000gn/T/opencode/bad.hex (dry-run: not sent)
+exit: 2
+
+### 6. the selftests (ctest) ###
+Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build3/build
+    Start 3: raptor_client_selftest
+1/2 Test #3: raptor_client_selftest ...........   Passed    0.01 sec
+    Start 4: raptor_client_reply_timeout
+2/2 Test #4: raptor_client_reply_timeout ......   Passed    0.31 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.33 sec
+exit: 0
