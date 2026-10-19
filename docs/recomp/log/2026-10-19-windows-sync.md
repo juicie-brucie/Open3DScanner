@@ -1,4 +1,4 @@
-- 2026-10-19 — the **Windows parent sync landed** (fork PR #17, branch `build/win-parent-sync` @ `cb54971`), consuming
+- 2026-10-19 — the **Windows parent sync's code is on its branch** (fork PR #17, branch `build/win-parent-sync` @ `cb54971`, later `12a4723` — **not merged**; corrected 2026-10-19 after the Windows dispatcher's check-in), consuming
   parent main `7537e44`. Judged by the fork's own fresh-build verification, not by repeating the builder: 44/44 objects;
   `GET /` → 200 `text/html` (3593 B — the parent's `ui/index.html` is 3474 B plus 119 CRLF) where the pre-sync tree closed
   with zero bytes; WebSocket 101; guard harness 62/62; `[perf] window` lines. Independently checked here: the header at
