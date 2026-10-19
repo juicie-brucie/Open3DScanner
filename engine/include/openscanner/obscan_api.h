@@ -924,6 +924,20 @@ typedef ObScanStatus (*fn_obscan_frame_get_frame_bbox)(ObScanFrameHandle frame, 
 typedef ObScanStatus (*fn_obscan_frame_get_timestamp)(ObScanFrameHandle frame, int64_t* out_timestamp);
 typedef ObScanStatus (*fn_obscan_frame_get_frame_id)(ObScanFrameHandle frame, int32_t* out_frame_id);
 typedef ObScanStatus (*fn_obscan_frame_get_frame_rate)(ObScanFrameHandle frame, int32_t* out_frame_rate);
+// OBScan.SDK.OBScanTrackingStatus — the value returned by the getter below
+// (row #78; findings scan-quality-gate.md §2). The mapping is the vendor's own:
+// OBScanTrackingStatus_name (0x170d64) bounds-checks <= 6 and loads a 7-entry
+// table (0x45455b0; descs 0x45455e8); out of range is "UNKNOWN".
+typedef enum ObScanTrackingStatus {
+    OB_SCAN_TRACKING_SUCCESS = 0,                        // "tracking success"
+    OB_SCAN_TRACKING_LOST = 1,                           // "tracking lost"
+    OB_SCAN_TRACKING_AMBIGUOUS_PLANE = 2,                // "ambiguous plane"
+    OB_SCAN_TRACKING_FAILURE_INSUFF_VALID_POINTS = 3,    // "insufficient valid points"
+    OB_SCAN_TRACKING_FAILURE_TEXTURELESS = 4,            // "textureless"
+    OB_SCAN_TRACKING_FAILURE_MARKERLESS = 5,             // "markerless failure"
+    OB_SCAN_TRACKING_FAILURE_MOVING_TOO_FAST = 6,        // "moving too fast"
+} ObScanTrackingStatus;
+
 typedef ObScanStatus (*fn_obscan_frame_get_frame_tracking_status)(ObScanFrameHandle frame, int32_t* out_status);
 typedef ObScanStatus (*fn_obscan_frame_get_update_model)(ObScanFrameHandle frame, bool* out_update_model);
 typedef ObScanStatus (*fn_obscan_frame_get_frame_pose)(ObScanFrameHandle frame, ObScanPose** out_pose);

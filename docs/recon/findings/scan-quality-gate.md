@@ -56,23 +56,31 @@ frame's tracking status, `obscan_frame_get_frame_tracking_status(frame,
 int32_t*)`. Its value set is recovered from the SDK's own name/description
 table (plaintext, `0x42eb0xx`):
 
-| name | description |
-| --- | --- |
-| `OB_SCAN_TRACKING_SUCCESS` | "tracking success" |
-| `OB_SCAN_TRACKING_LOST` | "tracking lost" |
-| `OB_SCAN_TRACKING_AMBIGUOUS_PLANE` | "ambiguous plane" |
-| `OB_SCAN_TRACKING_FAILURE_INSUFF_VALID_POINTS` | "insufficient valid points" |
-| `OB_SCAN_TRACKING_FAILURE_TEXTURELESS` | "textureless" |
-| `OB_SCAN_TRACKING_FAILURE_MARKERLESS` | "markerless failure" |
-| `OB_SCAN_TRACKING_FAILURE_MOVING_TOO_FAST` | "moving too fast" |
+**The numeric mapping is pinned (row #78)** — read from the vendor's own
+lookup functions `_OBScanTrackingStatus_name` (`0x170d64`) and `_desc`
+(`0x170d88`): each bounds-checks `index <= 6` and loads from a 7-entry pointer
+table (`0x45455b0` names / `0x45455e8` descs); out of range returns the shared
+`"UNKNOWN"` (`0x42dfae9`).
+
+| value | name | description |
+| --- | --- | --- |
+| `0` | `OB_SCAN_TRACKING_SUCCESS` | "tracking success" |
+| `1` | `OB_SCAN_TRACKING_LOST` | "tracking lost" |
+| `2` | `OB_SCAN_TRACKING_AMBIGUOUS_PLANE` | "ambiguous plane" |
+| `3` | `OB_SCAN_TRACKING_FAILURE_INSUFF_VALID_POINTS` | "insufficient valid points" |
+| `4` | `OB_SCAN_TRACKING_FAILURE_TEXTURELESS` | "textureless" |
+| `5` | `OB_SCAN_TRACKING_FAILURE_MARKERLESS` | "markerless failure" |
+| `6` | `OB_SCAN_TRACKING_FAILURE_MOVING_TOO_FAST` | "moving too fast" |
 
 Note what this means for the corpus's argument: the string it leans on
-("insufficient valid points") is **this enum's fourth value's description** — a
-per-frame *diagnostic*, not a point count. The enum's **numeric mapping is not
-yet pinned** (the only writers on file, `send_frame_msg`'s
-`set_frame_tracking_status_unsafe` calls at `0x5f458`/`0x5f4f0` and
-`0xc6f18`/`0xc7048`, pass `5` and a computed value) — a follow-up read, not a
-blocker for using the *names*.
+("insufficient valid points") is **this enum's value 3's description** — a
+per-frame *diagnostic*, not a point count. The enum is declared in the header
+(`ObScanTrackingStatus`) so a consumer can render the vendor's own reason from
+the raw getter value. Cross-check: `send_frame_msg`'s
+`set_frame_tracking_status_unsafe` calls (`0x5f458`/`0x5f4f0`, `0xc6f18`/
+`0xc7048`) write `5` (`OB_SCAN_TRACKING_FAILURE_MARKERLESS`) and a computed
+value — consistent with the mapping, though the state machine that chooses
+between them is not part of this row.
 
 ## 3. What our coverage layer can align with
 
@@ -92,7 +100,6 @@ blocker for using the *names*.
   "is there enough data" heuristic we build must be ours, with the vendor's
   enum as the per-frame cross-check.
 
-**Residual (listing-follow-up):** the tracking-status enum's numeric mapping
-(the values behind the seven names) — pin it from the `send_frame_msg` state
-transitions (`0x5f44c`–`0x5f500`, `0xc6f0c`–`0xc7058`) when a consumer needs to
-compare numbers rather than names.
+**Residual (listing-follow-up):** the `send_frame_msg` state machine that
+*chooses* a status (`0x5f44c`–`0x5f500`, `0xc6f0c`–`0xc7058`) — which conditions
+produce which value. The mapping itself is pinned above.
