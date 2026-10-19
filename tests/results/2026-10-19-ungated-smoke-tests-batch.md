@@ -1,4 +1,4 @@
-# tracking_status_test / bounded_watchdog_test / mesh_tools_smoke_test / smoke_test — first runs under their own name — PASS (3) / PASS-with-known-recovered-crash (1)
+# tracking_status_test / bounded_watchdog_test / mesh_tools_smoke_test / smoke_test — runs under their own name — PASS (3) / PASS-with-known-recovered-crash (1)
 
 - Date: 2026-10-19
 - Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
@@ -89,22 +89,27 @@ lead is being filed.
 ## Open questions
 
 - `smoke_test`'s `get_device_num` reported `count=0` on all 7 samples even
-  after the log shows the device was added (`DeviceManager.cpp:188`) before
-  sample 6 and 7. Is that expected lag/timing for this particular probe
-  cadence (7 x 500 ms, fixed by design per the file's own comment), or does
-  it indicate `get_device_num` and the `DeviceManager`'s internal device
-  list are out of sync in this build? Not settled by this run.
-- Is `smoke_test` expected to hit the known `obscan_context_destroy()` crash
-  on every run, or did this run just happen to hit it? The binary's own
-  exit-code design treats exit 3 as a known, recovered condition rather than
-  a failure, so this record treats it the same way, but the frequency isn't
-  established here.
+  after the log shows the device was added (`DeviceManager.cpp:188`). This is
+  the probe tracked by **#69** (`smoke_test`'s two gaps — the exit-2 collision
+  and a delayed/repeated device-count probe, `DONE`); the 7 x 500 ms cadence
+  is #69's fix, and this run is consistent with it rather than raising a new
+  question.
+- Is the known `obscan_context_destroy()` crash expected on every run? The
+  repo's evidence says yes: **three** recorded `smoke_test` runs
+  (`2026-10-18-oq7b-listenerless-smoke-test.md`, its `-rerun.md`, and this one)
+  all hit the same vendor crash. Exit 3 is the normal outcome for this binary,
+  not an occasional one.
 
 ## Board
 
-- Row move: none proposed. I found no PLAN.md row that names any of these
-  four binaries directly by their own test name (rows #89/#91 cover the
-  *features* `bounded_watchdog_test`/`tracking_status_test` exercise, and
-  both are already `DONE` via other hardware confirmation runs against
-  `scan_server --live`, not these ctest binaries). This batch is the first
-  recorded run of all four under their own name.
+- Row move: none proposed. **The survey this record first carried was wrong**
+  and is corrected here: **#69** is `smoke_test`'s own gap row (`smoke_test`'s
+  two gaps — the exit-2 collision and a delayed/repeated device-count probe,
+  `DONE`), and **#115** lists `tools/smoke_test` in its path set. Rows
+  #89/#91 cover the *features* `bounded_watchdog_test`/`tracking_status_test`
+  exercise. **`smoke_test` is not a new run**: `2026-10-18-oq7b-listenerless-
+  smoke-test.md` and its `-rerun.md` are prior recorded runs of the same
+  binary, the rerun ending with the same `Exit code 3 = recovered from known
+  vendor crash.` This batch is the first recorded run of
+  `tracking_status_test`, `bounded_watchdog_test` and `mesh_tools_smoke_test`
+  under their own names.
