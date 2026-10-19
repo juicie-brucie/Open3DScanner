@@ -6,6 +6,10 @@ from `session4.pcapng` with the fixed extractor (§1). The container is the
 **msgpack-RPC reply envelope**; the frame payload it carries is
 **headerless raw 8-bit image samples** (row stride **1920 B**).*
 
+*§10 (added by row #131) is the **producer side** of this file: what the
+daemon's code writes into the 11-element array, what every element means, and
+what the serializer does **not** do. Read §10 before acting on §2.*
+
 *This is a **sample, not a stream.** Every count below is over **n = 11**
 replies unless a different n is stated. "≥99 %" on this corpus means
 **11/11**. The corpus holds 11 of the **5,886** `get_frame`-shaped replies
@@ -417,33 +421,271 @@ therefore `SPEC-READY`, not `DONE`.**
      scale** (depth in mm vs a normalised 0–255).
    * Capture the IR port (10013) the same way — **n = 1** here, so the IR
      numbers need their own corpus.
-2. **The producer, on disk** — REA `/Library/Creality/RPCServer` (230 KB) and
-   `/Library/Creality/libOrbbecSDK.1.7.1.dylib` (23 MB) for the **frame
-   serializer**: the function that writes the 11-element array and the
-   band-splitting rule. This settles §4.3, the meaning of `e2`/`e3`/`e6`/`e8`
-   and the no-data/data variant outright, and is cheaper than a capture.
+2. **The producer, on disk — DONE (§10).** REA of
+   `/Library/Creality/libOrbbecSDK.1.7.1.dylib` (23 MB) settled the array's
+   **type tuple and every element's meaning** (§10.3), settled the
+   no-data/data "variant" question (§10.4), and **falsified** the premise that
+   the serializer holds the band rule (§10.5). `/Library/Creality/RPCServer`
+   (230 KB) is **not** the producer — it has no `ob_rpc_*` symbol or string
+   (§10.0). The band rule is narrowed to the platform layer / the application
+   (§10.7) and is carried by **#132**.
 3. **A decoded comparison** — row #126's controlled-content capture (flat
    wall at 300/400/500 mm + checkerboard) with the vendor app as the A/B
    oracle, to turn the 8-bit samples into millimetres.
 
 ---
 
+## 10. The producer — the daemon's frame serializer (row #131)
+
+*Added 2026-10-19, row #131 (recon room). This section is the **producer side**
+of §2: what the daemon's code actually writes into the 11-element array, and
+what it does **not** do. It settles **OQ-124-3** (the meanings of `e2`/`e6`/`e8`
+and the "two reply forms") and **narrows OQ-124-2** (the band rule) to a named
+place outside the serializer. Every claim below is **`[inferred]`** from static
+analysis of the shipped binary — no hardware run in this row, so no `[hw-*]`
+tag applies.*
+
+### 10.0 The artifacts, and which one is the producer
+
+| artifact | sha256 | role |
+| --- | --- | --- |
+| `/Library/Creality/libOrbbecSDK.1.7.1.dylib` (shipped, fat x86_64 + arm64, 23,354,416 B) | `2cf0fcebf2392c7e85ed68f6b8014953eac9988c74703e10e5c8d82747547206` | **the producer** — holds the msgpack-RPC server and all 14 `ob_rpc_*` method names |
+| `.recon-cache/libOrbbecSDK_arm64.dylib` (`lipo -thin arm64` of the above; 11,050,032 B) | `5134a211296484473eaa7e4801788943a6ccb6b4a8660465b0a2c042d9dd925b` | the slice actually disassembled and decompiled |
+| `/Library/Creality/RPCServer` (shipped, fat, 230,288 B) | `b7f324c0659eed7952473c500e923343486168ad34df7812c0715775cba58fb7` | **not the producer** |
+
+**The work order's premise needs one correction.** `/Library/Creality/RPCServer`
+is **not** the daemon that answers `ob_rpc_get_frame`: it contains **zero**
+occurrences of `ob_rpc_*` (checked over the whole file), has six exported
+symbols (`main`, `getch`, `kbhit`, `handleDeviceConnected`,
+`handleDeviceDisconnected`) and only links the Orbbec SDK. It is a small
+device-enumeration utility. The msgpack-RPC server the capture talks to lives
+**inside `libOrbbecSDK.1.7.1.dylib`**, in `libobsensor::pal::RPCServer`
+(namespace `libobsensor`, `pal` = platform-abstraction layer), built on
+`clmdep_msgpack2v1` (msgpack-cxx) and the `rpc::` C++ client/server library.
+`RPCServer::initVideoStreamingFunction()` is the function that registers the
+video-streaming methods.
+
+### 10.1 The method name and the `0-2-10` / `0-2-12` suffix
+
+The registered method name is built as
+
+```
+"ob_rpc_get_frame"  +  <SourcePort+0x28 string>  +  to_string(*(uint8*)(SourcePort+0x90))
+```
+
+`SourcePort+0x28` holds `"0-2-"` and `SourcePort+0x90` holds the port ordinal
+(`10` for depth → 10010, `12` for IR → 10013), giving the wire names
+`ob_rpc_get_frame0-2-10` and `ob_rpc_get_frame0-2-12` — **exactly** the method
+strings in the capture. The suffix is therefore the **daemon's own port
+identity**, not the client's choice. `[inferred]`
+
+### 10.2 `ob_rpc_get_frame` takes **zero** arguments
+
+The handler begins with
+`rpc::detail::dispatcher::enforce_arg_count(<name>, 0, <count>)` — it rejects
+any request that carries parameters. This confirms #124's observation that
+`get_frame`'s request has empty params (`90` = fixarray(0)) as the **daemon's**
+contract, not a client convention. `[inferred]`
+
+### 10.3 The 11-element array: the exact type tuple, and every element's meaning
+
+The serializer builds its result with
+`clmdep_msgpack::v1::type::define_array<T0,…,T10>::msgpack_object(...)`, and the
+SDK's **own client** unpacks the same reply with
+`define_array_imp<std::tuple<T0&,…,T10&>,10>::unpack(...)` in
+`libobsensor::pal::RPCFrameObject::msgpack_unpack`. The two agree exactly, and
+the tuple is:
+
+```
+u64, u64, u64, OBFormat, vector<char>, uint, vector<char>, uint, vector<char>, uint, OBIRFrameLightType_t
+```
+
+**11 elements — the same 11 the capture sees.** The element-by-element meaning,
+read off the producer (`RPCServer::frameCallback` copies these fields out of the
+PAL frame) and confirmed by the client's unpack:
+
+| # | wire form (measured) | C++ type | the field it carries |
+| --- | --- | --- | --- |
+| `e0` | `fixint 0` (11/11) | `u64` | PAL frame word 0 — **always 0**; not a frame index, not an offset |
+| `e1` | `uint64` | `u64` | PAL frame word 1 — the frame **timestamp (µs)** |
+| `e2` | `uint32` (fixint 0 in 5/10) | `u64` | PAL frame word 2 — a **second time/counter word** of the same frame |
+| `e3` | `uint8 255` (11/11) | `OBFormat` (u32) | the frame's **format** field — **not** the stream profile's format id 9 (§10.9, OQ-131-3) |
+| `e4` | `bin16`, 12,118–12,276 B | `vector<char>` | the frame's **primary data buffer** — the band |
+| `e5` | `uint16` = `len(e4)` | `uint` | the primary data buffer's length |
+| `e6` | `bin8`, 19–168 B | `vector<char>` | the frame's **second data buffer** (`data2`) |
+| `e7` | `fixint` = `len(e6)` | `uint` | `data2`'s length |
+| `e8` | `bin8`, exactly 6 B | `vector<char>` | the frame's **third data buffer** (`data3`) |
+| `e9` | `fixint 6` = `len(e8)` | `uint` | `data3`'s length |
+| `e10` | `fixint 0` (depth) / `2` (IR) | `OBIRFrameLightType_t` (**int32**) | the frame's **IR light type** — the SDK exposes it as `RPCClientPort::getIRFrameLightType` / `setIRFrameLightType` |
+
+**⇒ OQ-124-3 is answered.** `e6` and `e8` are **not** companions of the frame
+and **not** frames: they are the **second and third data planes of the very same
+PAL frame** as `e4` — three sibling buffers the platform layer delivers together,
+in the same callback, for the same instant. `e8` is 6 bytes because the frame's
+`data3` plane is 6 bytes; `e6` is 19–168 B because the frame's `data2` plane
+varies. `e2` is the frame's second 64-bit time word (it is 0 in 5/10 replies and
+a large value otherwise — it is **not** ASCII, and **not** a frame counter that
+increments per band).
+
+The PAL frame's field map, as the producer reads it (offsets are
+`libobsensor::pal::VideoFrameObject`):
+
+| PAL frame offset | width | reply element |
+| --- | --- | --- |
+| `+0x00` | u64 | `e0` |
+| `+0x08` | u64 | `e1` |
+| `+0x10` | u64 | `e2` |
+| `+0x18` | u32 | `e3` (format) |
+| `+0x1c` | u32 | `e5` (data length) |
+| `+0x20` | ptr | `e4` (data) |
+| `+0x28` | u32 | `e7` (data2 length) |
+| `+0x30` | ptr | `e6` (data2) |
+| `+0x38` | ptr | `e8` (data3) |
+| `+0x40` | u8 | `e9` (data3 length) |
+| `+0x44` | u32 | `e10` (IR light type) |
+
+### 10.4 The "two reply forms" are **one** form
+
+§2.1 recorded two shapes and §8 OQ 3 left the rule open. There is **no
+variant**: the reply is always the same 11-element array. What differs is only
+whether the ring buffer held a frame when the call arrived (§10.5).
+
+* **Data form** — the last array word is `{ e9 = 6, e10 = 0 or 2 }`, both small
+  positives → msgpack `fixint`.
+* **No-data form** — the same array with all three buffers empty (`e4`/`e6`/`e8`
+  = `bin(0)`, `e5`/`e7` = 0) and the last word set to
+  `{ e9 = <uninitialised>, e10 = 0xFFFFFFFF }`. `0xFFFFFFFF` as an **int32**
+  packs as msgpack `int8 -1` (`ff`) — which is exactly the `e10 = -1` #124
+  measured. `e3`'s default is `0xFF` (255) in **both** forms.
+
+  **A real defect the client must know about:** the producer writes **only the
+  high half** of that last 64-bit word (`e10`) and never initialises the low
+  half (`e9`). So **`e9` in the no-data form is uninitialised stack** — the
+  capture's `0xA2C90018` is a leftover, not a value. `[inferred]`
+  ⇒ **A decoder must branch on "are the buffers empty", never on the wire types,
+  and must ignore `e9` when `e8` is empty.** The SDK's own client does exactly
+  this: it pre-initialises its `RPCFrameObject` to `{e0..e2 = 0, e3 = 255,
+  e4..e9 = empty/0, e10 = -1}` before unpacking.
+
+### 10.5 The serializer does **not** split the frame — it is a pass-through
+
+This is the row's main negative result, and it falsifies the premise that the
+band rule lives in the serializer.
+
+* `RPCServer::frameCallback(VideoFrameObject const&)` is the producer's only
+  input. It allocates one **128-byte record** and copies the PAL frame's three
+  buffers into it **whole**: `memcpy(dst, src, size)` with `size` taken from the
+  frame's own `dataSize`/`data2Size`/`data3Size` fields. **There is no slicing,
+  no `min()`, no row arithmetic, no 12,288-byte constant anywhere in it.**
+* Records are pushed onto a **ring buffer of 256 entries per page**, pages
+  chained: the head counter lives at `server+0xf8`, the live count at
+  `server+0x100`, the page pointer at `server+0xe0`, and a page is released when
+  the counter passes `0x1FF`.
+* `ob_rpc_get_frame` **pops one whole record per call** and serialises it. It
+  never splits either. The payload length it writes is therefore **the PAL
+  frame's primary data buffer's length, verbatim**.
+
+⇒ **The ~12 KB band is not produced by the serializer.** The serializer's
+`bin` length is whatever the platform layer handed it. `[inferred]`
+
+### 10.6 The SDK's own RPC client does **not** stitch bands either
+
+`RPCClientPort::startStream` spawns a thread whose body is a loop that calls
+`ayncCall<RPCFrameObject>("ob_rpc_get_frame")` and then **hands the payload to
+the application callback unchanged**: the `VideoFrameObject` it builds has its
+`data` pointer = the received bin's begin, its `data` end = the bin's end, and
+its `dataSize` = element 5. **No concatenation, no offset arithmetic.** When the
+call returns no frame it sleeps `1000 / profile.fps` ms and retries.
+
+⇒ The **stitcher is not in the Orbbec SDK either**. Whatever reassembles the
+12 KB bands into a 1920×1200 image lives in the **CrealityScan application**
+(`GameAssembly.dylib`, IL2CPP) or in the platform layer that produced the
+banded PAL frame. `[inferred]`
+
+### 10.7 Where the band rule therefore must be — the named next reads
+
+Given §10.5 and §10.6, the rule is in one of exactly two places, both
+nameable:
+
+1. **The platform-layer frame producer** — the thing that decides the PAL
+   frame's `dataSize` (~12 KB instead of 2,304,000 B). Named reads in the same
+   dylib: `libobsensor::VideoSensor::onFrameRawDataCallback` (`0x369d68`),
+   `libobsensor::OpenNIVideoSensor::onNewFrameDataCallback` (`0x37ded0`),
+   `libobsensor::FrameBufferManager<libobsensor::FrameSet>::acquireFrame`
+   (`0x3a1fe0`), `libobsensor::AbstractFrameBufferManager::getFrameDataBufferSize`
+   (`0x398930`), `libobsensor::OpenNIFrameBufferManager::Init` (`0x3a2f98`).
+   A frame-buffer manager that assembles a frame from pieces is the most likely
+   home of a "how many bytes are ready" rule. `[inferred]`
+2. **The CrealityScan application** — the IL2CPP side that stitches the bands
+   (the SDK client passes them through untouched). The secondary confirmation
+   route named in the room's method.
+
+### 10.8 What this does to the OQ list
+
+* **OQ-124-3 — settled.** §10.3 names `e2`, `e6`, `e8` (and every other
+  element); §10.4 settles the "two forms" question. Neither was a separate
+  mystery: all four fields are ordinary fields of one PAL frame.
+* **OQ-124-2 — narrowed, not settled.** The rule is **not** in the serializer
+  (§10.5) and **not** in the SDK's RPC client (§10.6). What is now known is
+  the rule's *shape*: the payload is a **contiguous slice of the frame's primary
+  data buffer**, delivered whole; a band boundary is a property of the platform
+  layer or of the device transport, and the client-side stitch rule is outside
+  the SDK. The remaining evidence is named in §10.7 and carried by **#132**.
+
+### 10.9 OPEN QUESTIONS raised by this row
+
+1. **OQ-131-1 — where exactly is the band cut?** Not in the serializer
+   (§10.5), not in the SDK client (§10.6). Named next reads in §10.7; the
+   runtime confirmation belongs to **#132**.
+2. **OQ-131-2 — is the band aligned to a row?** The measured payloads are
+   6 full rows + a partial row of 598–756 B, and the 0xFF invalid marker
+   recurs every 1920 B *inside* a payload. Whether the band *starts* on a row
+   boundary cannot be decided from a single band. **#132** must compare the
+   0xFF phase of consecutive bands.
+3. **OQ-131-3 — what is `e3` = 255?** It is an `OBFormat`-typed field taken
+   from the PAL frame's `+0x18`, always 255 on the wire, and it is **not** the
+   stream profile's format id 9 (`protocol-spec.md` §7). The SDK's enum names
+   for 255 are not present in the shipped dylib, so "unknown" vs "custom"
+   cannot be resolved from the binary. It is, however, now **known to be the
+   frame's format field** rather than a status byte — which is what §6's
+   acceptance clause (2) was missing.
+4. **OQ-131-4 — what is `e2` exactly?** It is the PAL frame's word at `+0x10`,
+   a second 64-bit time word, 0 in 5/10 depth replies and a large value
+   otherwise. Its unit and role are not named by the binary. It is **not** a
+   band index and **not** a frame ordinal (it does not increment per band in
+   the corpus).
+
+---
+
 ## 8. OPEN QUESTIONS
 
-1. **What is the band-assembly rule?** Each reply carries 6 whole rows plus a
-   partial row of a 1920-wide image; the rule that stitches bands into a
-   1920×1200 frame is not in this corpus (§4.3). **Next evidence: §7.1.**
+1. **What is the band-assembly rule? — NARROWED, still open.** Each reply
+   carries 6 whole rows plus a partial row of a 1920-wide image. §10.5 proves
+   the **serializer does not split** (it copies the platform frame's buffers
+   whole) and §10.6 proves the **SDK's RPC client does not stitch** (it hands
+   the bin through unchanged). The rule is therefore in the platform layer that
+   produced the ~12 KB frame buffer, or in the CrealityScan application that
+   stitches the bands. **Next evidence: §10.7 (named reads) + §7.1 and
+   #132.** (This is OQ-124-2.)
 2. **What are `e6` (19–168 B, pixel-like) and `e8` (6 B, `ff ff ff ff ff ff`
-   on depth, `b1 1b 00 00 99 03` on IR)?** `e6` is the same kind of data as
-   the payload at 1/400th the size; `e8` is 3 × `u16` with `0xFFFF` as
-   "absent" on depth. Neither is a frame; neither is understood.
-   **Next evidence: §7.2.**
-3. **Why does the reply have two shapes?** In the no-data form `e9`/`e10` are
-   `uint32` and `int8 −1`; in the data form they are `fixint 6` and
-   `fixint 0/2`. A decoder must branch on the form; the rule is unknown.
-4. **What is `e2`?** A `uint32` that is nonzero in 6/11 replies and whose
-   nonzero values are large and ASCII-looking (0x29252827, 0x32303138 =
-   `"2018"`). Not a frame index as read; not understood.
+   on depth, `b1 1b 00 00 99 03` on IR)? — SETTLED (§10.3).** They are the
+   **second and third data planes of the same platform frame** as `e4` — the
+   frame's `data2` and `data3` buffers, delivered together in the same
+   callback. `e8`'s 6 bytes are the frame's `data3` length; `e6` is the
+   frame's `data2` length. Neither is a frame, and neither is a "companion" in
+   any sense beyond "another buffer of the same frame".
+   (This is OQ-124-3.)
+3. **Why does the reply have two shapes? — SETTLED (§10.4).** It does not.
+   There is **one** 11-element array; the "no-data" form is the same array
+   with empty buffers and `e10 = -1` (the producer writes `0xFFFFFFFF` into
+   the high half of the last word, which msgpack packs as `int8 -1`), and it
+   **never initialises `e9`** — so `e9`'s value in that form is uninitialised
+   stack and must be ignored. A decoder branches on "are the buffers empty",
+   not on the wire types.
+4. **What is `e2`? — PARTLY SETTLED (§10.3, OQ-131-4).** It is the platform
+   frame's word at `+0x10`: a **second 64-bit time word** of the same frame.
+   It is **not** ASCII, **not** a band index and **not** a per-band counter.
+   Its unit and role are not named by the binary.
 5. **What does one pixel byte mean?** 8-bit single-channel is settled; the
    *scale* (depth in mm? a normalised 0–255? a log encoding?) is not.
    **Next evidence: §7.3.**
