@@ -1,0 +1,8 @@
+1792388275.121833 [app pid 90672] applicationWillFinishLaunching
+1792388275.199572 [app pid 90672] applicationDidFinishLaunching
+1792388275.786400 [app pid 90672] worker launched pid=90679 path=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/MacOS/scan_server
+1792388275.942726 [worker pid 90679] RunLiveServer: installing signal handlers
+1792388309.859923 [worker pid 90679] teardown: calling obscan_scan_stop(is_block=false)
+1792388309.859960 [worker pid 90679] teardown: obscan_scan_stop returned
+1792388312.185304 [worker pid 90679] teardown: session_destroy poll loop done
+1792388312.185333 [worker pid 90679] teardown: starting context_destroy poll loop
