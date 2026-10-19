@@ -78,7 +78,15 @@ if [ -z "$BASE" ]; then
   BASE="http://127.0.0.1:$PORT"
 fi
 
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)
+# The repo comes from the origin remote — never from bare `gh`, which prefers
+# `upstream` when a fork room carries one and would then resolve PR numbers
+# against the parent repo (the Windows lane hit exactly this: a fork PR read as
+# MERGED because the parent's PR of the same number was). verify-pr.py is immune
+# because it pins REPO; this is the same idea, derived so it also works in a fork.
+origin_url=$(git remote get-url origin 2>/dev/null || true)
+REPO=$(printf '%s' "$origin_url" | sed -E 's#^(git@[^:]+:|https://[^/]+/)##; s#\.git$##')
+case "$REPO" in */*) ;; *) REPO="" ;; esac
+[ -n "$REPO" ] || printf 'watch-sessions: warning: cannot derive owner/repo from origin (%s); PR resolution disabled\n' "${origin_url:-no origin}" >&2
 
 # --- helpers -----------------------------------------------------------------
 # session_line <id> — "outcome=... — \"<first line of last assistant text>\""
@@ -135,8 +143,11 @@ watch_pr() {
   local n="$1" out="$2" deadline=$(( $(date +%s) + TIMEOUT ))
   local json state mss head armed vline verdict fails
   printf '[pr] #%s: watching\n' "$n" > "$out"
+  if [ -z "$REPO" ]; then
+    printf '[pr] #%s: cannot resolve — no repo derived from the origin remote\n' "$n" > "$out"; return 1
+  fi
   while :; do
-    json=$(gh pr view "$n" --json state,mergeStateStatus,headRefOid,autoMergeRequest,url 2>/dev/null) || {
+    json=$(gh pr view "$n" --repo "$REPO" --json state,mergeStateStatus,headRefOid,autoMergeRequest,url 2>/dev/null) || {
       printf '[pr] #%s: not found or not readable\n' "$n" > "$out"; return 1; }
     state=$(printf '%s' "$json" | jq -r '.state')
     mss=$(printf '%s' "$json" | jq -r '.mergeStateStatus // "?"')
@@ -163,7 +174,7 @@ watch_pr() {
         fi
       fi
     fi
-    fails=$(gh pr checks "$n" --json state --jq '[.[]|select(.state=="FAILURE")]|length' 2>/dev/null || echo 0)
+    fails=$(gh pr checks "$n" --repo "$REPO" --json state --jq '[.[]|select(.state=="FAILURE")]|length' 2>/dev/null || echo 0)
     if [ "${fails:-0}" != "0" ]; then
       printf '[pr] #%s: %s check(s) failing\n' "$n" "$fails" > "$out"; return 0
     fi

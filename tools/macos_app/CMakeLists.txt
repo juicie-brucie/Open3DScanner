@@ -9,6 +9,7 @@ endif()
 set(APP_NAME "OpenScanner")
 
 add_executable(OpenScanner MACOSX_BUNDLE main.mm)
+add_dependencies(OpenScanner scan_server)
 set_target_properties(OpenScanner PROPERTIES
     MACOSX_BUNDLE_BUNDLE_NAME "${APP_NAME}"
     MACOSX_BUNDLE_GUI_IDENTIFIER "org.openscanner.app"
@@ -41,9 +42,28 @@ add_custom_command(TARGET OpenScanner POST_BUILD
     COMMENT "Installing OpenScanner.icns into the bundle"
 )
 
+target_compile_options(OpenScanner PRIVATE "-fobjc-arc")
 target_link_libraries(OpenScanner PRIVATE "-framework Cocoa" "-framework WebKit")
 
+# Bundle our own capture worker (not the vendor dylib) so the app owns it.
+# scan_server goes in Contents/MacOS (so its exe-relative ui/ lookup finds
+# Contents/Resources/ui); the UI directory is copied alongside.
+add_custom_command(TARGET OpenScanner POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:scan_server>"
+            "$<TARGET_BUNDLE_CONTENT_DIR:OpenScanner>/MacOS/scan_server"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/ui"
+            "$<TARGET_BUNDLE_CONTENT_DIR:OpenScanner>/Resources/ui"
+    COMMENT "Installing scan_server and ui/ into the bundle"
+)
+
 # Ad-hoc signing so the local bundle runs without a developer identity.
+# Sign the nested worker first, then the bundle.
+add_custom_command(TARGET OpenScanner POST_BUILD
+    COMMAND codesign --force --sign - "$<TARGET_BUNDLE_CONTENT_DIR:OpenScanner>/MacOS/scan_server"
+    COMMENT "Ad-hoc signing bundled scan_server"
+)
 add_custom_command(TARGET OpenScanner POST_BUILD
     COMMAND codesign --force --sign - "$<TARGET_BUNDLE_DIR:OpenScanner>"
     COMMENT "Ad-hoc signing OpenScanner.app"

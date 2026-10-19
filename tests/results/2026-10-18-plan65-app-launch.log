@@ -1,0 +1,177 @@
+PLAN #65 — A3 live launch — companion evidence log
+Date: 2026-10-18
+Worker stdout/stderr went to /dev/null under `open` (confirmed below), so this file is the
+room's own observational commands and their real output — process snapshots, curl probes,
+and the vendor SDK's own on-disk log — gathered live during the run, not synthesized after
+the fact. Timestamps are wall-clock from the commands as run; the SDK log carries its own
+internal timestamps.
+
+================================================================================
+PRE-RUN
+================================================================================
+
+$ ps aux | awk '$0 !~ /awk|grep/ && $0 ~ /scan_server|smoke_test|live_capture_test|message_listener_test|OpenScanner/ {print}'
+(no output — clear)
+
+================================================================================
+RUN 1 — cold start, then crash test (kill -9 the worker)
+================================================================================
+
+$ open /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app
+(no output)
+
+$ sleep 3; ps aux | grep -i "OpenScanner\|scan_server" | grep -v grep
+brucemackay      26955  52.1  2.9 490416048 494720   ??  R     7:51PM   0:00.71 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/Resources/scan_server --live-worker 8787 /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib 300
+brucemackay      26943   0.0  0.6 493604560  92672   ??  S     7:51PM   0:00.46 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/MacOS/OpenScanner
+
+-- cold-start probe loop (15 attempts, 2s apart) --
+$ for i in $(seq 1 15); do code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8787/ 2>/dev/null); echo "attempt $i: $code"; if [ "$code" = "200" ]; then break; fi; sleep 2; done
+attempt 1: 404
+attempt 2: 404
+attempt 3: 404
+attempt 4: 404
+attempt 5: 404
+attempt 6: 404
+attempt 7: 404
+attempt 8: 404
+attempt 9: 404
+attempt 10: 404
+attempt 11: 404
+attempt 12: 404
+attempt 13: 404
+attempt 14: 404
+attempt 15: 404
+-- never reached 200 across ~30s of real connect-window-plus-margin; this is well past the
+   ~20s device-wait the spec expects a cold start to clear --
+
+$ curl -s http://127.0.0.1:8787/ | head -5
+(empty body)
+
+$ curl -s -i http://127.0.0.1:8787/ | head -5
+HTTP/1.1 404 Not Found
+Content-Length: 0
+Connection: close
+
+-- cwd of the worker process, the root cause --
+$ lsof -p 26955 2>/dev/null | grep cwd
+scan_serv 26955 brucemackay  cwd      DIR               1,17      736                   2 /
+
+-- crash test: kill the worker directly --
+$ kill -9 26955
+(no output)
+
+$ sleep 2; ps -p 26955
+  PID TTY           TIME CMD
+(process 26955 absent — confirms the kill took)
+
+-- user-reported window state at this point (relayed, not captured by this session's
+   tooling — no screen/desktop control available here): title changed to
+   "OpenScanner — worker not running"; NSAlert shown reading exactly
+   "OpenScanner / Capture worker exited unexpectedly (status 9)." Status 9 = SIGKILL,
+   correctly reported. App stayed responsive; alert dismissed by the user clicking OK. --
+
+$ sleep 5; ps aux | grep -i "OpenScanner" | grep -v grep
+brucemackay      26943   7.8  0.6 493638592  92432   ??  S     7:51PM   0:03.20 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/MacOS/OpenScanner
+-- app process still alive after the alert was dismissed, worker already gone --
+
+-- first quit attempt: user pressed Cmd+Q / clicked the window's close button.
+   Reported result: "nothing happened" — no change, app did not quit.
+   (Expected per source: self.worker.running should already be NO at this point, so
+   applicationShouldTerminate should take the NSTerminateNow branch and quit immediately.
+   It did not quit at all.) --
+
+$ ps aux | grep -i "OpenScanner" | grep -v grep
+brucemackay      26943   0.0  0.5 493637472  89168   ??  S     7:51PM   0:03.46 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/MacOS/OpenScanner
+-- still running; user force-quit it from here --
+
+================================================================================
+RUN 2 — fresh cold start, then quit attempt while the worker is healthy
+================================================================================
+
+$ ps aux | awk '$0 !~ /awk|grep/ && $0 ~ /scan_server|OpenScanner/ {print}'
+(no output — confirmed clear before this run)
+
+$ open /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app
+$ sleep 3; ps aux | grep -i "OpenScanner\|scan_server" | grep -v grep
+brucemackay      28805   5.1  0.3 489011664   43136   ??  S     7:55PM   0:00.24 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/Resources/scan_server --live-worker 8787 /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib 300
+brucemackay      28798   2.6  0.6 493585952   94112   ??  S     7:55PM   0:00.42 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/MacOS/OpenScanner
+
+-- open fds of the worker, confirming a real live session underneath (device connected,
+   SDK logs, session files, listening socket) despite the page itself being unservable --
+$ lsof -p 28805 2>/dev/null | grep -E "^scan_serv.*[0-9]+[wu] "
+scan_serv 28805 brucemackay    1u     CHR                3,2   0t23680                 339 /dev/null
+scan_serv 28805 brucemackay    2u     CHR                3,2       0t0                 339 /dev/null
+scan_serv 28805 brucemackay    3w     REG               1,17   299626            69327990 /private/tmp/openscanner_live_server_scan_log/scan_log_20261018-195559.txt
+scan_serv 28805 brucemackay    4w     REG               1,17        0            68379118 /private/tmp/openscanner_live_server_scan_log/alog.txt
+scan_serv 28805 brucemackay    7w     REG               1,17 24888977            69246042 /private/tmp/openscanner_live_server_sdk_log/ScannerStreamSDK.log
+scan_serv 28805 brucemackay   17u    IPv4 0xa6d5a211135d5e87      0t0                 TCP localhost:54076->localhost:10010 (ESTABLISHED)
+scan_serv 28805 brucemackay   21u    IPv4 0x36774ec810ae50e9      0t0                 TCP localhost:54079->localhost:10011 (ESTABLISHED)
+scan_serv 28805 brucemackay   22u     REG               1,17    24576            69328017 /private/tmp/openscanner_live_server_session/s5ZBxkE_0RuXW4_lRlwoI_WcU7g6/resources.obscan
+scan_serv 28805 brucemackay   28u    IPv4 0x7d113a07d373384b      0t0                 TCP localhost:54081->localhost:10013 (ESTABLISHED)
+scan_serv 28805 brucemackay   32u    IPv4 0x1a0f0cca3fff91fa      0t0                 TCP localhost:54082->localhost:10012 (ESTABLISHED)
+scan_serv 28805 brucemackay   33u    IPv4 0x57645f171b42f310      0t0                 TCP *:msgsrvr (LISTEN)
+scan_serv 28805 brucemackay   34u    IPv4 0x2bd1f7e650483897      0t0                 TCP localhost:msgsrvr->localhost:54085 (ESTABLISHED)
+   (fds 1/2 -> /dev/null confirms no worker stdout/stderr was ever captured this run;
+    fd 33 LISTEN on msgsrvr=8787 confirms the HTTP+WS listener is up; the several
+    ESTABLISHED localhost:msgsrvr connections are the WKWebView's own repeated GET /
+    attempts against the 404 page, each a short-lived one-shot connection)
+
+-- user told to press Cmd+Q here, with the session healthy and actively streaming --
+
+$ ps aux | grep -i "OpenScanner\|scan_server" | grep -v grep
+brucemackay      28805  46.2  2.8 490683552  473072   ??  R     7:55PM   0:31.22 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/Resources/scan_server --live-worker 8787 /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib 300
+brucemackay      28798   0.0  0.6 493634544   96816   ??  S     7:55PM   0:01.21 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/MacOS/OpenScanner
+
+$ tail -60 /private/tmp/openscanner_live_server_sdk_log/ScannerStreamSDK.log 2>/dev/null | grep -iE "stop|destroy|pipeline|pause"
+(no output — zero teardown-related lines at this point, ~immediately after the quit attempt)
+
+-- waited 30s, checked again --
+$ ps aux | grep -i "OpenScanner\|scan_server" | grep -v grep
+brucemackay      28805 292.8  0.1 490115280   10208   ??  R     7:55PM  10:44.33 /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_app/OpenScanner.app/Contents/Resources/scan_server --live-worker 8787 /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib 300
+   (worker still fully alive, 292.8% CPU, 10:44 of accumulated CPU time — actively
+    processing, not stuck/blocked — 30+ seconds after the quit request)
+
+$ tail -5 /private/tmp/openscanner_live_server_sdk_log/ScannerStreamSDK.log 2>/dev/null
+[10/18 19:57:10.535263][debug][16255034][Pipeline.cpp:267] Frame received on pipeline! type=OB_FRAME_IR_RIGHT [**653 logs in 22766ms, last: 19:57:10.084035**]
+[10/18 19:57:10.535350][info][16255047][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**12 logs in 24253ms, last: 19:57:10.351806**]
+[10/18 19:57:10.535401][error][16255021][GVCPClient.cpp:355] sendto failed with error:49 [**12 logs in 25259ms, last: 19:57:09.348229**]
+[10/18 19:57:10.535431][info][16254997][GVCPClient.cpp:421] 0, 3, 248, 1 [**39 logs in 25323ms, last: 19:57:09.348405**]
+[10/18 19:57:10.535473][info][16254998][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**39 logs in 25325ms, last: 19:57:09.348407**]
+   -- the live-streaming GVCP/frame-arrival chatter that was running before the quit
+      attempt is still running, unchanged, 30+s after it; no stop/destroy/pipeline-
+      teardown line appears anywhere in this window --
+
+-- second quit attempt reported by the user: Cmd+Q again, result "didn't work", same as
+   run 1. A ~23.35s screen recording was captured during this window (not staged into the
+   repo per the room's convention for non-text artifacts) and reviewed here via ffmpeg
+   frame extraction (one frame every 2s). It shows: the window content staying blank white
+   throughout; the cursor clicking the red traffic-light close button with no visible
+   effect on the window (it never closes, content unchanged); the title bar staying plain
+   "OpenScanner" the entire recording (this recording covers the second, never-crashed
+   hang — no title change ever occurs, consistent with the app not reaching any of its
+   title-changing code paths). By the final frame the user had opened Force Quit
+   Applications, whose app list reads: Claude, Messages, OpenCode, Opera, Safari,
+   Terminal, Xcode — "OpenScanner" is absent from that list entirely, not present as a
+   greyed-out/hung entry. --
+
+-- cleanup --
+$ kill -9 28798 28805 2>&1
+(eval):kill:1: kill 28798 failed: no such process
+   (28798, the app's own PID, was already gone — the user had force-quit it via the GUI
+    between the recording and this cleanup step; 28805, the worker, was still alive and
+    was killed here)
+
+$ sleep 2; ps aux | grep -i "OpenScanner\|scan_server" | grep -v grep
+(no output — clean)
+
+================================================================================
+SPEC LESSON
+================================================================================
+
+The spec's recommended launch method (`.../MacOS/OpenScanner 2>&1 | tee ...`, run from a
+terminal) would have masked #72 entirely: a terminal launch's cwd is the build tree, where
+`FindUiDir()`'s relative candidates resolve and the page loads normally. #72 only surfaces
+under an `open`-style launch (Finder/Spotlight/double-click), which is how a real user
+actually launches a `.app`. The spec should require at least one `open`-style launch
+alongside the terminal-redirect one, specifically to catch this class of cwd-dependent bug
+that a terminal launch cannot reproduce.

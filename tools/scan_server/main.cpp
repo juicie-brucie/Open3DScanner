@@ -7,6 +7,10 @@
 //
 //   scan_server --live [port] [path] [seconds] [--record <file>]
 //       Drives a real OBScan session; --record writes V1 frames to <file>.
+//       Plane removal (findings plane-removal.md §3), env-driven:
+//         OPENSCANNER_PLANE_REMOVE=1            auto plane removal on
+//         OPENSCANNER_TURNTABLE_PLANE_REMOVE=1  turntable plane removal on
+//         OPENSCANNER_MANUAL_PLANE=a,b,c,d      manual plane for the SDK
 //
 //   scan_server --replay <file> [port]
 //       Replays a recorded session (V1 frames) without a device.
@@ -37,13 +41,19 @@
 #include <functional>
 #include <fstream>
 #include <iterator>
+#include <limits.h>
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
+#include <mach-o/dyld.h>
 #endif
 
 #include "openscanner/capture_source.h"
@@ -54,18 +64,62 @@
 
 namespace {
 
-// UI directory served on the same port as the WebSocket. Checked relative
-// to the cwd and the usual build-dir depths so the tool works from build/.
+// Directory containing the running binary (with trailing '/'), or "".
+std::string ExecutableDir() {
+#if defined(__APPLE__)
+    char buf[PATH_MAX];
+    uint32_t size = sizeof(buf);
+    if (_NSGetExecutablePath(buf, &size) != 0) return "";
+    char resolved[PATH_MAX];
+    if (realpath(buf, resolved) == nullptr) return "";
+    std::string p(resolved);
+#else
+    char buf[PATH_MAX];
+    ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+    if (n <= 0) return "";
+    buf[n] = '\0';
+    std::string p(buf);
+#endif
+    size_t slash = p.find_last_of('/');
+    return slash == std::string::npos ? std::string() : p.substr(0, slash + 1);
+}
+
+// UI directory served on the same port as the WebSocket. Resolved relative
+// to the running binary first (a bundled .app's cwd is "/"), then the cwd
+// for dev-tree runs. Returns "" if none is found (caller warns loudly).
 std::string FindUiDir() {
-    const char* candidates[] = {"ui", "../ui", "../../ui"};
-    for (const char* c : candidates) {
-        std::string index = std::string(c) + "/index.html";
+    std::vector<std::string> candidates;
+    std::string exe = ExecutableDir();
+    if (!exe.empty()) {
+        candidates.push_back(exe + "ui");                    // exe dir has ui/
+        candidates.push_back(exe + "../Resources/ui");       // .app: MacOS -> Resources/ui
+        candidates.push_back(exe + "../../../ui");           // build/tools/scan_server -> repo/ui
+    }
+    candidates.push_back("ui");
+    candidates.push_back("../ui");
+    candidates.push_back("../../ui");
+    for (const std::string& c : candidates) {
+        std::string index = c + "/index.html";
         if (FILE* f = std::fopen(index.c_str(), "rb")) {
             std::fclose(f);
             return c;
         }
     }
-    return "ui";
+    return "";
+}
+
+// Loud at startup rather than a silent 404 per request: a missing ui/
+// means the page cannot load, and the app's retry sees 404 as success.
+void ConfigureStatic(openscanner::WsBroadcastServer& server) {
+    std::string ui = FindUiDir();
+    if (ui.empty()) {
+        std::fprintf(stderr,
+                     "[worker] WARNING: ui/ directory not found (checked next to the binary and cwd); "
+                     "static serving disabled — the page will 404.\n");
+    } else {
+        std::printf("[worker] Serving UI from: %s\n", ui.c_str());
+    }
+    server.SetStaticRoot(ui);
 }
 
 std::string g_record_path;
@@ -324,7 +378,7 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
 
 void RunSyntheticServer(uint16_t port) {
     openscanner::WsBroadcastServer server;
-    server.SetStaticRoot(FindUiDir());
+    ConfigureStatic(server);
     ControlState control;
     control.scanning = true;  // Streams immediately, as before, if no UI ever sends a command.
 
@@ -716,6 +770,49 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     Report("obscan_scan_start", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
+    // Plane-removal bind (findings plane-removal.md §3): the three toggles
+    // are live-callable and gate-free, so enabling them is lawful at any
+    // step. The vendor's own per-frame executor then does the work; the
+    // effect is only observable through the cloud getters (compare point
+    // counts). Env-driven surface (inherited by the worker):
+    // OPENSCANNER_PLANE_REMOVE=1, OPENSCANNER_TURNTABLE_PLANE_REMOVE=1,
+    // OPENSCANNER_MANUAL_PLANE="a,b,c,d".
+    //
+    // Persistence is unconfirmed: whether the toggles survive a pause is
+    // not stated in the findings, so re-assert them after every successful
+    // resume rather than assuming they persist. Re-calling is lawful
+    // (gate-free), and the log shows each re-assert.
+    auto apply_plane_config = [&lib, scan]() {
+        if (const char* pr = std::getenv("OPENSCANNER_PLANE_REMOVE");
+            pr != nullptr && std::string(pr) == "1") {
+            Report("obscan_scan_plane_remove(true)", lib.obscan_scan_plane_remove(scan, true));
+        }
+        if (const char* tpr = std::getenv("OPENSCANNER_TURNTABLE_PLANE_REMOVE");
+            tpr != nullptr && std::string(tpr) == "1") {
+            Report("obscan_scan_turntable_plane_remove(true)",
+                   lib.obscan_scan_turntable_plane_remove(scan, true));
+        }
+        if (const char* mp = std::getenv("OPENSCANNER_MANUAL_PLANE"); mp != nullptr && mp[0] != '\0') {
+            float a = 0, b = 0, c = 0, d = 0;
+            if (std::sscanf(mp, "%f,%f,%f,%f", &a, &b, &c, &d) == 4) {
+                // Setter's layout: {int state, bool enabled, pad, plane}
+                // (findings §4); state==2 is the native's observed int read.
+                ObScanManualRPConfig cfg = {};
+                cfg.state = 2;
+                cfg.enabled = true;
+                cfg.plane.a = a;
+                cfg.plane.b = b;
+                cfg.plane.c = c;
+                cfg.plane.d = d;
+                Report("obscan_scan_config_manaul_remove_plane(a,b,c,d)",
+                       lib.obscan_scan_config_manaul_remove_plane(scan, &cfg));
+            } else {
+                std::fprintf(stderr, "[worker] OPENSCANNER_MANUAL_PLANE must be \"a,b,c,d\"\n");
+            }
+        }
+    };
+    apply_plane_config();
+
     ControlState control;
     control.scanning = true;  // obscan_scan_start above has already run.
     control.auto_exposure = false;  // Matches the unconditional 900 re-assert this loop already did.
@@ -723,7 +820,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     control.fov_wide = (scan_config.mode_config.scan_fov == OB_SCAN_FOV_WIDE);
 
     openscanner::WsBroadcastServer server;
-    server.SetStaticRoot(FindUiDir());
+    ConfigureStatic(server);
     server.SetTextMessageHandler([&control, &server](const std::string& msg) {
         HandleControlMessage(msg, &control);
         if (control.finish_requested.load()) g_stop_requested = 1;
@@ -757,7 +854,20 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     // sequence. Pausing again (or clicking Start again) is still a fresh,
     // deliberate single attempt.
     bool last_requested_paused = false;
+#if !defined(_WIN32)
+    // Orphan guard: if the supervising app dies without sending SIGTERM,
+    // the worker is reparented (ppid changes); tear down gracefully rather
+    // than lingering as a second SDK user.
+    const pid_t original_parent = getppid();
+#endif
     for (int tick = 0; tick < total_ticks; ++tick) {
+#if !defined(_WIN32)
+        if (getppid() != original_parent) {
+            std::printf("[worker] parent exited — stopping and tearing down cleanly.\n");
+            std::fflush(stdout);
+            g_stop_requested = 1;
+        }
+#endif
         if (g_stop_requested) {
             std::printf(
                 "[worker] Stop requested (Ctrl+C or UI \"finish\") — ending the live loop and tearing down "
@@ -783,7 +893,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             ObScanStatus toggle_status = want_paused ? lib.obscan_scan_pause(scan) : lib.obscan_scan_start(scan);
             Report(want_paused ? "obscan_scan_pause (control)" : "obscan_scan_start (resume, control)",
                    toggle_status);
-            if (toggle_status == OB_SCAN_SUCCESS) hardware_paused = want_paused;
+            if (toggle_status == OB_SCAN_SUCCESS) {
+                hardware_paused = want_paused;
+                if (!want_paused) apply_plane_config();  // toggles may not survive pause
+            }
         }
 
         ObScanPointColorClouds cloud = {};
@@ -1118,7 +1231,7 @@ int RunReplayMode(int argc, char** argv) {
     }
 
     openscanner::WsBroadcastServer server;
-    server.SetStaticRoot(FindUiDir());
+    ConfigureStatic(server);
     if (!server.Start(port)) {
         std::fprintf(stderr, "[worker] Failed to start WebSocket server on port %u\n", port);
         return 1;

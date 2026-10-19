@@ -176,10 +176,23 @@ has not been observed directly (`f4c5f86` had no Frida) — **OQ-7b.**
   row.
 - **OQ-7c** — Which USB vendor ID owns `0x1B20` (watched alongside Orbbec's
   `0x2BC5`)? Static-only; possibly a legacy pre-Orbbec sensor line.
-- **OQ-7d** — The two scheduler-style arguments around
+- **OQ-7d** — *Closed (row #68)*. The two scheduler-style arguments around
   `libusb_hotplug_register_callback` calls (arg layout, whether an additional
   vendor-side poll thread ever exists) were read at call-granularity; the
   timer/poll mechanic naming ("PollingDeviceWatcher" vs. libusb-hotplug) is a
-  vendor naming inconsistency, not a second mechanism, but the exact
-  event-pump thread config belongs to OQ-4 (listener delivery thread), which
-  remains open.
+  vendor naming inconsistency, not a second mechanism. The exact event-pump
+  thread config belongs to OQ-4 — which is **not** open: OQ-4 is *Resolved
+  (row #52), one hardware confirmation left* (`device-message-listener.md`
+  §4's trace: a `[cb]` line while a device-changed pass fires with the
+  listener installed). See the closure note below.
+
+## OQ-7d — closed (row #68)
+
+`OQ-7d` (ROADMAP rev 12: "only its parent question, `#52`") is **closed**:
+`#52` is delivered and landed — `ef14646` (the invocation threads and the
+re-entrancy finding) and its follow-up `ad90ef6` (the invoke is
+unsynchronised) — and OQ-7d carried nothing else. The only residue anywhere
+on that line is OQ-4's single hardware observation (a `[cb]` line while a
+device-changed pass fires with the listener installed; the trace spec is in
+device-message-listener.md §4) — a specified one-observation trace, not an
+open question.

@@ -1,0 +1,217 @@
+{"app_name":"smoke_test","timestamp":"2026-10-18 19:10:29.00 -0400","app_version":"","slice_uuid":"f0709b85-4114-3566-8941-596033cd49d8","build_version":"","platform":1,"share_with_app_devs":0,"is_first_party":1,"bug_type":"309","os_version":"macOS 27.0.1 (26A434)","roots_installed":0,"incident_id":"60465E33-F485-4BD9-A1B9-D557E26FA163","name":"smoke_test"}
+{
+  "uptime" : 1500000,
+  "procRole" : "Unspecified",
+  "version" : 2,
+  "userID" : 501,
+  "deployVersion" : 210,
+  "modelCode" : "iMac21,1",
+  "coalitionID" : 61184,
+  "osVersion" : {
+    "train" : "macOS 27.0.1",
+    "build" : "26A434",
+    "releaseType" : "User"
+  },
+  "captureTime" : "2026-10-18 19:10:27.7227 -0400",
+  "codeSigningMonitor" : 2,
+  "incident" : "60465E33-F485-4BD9-A1B9-D557E26FA163",
+  "pid" : 15439,
+  "translated" : false,
+  "cpuType" : "ARM-64",
+  "procLaunch" : "2026-10-18 19:10:21.1515 -0400",
+  "procStartAbsTime" : 36657615857367,
+  "procExitAbsTime" : 36657767489936,
+  "procName" : "smoke_test",
+  "procPath" : "\/Users\/USER\/*\/smoke_test",
+  "parentProc" : "Exited process",
+  "parentPid" : 15437,
+  "coalitionName" : "com.anthropic.claudefordesktop",
+  "crashReporterKey" : "6FF03550-85D0-171B-4492-89F86B95E436",
+  "chargingStatus" : {"externalSourceConnected":true},
+  "developerMode" : 1,
+  "bootProgressRegister" : "0x2f000000",
+  "responsiblePid" : 87808,
+  "responsibleProc" : "claude",
+  "codeSigningID" : "smoke_test",
+  "codeSigningTeamID" : "",
+  "codeSigningFlags" : 570556929,
+  "codeSigningValidationCategory" : 10,
+  "codeSigningTrustLevel" : 4294967295,
+  "codeSigningAuxiliaryInfo" : 0,
+  "instructionByteStream" : {"beforePC":"+mcGqfhfB6n2Vwip9E8Jqf17Cqn9gwKR9QMBqqgBAJAIARqRCAFA+Q==","atPC":"E9lg+OADE6pj\/f+XdAIVkeADFKpVcwCU4AsANagSQPnIAAC0KQCAUg=="},
+  "bootSessionUUID" : "63D0CF1D-B280-474D-BD81-678BCF3DE800",
+  "wakeTime" : 22832,
+  "sleepWakeUUID" : "F29C7C85-6C5C-4CEE-A34D-BCD342C5BC4E",
+  "sip" : "enabled",
+  "vmRegionInfo" : "0 is not in any region.  Bytes before following region: 4375527424\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      UNUSED SPACE AT START\n--->  \n      __TEXT                      104cd4000-104cd8000    [   16K] r-x\/r-x SM=COW  \/Users\/USER\/*\/smoke_test",
+  "exception" : {"codes":"0x0000000000000001, 0x0000000000000000","rawCodes":[1,0],"type":"EXC_BAD_ACCESS","signal":"SIGSEGV","subtype":"KERN_INVALID_ADDRESS at 0x0000000000000000"},
+  "termination" : {"flags":0,"code":11,"namespace":"SIGNAL","indicator":"Segmentation fault: 11","byProc":"exc handler","byPid":15439},
+  "vmregioninfo" : "0 is not in any region.  Bytes before following region: 4375527424\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      UNUSED SPACE AT START\n--->  \n      __TEXT                      104cd4000-104cd8000    [   16K] r-x\/r-x SM=COW  \/Users\/USER\/*\/smoke_test",
+  "extMods" : {"caller":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"system":{"thread_create":16,"thread_set_state":354,"task_for_pid":72},"targeted":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"warnings":0},
+  "faultingThread" : 0,
+  "threads" : [{"triggered":true,"id":16168167,"threadState":{"x":[{"value":0},{"value":6091349192},{"value":18446743828280307104},{"value":68719460488},{"value":0},{"value":6091348648},{"value":6091348644},{"value":1},{"value":0},{"value":469082},{"value":1000},{"value":7142725173201192},{"value":24000000},{"value":9293},{"value":0},{"value":3},{"value":4456715912,"symbolLocation":0,"symbol":"void __kmp_suspend_64<false, true>(int, kmp_flag_64<false, true>*)"},{"value":8576070584},{"value":0},{"value":4382700416},{"value":6091349192},{"value":6091349192},{"value":0},{"value":4751056072,"symbolLocation":0,"symbol":"__kmp_dflt_blocktime"},{"value":4751056708,"symbolLocation":0,"symbol":"__kmp_pause_status"},{"value":1},{"value":4751056512,"symbolLocation":0,"symbol":"__kmp_global"},{"value":4749308036,"symbolLocation":0,"symbol":"__kmp_tasking_mode"},{"value":4751056268,"symbolLocation":0,"symbol":"__kmp_use_yield"}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4689186508},"cpsr":{"value":1610616832},"fp":{"value":6091348944},"sp":{"value":6091348784},"esr":{"value":2449473542,"description":"(Data Abort) byte read Translation fault"},"pc":{"value":4456715956,"matchesCrashFrame":1},"far":{"value":0}},"queue":"com.apple.main-thread","frames":[{"imageOffset":448180,"symbol":"void __kmp_suspend_64<false, true>(int, kmp_flag_64<false, true>*)","symbolLocation":44,"imageIndex":8},{"imageOffset":16158412,"symbol":"kmp_flag_64<false, true>::wait(kmp_info*, int)","symbolLocation":672,"imageIndex":1},{"imageOffset":16152268,"symbol":"__kmp_hyper_barrier_gather(barrier_type, kmp_info*, int, int, void (*)(void*, void*))","symbolLocation":348,"imageIndex":1},{"imageOffset":16150648,"symbol":"__kmp_join_barrier(int)","symbolLocation":584,"imageIndex":1},{"imageOffset":16049100,"symbol":"__kmp_internal_join","symbolLocation":92,"imageIndex":1},{"imageOffset":16048140,"symbol":"__kmp_join_call","symbolLocation":384,"imageIndex":1},{"imageOffset":16003088,"symbol":"__kmpc_fork_call","symbolLocation":192,"imageIndex":1},{"imageOffset":18572116,"symbol":"ncnn::Convolution_vulkan::create_pipeline(ncnn::Option const&)","symbolLocation":6724,"imageIndex":1},{"imageOffset":17965688,"symbol":"ncnn::Net::load_model(ncnn::DataReader const&)","symbolLocation":452,"imageIndex":1},{"imageOffset":17967368,"symbol":"ncnn::Net::load_model(unsigned char const*)","symbolLocation":52,"imageIndex":1},{"imageOffset":8507392,"symbol":"SuperPoint::InitEnv()","symbolLocation":576,"imageIndex":1},{"imageOffset":8541256,"symbol":"SuperPoint::SuperPoint()","symbolLocation":52,"imageIndex":1},{"imageOffset":8541440,"symbol":"texture_mode::shutdown_network()","symbolLocation":76,"imageIndex":1},{"imageOffset":46748,"symbol":"obscan_context_destroy","symbolLocation":128,"imageIndex":1},{"symbol":"(anonymous namespace)::RunSdkSession(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&)","inline":true,"imageIndex":0,"imageOffset":5120,"symbolLocation":568,"sourceLine":121,"sourceFile":"main.cpp"},{"imageOffset":5120,"sourceLine":133,"sourceFile":"main.cpp","symbol":"main","imageIndex":0,"symbolLocation":1688},{"imageOffset":204416,"symbol":"start","symbolLocation":6688,"imageIndex":11}]},{"id":16168357,"frames":[],"threadState":{"x":[{"value":6093058048},{"value":8199},{"value":6092521472},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6093058048},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840241368},"far":{"value":0}}},{"id":16168358,"frames":[],"threadState":{"x":[{"value":6091911168},{"value":10511},{"value":6091374592},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6091911168},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840241368},"far":{"value":0}}},{"id":16168359,"frames":[],"threadState":{"x":[{"value":6092484608},{"value":5391},{"value":6091948032},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6092484608},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840241368},"far":{"value":0}}},{"id":16168414,"frames":[{"imageOffset":448180,"symbol":"void __kmp_suspend_64<false, true>(int, kmp_flag_64<false, true>*)","symbolLocation":44,"imageIndex":8},{"imageOffset":16159152,"symbol":"kmp_flag_64<false, true>::wait(kmp_info*, int)","symbolLocation":1412,"imageIndex":1},{"imageOffset":16147252,"symbol":"__kmp_hyper_barrier_release(barrier_type, kmp_info*, int, int, int)","symbolLocation":148,"imageIndex":1},{"imageOffset":16155588,"symbol":"__kmp_fork_barrier(int, int)","symbolLocation":368,"imageIndex":1},{"imageOffset":16057500,"symbol":"__kmp_launch_thread","symbolLocation":220,"imageIndex":1},{"imageOffset":16247048,"symbol":"__kmp_launch_worker(void*)","symbolLocation":96,"imageIndex":1},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":13},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":13}],"threadState":{"x":[{"value":2},{"value":6109900184},{"value":18446743828280307104},{"value":68719460488},{"value":1},{"value":6109900072},{"value":6109900068},{"value":1},{"value":0},{"value":469126},{"value":1000},{"value":7947463498428960},{"value":24000000},{"value":10340},{"value":0},{"value":3},{"value":4456715912,"symbolLocation":0,"symbol":"void __kmp_suspend_64<false, true>(int, kmp_flag_64<false, true>*)"},{"value":8576070584},{"value":0},{"value":527400520768},{"value":6109900184},{"value":6109900184},{"value":1},{"value":4751056512,"symbolLocation":0,"symbol":"__kmp_global"},{"value":527400522116},{"value":4751056268,"symbolLocation":0,"symbol":"__kmp_use_yield"},{"value":4749308036,"symbolLocation":0,"symbol":"__kmp_tasking_mode"},{"value":4751056072,"symbolLocation":0,"symbol":"__kmp_dflt_blocktime"},{"value":4751056708,"symbolLocation":0,"symbol":"__kmp_pause_status"}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4689187248},"cpsr":{"value":1610616832},"fp":{"value":6109899984},"sp":{"value":6109899824},"esr":{"value":2449473542,"description":"(Data Abort) byte read Translation fault"},"pc":{"value":4456715956},"far":{"value":16}}},{"id":16168415,"frames":[{"imageOffset":18605136,"symbol":".omp_outlined.","symbolLocation":716,"imageIndex":1},{"imageOffset":16276092,"symbol":"__kmp_invoke_microtask","symbolLocation":156,"imageIndex":1},{"imageOffset":3,"imageIndex":12}],"threadState":{"x":[{"value":527384014352},{"value":527384871628},{"value":527384871628},{"value":8},{"value":6118321464},{"value":6118321448},{"value":6118321444},{"value":1},{"value":62},{"value":64},{"value":527383871504},{"value":64},{"value":9216},{"value":527384868892},{"value":144},{"value":36},{"value":6118321456},{"value":19},{"value":0},{"value":6091350640},{"value":6118321660},{"value":6091350240},{"value":4382469600},{"value":3},{"value":6091350388},{"value":63},{"value":527400523904},{"value":257},{"value":1}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4691632652},"cpsr":{"value":2147487744},"fp":{"value":6118321600},"sp":{"value":6118321424},"esr":{"value":2449473607,"description":"(Data Abort) byte write Translation fault"},"pc":{"value":4691633232},"far":{"value":0}}}],
+  "usedImages" : [
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4375527424,
+    "size" : 16384,
+    "uuid" : "f0709b85-4114-3566-8941-596033cd49d8",
+    "path" : "\/Users\/USER\/*\/smoke_test",
+    "name" : "smoke_test"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4673028096,
+    "size" : 72564736,
+    "uuid" : "80192f32-a799-3499-80f4-b932b44e5af8",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/liborbbec_scan.3.5.3.dylib",
+    "name" : "liborbbec_scan.3.5.3.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4464902144,
+    "size" : 3473408,
+    "uuid" : "77e6157c-15c6-3652-b604-576bbc47b346",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libMoltenVK.dylib",
+    "name" : "libMoltenVK.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4493443072,
+    "size" : 7536640,
+    "uuid" : "e59b07ae-2537-33cf-9299-21c2235912b0",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libOrbbecSDK.1.7.1.dylib",
+    "name" : "libOrbbecSDK.1.7.1.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4376428544,
+    "size" : 229376,
+    "uuid" : "99027dae-154d-38bd-b6b4-2e10529c92b3",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libmx6600_depth_engine.2.1.4.5.dylib",
+    "name" : "libmx6600_depth_engine.2.1.4.5.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4376805376,
+    "size" : 163840,
+    "uuid" : "ecde08a1-3b4b-3913-a1fb-05085ab454ef",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libline_laser_param_preprocessing.3.5.0.7.dylib",
+    "name" : "libline_laser_param_preprocessing.3.5.0.7.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4377100288,
+    "size" : 180224,
+    "uuid" : "815c1dc9-8fee-3757-bcaa-bdbb6b1501b2",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libsoc_linelaser_param_processing.3.6.0.4.dylib",
+    "name" : "libsoc_linelaser_param_processing.3.6.0.4.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4454252544,
+    "size" : 180224,
+    "uuid" : "31f68f96-34af-349c-99ea-5ee731a5d4b1",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libsoc_depth_engine.2.2.0.5.dylib",
+    "name" : "libsoc_depth_engine.2.2.0.5.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4456267776,
+    "size" : 606208,
+    "uuid" : "00d1ff67-d8f2-3f52-b04e-b14b1bd95b39",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libomp.dylib",
+    "name" : "libomp.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4376068096,
+    "size" : 114688,
+    "uuid" : "727e416f-f2f2-3b08-988a-af20bf6672ca",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libcreate_distortion_lut.dylib",
+    "name" : "libcreate_distortion_lut.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 4376264704,
+    "CFBundleShortVersionString" : "900.4.2",
+    "CFBundleIdentifier" : "com.apple.iokit.IOUSBLib",
+    "size" : 49152,
+    "uuid" : "ede85c52-7ac2-3666-b06d-6abb74a94f77",
+    "path" : "\/System\/Library\/Extensions\/IOUSBHostFamily.kext\/Contents\/PlugIns\/IOUSBLib.bundle\/Contents\/MacOS\/IOUSBLib",
+    "name" : "IOUSBLib",
+    "CFBundleVersion" : "900.4.2"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6836035584,
+    "size" : 784100,
+    "uuid" : "d341ddcb-7969-3a9c-8e03-0cf4751398a9",
+    "path" : "\/usr\/lib\/dyld",
+    "name" : "dyld"
+  },
+  {
+    "size" : 0,
+    "source" : "A",
+    "base" : 0,
+    "uuid" : "00000000-0000-0000-0000-000000000000"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6840233984,
+    "size" : 51484,
+    "uuid" : "5a1828c3-cbc2-3b85-bd07-c8ed10021a41",
+    "path" : "\/usr\/lib\/system\/libsystem_pthread.dylib",
+    "name" : "libsystem_pthread.dylib"
+  }
+],
+  "sharedCache" : {
+  "base" : 6831292416,
+  "size" : 7410368512,
+  "uuid" : "c284a291-b68b-3d0d-a1a0-3f866f87efdc"
+},
+  "vmSummary" : "ReadOnly portion of Libraries: Total=2.2G resident=0K(0%) swapped_out_or_unallocated=2.2G(100%)\nWritable regions: Total=265.2M written=609K(0%) resident=609K(0%) swapped_out=0K(0%) unallocated=264.6M(100%)\n\n                                VIRTUAL   REGION \nREGION TYPE                        SIZE    COUNT (non-coalesced) \n===========                     =======  ======= \nActivity Tracing                   256K        1 \nDeferred Reclaim                  64.0M        1 \nDispatch Continuations            64.0M        1 \nGuard                            385.0G        1 \nMalloc                            85.3M       25 \nMalloc Guard Page                 3216K        4 \nOS Alloc Once                       32K        1 \nStack                             33.6M        7 \nStack Guard                       56.1M        7 \nUntagged                            16K        1 \n__AUTH                            2586K      257 \n__AUTH_CONST                      44.0M      453 \n__CTF                               824        1 \n__DATA                            32.7M      472 \n__DATA_CONST                      26.8M      462 \n__DATA_DIRTY                      2571K      398 \n__FONT_DATA                        2352        1 \n__LINKEDIT                         1.6G       12 \n__OBJC_RO                        118.0M        1 \n__OBJC_RW                         2735K        1 \n__TEXT                           660.7M      537 \n__TPRO_CONST                       132K        4 \nmapped file                       39.6M       11 \npage table in kernel               609K        1 \nshared memory                      720K       12 \n===========                     =======  ======= \nTOTAL                            387.8G     2672 \n",
+  "legacyInfo" : {
+  "threadTriggered" : {
+    "queue" : "com.apple.main-thread"
+  }
+},
+  "logWritingSignature" : "dcce644d0f963cda77c5365b34bed55f1bdb22c4",
+  "roots_installed" : 0,
+  "bug_type" : "309",
+  "trmStatus" : 8192,
+  "trialInfo" : {
+  "rollouts" : [
+    {
+      "rolloutId" : "645197bf528fbf3c3af54105",
+      "factorPackIds" : [
+        "663e65b4a1526e1ca0e288a1"
+      ],
+      "deploymentId" : 240000002
+    },
+    {
+      "rolloutId" : "67fd77fe1f9da9148f70d6ed",
+      "factorPackIds" : [
+
+      ],
+      "deploymentId" : 240000020
+    }
+  ],
+  "experiments" : [
+
+  ]
+}
+}

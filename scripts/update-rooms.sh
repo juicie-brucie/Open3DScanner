@@ -14,19 +14,28 @@
 # rooms are not mid-turn. The script's guarantees are about *work* - it will
 # not discard a change or rebase a branch carrying unlanded commits.
 #
-# Usage: scripts/update-rooms.sh [--dry-run] [room-path ...]
-#   no paths = every worktree of this repository
+# Usage: scripts/update-rooms.sh [--dry-run] [--self] [room-path ...]
+#   --self      update only THIS worktree - the safe form for an agent to run
+#               as the first step of a work order (it cannot touch another
+#               session's room)
+#   room-path   update only the named room(s)
+#   no paths    every worktree of this repository (the dispatcher's form)
 set -euo pipefail
 
-DRY=""
-if [ "${1:-}" = "--dry-run" ]; then DRY=1; shift; fi
+DRY=""; SELF=""
+while [ "${1:-}" = "--dry-run" ] || [ "${1:-}" = "--self" ]; do
+  if [ "$1" = "--dry-run" ]; then DRY=1; else SELF=1; fi
+  shift
+done
 
 MAIN=$(git rev-parse --show-toplevel)
 git -C "$MAIN" fetch -q origin
 BASE=$(git -C "$MAIN" rev-parse origin/main)
 SHORT=$(git -C "$MAIN" rev-parse --short "$BASE")
 
-if [ "$#" -gt 0 ]; then
+if [ -n "$SELF" ]; then
+  ROOMS=("$MAIN")
+elif [ "$#" -gt 0 ]; then
   ROOMS=("$@")
 else
   ROOMS=()
