@@ -13,7 +13,8 @@
 //         OPENSCANNER_MANUAL_PLANE=a,b,c,d      manual plane for the SDK
 //       Our own removal decision (row #77), independent of the toggles:
 //         OPENSCANNER_OUR_PLANE_REMOVE=1        fit a plane, cut below it
-//         OPENSCANNER_PLANE_MARGIN=<float>      keep-distance margin
+//         OPENSCANNER_PLANE_MARGIN=<float>      keep signed distance >= margin
+//                                               (default 1% of cloud radius)
 //
 //   scan_server --replay <file> [port]
 //       Replays a recorded session (V1 frames) without a device.
@@ -118,7 +119,10 @@ struct OurPlane {
     uint32_t inliers = 0;
 };
 
-OurPlane FitDominantPlane(const ObScanPoint* pts, uint32_t n, int iterations, double inlier_dist) {
+// Canonicalize the normal's sign so "below the plane" has one meaning per
+// run: the positive side is the scanner (or +z when no pose is available).
+OurPlane FitDominantPlane(const ObScanPoint* pts, uint32_t n, int iterations, double inlier_dist, double ref_x,
+                          double ref_y, double ref_z, bool have_ref) {
     OurPlane best;
     if (n < 3) return best;
     uint64_t seed = 0x9e3779b97f4a7c15ULL;
@@ -148,6 +152,15 @@ OurPlane FitDominantPlane(const ObScanPoint* pts, uint32_t n, int iterations, do
         }
         if (inliers > best.inliers) {
             best = {a, b, c, d, true, inliers};
+        }
+    }
+    if (best.valid) {
+        double side = have_ref ? (best.a * ref_x + best.b * ref_y + best.c * ref_z + best.d) : best.c;
+        if (side < 0) {
+            best.a = -best.a;
+            best.b = -best.b;
+            best.c = -best.c;
+            best.d = -best.d;
         }
     }
     return best;
@@ -1036,10 +1049,16 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             // follows the scanner during a scan (the global pose only updates
             // when a registration result is confirmed). Broadcast it as a
             // pose message so the page can follow the scanner POV.
+            bool have_scanner_pose = false;
+            double scanner_x = 0, scanner_y = 0, scanner_z = 0;
             {
                 ObScanPose pose = {};
                 ObScanStatus pose_status = lib.obscan_scan_get_registration_pose(scan, &pose);
                 if (pose_status == OB_SCAN_SUCCESS) {
+                    have_scanner_pose = true;
+                    scanner_x = pose.m[0][3];
+                    scanner_y = pose.m[1][3];
+                    scanner_z = pose.m[2][3];
                     std::vector<uint8_t> pbuf = openscanner::frame_protocol::encode_pose(
                         frame_id++, NowMs(), NowMs(), &pose.m[0][0]);
                     server.BroadcastBinary(pbuf.data(), pbuf.size());
@@ -1063,23 +1082,44 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     constexpr uint32_t kLiveBroadcastPointBudget = 20000;
                     bool use_plane = false;
                     OurPlane plane;
+                    // Margin semantics: keep points with signed distance >= margin;
+                    // cut the half-space strictly below the plane. The normal is
+                    // oriented toward the scanner, so the object side is positive.
                     double margin = 0.0;
                     const char* our_env = std::getenv("OPENSCANNER_OUR_PLANE_REMOVE");
                     if (our_env != nullptr && std::string(our_env) == "1") {
                         const char* margin_env = std::getenv("OPENSCANNER_PLANE_MARGIN");
-                        margin = margin_env != nullptr ? std::atof(margin_env) : 0.0;
-                        uint32_t sample_stride = 1;
-                        if (cloud.num_points > kLiveBroadcastPointBudget) {
-                            sample_stride = (cloud.num_points + kLiveBroadcastPointBudget - 1) / kLiveBroadcastPointBudget;
+                        bool margin_given = false;
+                        if (margin_env != nullptr && margin_env[0] != '\0') {
+                            char* end = nullptr;
+                            double parsed = std::strtod(margin_env, &end);
+                            if (end == margin_env || *end != '\0' || !std::isfinite(parsed) ||
+                                parsed < -1e6 || parsed > 1e6) {
+                                std::fprintf(stderr,
+                                             "[worker] invalid OPENSCANNER_PLANE_MARGIN '%s'; our plane removal "
+                                             "disabled\n",
+                                             margin_env);
+                            } else {
+                                margin = parsed;
+                                margin_given = true;
+                            }
                         }
-                        std::vector<ObScanPoint> sample;
-                        sample.reserve(kLiveBroadcastPointBudget);
-                        for (uint32_t s = 0; s < cloud.num_points && sample.size() < kLiveBroadcastPointBudget; s += sample_stride) {
-                            sample.push_back(cloud.points[s]);
+                        if (margin_env == nullptr || margin_env[0] == '\0' || margin_given) {
+                            uint32_t sample_stride = 1;
+                            if (cloud.num_points > kLiveBroadcastPointBudget) {
+                                sample_stride = (cloud.num_points + kLiveBroadcastPointBudget - 1) / kLiveBroadcastPointBudget;
+                            }
+                            std::vector<ObScanPoint> sample;
+                            sample.reserve(kLiveBroadcastPointBudget);
+                            for (uint32_t s = 0; s < cloud.num_points && sample.size() < kLiveBroadcastPointBudget; s += sample_stride) {
+                                sample.push_back(cloud.points[s]);
+                            }
+                            double extent = std::max(view_radius_guess(sample.data(), (uint32_t)sample.size()), 1e-6);
+                            if (!margin_given) margin = extent * 0.01; // drop the plane's own face too
+                            plane = FitDominantPlane(sample.data(), (uint32_t)sample.size(), 60, extent * 0.01,
+                                                     scanner_x, scanner_y, scanner_z, have_scanner_pose);
+                            if (plane.valid) { use_plane = true; ++g_our_plane_fits; }
                         }
-                        double extent = std::max(view_radius_guess(sample.data(), (uint32_t)sample.size()), 1e-6);
-                        plane = FitDominantPlane(sample.data(), (uint32_t)sample.size(), 60, extent * 0.01);
-                        if (plane.valid) { use_plane = true; ++g_our_plane_fits; }
                     }
                     uint32_t stride = 1;
                     if (cloud.num_points > kLiveBroadcastPointBudget) {
