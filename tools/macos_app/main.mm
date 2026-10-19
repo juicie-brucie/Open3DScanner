@@ -48,7 +48,8 @@
 }
 
 - (NSString*)resolveWorkerPath {
-    NSString* bundled = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"scan_server"];
+    NSString* bundled = [[[NSBundle mainBundle] executablePath] stringByDeletingLastPathComponent];
+    bundled = [bundled stringByAppendingPathComponent:@"scan_server"];
     if ([[NSFileManager defaultManager] isExecutableFileAtPath:bundled]) return bundled;
     const char* env = std::getenv("OPENSCANNER_SCAN_SERVER");
     if (env != nullptr && env[0] != '\0') return [NSString stringWithUTF8String:env];
