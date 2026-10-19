@@ -9,13 +9,13 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-19 (rev 19 — **the pivot's first live run changed the picture**: Phase B's
-code landed but its first session pulled **zero frames**, so `#105` now gates `#98`'s acceptance and
-everything downstream. This revision re-ranks around it, reframes the capture work from
-*re-derivation* to *verbatim replay*, sweeps the night's moves (#73/#95/#104 `DONE`, #89 a failed
-observation, #105 filed), and records the session-model lesson under `H2`. rev 18 retired the README
-staging block; rev 17 was **the pivot**; rev 16's objective landed; rev 15 closed the walls audit;
-rev 14/13/12/11/10 are superseded — see **Superseded plans**)._
+_Last planned: 2026-10-19 (rev 20 — adds the **agent-structure proposal (E1–E10)** for the
+dispatcher's input: the duplicated Secrets block measured at 28 lines × 6 copies with half already
+diverged, the unwalled `reconcile` command, `W2`'s enumeration-based builder wall, and the
+foreground-blocking watcher rule. Only **E5** is urgent; the rest is a parked harness refactor behind
+the pivot. rev 19 re-ranked around `#105`; rev 18 retired the README staging block; rev 17 was **the
+pivot**; rev 16's objective landed; rev 15 closed the walls audit; rev 14/13/12/11/10 are superseded —
+see **Superseded plans**)._
 
 ## Objective for the next round
 
@@ -368,6 +368,83 @@ repo does not carry (agent definitions are global by design — `ARCHITECTURE.md
 live"). So it is **not a PR**: whoever owns the harness applies it. **Order matters — edit the
 instruction file, then compact**, because a compaction re-baselines the session against the current
 instructions.
+
+## Agent structure — a proposed refactor (E1–E10), for the dispatcher's input
+
+Raised from the watcher thread: the dispatcher lost turns to a **foreground blocking call**, which is
+a *usage* rule rather than a tooling gap. That opened the larger question — whether the agent
+structure itself carries duplicated rules and hand-rolled checks that the platform, or a maintained
+tool, already does better. **This is a proposal, not a plan of record: the dispatcher reviews it and
+decides what, if anything, to route.**
+
+### What is measurably wrong
+
+| | measurement |
+| --- | --- |
+| six agent files | **973 lines total** |
+| the **Secrets** section | **28 lines × 6 copies** — **three byte-identical, three already diverged** |
+| `dispatch.md` | 339 lines, the largest by 2× |
+| `commands/reconcile.md` | still **no `agent:` line** — runs as whatever agent the session has, with full `rea` access (W7, open since the audit) |
+| `builder` permissions | 7 denies, **no `edit * deny`** — unlisted paths writable by omission |
+| `watch-sessions.sh` | its PR half duplicates `gh pr checks`; its session half blocks if run in the foreground |
+
+The Secrets drift is the `aicers/agent-instructions` finding reproduced locally: hand-duplicated
+blocks diverge, and the copies that diverge are the ones nobody re-reads.
+
+### The edits
+
+| # | file | change | urgency |
+| --- | --- | --- | --- |
+| **E1** | `AGENTS.md` *(new)* | the repo-wide rules currently duplicated: clean-room principle, walls in prose, Secrets, pre-run step, *point at rows*, the blocking-call rule | parked |
+| **E2** | `opencode.json` | `"instructions": ["AGENTS.md"]` — **same commit as E1** | parked |
+| **E3** | all six agent files | delete the duplicated Secrets + pre-run blocks; keep role, permissions, procedure | parked |
+| **E4** | `commands/reconcile.md` | add an `agent:` line, or retire the command | parked |
+| **E5** | `dispatch.md` | **`wait`, not `/api/event`, for completion; backgrounded or timeout-bounded, never foreground; the PR half backgrounded too** | **now** |
+| **E6** | `builder.md` permissions | restore `edit * deny` plus the audit's allow list | **operator's call** |
+| **E7** | `scripts/check-agents.py` | verify `AGENTS.md` exists; drift-check that no agent re-introduces a shared block; every command carries `agent:` | parked, after E3 |
+| **E8** | `scripts/verify-pr.py` | delegate generic checks to `markdownlint-cli2` / `lychee` / `shellcheck` / `actionlint`; **keep** the tier gate, record provenance, archive hashes, plan syntax | parked |
+| **E9** | `scripts/watch-sessions.sh` | drop the PR half (`gh`, backgrounded, already maintained) | parked |
+| **E10** | `.opencode/plugins/` *(optional)* | `ctx.event.subscribe` + `ctx.session.synthetic` — wake the dispatcher server-side, no tool call | optional |
+
+### What this must not change
+
+- **Permissions stay in frontmatter.** `AGENTS.md` is prose and cannot enforce a wall. E3 removes
+  *narrative* duplication only — W1/W2/W4/W5 stay exactly where they are.
+- **No new agents.** Six is the set; adding agents to fix orchestration is the move the workflow
+  audit's §5.4 warns against.
+- **The board/roadmap split.** E1 must not become a third place where row state is written.
+
+### Why `AGENTS.md` rather than drift-checked copies
+
+Both are viable. `aicers/agent-instructions` renders blocks into copies and *detects* drift, which is
+the more conservative option. The reason to prefer one file here is that the shared text is short,
+repo-wide and unparameterised — nothing per-role to interpolate, so a copy buys nothing an include
+does not. **If the dispatcher disagrees, the drift-check path is a fine fallback, and E7 is the
+load-bearing piece either way.**
+
+### Sequencing, and the one split that matters
+
+```
+E1 + E2 (one commit) ─► E3 (thin) ─► E7 (guard)
+E5 — independent, now
+E4, E6, E8, E9, E10 — independent, park behind the pivot
+```
+
+**E5 is the only item that should move now.** It costs the dispatcher turns tonight; everything else
+buys drift prevention, not capability, while `#105` blocks the whole pivot. If the dispatcher takes
+exactly one thing from this proposal, it is the blocking-call rule.
+
+### Reach — who can actually apply each
+
+| edit | who |
+| --- | --- |
+| E1, E2, E7, E8, E9 | **dispatch** — repo files; `AGENTS.md` poses the same reach question `README.md` had, which is now resolved |
+| E3, E4, E5, E6, E10 | **operator** — `~/.config/opencode/**` is outside every agent's edit allow |
+
+**One process note.** E5 exists because a rule was stated where the caller did not read it at the
+moment it mattered — the same failure `H3` records. The fix is the same: **put the rule where the
+action happens**, which for a blocking call is the *Dispatching* section of `dispatch.md`, not a
+hygiene appendix.
 
 ## The pivot — posture, parity, and what parks
 
