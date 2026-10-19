@@ -41,10 +41,15 @@
 }
 
 - (NSString*)resolveLibraryPath {
-    for (NSString* p in [self librarySearchPaths]) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:p]) return p;
+    const char* env = std::getenv("OPENSCANNER_LIBRARY");
+    if (env != nullptr && env[0] != '\0') {
+        // An explicit override is authoritative: set-but-missing is fatal
+        // (the missing-SDK dialog lists it), never a silent fall-through.
+        NSString* override = [NSString stringWithUTF8String:env];
+        return [[NSFileManager defaultManager] fileExistsAtPath:override] ? override : @"";
     }
-    return @"";
+    NSString* installed = @"/Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib";
+    return [[NSFileManager defaultManager] fileExistsAtPath:installed] ? installed : @"";
 }
 
 - (NSString*)resolveWorkerPath {
