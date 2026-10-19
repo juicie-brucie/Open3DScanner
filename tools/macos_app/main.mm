@@ -295,6 +295,17 @@
     });
 }
 
+// Diagnosis status (row #73): the room's hang could not be reproduced
+// outside its launch. Controlled local runs (app launched directly with a
+// fake worker, then `osascript -e 'tell application "OpenScanner" to quit'`)
+// showed applicationShouldTerminate reached, kill(SIGTERM) delivered, and
+// the app exiting once the worker did — for both a responsive worker and an
+// already-dead one. The record's decisive clue (the app absent from Force
+// Quit's own list) points at a launch/session without a window-server
+// connection, which this environment cannot reproduce; the #65 rerun
+// re-tests the original case. Hardening below is independent of that
+// diagnosis: the menu exists from willFinishLaunching, startup errors are
+// non-modal sheets, and the worker has an orphan guard.
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
     (void)sender;
     // Quit = graceful teardown: SIGTERM makes the worker break its loop and
