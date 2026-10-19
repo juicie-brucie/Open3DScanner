@@ -143,3 +143,13 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
   entry. The fork's gate note is **adopted on this side**: a UTF-8 BOM at the head of a verdict comment defeats an
   anchored-line parser, and the parent's `verdict-gate.yml` now strips one; verdicts stay BOM-free on both sides. The
   device remains on the Mac; the handover is this side's call and waits on the #105/#127 live diagnostics.
+- `[mac]` 2026-10-19 — **the Windows loader fix is folded into the parent** (row #129), so the next
+  `engine/` sync is a no-op rather than a differing tracked file. `engine/src/obscan_loader.cpp` now
+  uses `LoadLibraryExA(..., LOAD_WITH_ALTERED_SEARCH_PATH)` (a plain `LoadLibraryA` with a full path
+  does not search the DLL's own directory for the SDK's adjacent dependencies), and the Windows
+  `LastErrorMessage` names the path it failed on. **Applied verbatim from the fork** (their commit
+  `4ed3e40`, merge `bfa3df3`): blob `bc09230` = `bc09230323f6149548033cd4a9a2125a59b7cc27`, byte-for-byte
+  identical to the fork's own file (verified against the fork's content, not just the abbreviated
+  sha). The Windows-side evidence is the fork's `win #119` run (the SDK loads and its bootstrap
+  exports resolve) — **this side compiles only the `#else` branch**, so the macOS build and
+  `ctest` prove the non-Windows path is unaffected and do **not** exercise `LoadLibraryExA`.
