@@ -11,9 +11,14 @@
 // Usage:
 //   raptor_client --dry-run                  # framing selftest, no device
 //   raptor_client --dry-run-live             # bytes each call would send
+//   raptor_client --selftest-timeout         # the bounded reply read, no device
 //   raptor_client --discover                 # GVCP discovery only
 //   raptor_client --replay <file> [host] [port] [--dry-run] [--quiet]
-//       recon's captured request frames, unchanged, in order (hex lines)
+//       [--reply-timeout-ms N]
+//       recon's captured request frames, unchanged, in order (hex lines).
+//       The '+<ms>' prefix is an ABSOLUTE capture timestamp (ms since the
+//       capture started), so the replay paces on the inter-arrival deltas
+//       between stamps.
 //   raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]
 //       per-call logging is on by default: every get_frame result (bin size /
 //       empty / error) and every SET_PROPERTY (prop, value, ACCEPT/REJECT).
@@ -22,6 +27,7 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -29,6 +35,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cctype>
+#include <cerrno>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
@@ -96,7 +103,9 @@ private:
 };
 
 struct Value {
-    enum class Kind { Nil, Bool, Int, UInt, Double, Str, Bin, Array, Map, Error } kind = Kind::Nil;
+    // Timeout is last so the numeric kind values the older logs recorded
+    // (e.g. "kind=7" for the RPC envelope array) keep their meaning.
+    enum class Kind { Nil, Bool, Int, UInt, Double, Str, Bin, Array, Map, Error, Timeout } kind = Kind::Nil;
     bool b = false;
     int64_t i = 0;
     uint64_t u = 0;
@@ -252,11 +261,21 @@ public:
     }
 
     static Value Error(const std::string& s) { Value v; v.kind = Value::Kind::Error; v.error = s; return v; }
+    // A deadline expiry is its own kind so the replay can name the frame it
+    // was waiting for, instead of lumping it in with a transport error.
+    static Value Timeout() { Value v; v.kind = Value::Kind::Timeout; v.error = "timeout"; return v; }
 
     // Raw send/receive for --replay: the bytes come from recon's dump, not
     // from our own encoder.
     bool sendRaw(const Bytes& frame) { return WriteAll(frame); }
     Value readReply() { return ReadMessage(); }
+
+    // Bounded read for the replay path (row #117): the WHOLE reply must
+    // arrive within timeout_ms, not just its first segment — a reply that
+    // trickles in forever still times out. Returns a Timeout value when the
+    // deadline passes. The live path keeps the unbounded ReadMessage(): this
+    // bound belongs to the replay diagnostic only.
+    Value readReplyWithDeadline(int timeout_ms) { return ReadMessageWithDeadline(timeout_ms); }
 
 private:
     int fd_ = -1;
@@ -281,6 +300,43 @@ private:
             if (r.ok()) return v;
             ssize_t n = recv(fd_, tmp, sizeof(tmp), 0);
             if (n <= 0) return Error("eof");
+            buf.insert(buf.end(), tmp, tmp + n);
+            if (buf.size() > (1u << 26)) return Error("response too large");
+        }
+    }
+
+    // Bounded twin of ReadMessage(): the whole reply must arrive within
+    // timeout_ms. The deadline covers the entire read, so a reply that
+    // arrives in dribbles still times out. Uses poll() on the socket rather
+    // than SO_RCVTIMEO, so the socket's own options stay untouched (the
+    // live path's socket is shared with call()).
+    Value ReadMessageWithDeadline(int timeout_ms) {
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
+        Bytes buf;
+        uint8_t tmp[65536];
+        for (;;) {
+            Reader r(buf.data(), buf.size());
+            Value v = r.parse();
+            if (r.ok()) return v;
+            auto now = std::chrono::steady_clock::now();
+            if (now >= deadline) return Timeout();
+            int remaining = (int)std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
+            if (remaining < 0) remaining = 0;
+            struct pollfd pfd = {};
+            pfd.fd = fd_;
+            pfd.events = POLLIN;
+            int pr = poll(&pfd, 1, remaining);
+            if (pr < 0) {
+                if (errno == EINTR) continue;
+                return Error("poll failed");
+            }
+            if (pr == 0) return Timeout();
+            ssize_t n = recv(fd_, tmp, sizeof(tmp), 0);
+            if (n == 0) return Error("eof");
+            if (n < 0) {
+                if (errno == EINTR) continue;
+                return Error("recv failed");
+            }
             buf.insert(buf.end(), tmp, tmp + n);
             if (buf.size() > (1u << 26)) return Error("response too large");
         }
@@ -493,14 +549,43 @@ int DryRunLive() {
 // --replay: send recon's captured request frames, unchanged, in order
 //
 // Input format (text, one frame per line):
-//   [+<ms> ]<hex bytes>      optional delay; the space after the delay is
-//                            required (it separates it from the hex payload)
+//   [+<ms> ]<hex bytes>      optional '+<ms>' prefix; the space after the
+//                            prefix is required (it separates it from the hex
+//                            payload)
 //   # comment / blank lines are ignored
+//
+// The '+<ms>' prefix is an ABSOLUTE capture timestamp — milliseconds since
+// the capture started — NOT a delay before that frame. (See
+// docs/recon/findings/streaming-replay-payloads.md, whose table gives the
+// same instants as t=25.xxx s.) The replay therefore paces on the
+// INTER-ARRIVAL delta between consecutive timestamps; sleeping a timestamp
+// itself would wait the whole capture offset before every frame.
+//
+// A frame with no '+<ms>' prefix carries no timestamp and is sent with no
+// wait.
+//
 // Bytes are the raw msgpack-RPC request frame as captured (e.g. the 0x94…
 // [0, msgid, method, params] frame). We do not re-encode; this is the vendor's
 // own bytes.
 // ---------------------------------------------------------------------------
-bool ParseReplayFile(const std::string& path, std::vector<Bytes>* frames, std::vector<int>* delays,
+
+// A capture timestamp is bounded to a sane range (~11 days) so a malformed
+// prefix cannot overflow the accumulator.
+constexpr int64_t kMaxStampMs = 1000000000LL;
+
+// The wait before the FIRST frame is capped. The first stamp is measured
+// from the start of the capture, which is recon's clock and not a deadline
+// the daemon shares — so waiting it out in full would stall the replay
+// before it sends anything. The inter-frame deltas from the second frame on
+// are used as captured.
+constexpr int64_t kFirstFrameWaitCapMs = 250;
+
+// How long a single reply read may take on the replay path (row #117).
+// The daemon answers in well under this; the bound exists so a missing
+// reply fails loudly, naming the frame, instead of hanging forever.
+constexpr int kDefaultReplyTimeoutMs = 2000;
+
+bool ParseReplayFile(const std::string& path, std::vector<Bytes>* frames, std::vector<int64_t>* stamps,
                      std::string* err) {
     std::ifstream in(path);
     if (!in) { *err = "cannot open " + path; return false; }
@@ -516,26 +601,32 @@ bool ParseReplayFile(const std::string& path, std::vector<Bytes>* frames, std::v
         if (first == std::string::npos) continue;
         size_t last = line.find_last_not_of(" \t\r\n");
         line = line.substr(first, last - first + 1);
-        int delay = 0;
+        int64_t stamp = -1;  // -1: this frame carries no timestamp
         std::string hex = line;
         if (hex[0] == '+') {
-            // Split on the first whitespace: "+<ms>" is the delay, the rest
-            // is the hex payload. Scanning digits across the space was the
-            // bug (hex bytes 94/00… are also decimal characters).
+            // Split on the first whitespace: "+<ms>" is the timestamp, the
+            // rest is the hex payload. Scanning digits across the space was
+            // the bug (hex bytes 94/00… are also decimal characters).
             size_t sp = hex.find_first_of(" \t");
             if (sp == std::string::npos) {
                 *err = "line " + std::to_string(lineno) + ": '+<ms>' must be followed by whitespace and hex";
                 return false;
             }
             std::string prefix = hex.substr(1, sp - 1);
-            if (prefix.empty()) { *err = "line " + std::to_string(lineno) + ": empty delay"; return false; }
+            if (prefix.empty()) { *err = "line " + std::to_string(lineno) + ": empty timestamp"; return false; }
+            int64_t value = 0;
             for (char c : prefix) {
                 if (!std::isdigit((unsigned char)c)) {
-                    *err = "line " + std::to_string(lineno) + ": non-digit in delay";
+                    *err = "line " + std::to_string(lineno) + ": non-digit in timestamp";
                     return false;
                 }
-                delay = delay * 10 + (c - '0');
+                value = value * 10 + (c - '0');
+                if (value > kMaxStampMs) {
+                    *err = "line " + std::to_string(lineno) + ": timestamp out of range";
+                    return false;
+                }
             }
+            stamp = value;
             hex = hex.substr(sp + 1);
         }
         std::string payload;
@@ -557,14 +648,43 @@ bool ParseReplayFile(const std::string& path, std::vector<Bytes>* frames, std::v
         }
         if (b.empty()) continue;
         frames->push_back(b);
-        delays->push_back(delay);
+        stamps->push_back(stamp);
     }
     return true;
 }
 
+// The inter-arrival deltas between the capture's absolute timestamps: the
+// first frame's delta is measured from the capture start (t=0), each later
+// frame's from the frame before it. A timestamp that goes backwards (the
+// capture file groups frames by call type, not by time) clamps to 0 — a
+// replay never waits a negative time — and is counted in *backward_steps.
+std::vector<int64_t> ToInterFrameDeltas(const std::vector<int64_t>& stamps, int* backward_steps) {
+    std::vector<int64_t> deltas;
+    deltas.reserve(stamps.size());
+    int64_t prev = 0;
+    for (size_t i = 0; i < stamps.size(); ++i) {
+        if (stamps[i] < 0) { deltas.push_back(0); continue; }  // no timestamp: no wait
+        int64_t d = stamps[i] - prev;
+        if (d < 0) {
+            d = 0;
+            if (backward_steps) ++(*backward_steps);
+        }
+        deltas.push_back(d);
+        prev = stamps[i];
+    }
+    return deltas;
+}
+
+// The wait before the first frame: its delta is measured from the capture's
+// t=0 and is capped (see kFirstFrameWaitCapMs).
+int64_t FirstFrameWaitMs(int64_t first_delta_ms) {
+    if (first_delta_ms > kFirstFrameWaitCapMs) return kFirstFrameWaitCapMs;
+    return first_delta_ms < 0 ? 0 : first_delta_ms;
+}
+
 // Regression for the row #105 parser bug: '+25429 94000d…' — the space after
-// the delay must delimit it, or the digit scanner eats 94000 (hex chars that
-// are also decimal digits).
+// the timestamp must delimit it, or the digit scanner eats 94000 (hex chars
+// that are also decimal digits).
 int ReplayParserSelftest() {
     const char* line = "+25429 94000db66f625f7270635f6765745f6672616d65302d322d313290\n";
     char path[] = "/tmp/raptor_replay_XXXXXX";
@@ -574,31 +694,138 @@ int ReplayParserSelftest() {
     (void)ignored;
     close(fd);
     std::vector<Bytes> frames;
-    std::vector<int> delays;
+    std::vector<int64_t> stamps;
     std::string err;
-    bool ok = ParseReplayFile(path, &frames, &delays, &err);
+    bool ok = ParseReplayFile(path, &frames, &stamps, &err);
     unlink(path);
-    bool pass = ok && frames.size() == 1 && delays.size() == 1 && delays[0] == 25429 && !frames[0].empty();
+    bool pass = ok && frames.size() == 1 && stamps.size() == 1 && stamps[0] == 25429 && !frames[0].empty();
     std::printf("[replay-selftest] delay-then-hex-digits %s%s%s\n", pass ? "PASS" : "FAIL",
                 pass ? "" : ": ", pass ? "" : err.c_str());
     return pass ? 0 : 1;
 }
 
-int Replay(const std::string& host, uint16_t port, const std::string& path, bool dry_run, bool log) {
+// Row #117: the '+<ms>' prefix is an ABSOLUTE capture timestamp, so the
+// replay's pacing is the inter-arrival DELTA between consecutive stamps —
+// not the stamp itself. Sleeping the stamp would wait the whole capture
+// offset before every frame (row #105's replay sent 5 frames in 2+ minutes
+// and looked hung).
+//
+// Pins the conversion on the capture's own first three stamps (see
+// docs/recon/findings/streaming-replay-payloads.md): '+25259', '+25261',
+// '+25281' are the capture's first three instants, so the waits before them
+// are 25259 ms (from t=0), then 2 ms, then 20 ms.
+int ReplayDeltaSelftest() {
+    const char* body =
+        "+25259 940001d9206f625f7365745f69725f6672616d655f6c696768745f74797065302d322d31329206cdffff\n"
+        "+25261 9400cc8cd9206f625f7365745f69725f6672616d655f6c696768745f74797065302d322d31309207cdffff\n"
+        "+25281 9400cc9fb66f625f7270635f73656e645f64617461302d322d313092b0474d04000200af009d0000000000000040\n";
+    char path[] = "/tmp/raptor_delta_XXXXXX";
+    int fd = mkstemp(path);
+    if (fd < 0) { std::printf("[replay-selftest] SKIP (mkstemp failed)\n"); return 0; }
+    ssize_t ignored = write(fd, body, std::strlen(body));
+    (void)ignored;
+    close(fd);
+
     std::vector<Bytes> frames;
-    std::vector<int> delays;
+    std::vector<int64_t> stamps;
     std::string err;
-    if (!ParseReplayFile(path, &frames, &delays, &err)) {
+    bool ok = ParseReplayFile(path, &frames, &stamps, &err);
+    unlink(path);
+    int failures = 0;
+    auto check = [&](const char* name, bool pass) {
+        std::printf("[replay-selftest] %-52s %s\n", name, pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+
+    check("parses three frames with absolute stamps",
+          ok && frames.size() == 3 && stamps.size() == 3);
+    if (!ok || stamps.size() != 3) {
+        std::printf("[replay-selftest] %s\n", err.c_str());
+        return 1;
+    }
+    check("stamps are the absolute capture timestamps",
+          stamps[0] == 25259 && stamps[1] == 25261 && stamps[2] == 25281);
+
+    int backward = 0;
+    std::vector<int64_t> deltas = ToInterFrameDeltas(stamps, &backward);
+    check("deltas are 25259, 2, 20 ms (not 25259 three times)",
+          deltas.size() == 3 && deltas[0] == 25259 && deltas[1] == 2 && deltas[2] == 20);
+    check("no backward steps in a monotonic file", backward == 0);
+
+    // The first frame's wait comes from the capture's t=0, which the daemon
+    // does not share: it is capped.
+    check("first-frame wait is capped", FirstFrameWaitMs(deltas[0]) == kFirstFrameWaitCapMs);
+    check("a small first delta is not inflated", FirstFrameWaitMs(7) == 7);
+
+    // A stamp that goes backwards (the capture file groups frames by call
+    // type, not by time) must clamp to 0, never go negative.
+    std::vector<int64_t> unordered_stamps = {25259, 25300, 25200, 25250};
+    int backward2 = 0;
+    std::vector<int64_t> d2 = ToInterFrameDeltas(unordered_stamps, &backward2);
+    check("a backward stamp clamps to 0 ms",
+          d2.size() == 4 && d2[0] == 25259 && d2[1] == 41 && d2[2] == 0 && d2[3] == 50);
+    check("backward steps are counted", backward2 == 1);
+
+    // A frame with no timestamp waits 0 and does not move the cursor.
+    std::vector<int64_t> sparse = {100, -1, 130};
+    int backward3 = 0;
+    std::vector<int64_t> d3 = ToInterFrameDeltas(sparse, &backward3);
+    check("a frame with no timestamp waits 0 ms",
+          d3.size() == 3 && d3[0] == 100 && d3[1] == 0 && d3[2] == 30);
+
+    std::printf("[replay-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
+}
+
+// The cadence the replay would use, as one summary line: how many frames,
+// the span they cover, and the mean gap between them. This is the
+// no-hardware check that the pacing is the captured one (row #117).
+void PrintCadence(const std::vector<int64_t>& stamps, const std::vector<int64_t>& deltas, int backward) {
+    // The capture file groups frames by call type, not by time, so the span
+    // is max(stamp) - min(stamp), not last - first.
+    int64_t lo = -1, hi = -1;
+    for (int64_t s : stamps) {
+        if (s < 0) continue;
+        if (lo < 0 || s < lo) lo = s;
+        if (hi < 0 || s > hi) hi = s;
+    }
+    int64_t span = (lo >= 0 && hi >= lo) ? (hi - lo) : 0;
+    // The mean gap is over the inter-frame deltas (the first frame's wait is
+    // from the capture's t=0 and is capped, so it is not part of the pace).
+    int64_t sum = 0;
+    size_t n = 0;
+    for (size_t i = 1; i < deltas.size(); ++i) { sum += deltas[i]; ++n; }
+    double mean = n ? (double)sum / (double)n : 0.0;
+    std::printf("[replay] cadence: %zu frame(s), capture span %lld ms, mean gap %.2f ms, "
+                "first-frame wait %lld ms%s\n",
+                deltas.size(), (long long)span, mean,
+                (long long)(deltas.empty() ? 0 : FirstFrameWaitMs(deltas[0])),
+                backward ? " (backward stamps clamped to 0)" : "");
+}
+
+int Replay(const std::string& host, uint16_t port, const std::string& path, bool dry_run, bool log,
+           int reply_timeout_ms) {
+    std::vector<Bytes> frames;
+    std::vector<int64_t> stamps;
+    std::string err;
+    if (!ParseReplayFile(path, &frames, &stamps, &err)) {
         std::fprintf(stderr, "[replay] %s\n", err.c_str());
         return 2;
     }
     std::printf("[replay] %zu frame(s) from %s%s\n", frames.size(), path.c_str(),
                 dry_run ? " (dry-run: not sent)" : "");
     if (frames.empty()) return 2;
+    int backward = 0;
+    std::vector<int64_t> deltas = ToInterFrameDeltas(stamps, &backward);
+    PrintCadence(stamps, deltas, backward);
     if (dry_run) {
         for (size_t i = 0; i < frames.size(); ++i) {
-            std::printf("[replay] frame %zu: +%dms %zu B: %s\n", i + 1, delays[i], frames[i].size(),
-                        HexHead(frames[i]).c_str());
+            int64_t wait = (i == 0) ? FirstFrameWaitMs(deltas[i]) : deltas[i];
+            char ts[32];
+            if (stamps[i] < 0) std::snprintf(ts, sizeof(ts), "none");
+            else std::snprintf(ts, sizeof(ts), "%lldms", (long long)stamps[i]);
+            std::printf("[replay] frame %zu: t=%s wait %lldms %zu B: %s\n", i + 1, ts,
+                        (long long)wait, frames[i].size(), HexHead(frames[i]).c_str());
         }
         return 0;
     }
@@ -607,20 +834,28 @@ int Replay(const std::string& host, uint16_t port, const std::string& path, bool
         std::fprintf(stderr, "[replay] cannot connect to %s:%u (is RPCServer running?)\n", host.c_str(), port);
         return 1;
     }
-    std::printf("[replay] connected %s:%u; sending unchanged request frames\n", host.c_str(), port);
+    std::printf("[replay] connected %s:%u; sending unchanged request frames (reply timeout %d ms)\n",
+                host.c_str(), port, reply_timeout_ms);
     uint64_t bins = 0, empties = 0, errors = 0;
     for (size_t i = 0; i < frames.size(); ++i) {
-        if (delays[i] > 0) std::this_thread::sleep_for(std::chrono::milliseconds(delays[i]));
+        int64_t wait = (i == 0) ? FirstFrameWaitMs(deltas[i]) : deltas[i];
+        if (wait > 0) std::this_thread::sleep_for(std::chrono::milliseconds(wait));
         if (!rpc.sendRaw(frames[i])) {
             std::fprintf(stderr, "[replay] frame %zu: send failed\n", i + 1);
             ++errors;
             break;
         }
-        Value reply = rpc.readReply();
+        Value reply = rpc.readReplyWithDeadline(reply_timeout_ms);
         if (reply.kind == Value::Kind::Bin) {
             ++bins;
             if (log) std::printf("[replay] frame %zu -> bin(%zu) head=[%s]\n", i + 1, reply.bin.size(),
                                  HexHead(reply.bin).c_str());
+        } else if (reply.kind == Value::Kind::Timeout) {
+            // Name the frame: the point of the bound is that a stall says
+            // WHICH request went unanswered, not just "it hung".
+            std::fprintf(stderr, "[replay] frame %zu: no reply within %d ms\n", i + 1, reply_timeout_ms);
+            std::fflush(stderr);
+            return 1;
         } else if (reply.kind == Value::Kind::Error) {
             ++errors;
             if (log) std::printf("[replay] frame %zu -> ERROR: %s\n", i + 1, reply.error.c_str());
@@ -635,27 +870,138 @@ int Replay(const std::string& host, uint16_t port, const std::string& path, bool
     return bins > 0 ? 0 : 1;
 }
 
+// Row #117: the bounded reply read, exercised with no device. A loopback
+// listener accepts the connection and never answers, so the read must hit
+// its deadline and report the frame it was waiting for — the case that
+// produced row #105's silent hang.
+//
+// The listener runs in a thread and is shut down (and joined) before this
+// returns: no stray process or thread outlives the test.
+int ReplyTimeoutSelftest() {
+    int failures = 0;
+    auto check = [&](const char* name, bool pass) {
+        std::printf("[replay-selftest] %-52s %s\n", name, pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+
+    int lfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (lfd < 0) { std::printf("[replay-selftest] SKIP (socket failed)\n"); return 0; }
+    int one = 1;
+    setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+    sockaddr_in addr = {};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = 0;  // let the kernel pick a free port
+    if (bind(lfd, (sockaddr*)&addr, sizeof(addr)) != 0 || listen(lfd, 4) != 0) {
+        close(lfd);
+        std::printf("[replay-selftest] SKIP (bind/listen failed)\n");
+        return 0;
+    }
+    socklen_t alen = sizeof(addr);
+    getsockname(lfd, (sockaddr*)&addr, &alen);
+    uint16_t port = ntohs(addr.sin_port);
+
+    // The silent peer: accept, then never write a reply.
+    std::atomic<bool> stop{false};
+    std::thread peer([&] {
+        int cfd = accept(lfd, nullptr, nullptr);
+        if (cfd < 0) return;
+        while (!stop.load()) {
+            struct pollfd p = {cfd, POLLIN, 0};
+            if (poll(&p, 1, 50) > 0) {
+                uint8_t sink[4096];
+                ssize_t n = recv(cfd, sink, sizeof(sink), 0);
+                if (n <= 0) break;  // the client hung up
+            }
+        }
+        close(cfd);
+    });
+
+    // A one-frame replay file, sent to the silent peer.
+    const char* body = "+0 940001b16f625f7270635f6765745f6672616d6590\n";
+    char path[] = "/tmp/raptor_timeout_XXXXXX";
+    int fd = mkstemp(path);
+    if (fd < 0) {
+        stop.store(true);
+        peer.join();
+        close(lfd);
+        std::printf("[replay-selftest] SKIP (mkstemp failed)\n");
+        return 0;
+    }
+    ssize_t ignored = write(fd, body, std::strlen(body));
+    (void)ignored;
+    close(fd);
+
+    RpcClient rpc;
+    bool connected = rpc.connect("127.0.0.1", port);
+    check("connects to the silent loopback peer", connected);
+
+    bool got_timeout = false;
+    int64_t elapsed_ms = 0;
+    if (connected) {
+        Bytes frame = {0x94, 0x00, 0x01, 0xb1, 'o', 'b', '_', 'r', 'p', 'c', '_', 'g',
+                       'e', 't', '_', 'f', 'r', 'a', 'm', 'e', 0x90};
+        rpc.sendRaw(frame);
+        auto t0 = std::chrono::steady_clock::now();
+        Value reply = rpc.readReplyWithDeadline(300);
+        auto t1 = std::chrono::steady_clock::now();
+        elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+        got_timeout = (reply.kind == Value::Kind::Timeout);
+        check("the bounded read reports a timeout", got_timeout);
+        check("the timeout fires near the deadline (not instantly, not late)",
+              elapsed_ms >= 250 && elapsed_ms < 3000);
+    }
+
+    unlink(path);
+    stop.store(true);
+    peer.join();
+    close(lfd);
+
+    std::printf("[replay-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--dry-run") {
         int rc = DryRun();
         if (rc) return rc;
-        return ReplayParserSelftest();
+        rc |= ReplayParserSelftest();
+        rc |= ReplayDeltaSelftest();
+        return rc;
     }
+    if (argc >= 2 && std::string(argv[1]) == "--selftest-timeout") return ReplyTimeoutSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
-        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [port] [--dry-run] [--quiet]\n"); return 2; }
+        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [port] [--dry-run] [--quiet] [--reply-timeout-ms N]\n"); return 2; }
         std::string path = argv[2];
-        std::string host = argc > 3 ? argv[3] : "127.0.0.1";
-        uint16_t port = argc > 4 ? (uint16_t)std::atoi(argv[4]) : 10013;
+        std::string host = "127.0.0.1";
+        uint16_t port = 10013;
         bool dry_run = false, log = true;
+        int reply_timeout_ms = kDefaultReplyTimeoutMs;
+        // Positionals are host then port; anything starting with "--" is a
+        // flag, so a flag may appear before them.
+        std::vector<std::string> positionals;
         for (int i = 3; i < argc; ++i) {
-            if (std::string(argv[i]) == "--dry-run") dry_run = true;
-            if (std::string(argv[i]) == "--quiet") log = false;
+            std::string a = argv[i];
+            if (a.rfind("--", 0) == 0) {
+                if (a == "--dry-run") dry_run = true;
+                else if (a == "--quiet") log = false;
+                else if (a == "--reply-timeout-ms" && i + 1 < argc) reply_timeout_ms = std::atoi(argv[++i]);
+                else { std::fprintf(stderr, "unknown option: %s\n", a.c_str()); return 2; }
+            } else {
+                positionals.push_back(a);
+            }
         }
-        return Replay(host, port, path, dry_run, log);
+        if (positionals.size() > 0) host = positionals[0];
+        if (positionals.size() > 1) port = (uint16_t)std::atoi(positionals[1].c_str());
+        if (reply_timeout_ms <= 0) {
+            std::fprintf(stderr, "--reply-timeout-ms must be positive (got %d)\n", reply_timeout_ms);
+            return 2;
+        }
+        return Replay(host, port, path, dry_run, log, reply_timeout_ms);
     }
     if (argc >= 2 && std::string(argv[1]) == "--live") {
         std::string host = argc > 2 ? argv[2] : "127.0.0.1";
@@ -675,11 +1021,18 @@ int main(int argc, char** argv) {
         "Usage:\n"
         "  raptor_client --dry-run                  framing selftest, no device\n"
         "  raptor_client --dry-run-live             print the bytes each call would send\n"
+        "  raptor_client --selftest-timeout         bounded reply read, no device\n"
         "  raptor_client --discover                 GVCP discovery only\n"
         "  raptor_client --replay <file> [host] [port] [--dry-run] [--quiet]\n"
+        "      [--reply-timeout-ms N]\n"
         "      sends recon's captured request frames unchanged, in order; file\n"
-        "      format: one hex frame per line, optional '+<ms> ' delay prefix,\n"
-        "      '#' comments/blank lines ignored\n"
+        "      format: one hex frame per line, optional '+<ms> ' prefix,\n"
+        "      '#' comments/blank lines ignored.\n"
+        "      The '+<ms>' prefix is an ABSOLUTE capture timestamp (milliseconds\n"
+        "      since the capture started), not a per-frame delay, so the replay\n"
+        "      paces on the inter-arrival deltas between consecutive stamps.\n"
+        "      --reply-timeout-ms bounds each reply read (default 2000); on\n"
+        "      expiry the replay names the frame and exits non-zero.\n"
         "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
         "      per-call logging is ON by default (--quiet disables it); --pull-ms 0 = as fast\n");
     return 0;
