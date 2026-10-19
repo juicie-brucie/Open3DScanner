@@ -95,7 +95,7 @@ that injects the MoltenVK blocker** [hw-confirmed: the acceptance log
 plan73 app-stdout log]:
 
 - **Launcher path — resolves.** `scan_server --live` → `RunLiveMode`
-  (`tools/scan_server/main.cpp` ~1376–1389) sets
+  (`tools/scan_server/main.cpp` ~1435–1438; `RunLiveMode` starts at `:1394`) sets
   `DYLD_INSERT_LIBRARIES=<libMoltenVK.dylib>:<vulkan_disable_interpose.dylib>`
   before `RunSelfAsWorker` execs the worker (`engine/src/worker_process.cpp:150`).
   The worker loads the interposer (`[vulkan_disable_interpose] loaded` —
