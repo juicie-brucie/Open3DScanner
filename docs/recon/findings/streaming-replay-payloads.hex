@@ -1,6 +1,9 @@
 # Streaming replay payloads from vendor capture (session4)
 # Extracted from docs/recon/findings/streaming-replay-payloads.md
-# Format: one msgpack-RPC frame per line (hex), optional +<ms> timing prefix
+# Format: one msgpack-RPC frame per line (hex), with absolute capture timestamp
+# prefix (milliseconds since capture start). The client sleeps the inter-arrival
+# delta between frames; backward stamps (the file is grouped by call type, not
+# time) are clamped to 0.
 # Comments (#) and blank lines are ignored
 
 # Pre-stream setup: set_ir_frame_light_type

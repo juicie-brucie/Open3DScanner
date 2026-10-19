@@ -110,3 +110,9 @@
 **Latency**: 25.339836 - 25.294078 = **0.045758s = 45.76 ms** after start_stream IR request.
 
 (First depth frame response would follow depth start_stream at t=25.339820, but not captured in this extract — the TSV truncates large payloads.)
+
+## 6. File composition and replay semantics
+
+The companion `streaming-replay-payloads.hex` file is **grouped by call type, not chronologically**. It contains 36 frames across two interfaces: **13 × `0-2-12` (IR, port 10013)** and **23 × `0-2-10` (depth, port 10010)**. The timestamps are **absolute capture times** (milliseconds since capture start), not inter-frame delays. Because the file is grouped, the timestamp sequence is **not monotonic**: two transitions produce backward stamps (−157 ms at the IR→depth get_frame boundary, −114 ms at the depth→post-stream SetProperty boundary). The replay client clamps negative deltas to 0, so these frames are sent immediately after the previous frame with no delay.
+
+The client replays both interfaces over **one connection to port 10013**, despite the frames originating from two different interfaces. A hardware replay that stalls must record the interface suffix (`0-2-12` or `0-2-10`) of the unanswered frame to identify which interface's request was not acknowledged.
