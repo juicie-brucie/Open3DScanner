@@ -154,6 +154,7 @@ like another primary/backup pair (OQ-S15f).
   default block (+0x10..+0x38) or the computed block (+0xec..+0x114) — and
   **recomputes only when |ΔT| > 0.4** (last temps at +0xa0/+0xa4/+0xa8; base
   temps set via the +0x94/+0x9c setter @`0x289344`).
+   *[ERRATUM 2026-10-19: superseded — threshold is 0.2°C; settled in `calibration-store-row95.md`]*
 - **The coefficient source.** `device::RaptorSerialDeviceHandle::getTemperatureCompensationCoeff()`
   @`0x3d61f0` is a **constant stub** — a 16-float struct zeroed, with `-0.03`
   at indices 2,3 and 6,7 and `0.002` at index 10. On this device the
@@ -187,6 +188,7 @@ like another primary/backup pair (OQ-S15f).
   params across a temperature step).
 - Whether the 0.4 threshold is °C (assumed; the values come from the device's
   temperature struct) [inferred].
+  *[ERRATUM 2026-10-19: superseded — threshold is 0.2°C; settled in `calibration-store-row95.md`]*
 - Whether the flash "calibration temp info" (key `0x14000`) holds
   per-temperature *entries* or coefficients (the parser's fields beyond the
   checksum were not read).
@@ -306,5 +308,6 @@ bytes.
   reads). Schema half: still open.*
 - **OQ-S15e** — the 0.4-threshold units and the compensator's numeric effect
   (a temperature-step capture).
+  *[ERRATUM 2026-10-19: superseded — threshold is 0.2°C; settled in `calibration-store-row95.md`]*
 - **OQ-S15f** — the identities of the other flash record kinds
   (0x08/0x11/0x12/0x13/0x15) and the 0x20e000/0x215000 pairing.
