@@ -4,3 +4,6 @@
   own directory; `LoadLibraryExA(..., LOAD_WITH_ALTERED_SEARCH_PATH)` fixes it. The fork's gate note is adopted here: a
   leading UTF-8 BOM defeats the anchored-line verdict parser, and `verdict-gate.yml` now strips one. The scanner is still
   not attached on Windows; the handover waits on the #105/#127 live diagnostics and stays this side's call.
+- 2026-10-19 — **mac #115 clause corrected (supersession, not an edit):** #310 ("Windows sync is not landed")
+  merged at 21:09:32Z and the fork's #17 merged at 21:19:33Z, so the row's "NOT merged" clause is superseded by
+  `f2e9003`. Appended as a dated correction; the old sentence stays for the trail.
