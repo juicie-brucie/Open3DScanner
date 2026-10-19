@@ -46,6 +46,7 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
 @property(nonatomic, strong) WKWebView* webView;
 @property(nonatomic, strong) NSTask* worker;
 @property(nonatomic, assign) BOOL quitting;
+@property(nonatomic, assign) BOOL terminationReplySent;
 @property(nonatomic, assign) BOOL restarting;
 @property(nonatomic, assign) BOOL reloadAfterRestart;
 @property(nonatomic, assign) NSInteger retryCount;
@@ -180,8 +181,13 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
             QuitTrace("app", "terminationHandler on main queue; quitting=%d restarting=%d", self.quitting,
                       self.restarting);
             if (self.quitting) {
-                QuitTrace("app", "replying NSTerminateNow (worker exited)");
-                [NSApp replyToApplicationShouldTerminate:YES];
+                if (self.terminationReplySent) {
+                    QuitTrace("app", "worker exit after termination reply; ignoring");
+                } else {
+                    self.terminationReplySent = YES;
+                    QuitTrace("app", "replying NSTerminateNow (worker exited)");
+                    [NSApp replyToApplicationShouldTerminate:YES];
+                }
             } else if (self.restarting) {
                 self.restarting = NO;
                 [self startWorker];
@@ -347,27 +353,42 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
     });
 }
 
-// Diagnosis status (row #73): the room's hang could not be reproduced
-// outside its launch. Controlled local runs (app launched directly with a
-// fake worker, then `osascript -e 'tell application "OpenScanner" to quit'`)
-// showed applicationShouldTerminate reached, kill(SIGTERM) delivered, and
-// the app exiting once the worker did — for both a responsive worker and an
-// already-dead one. The record's decisive clue (the app absent from Force
-// Quit's own list) points at a launch/session without a window-server
-// connection, which this environment cannot reproduce; the #65 rerun
-// re-tests the original case. Hardening below is independent of that
-// diagnosis: the menu exists from willFinishLaunching, startup errors are
-// non-modal sheets, and the worker has an orphan guard.
+// Instrumented rerun (row #73b): the graceful path starts correctly
+// (applicationShouldTerminate -> kill(SIGTERM) -> NSTerminateLater) but
+// windowWillClose fired ~8 s later and re-entered terminate:, bypassing the
+// wait and exiting before the worker finished. Guard the window-close path
+// so termination is idempotent, and bound a worker that never exits (the
+// #89 context_destroy hang) with a generous deadline that keeps normal
+// 11-19 s tails intact.
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
     (void)sender;
-    QuitTrace("app", "applicationShouldTerminate entered; worker=%p running=%d",
-              (__bridge void*)self.worker, (self.worker != nil && self.worker.running));
+    QuitTrace("app", "applicationShouldTerminate entered; worker=%p running=%d quitting=%d",
+              (__bridge void*)self.worker, (self.worker != nil && self.worker.running), self.quitting);
+    if (self.quitting) {
+        // Re-entered from windowWillClose or a second quit: do not start a
+        // second wait or re-kill.
+        QuitTrace("app", "termination already in progress; returning NSTerminateLater (idempotent)");
+        return NSTerminateLater;
+    }
     // Quit = graceful teardown: SIGTERM makes the worker break its loop and
     // run pause -> mesh -> stop -> session_destroy -> context_destroy.
     if (self.worker != nil && self.worker.running) {
         self.quitting = YES;
         int rc = kill(self.worker.processIdentifier, SIGTERM);
         QuitTrace("app", "kill(SIGTERM, pid=%d) -> %d errno=%d", self.worker.processIdentifier, rc, errno);
+        // Last-resort deadline: normal teardown is ~11-19 s; a worker stuck
+        // in context_destroy (#89) would otherwise hang the app forever.
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(120 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            if (!self.quitting || self.terminationReplySent) return;
+            if (self.worker != nil && self.worker.running) {
+                QuitTrace("app", "termination deadline reached; SIGKILL pid=%d", self.worker.processIdentifier);
+                kill(self.worker.processIdentifier, SIGKILL);
+            }
+            self.terminationReplySent = YES;
+            QuitTrace("app", "deadline: replying NSTerminateNow");
+            [NSApp replyToApplicationShouldTerminate:YES];
+        });
         QuitTrace("app", "returning NSTerminateLater");
         return NSTerminateLater;
     }
@@ -387,6 +408,13 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
 
 - (void)windowWillClose:(NSNotification*)notification {
     (void)notification;
+    if (self.quitting) {
+        // Termination is already waiting on the worker; closing the window
+        // must not re-enter terminate: (the 8 s bypass in the instrumented
+        // rerun). The wait/terminationHandler owns the exit.
+        QuitTrace("app", "windowWillClose during termination; ignoring (idempotent)");
+        return;
+    }
     QuitTrace("app", "windowWillClose -> terminate:");
     [NSApp terminate:nil];
 }
