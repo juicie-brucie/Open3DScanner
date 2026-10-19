@@ -123,7 +123,7 @@
                 override, [self installedLibraryPath]];
         } else {
             msg = [NSString stringWithFormat:
-                @"CrealityScan's liborbbec_scan.dylib was not found.\n\nSearched:\n\n  • %@\n\n"
+                @"CrealityScan's liborbbec_scan.dylib was not found.\n\nSearched:\n  • %@\n\n"
                  @"Install CrealityScan, or set OPENSCANNER_LIBRARY to the dylib.",
                 [self installedLibraryPath]];
         }
