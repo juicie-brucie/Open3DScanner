@@ -14,10 +14,9 @@ Tiers (printed with the report; used by verdict-gate.yml to decide whether a PR
 is script-gated or needs an agent verdict):
     agent tier   engine/**, tools/**, mesh/**, ui/**, scripts/**, tests/hardware/**,
                  any CMakeLists.txt, .github/**, .claude/**, opencode.json(c),
-                 docs/recon/**, docs/recomp/{WINDOWS-FORK,FORK-COORDINATION}.md,
+                 docs/recon/**, docs/recomp/{WINDOWS-FORK,FORK-COORDINATION,ARCHITECTURE}.md,
                  tests/results/** (records, logs, addenda — #21)
-    script tier  everything else (PLAN.md, docs/recomp/** except the two fork
-                 documents above, CLAUDE.md, README.md, ...)
+    script tier  everything else (PLAN.md, docs/recomp/** except the documents listed above, CLAUDE.md, README.md, ...)
     An empty or unreadable file list is treated as agent tier. The list is
     pinned by `--selftest`; edit the table and the patterns together.
 
@@ -83,6 +82,9 @@ AGENT_PATTERNS = [
     # the Windows-fork charter and coordination file carry rules (the contract
     # pin, the two-writer rule) and deserve a verdict like docs/recon/**.
     r"^docs/recomp/(WINDOWS-FORK|FORK-COORDINATION)\.md$",
+    # The doc that states the roles' walls and the clean-room principle: like the fork
+    # documents, it carries rules rather than prose, so it earns a verdict.
+    r"^docs/recomp/ARCHITECTURE\.md$",
     # Every evidence artifact under tests/results/** — records, logs and addenda —
     # is agent-tier (#21): the directory is the loop's highest-stakes artifact
     # class, and an added record auto-merging unreviewed was the hole.
@@ -124,6 +126,7 @@ TIER_CASES = [
     ("docs/architecture/scan-viewer.md", "agent"),
     ("docs/recomp/WINDOWS-FORK.md", "agent"),
     ("docs/recomp/FORK-COORDINATION.md", "agent"),
+    ("docs/recomp/ARCHITECTURE.md", "agent"),
     ("tests/results/2026-10-18-run.md", "agent"),
     ("tests/results/2026-10-18-run.log", "agent"),
     ("tests/results/2026-10-18-run.ips", "agent"),
