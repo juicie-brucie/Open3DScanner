@@ -576,7 +576,7 @@ def main():
     for name, st, detail in report:
         print(f"| {name} | {st} | {detail.replace('|', '/')} |")
     print()
-    print("Gating checks: whitespace, run-records, record-provenance, plan, archives, hook, ui-js-syntax, build.")
+    print("Gating checks: whitespace, run-records, record-provenance, plan, archives, hook, ui-js-syntax, fork-log, build.")
     if fails:
         print()
         print(f"**FAILED: {', '.join(fails)}**")
