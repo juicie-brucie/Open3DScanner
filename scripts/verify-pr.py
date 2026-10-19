@@ -4,7 +4,7 @@
 Usage:
     scripts/verify-pr.py <pr-number> [--build] [--no-build]
     scripts/verify-pr.py --tier <pr-number>      # print: script | agent
-    scripts/verify-pr.py --selftest              # assert the tier table (CI runs this)
+    scripts/verify-pr.py --selftest              # assert the tier table and the fork-log rule (CI runs this)
 
 Works on git refs (no checkout required): fetches `refs/pull/<n>/head` and the
 PR's base branch, then checks the diff. Exit 0 = all gating checks passed;
@@ -36,6 +36,10 @@ Gating checks
                   that cannot be resolved fails. Added *.ips files are compared
                   against ~/Library/Logs/DiagnosticReports/<same basename> when
                   that directory exists (local best-effort; CI has no such dir).
+  fork-log        a PR that moves engine/include/openscanner/obscan_api.h must also
+                  add its line to docs/recomp/FORK-COORDINATION.md §5 — the agreed
+                  routine (one line per header change, in the same PR); the fork's
+                  --pincheck is the drift alarm.
   hook            .claude/hooks/guard-hw-run.sh is executable, and the head hook
                   satisfies the guard invariants (must-block / must-allow cases
                   below). A base-vs-head probe matrix diff is reported.
@@ -90,6 +94,19 @@ def is_agent_tier(path):
     return any(re.search(p, path) for p in AGENT_PATTERNS)
 
 
+def fork_log_problem(changed_paths):
+    """The agreed routine with the fork lane: a PR that moves the contract header adds its
+    §5 line to the coordination file in the same PR. The fork's `--pincheck` is the drift
+    alarm; the log is the revision trail, and this keeps it complete without a message per
+    move. Returns the problem string, or None when the PR is fine."""
+    hdr = "engine/include/openscanner/obscan_api.h"
+    forklog = "docs/recomp/FORK-COORDINATION.md"
+    if hdr in changed_paths and forklog not in changed_paths:
+        return (f"{hdr} moved without a line in {forklog} §5 — the agreed routine is one "
+                "line per header change, in the same PR")
+    return None
+
+
 # The tier list is load-bearing: a path that should be agent-tier returning
 # `script` lets auto-verdict post success and the PR merges judged by nothing.
 # This table pins the list; CI runs `--selftest` before trusting a tier
@@ -136,9 +153,17 @@ def selftest():
         bad.append("empty list: want agent (unknown -> require a verdict)")
     if tier_of(["docs/recomp/PLAN.md", "ui/app.js"]) != "agent":
         bad.append("mixed list: want agent (one agent path makes the PR agent)")
+    # fork-log: the agreed routine's three paths
+    H = "engine/include/openscanner/obscan_api.h"; F = "docs/recomp/FORK-COORDINATION.md"
+    if fork_log_problem([H, "docs/recon/findings/x.md"]) is None:
+        bad.append("fork-log: header-only must be a problem")
+    if fork_log_problem([H, F]) is not None:
+        bad.append("fork-log: header + its log line must pass")
+    if fork_log_problem(["ui/app.js"]) is not None:
+        bad.append("fork-log: no header must pass")
     for b in bad:
         print("SELFTEST FAIL:", b)
-    print(f"tier selftest: {len(TIER_CASES) + 2} cases, {'FAIL' if bad else 'ok'}")
+    print(f"selftest: {len(TIER_CASES) + 5} cases, {'FAIL' if bad else 'ok'}")
     return 1 if bad else 0
 
 
@@ -489,6 +514,14 @@ def main():
         add("ui-js-syntax", not js_bad,
             "; ".join(js_bad) if js_bad else f"{js_checked} file(s) parse")
 
+    # 6b. fork-log: the agreed routine — a PR that moves the contract header carries its §5
+    # line in the coordination file, in the same PR (the fork's --pincheck is the drift alarm).
+    changed = [l.split("\t")[-1] for l in diff_files.splitlines()]
+    fl = fork_log_problem(changed)
+    add("fork-log", fl is None,
+        fl if fl else ("header unchanged" if "engine/include/openscanner/obscan_api.h" not in changed
+                       else "header + its fork-log line together"))
+
     # 7. inventory vs PR body
     body_l = body.lower()
 
@@ -543,7 +576,7 @@ def main():
     for name, st, detail in report:
         print(f"| {name} | {st} | {detail.replace('|', '/')} |")
     print()
-    print("Gating checks: whitespace, run-records, record-provenance, plan, archives, hook, ui-js-syntax, build.")
+    print("Gating checks: whitespace, run-records, record-provenance, plan, archives, hook, ui-js-syntax, fork-log, build.")
     if fails:
         print()
         print(f"**FAILED: {', '.join(fails)}**")
