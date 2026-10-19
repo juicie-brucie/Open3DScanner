@@ -9,12 +9,12 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-19 (rev 17 — **the pivot**: the operator has set full host-side independence
-from Creality Scan as the priority target, and the objective becomes its Phase A–D chain. rev 16's
-objective landed (`G3`'s build row, `#91`/`#92`); rev 15 closed the walls audit; rev 14 moved the
-objective to `G1`'s bind half and added `H4`; rev 13 corrected the `G1` misread and added `H3`; rev 12
-recorded the `A2` decision; rev 11 added the app workstream; rev 10 moved the objective;
-rev 9/8/7/6/5/4/3/2/1 are superseded — see **Superseded plans**)._
+_Last planned: 2026-10-19 (rev 18 — retires the README staging block, which was applied verbatim as
+#252, and records the ownership fix; sweeps rows #95–#104 (`#96` `DONE`, `#98` `BUILD`); narrows the
+`FULL-INDEPENDENCE.md` licensing erratum to a fact; and raises one new open question — the Raptor
+Pro's USB protocol family — that shapes `#100`. rev 17 was **the pivot**; rev 16's objective landed
+(`G3`'s build row); rev 15 closed the walls audit; rev 14/13/12/11/10 are superseded — see
+**Superseded plans**)._
 
 ## Objective for the next round
 
@@ -42,13 +42,13 @@ parameters and one that uses the vendor's.
 ## Critical path
 
 ```
-PHASE A            PHASE B                    PHASE C              PHASE D
-#96 protocol spec ─G-A─► #98 C1 RPC client ──► #99 own the math ──► #100 replace the daemon
-   (RECON)                    (msgpack+GVCP)     (gated by #95)        (gated by #97)
+PHASE A ✅ DONE (#96 — G-A cleared)        PHASE B (live)          PHASE C          PHASE D
+                                     ──► #98 C1 RPC client ──────► #99 own math ──► #100 replace the daemon
+                                         (BUILD)                    (gated by #95)   (gated by #97)
 
 #95 calibration payloads ──G-C──┘  (gates a CORRECT C, not C's start)
 #97 the macOS privileged-access DECISION ──G-B──┘                     (the biggest unknown)
-#101 OQ-F2 · #102 OQ-F3 ──► capture-driven recon feeding A and D
+#101 OQ-F2 · #102 OQ-F3 ──► capture-driven recon feeding B and D
 ```
 
 The gates, and what each one blocks (§8):
@@ -419,6 +419,52 @@ full flash map, so calibration, serial and boot are preserved; and ideally a sec
 camera/laser driver details that inform the host loops, and cross-checks the vendor-command opcode
 semantics. That is recon-side input (see the posture above), never builder-side.
 
+## rev 18 — README close-out, the sweep, and one new open question
+
+**The README correction is closed**: applied verbatim as **#252**, the file now has an owner
+(dispatch), and the erratum landed. Full record above.
+
+### The sweep (`H3`) — what moved since rev 17
+
+| this file said | board says now | correction |
+| --- | --- | --- |
+| `#96` is the pivot's first work item, `RECON` | **`#96` `DONE`** | Phase A closed — **G-A is cleared**, and **`#98` (Phase B) is `BUILD`** |
+| `#98` "after G-A", no row state | **`#98` `BUILD`** | moved from `TODO`; the C1 client is in flight — it is now the critical path's head |
+| `#91`/`#92` "code landed, row move pending" | **`#91` `HW`** | the move happened; it owes a **rerun**, not a row |
+| the README's `Status`/`Known issues` need "a pass once Phase A exists" | **`#103` filed** | rowed — no longer a note here |
+| — | **`#104` (new)** | session-model drift: extend `check-agents.py` to compare each live session's model against its agent definition |
+
+**`#96` closing moves the critical path's head.** The live edge is now **`#98` → `#99`**, with `#95`
+(G-C) and `#97` (G-B) still the two gates that matter.
+
+### The README needs one more pass — and the erratum can now be narrowed
+
+The section just applied says **"the MIT-licensed public-SDK headers"**, and `FULL-INDEPENDENCE.md`'s
+erratum marks that attribution *unverified*. Having read the source, the erratum narrows from
+"unconfirmed" to a **fact**:
+
+- `orbbec/OrbbecSDK_v2`'s own README §5: *"This project is licensed under the **MIT License** with some
+  other licenses for third-party libraries and extensions."*
+- GitHub's classifier reports the repo as **"Other"** — because of that mixed licensing, **not**
+  because the licence is unknown.
+
+So "MIT-licensed" is **right for Orbbec's own source and wrong as a blanket description of the repo**.
+The README should either say exactly that, or drop the licence adjective and defer to the erratum.
+This sits in **`#103`'s neighbourhood**, but it is a *factual* fix rather than a "binding-era" pass —
+it should not be lost inside that one.
+
+### A new open question the same reading turned up
+
+`OrbbecSDK_v2`'s README documents **two USB protocol families**: OpenNI for v1.x firmware, **UVC for
+v2.x** — and Orbbec has been migrating devices between them since v2.5.5 (Oct 2025), noting that the
+*same* product line can speak either depending on its **firmware major version**.
+
+**`FULL-INDEPENDENCE.md` §5 assumes UVC in C2, and §8 does not list the family as an unknown.** So:
+**which family does the Raptor Pro speak?** It is cheaply checkable — a firmware major version answers
+it — and it materially shapes **`#100`**, because an OpenNI-protocol device is *not* "UVC streaming +
+UVC controls + an extension-unit vendor channel". This wants an OQ on the `#100` chain **before** C2
+is designed, not after.
+
 ## rev 16 close-out, and the board sweep
 
 **rev 16's objective landed.** `G3`'s build row was filed and built — `#91`, with `#92` — so the last
@@ -470,14 +516,18 @@ allows, and no blanket deny** (`blanket_deny: 0`). An enumeration closes the pat
 `docs/architecture/**`, `docs/tooling/**` and `THIRD_PARTY_LICENSES.md`, silently, by the **absence**
 of a rule rather than by a decision.
 
-**That is why the root README still carries a factual error.** No role *owns* it: it appears in no
-agent's allow list, and the only reason anything can write it is that absent deny — so the drift is
+**That is why the root README carried a factual error.** No role *owned* it: it appeared in no
+agent's allow list, and the only reason anything could write it is that absent deny — so the drift was
 **structural, not accidental**. It is the third unowned artifact after `docs/research/**` and
-`docs/architecture/**`, and the first to produce a user-visible wrong claim (see the README
-correction below). **Two fixes belong together:** restore `deny:*` on the builder with the audit's
-allow list, and give the repo-level docs an owner.
+`docs/architecture/**`, and the first to produce a user-visible wrong claim.
 
-### The root README's factual error (open — no role can own the fix)
+**One of the two fixes has landed; one has not.** The **owner is fixed** — `README.md` is now in
+dispatch's allow list, with the wall record updated in `ARCHITECTURE.md`, so the file is no longer
+reachable only by accident. **`deny:*` on the builder is still absent (W2 is enumeration-based), and
+restoring it is the operator's call** — not the planner's and not the dispatcher's. The owner fix
+removes the consequence; it does not close the wall.
+
+### The root README's factual error — **closed** (#252), one phrase outstanding
 
 `README.md`'s "Possible future direction" section claimed the low-level layer
 (`libOrbbecSDK.1.7.1.dylib`) is "Orbbec's own **public, open-source** SDK … the same one published on
@@ -783,101 +833,27 @@ correctness, not its start.
 
 ---
 
-# STAGING — `README.md` changes
+## README correction — **applied and closed** (#252)
 
-**Dispatcher: this is staged text, not roadmap content, and it is a routing job rather than a PR you
-can open yourself.**
+The text staged here was **applied verbatim** as **PR #252** and is on `main`: the layer table, the
+repo-URL correction, the "no source to read" argument, the phase path, the firmware exclusion, and the
+clean-room posture. **The routing instruction that stood here is retired** — it has done its job.
 
-**Why you cannot apply it.** `README.md` is outside *your* edit reach as well as the planner's —
-dispatch's `edit` allows are `scripts/**`, `/private/var/folders/**`, `docs/recomp/**` and
-`.claude/**`; the planner's is this file. The **only** agent that can write it is
-`openscanner/builder`, and only because it carries **no blanket `edit * deny`** — by the *absence* of
-a rule, not by anyone's decision. So **route it deliberately**, and say which route you took:
-a **builder session** (with the text below), or the **operator** applying it directly.
+- **Owner fixed.** `README.md` is now in **dispatch's** allow list and the wall record in
+  `ARCHITECTURE.md` is updated, so the file is no longer reachable only by accident.
+- **The underlying error is closed.** The SDK-layer claim was verified against Orbbec's own GitHub
+  org, and the corrected section shipped; the finding stands above.
+- **The erratum landed.** `FULL-INDEPENDENCE.md` marks its "MIT-licensed public source" attributions
+  unverified. The verification below **narrows** that erratum rather than contradicting it.
 
-**This is also the evidence for two rows' worth of follow-up** (already argued above): restore
-`deny:*` on the builder with the audit's allow list, and give the repo-level docs an owner. Fixing the
-text without those two leaves the next error permanent for the same reason this one was.
+### What this did *not* settle
 
-**Boundaries.** Two independent edits. `--- BEGIN EDIT 1` … `--- END EDIT 1` replaces the README's
-opening description. `--- BEGIN EDIT 2` … `--- END EDIT 2` replaces the whole
-`## Possible future direction: dropping OBScan entirely` section, heading included.
+**W2's builder wall is still enumeration-based** (no `deny:*`), so unlisted paths stay editable — the
+argument above stands unchanged, and **whether to restore `deny:*` is the operator's call**, not the
+planner's and not the dispatcher's. The owner fix removes the *consequence* this README suffered; it
+does not close the wall.
 
-**Why the substantive change.** That section called `libOrbbecSDK.1.7.1.dylib` "Orbbec's own public,
-open-source SDK". Verified wrong against Orbbec's own GitHub org: `orbbec/OrbbecSDK` is *"Orbbec SDK
-v1&v2 **Pre-Compiled** Repo"* — binaries, not source — while `orbbec/OrbbecSDK_v2` is the *open-source*
-repo, a **different** codebase that does not list this device's `0x0c03`. The layer we bind has no
-source to read, which is the argument *for* the pivot. Full finding in the roadmap above.
+**And the README still says "MIT-licensed public-SDK headers"** in the section just applied — see the
+sweep below for why that now needs one more pass.
 
---- BEGIN EDIT 1
-
-An open-source macOS/Windows application for Creality (Orbbec-based) 3D
-scanners, built as a clean-room replacement for **Creality's entire host
-stack** — the CrealityScan app layer, the OBScan scanning library, Orbbec's
-device library, and Creality's RPC daemon. Development is starting on macOS
-with a Creality Raptor Pro.
-
---- END EDIT 1
-
---- BEGIN EDIT 2
-
-## Direction: full host-side independence
-
-**OpenScanner's target is to replace Creality's closed host stack entirely** — no OBScan, no Orbbec
-device library, no Creality daemon. The feasibility assessment is
-[`docs/recomp/FULL-INDEPENDENCE.md`](docs/recomp/FULL-INDEPENDENCE.md); this is its summary.
-
-| layer | what it is | status |
-| --- | --- | --- |
-| **L4 — OBScan** (`liborbbec_scan`) | the closed scanning library: laser-line extraction, triangulation, tracking, fusion, meshing, plane removal | **replaced by our own math** (Phase C) |
-| **L3 — Creality RPCServer** | a root daemon that owns the USB device and exposes it on localhost as msgpack-RPC | **replaced by our own client, then our own device layer** (Phases B, D) |
-| **L2 — Orbbec device library** (`libOrbbecSDK.1.7.1.dylib`) | the device-I/O layer OBScan sits on | **replaced**, folded into Phase D |
-| **L1 — firmware** | runs the sensors, the laser driver, the flash store | **out of scope** — a later research track |
-
-### A correction to what this README used to claim
-
-Earlier revisions called `libOrbbecSDK.1.7.1.dylib` "Orbbec's own **public, open-source** SDK". That
-was wrong, and the distinction is load-bearing. Orbbec publishes two GitHub repos, and they are not
-the same codebase:
-
-- [`orbbec/OrbbecSDK`](https://github.com/orbbec/OrbbecSDK) — *"Orbbec SDK v1&v2 **Pre-Compiled**
-  Repo"*. **Binaries, not source.** This is the generation the Raptor Pro's `1.7.1` dylib belongs to.
-- [`orbbec/OrbbecSDK_v2`](https://github.com/orbbec/OrbbecSDK_v2) — *"Orbbec SDK v2 **Open-Source**
-  Repo"*. This is where the source actually is, and it is a **different** codebase.
-
-**The open-source SDK starts at v2, and v2 does not support this device.** Its PID tables do not list
-the Raptor Pro's `0x0c03`, and a live enumeration probe against it saw zero devices. So v2 is a
-reference for the UVC/HID/vendor-command mechanics, not a drop-in path — and **the layer we actually
-bind has no source to read.**
-
-### Why the route to independence is the protocol, not the SDK
-
-The transport between the app and the Creality daemon has been **fully observed** on the wire:
-GigE-Vision discovery, msgpack-RPC over TCP, roughly fourteen methods, and Orbbec's own
-vendor-command framing inside `send_data`. And the device is **dumb** — laser sequencing and
-auto-exposure are *host* loops, and depth is computed on the host, not on the scanner.
-
-Together those make an observation-derived replacement feasible **without ever reading a vendor
-binary**, which is also the cleanest possible provenance for the result.
-
-### The path
-
-In dependency order, and each phase leaves a working product:
-
-- **Phase A** — spec the protocol from the captures. Recon only; findings, no code.
-- **Phase B** — our own RPC client to the daemon. At the end, OBScan and the Orbbec library are gone.
-- **Phase C** — own the scanning math on raw frames, incrementally, A/B-tested against the vendor's
-  output while it still exists.
-- **Phase D** — replace the daemon with our own UVC + HID + vendor-channel layer, behind a privileged
-  helper on macOS. **At the end, no Creality or Orbbec code runs on the host.**
-
-**Firmware replacement is deliberately not on that path.** It buys little — the device is dumb, so
-the scanning smarts are host-side — and a failed write can brick the unit irreversibly. It stays a
-research track, gated on a proven recovery path, the full flash map, and ideally a second unit.
-
-**Clean-room posture.** Everything above is **observation-derived**: wire captures plus the
-MIT-licensed public-SDK headers. Recon writes specs from observation; the builder implements from
-specs, never from captures or vendor binaries. The extracted firmware, where it is used at all, is
-recon-side read-only input and never reaches the implementation.
-
---- END EDIT 2
+---
