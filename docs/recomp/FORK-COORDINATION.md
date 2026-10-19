@@ -92,3 +92,23 @@ _Append dated one-liners: what changed, which side, and the outcome. Newest last
   change lands in this log as part of the landing itself; the fork syncs at its own cadence,
   consumes the tip at push time, records the blob it consumed in the pin row, and treats a lagging
   pin as expected — the drift alarm is the fork's `--pincheck`.
+
+- `[win]` 2026-10-18 — the fork's CI ran for the first time and came back **green** on both PRs
+  (#11 `verify-pr` pass 1m22s, #12 pass 1m35s; `auto-verdict` pass on both) — **no
+  local-versus-runner divergence**, so the ported gate agrees with every local run. What executed
+  on the runner: the trusted base copy of the script, the selftest on both copies, the pin check
+  against the committed header, the tier computation, the build check.
+- `[win]` 2026-10-18 — the fork's branch protection now mirrors the parent's shape: required
+  contexts `[verify-pr, verdict]`, strict false, no review requirement, force-pushes and deletions
+  blocked — checked by read-back, not by the request.
+- `[win]` 2026-10-18 — the hardware backstop is **scoped to the room** (PR #12, merge `ed7e467`):
+  the two false-positive command shapes (a PATH prepend of tool directories; prose naming vendor
+  libraries) now run, verified by re-running them verbatim; the guard still exists, and it is inert
+  outside the hardware room.
+- `[win]` 2026-10-18 — the fork's **board exists** (its PR #13): rows are numbered **100+**, so a
+  bare row number cannot mean different work on each machine. Row #113 is the honest one: **no
+  Windows hardware run has ever executed**, so every claim from that lane is a build or recon
+  claim, never a hardware one.
+- `[mac]` 2026-10-18 — the trail, as agreed and now enforced: a parent header change logs its line
+  here in the same PR (the `fork-log` gate check), the fork records the blob it consumes in its pin
+  row when it syncs, and its `--pincheck` alarms on drift.
