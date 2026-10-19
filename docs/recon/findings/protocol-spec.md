@@ -53,18 +53,20 @@ implements from; the captures themselves stay outside the repo.*
 | `ob_rpc_get_frame` | `90` | a msgpack **bin** — the frame (see §1.3) |
 | `ob_rpc_get_imu_frame` | `90` | a 504-byte sample string, **or empty** (`a0`) when no new sample — the poll-returns-nothing pattern |
 | `ob_rpc_get_device_report_infomation` | `90` | a 248-byte sample, or empty (584 of 671 empty) |
-| `ob_rpc_start_stream` | `95 06 09 cd0780 cd04b032` = `[6, 9, 1920, 1200, 50]` | `true` (msgpack bool) |
-| `ob_rpc_stop_stream` | `95 07 09 cd0780 cd04b032` = `[7, 9, 1920, 1200, 50]` | (large / not captured small) |
+| `ob_rpc_start_stream` | `95 06 09 cd0780 cd04b032` = `[streamtype, 9, 1920, 1200, 50]` where **streamtype = 6 on IR (port 10013), 7 on depth (port 10010)** | `true` (msgpack bool) |
+| `ob_rpc_stop_stream`  | `95 06 09 cd0780 cd04b032` (IR) / `95 07 09 cd0780 cd04b032` (depth) — **same** streamtype as start | (large / not captured small) |
 | `ob_rpc_start_imu_stream` / `ob_rpc_stop_imu_stream` | `90` | `true` |
 | `ob_rpc_get_pu` | `[2002]` | uint16 `6000` |
 | `ob_rpc_get_pu_range` | `[2002]` | array of four `bin8(4)` values: `[1000, 15000, 100, 1000]` |
 | `ob_rpc_set_pu` | `[2003, 1]` | (ack) |
-| `ob_set_ir_frame_light_type` | `[6, 65535]` | (ack) |
+| `ob_set_ir_frame_light_type` | `[streamtype, 65535]` (streamtype 6 on IR, 7 on depth — same as `start_stream`'s first param) | (ack) |
 | `ob_rpc_send_data` | `[<vendor frame bytes>, <expected response size>]` | the vendor response (§2) |
 
-`[inferred]` — the start/stop parameter array reads as `[command, format,
-width, height, fps]` (the first element differs start=6 vs stop=7); the exact
-field names are not on the wire.
+`[inferred]` — the start/stop parameter array reads as `[streamtype, format,
+width, height, fps]` (streamtype = 6 on the IR port, 7 on the depth port — the
+method name carries start/stop; the array does not); the format field (9) and
+the exact field names are not on the wire. `ob_set_ir_frame_light_type`'s first
+argument is the same streamtype (6/7), not a light type (§7).
 
 ### 1.3 The frame response (what Phase B must decode)
 
@@ -206,6 +208,52 @@ single-action captures (the plan's OQ-F2). `[inferred]`
    a decoded length would settle it.
 9. **What needs a decision, not a capture:** none for this spec; the plan's
    G-B (macOS privileged access shape) is Phase D's.
+
+## 7. The streaming sequence (replay payloads, retired OQs)
+
+**Retired OQs**: §6 item 3 (pull semantics / cadence) is now settled from the
+capture: the vendor client calls `get_frame` at ~51 Hz immediately after
+`start_stream` (first response at 45.76 ms), with params `90` (empty array) —
+matches our client. The daemon responds with a non-empty bin immediately (no
+empty polls), so the daemon buffers frames server-side.
+
+**The streaming sequence, from the vendor's client** (session4, t=25.26–25.36):
+
+1. **Pre-stream setup** (t=25.259–25.261): `ob_set_ir_frame_light_type` on both
+   IR (port 10013) and depth (port 10010), params `[streamtype, 65535]` where
+   streamtype = 6 (IR) or 7 (depth). The first parameter is **not** a "light
+   type" — it's the stream/interface type, matching the profile tuple
+   `{7,9,1920,1200,50}` read from flash (op-31). Called twice per interface
+   (before and after start_stream).
+
+2. **Property configuration** (t=25.281–25.283): three `SetProperty` calls on
+   depth (port 10010): prop 157=0, prop 158=1, prop 2026=2403. These are
+   pre-stream configuration (not the laser loop, which starts after frames
+   flow).
+
+3. **Start stream** (t=25.294–25.340): sequential, IR first, depth second.
+   - IR (port 10013) at t=25.294: `[6, 9, 1920, 1200, 50]` → response `true`
+   - Depth (port 10010) at t=25.340: `[7, 9, 1920, 1200, 50]` → response `true`
+
+   The first parameter is the **stream type** (6=IR, 7=depth), **not** a
+   start/stop command (spec §1.2 had this reversed). The method name carries
+   start/stop; the parameter array is `[streamtype, format, width, height, fps]`.
+
+4. **First frame response** (t=25.340): IR port 10013 returns a bin at
+   25.339836, 45.76 ms after start_stream request. The client immediately
+   begins `get_frame` at ~51 Hz (cadence: 9 intervals in 0.1757 s).
+
+5. **Post-stream property sets** (t=25.358–25.364): props 2022=8, 2024=2,
+   2020=1, 3=0, 152=0, 153=0, 151=1. Props 3/152/153 are the laser loop
+   (§3.1), set to 0 here (laser off during preview?); the loop toggles
+   during active scanning.
+
+**Critical diff from our client**: we send `[6, 9, 1920, 1200, 50]` to **both**
+interfaces (the spec's §1.2 misread the first param as a command). The vendor
+sends `[6, ...]` to IR and `[7, ...]` to depth. This is the likely cause of the
+zero-frames gap: our client sends the wrong stream type to the depth interface.
+
+**Replay payloads**: see `streaming-replay-payloads.md` for byte-exact hex.
 
 *All of the above is `[inferred]` from the 2026-10-18 captures; none of it is
 a gated run record. The captures and the decode material stay outside the
