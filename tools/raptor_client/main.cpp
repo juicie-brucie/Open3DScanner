@@ -119,6 +119,39 @@ struct Value {
     std::string error;
 };
 
+// The text of an RPC error value. rpclib reports one as a string, or as a
+// [code, message] pair.
+std::string RpcErrorText(const Value& e) {
+    if (e.kind == Value::Kind::Str) return e.s;
+    if (e.kind == Value::Kind::Array && e.array.size() >= 2 && e.array[1].kind == Value::Kind::Str)
+        return e.array[1].s;
+    return "rpc error";
+}
+
+// The payload of an RPC reply.
+//
+// A reply is the msgpack-RPC envelope [1, msgid, nil, result]
+// (protocol-spec.md §1.1): the result is at index 3, and a non-nil
+// index 2 is an error (the rpclib convention — an error reply carries
+// the error there and nil in the result slot).
+//
+// So a reply that arrives as a whole envelope must be unwrapped before
+// its payload can be looked at: a frame is the bin at index 3, not the
+// envelope array. A reply that is NOT an envelope is returned unchanged,
+// so a peer that answers with a bare payload still works.
+Value Result(const Value& reply) {
+    if (reply.kind != Value::Kind::Array || reply.array.size() < 4) return reply;
+    if (reply.array[0].kind != Value::Kind::UInt || reply.array[0].u != 1) return reply;
+    // A non-nil error slot: the reply is an error, not a payload.
+    if (reply.array[2].kind != Value::Kind::Nil) {
+        Value err;
+        err.kind = Value::Kind::Error;
+        err.error = RpcErrorText(reply.array[2]);
+        return err;
+    }
+    return reply.array[3];
+}
+
 class Reader {
 public:
     Reader(const uint8_t* p, size_t n) : p_(p), n_(n) {}
@@ -246,8 +279,8 @@ public:
     }
     ~RpcClient() { if (fd_ >= 0) close(fd_); }
 
-    // One rpclib request: [0, msgid, method, params]. Returns the 4th element
-    // of the [1, msgid, nil, result] response, or an Error Value.
+    // One rpclib request: [0, msgid, method, params]. Returns the reply
+    // envelope [1, msgid, nil, result]; the caller unwraps it with Result().
     Value call(const std::string& method, const Bytes& params) {
         Packer p;
         p.array(4);
@@ -259,7 +292,7 @@ public:
         Value resp = ReadMessage();
         if (resp.kind != Value::Kind::Array || resp.array.size() < 4) return Error("bad response");
         if (resp.array[0].kind != Value::Kind::UInt || resp.array[0].u != 1) return Error("not a response");
-        return resp.array[3];
+        return resp;
     }
 
     static Value Error(const std::string& s) { Value v; v.kind = Value::Kind::Error; v.error = s; return v; }
@@ -406,7 +439,8 @@ Value StartStream(RpcClient& c, const std::string& suffix, uint8_t command, uint
     Packer p;
     p.array(5);
     p.uint(command); p.uint(9); p.uint(w); p.uint(h); p.uint(fps);
-    return c.call("ob_rpc_start_stream" + suffix, p.out);
+    // Unwrap the reply envelope: the result is the payload at index 3.
+    return Result(c.call("ob_rpc_start_stream" + suffix, p.out));
 }
 
 // Decode the vendor response (RespHeader: magic 5242, size, opcode, requestId,
@@ -429,7 +463,7 @@ void SetProperty(RpcClient& c, const std::string& suffix, uint32_t prop, int32_t
     p.array(2);
     p.bin(vendor);
     p.uint(64);  // expected response size for an ack (spec §2.1)
-    Value r = c.call("ob_rpc_send_data" + suffix, p.out);
+    Value r = Result(c.call("ob_rpc_send_data" + suffix, p.out));
     uint16_t opcode = 0, reqid = 0, err = 0xffff;
     bool accepted = VendorAccepted(r, &opcode, &reqid, &err);
     if (log) {
@@ -471,7 +505,9 @@ int Live(const std::string& host, uint16_t port, int seconds, const std::string&
     while (std::chrono::steady_clock::now() < deadline) {
         Packer p;
         p.array(0);
-        Value frame = rpc.call("ob_rpc_get_frame", p.out);
+        // The reply is the envelope [1, msgid, nil, result]; the frame is
+        // the payload at index 3, so unwrap before looking at it.
+        Value frame = Result(rpc.call("ob_rpc_get_frame", p.out));
         ++get_calls;
         bool should_log = false;
         if (frame.kind == Value::Kind::Bin) {
@@ -1034,6 +1070,81 @@ int ReplayInterfaceSelftest() {
     return failures ? 1 : 0;
 }
 
+// Row #122: a reply is the msgpack-RPC envelope [1, msgid, nil, result], so
+// the payload is at index 3 — the frame paths must unwrap before they look
+// at it, or every reply reads as the envelope array.
+//
+// The shapes here are the ones the daemon sends (protocol-spec.md §1.1/§1.3):
+// a success carries nil in the error slot and the result at index 3, and an
+// error carries the error in the error slot.
+int ReplyResultSelftest() {
+    int failures = 0;
+    auto check = [&](const char* name, bool pass) {
+        std::printf("[replay-selftest] %-52s %s\n", name, pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+
+    // [1, msgid, nil, bin(3)] — a successful reply carrying a payload.
+    Bytes payload = {0x0a, 0x0b, 0x0c};
+    Packer ok_p;
+    ok_p.array(4);
+    ok_p.uint(1);
+    ok_p.uint(7);
+    ok_p.nil();
+    ok_p.bin(payload);
+    Bytes ok_bytes = ok_p.out;
+    Reader ok_reader(ok_bytes.data(), ok_bytes.size());
+    Value ok_envelope = ok_reader.parse();
+
+    check("the synthetic reply parses as an envelope", ok_reader.ok() && ok_envelope.kind == Value::Kind::Array);
+    check("the envelope itself is not a bin", ok_envelope.kind != Value::Kind::Bin);
+
+    Value ok_result = Result(ok_envelope);
+    check("an envelope with a payload yields the payload",
+          ok_result.kind == Value::Kind::Bin && ok_result.bin.size() == 3);
+
+    // [1, msgid, "boom", nil] — an error reply: the error is in the error
+    // slot, and the result slot is nil.
+    Packer err_p;
+    err_p.array(4);
+    err_p.uint(1);
+    err_p.uint(7);
+    err_p.str("boom");
+    err_p.nil();
+    Bytes err_bytes = err_p.out;
+    Reader err_reader(err_bytes.data(), err_bytes.size());
+    Value err_envelope = err_reader.parse();
+    Value err_result = Result(err_envelope);
+    check("an envelope with an error slot is an error", err_result.kind == Value::Kind::Error);
+    check("the error text is carried through", err_result.error == "boom");
+
+    // A bare payload (not an envelope) is returned unchanged, so a peer that
+    // answers without the envelope still works.
+    Value bare = ok_result;
+    check("a bare payload is returned unchanged", Result(bare).kind == Value::Kind::Bin);
+
+    // A reply that is not a response envelope at all is left alone.
+    Packer other_p;
+    other_p.array(4);
+    other_p.uint(0);  // not the response marker
+    other_p.uint(7);
+    other_p.nil();
+    other_p.bin(payload);
+    Bytes other_bytes = other_p.out;
+    Reader other_reader(other_bytes.data(), other_bytes.size());
+    Value other_envelope = other_reader.parse();
+    check("a non-response array is left alone", Result(other_envelope).kind == Value::Kind::Array);
+
+    // A timeout is not an envelope, so it must survive the unwrap: the
+    // replay path reports it as a timeout, not as a payload.
+    Value timeout;
+    timeout.kind = Value::Kind::Timeout;
+    check("a timeout survives the unwrap", Result(timeout).kind == Value::Kind::Timeout);
+
+    std::printf("[replay-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
+}
+
 // The message a stalled frame produces. It names the frame AND the
 // interface the frame went to: the two connections are separate, so
 // "which request went unanswered" is only half the answer.
@@ -1176,7 +1287,11 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
             ++errors;
             break;
         }
-        Value reply = rpc.readReplyWithDeadline(reply_timeout_ms);
+        // The reply is the msgpack-RPC envelope [1, msgid, nil, result]; the
+        // payload is at index 3. Unwrap it before classifying, or every
+        // frame reads as the envelope array ("empty") — the bug row #122
+        // names. A Timeout is not an array, so it passes through unchanged.
+        Value reply = Result(rpc.readReplyWithDeadline(reply_timeout_ms));
         if (reply.kind == Value::Kind::Bin) {
             ++bins;
             if (log) std::printf("[replay] frame %zu (%s) -> bin(%zu) head=[%s]\n", i + 1,
@@ -1312,6 +1427,7 @@ int main(int argc, char** argv) {
         rc |= ReplayParserSelftest();
         rc |= ReplayDeltaSelftest();
         rc |= ReplayInterfaceSelftest();
+        rc |= ReplyResultSelftest();
         return rc;
     }
     if (argc >= 2 && std::string(argv[1]) == "--selftest-timeout") return ReplyTimeoutSelftest();
