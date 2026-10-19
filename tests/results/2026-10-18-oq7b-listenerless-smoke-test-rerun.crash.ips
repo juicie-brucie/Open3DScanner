@@ -1,0 +1,208 @@
+{"app_name":"smoke_test","timestamp":"2026-10-18 20:26:50.00 -0400","app_version":"","slice_uuid":"cc1b1863-3f70-3412-ab46-159c958fe8da","build_version":"","platform":1,"share_with_app_devs":0,"is_first_party":1,"bug_type":"309","os_version":"macOS 27.0.1 (26A434)","roots_installed":0,"incident_id":"D1547087-AF6C-43A3-A675-260E7E5B02A4","name":"smoke_test"}
+{
+  "uptime" : 1500000,
+  "procRole" : "Unspecified",
+  "version" : 2,
+  "userID" : 501,
+  "deployVersion" : 210,
+  "modelCode" : "iMac21,1",
+  "coalitionID" : 61184,
+  "osVersion" : {
+    "train" : "macOS 27.0.1",
+    "build" : "26A434",
+    "releaseType" : "User"
+  },
+  "captureTime" : "2026-10-18 20:26:49.2830 -0400",
+  "codeSigningMonitor" : 2,
+  "incident" : "D1547087-AF6C-43A3-A675-260E7E5B02A4",
+  "pid" : 46000,
+  "translated" : false,
+  "cpuType" : "ARM-64",
+  "procLaunch" : "2026-10-18 20:26:45.7597 -0400",
+  "procStartAbsTime" : 36767644944028,
+  "procExitAbsTime" : 36767726354101,
+  "procName" : "smoke_test",
+  "procPath" : "\/Users\/USER\/*\/smoke_test",
+  "parentProc" : "Exited process",
+  "parentPid" : 45996,
+  "coalitionName" : "com.anthropic.claudefordesktop",
+  "crashReporterKey" : "6FF03550-85D0-171B-4492-89F86B95E436",
+  "chargingStatus" : {"externalSourceConnected":true},
+  "developerMode" : 1,
+  "bootProgressRegister" : "0x2f000000",
+  "responsiblePid" : 87808,
+  "responsibleProc" : "claude",
+  "codeSigningID" : "smoke_test",
+  "codeSigningTeamID" : "",
+  "codeSigningFlags" : 570556929,
+  "codeSigningValidationCategory" : 10,
+  "codeSigningTrustLevel" : 4294967295,
+  "codeSigningAuxiliaryInfo" : 0,
+  "instructionByteStream" : {"beforePC":"+mcGqfhfB6n2Vwip9E8Jqf17Cqn9gwKR9QMBqqgBAJAIARqRCAFA+Q==","atPC":"E9lg+OADE6pj\/f+XdAIVkeADFKpVcwCU4AsANagSQPnIAAC0KQCAUg=="},
+  "bootSessionUUID" : "63D0CF1D-B280-474D-BD81-678BCF3DE800",
+  "wakeTime" : 27413,
+  "sleepWakeUUID" : "F29C7C85-6C5C-4CEE-A34D-BCD342C5BC4E",
+  "sip" : "enabled",
+  "vmRegionInfo" : "0x10 is not in any region.  Bytes before following region: 4311121904\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      UNUSED SPACE AT START\n--->  \n      __TEXT                      100f68000-100f6c000    [   16K] r-x\/r-x SM=COW  \/Users\/USER\/*\/smoke_test",
+  "exception" : {"codes":"0x0000000000000001, 0x0000000000000010","rawCodes":[1,16],"type":"EXC_BAD_ACCESS","signal":"SIGSEGV","subtype":"KERN_INVALID_ADDRESS at 0x0000000000000010"},
+  "termination" : {"flags":0,"code":11,"namespace":"SIGNAL","indicator":"Segmentation fault: 11","byProc":"exc handler","byPid":46000},
+  "vmregioninfo" : "0x10 is not in any region.  Bytes before following region: 4311121904\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      UNUSED SPACE AT START\n--->  \n      __TEXT                      100f68000-100f6c000    [   16K] r-x\/r-x SM=COW  \/Users\/USER\/*\/smoke_test",
+  "extMods" : {"caller":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"system":{"thread_create":16,"thread_set_state":354,"task_for_pid":72},"targeted":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"warnings":0},
+  "faultingThread" : 4,
+  "threads" : [{"id":16336955,"frames":[],"threadState":{"x":[{"value":6156890112},{"value":9995},{"value":6156353536},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6156890112},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840241368},"far":{"value":0}}},{"id":16336956,"frames":[],"threadState":{"x":[{"value":6156316672},{"value":11803},{"value":6155780096},{"value":0},{"value":409602},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6156316672},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840241368},"far":{"value":0}}},{"id":16336959,"frames":[],"threadState":{"x":[{"value":6157463552},{"value":13091},{"value":6156926976},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6157463552},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6840241368},"far":{"value":0}}},{"id":16336960,"frames":[],"threadState":{"x":[{"value":6158036992},{"value":0},{"value":6157500416},{"value":0},{"value":278532},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6158036992},"esr":{"value":0},"pc":{"value":6840241368},"far":{"value":0}}},{"triggered":true,"id":16336964,"threadState":{"x":[{"value":2},{"value":6174879128},{"value":18446743828280307104},{"value":68719460488},{"value":1},{"value":6174879016},{"value":6174879012},{"value":1},{"value":0},{"value":151406},{"value":1000},{"value":17783640168075374},{"value":24000000},{"value":23137},{"value":0},{"value":3},{"value":4313749128,"symbolLocation":0,"symbol":"void __kmp_suspend_64<false, true>(int, kmp_flag_64<false, true>*)"},{"value":8576070584},{"value":0},{"value":529147399232},{"value":6174879128},{"value":6174879128},{"value":1},{"value":4687928960,"symbolLocation":0,"symbol":"__kmp_global"},{"value":529147400580},{"value":4687928716,"symbolLocation":0,"symbol":"__kmp_use_yield"},{"value":4686180484,"symbolLocation":0,"symbol":"__kmp_tasking_mode"},{"value":4687928520,"symbolLocation":0,"symbol":"__kmp_dflt_blocktime"},{"value":4687929156,"symbolLocation":0,"symbol":"__kmp_pause_status"}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4626059696},"cpsr":{"value":1610616832},"fp":{"value":6174878928},"sp":{"value":6174878768},"esr":{"value":2449473542,"description":"(Data Abort) byte read Translation fault"},"pc":{"value":4313749172,"matchesCrashFrame":1},"far":{"value":16}},"frames":[{"imageOffset":448180,"symbol":"void __kmp_suspend_64<false, true>(int, kmp_flag_64<false, true>*)","symbolLocation":44,"imageIndex":8},{"imageOffset":16159152,"symbol":"kmp_flag_64<false, true>::wait(kmp_info*, int)","symbolLocation":1412,"imageIndex":1},{"imageOffset":16147252,"symbol":"__kmp_hyper_barrier_release(barrier_type, kmp_info*, int, int, int)","symbolLocation":148,"imageIndex":1},{"imageOffset":16155588,"symbol":"__kmp_fork_barrier(int, int)","symbolLocation":368,"imageIndex":1},{"imageOffset":16057500,"symbol":"__kmp_launch_thread","symbolLocation":220,"imageIndex":1},{"imageOffset":16247048,"symbol":"__kmp_launch_worker(void*)","symbolLocation":96,"imageIndex":1},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":12},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":12}]}],
+  "usedImages" : [
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4311121920,
+    "size" : 16384,
+    "uuid" : "cc1b1863-3f70-3412-ab46-159c958fe8da",
+    "path" : "\/Users\/USER\/*\/smoke_test",
+    "name" : "smoke_test"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4609900544,
+    "size" : 72564736,
+    "uuid" : "80192f32-a799-3499-80f4-b932b44e5af8",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/liborbbec_scan.3.5.3.dylib",
+    "name" : "liborbbec_scan.3.5.3.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4401774592,
+    "size" : 3473408,
+    "uuid" : "77e6157c-15c6-3652-b604-576bbc47b346",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libMoltenVK.dylib",
+    "name" : "libMoltenVK.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4430315520,
+    "size" : 7536640,
+    "uuid" : "e59b07ae-2537-33cf-9299-21c2235912b0",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libOrbbecSDK.1.7.1.dylib",
+    "name" : "libOrbbecSDK.1.7.1.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4312023040,
+    "size" : 229376,
+    "uuid" : "99027dae-154d-38bd-b6b4-2e10529c92b3",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libmx6600_depth_engine.2.1.4.5.dylib",
+    "name" : "libmx6600_depth_engine.2.1.4.5.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4312399872,
+    "size" : 163840,
+    "uuid" : "ecde08a1-3b4b-3913-a1fb-05085ab454ef",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libline_laser_param_preprocessing.3.5.0.7.dylib",
+    "name" : "libline_laser_param_preprocessing.3.5.0.7.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4312694784,
+    "size" : 180224,
+    "uuid" : "815c1dc9-8fee-3757-bcaa-bdbb6b1501b2",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libsoc_linelaser_param_processing.3.6.0.4.dylib",
+    "name" : "libsoc_linelaser_param_processing.3.6.0.4.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4313006080,
+    "size" : 180224,
+    "uuid" : "31f68f96-34af-349c-99ea-5ee731a5d4b1",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libsoc_depth_engine.2.2.0.5.dylib",
+    "name" : "libsoc_depth_engine.2.2.0.5.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4313300992,
+    "size" : 606208,
+    "uuid" : "00d1ff67-d8f2-3f52-b04e-b14b1bd95b39",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libomp.dylib",
+    "name" : "libomp.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4311662592,
+    "size" : 114688,
+    "uuid" : "727e416f-f2f2-3b08-988a-af20bf6672ca",
+    "path" : "\/Applications\/CrealityScan.app\/Contents\/PlugIns\/libcreate_distortion_lut.dylib",
+    "name" : "libcreate_distortion_lut.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 4311859200,
+    "CFBundleShortVersionString" : "900.4.2",
+    "CFBundleIdentifier" : "com.apple.iokit.IOUSBLib",
+    "size" : 49152,
+    "uuid" : "ede85c52-7ac2-3666-b06d-6abb74a94f77",
+    "path" : "\/System\/Library\/Extensions\/IOUSBHostFamily.kext\/Contents\/PlugIns\/IOUSBLib.bundle\/Contents\/MacOS\/IOUSBLib",
+    "name" : "IOUSBLib",
+    "CFBundleVersion" : "900.4.2"
+  },
+  {
+    "size" : 0,
+    "source" : "A",
+    "base" : 0,
+    "uuid" : "00000000-0000-0000-0000-000000000000"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6840233984,
+    "size" : 51484,
+    "uuid" : "5a1828c3-cbc2-3b85-bd07-c8ed10021a41",
+    "path" : "\/usr\/lib\/system\/libsystem_pthread.dylib",
+    "name" : "libsystem_pthread.dylib"
+  }
+],
+  "sharedCache" : {
+  "base" : 6831292416,
+  "size" : 7410368512,
+  "uuid" : "c284a291-b68b-3d0d-a1a0-3f866f87efdc"
+},
+  "vmSummary" : "ReadOnly portion of Libraries: Total=2.2G resident=0K(0%) swapped_out_or_unallocated=2.2G(100%)\nWritable regions: Total=253.7M written=609K(0%) resident=609K(0%) swapped_out=0K(0%) unallocated=253.1M(100%)\n\n                                VIRTUAL   REGION \nREGION TYPE                        SIZE    COUNT (non-coalesced) \n===========                     =======  ======= \nActivity Tracing                   256K        1 \nDeferred Reclaim                  64.0M        1 \nDispatch Continuations            64.0M        1 \nGuard                            385.0G        1 \nMalloc                            73.3M       22 \nMalloc Guard Page                 3248K        4 \nOS Alloc Once                       32K        1 \nStack                             34.2M        8 \nStack Guard                       56.1M        8 \nUntagged                            16K        1 \n__AUTH                            2586K      257 \n__AUTH_CONST                      44.0M      453 \n__CTF                               824        1 \n__DATA                            32.7M      472 \n__DATA_CONST                      26.8M      462 \n__DATA_DIRTY                      2571K      398 \n__FONT_DATA                        2352        1 \n__LINKEDIT                         1.6G       12 \n__OBJC_RO                        118.0M        1 \n__OBJC_RW                         2735K        1 \n__TEXT                           660.7M      537 \n__TPRO_CONST                       132K        4 \nmapped file                       39.8M        7 \npage table in kernel               609K        1 \nshared memory                      720K       12 \n===========                     =======  ======= \nTOTAL                            387.8G     2667 \n",
+  "legacyInfo" : {
+  "threadTriggered" : {
+
+  }
+},
+  "logWritingSignature" : "ac35fc2ef0c2580e1f51b51bab1fbab82eb44931",
+  "roots_installed" : 0,
+  "bug_type" : "309",
+  "trmStatus" : 8192,
+  "trialInfo" : {
+  "rollouts" : [
+    {
+      "rolloutId" : "645197bf528fbf3c3af54105",
+      "factorPackIds" : [
+        "663e65b4a1526e1ca0e288a1"
+      ],
+      "deploymentId" : 240000002
+    },
+    {
+      "rolloutId" : "67fd77fe1f9da9148f70d6ed",
+      "factorPackIds" : [
+
+      ],
+      "deploymentId" : 240000020
+    }
+  ],
+  "experiments" : [
+
+  ]
+}
+}
