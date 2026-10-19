@@ -234,7 +234,7 @@ empty polls), so the daemon buffers frames server-side.
 3. **Start stream** (t=25.294–25.340): sequential, IR first, depth second.
    - IR (port 10013) at t=25.294: `[6, 9, 1920, 1200, 50]` → response `true`
    - Depth (port 10010) at t=25.340: `[7, 9, 1920, 1200, 50]` → response `true`
-   
+
    The first parameter is the **stream type** (6=IR, 7=depth), **not** a
    start/stop command (spec §1.2 had this reversed). The method name carries
    start/stop; the parameter array is `[streamtype, format, width, height, fps]`.
