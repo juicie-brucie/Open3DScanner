@@ -12,9 +12,10 @@
 //   raptor_client --dry-run                  # framing selftest, no device
 //   raptor_client --dry-run-live             # bytes each call would send
 //   raptor_client --selftest-timeout         # the bounded reply read, no device
+//   raptor_client --selftest-dump            # the reply-structure dump, no device
 //   raptor_client --discover                 # GVCP discovery only
 //   raptor_client --replay <file> [host] [--dry-run] [--quiet]
-//       [--reply-timeout-ms N] [--ir-port N] [--depth-port N]
+//       [--reply-timeout-ms N] [--ir-port N] [--depth-port N] [--dump-replies]
 //       recon's captured request frames, unchanged, in order (hex lines).
 //       The '+<ms>' prefix is an ABSOLUTE capture timestamp (ms since the
 //       capture started), so the replay paces on the inter-arrival deltas
@@ -23,6 +24,13 @@
 //   raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]
 //       per-call logging is on by default: every get_frame result (bin size /
 //       empty / error) and every SET_PROPERTY (prop, value, ACCEPT/REJECT).
+//       [--dump-replies] adds one structure line per reply: the RPC kind, the
+//       msgid, and the result's shape (an array's length and each element's
+//       kind, with a hex head for any bin or string). For a get_frame reply
+//       the raw reply bytes follow, so the envelope sits next to the
+//       unwrapped result. It is off by default: the output above must not
+//       change.
+//   raptor_client --selftest-dump              the reply-structure dump, no device
 //
 // Wall: tools/** only. Clean-room: implements the spec; no vendor binary.
 
@@ -53,6 +61,19 @@
 namespace {
 
 using Bytes = std::vector<uint8_t>;
+
+// Bytes from a hex string.
+Bytes FromHex(const char* h) {
+    Bytes b;
+    auto nib = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
+    };
+    for (size_t i = 0; h[i] && h[i + 1]; i += 2) b.push_back((uint8_t)((nib(h[i]) << 4) | nib(h[i + 1])));
+    return b;
+}
 
 // ---------------------------------------------------------------------------
 // Minimal msgpack (the subset the daemon's wire uses)
@@ -156,6 +177,9 @@ class Reader {
 public:
     Reader(const uint8_t* p, size_t n) : p_(p), n_(n) {}
     bool ok() const { return ok_; }
+    // How many bytes the last parse consumed. A reader over a buffer that
+    // holds more than one message needs it to find the next one.
+    size_t consumed() const { return pos_; }
     Value parse() {
         Value v;
         if (!ok_ || pos_ >= n_) { v.kind = Value::Kind::Error; v.error = "eof"; ok_ = false; return v; }
@@ -164,7 +188,10 @@ public:
         if (b >= 0xe0) { v.kind = Value::Kind::Int; v.i = static_cast<int8_t>(b); return v; }
         if ((b & 0xf0) == 0x80) return str(b & 0x0f);
         if ((b & 0xf0) == 0x90) return arr(b & 0x0f);
-        if ((b & 0xf0) == 0xa0) return str(b & 0x1f);
+        // fixstr spans 0xa0-0xbf, so the mask is 0xe0: with 0xf0 the
+        // 16-31 byte lengths (0xb0-0xbf) fell through to the unhandled
+        // case, and a reply carrying one read as an error.
+        if ((b & 0xe0) == 0xa0) return str(b & 0x1f);
         switch (b) {
             case 0xc0: v.kind = Value::Kind::Nil; return v;
             case 0xc2: v.kind = Value::Kind::Bool; v.b = false; return v;
@@ -312,9 +339,15 @@ public:
     // bound belongs to the replay diagnostic only.
     Value readReplyWithDeadline(int timeout_ms) { return ReadMessageWithDeadline(timeout_ms); }
 
+    // The bytes of the last reply read, as they arrived. The reply dump
+    // prints a head of them, so the envelope's own bytes sit next to the
+    // unwrapped result.
+    const Bytes& lastRaw() const { return last_raw_; }
+
 private:
     int fd_ = -1;
     uint32_t msgid_ = 0;
+    Bytes last_raw_;
     bool WriteAll(const Bytes& b) {
         size_t sent = 0;
         while (sent < b.size()) {
@@ -332,7 +365,7 @@ private:
         for (;;) {
             Reader r(buf.data(), buf.size());
             Value v = r.parse();
-            if (r.ok()) return v;
+            if (r.ok()) { last_raw_ = buf; return v; }
             ssize_t n = recv(fd_, tmp, sizeof(tmp), 0);
             if (n <= 0) return Error("eof");
             buf.insert(buf.end(), tmp, tmp + n);
@@ -352,7 +385,7 @@ private:
         for (;;) {
             Reader r(buf.data(), buf.size());
             Value v = r.parse();
-            if (r.ok()) return v;
+            if (r.ok()) { last_raw_ = buf; return v; }
             auto now = std::chrono::steady_clock::now();
             if (now >= deadline) return Timeout();
             int remaining = (int)std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
@@ -409,6 +442,20 @@ int DryRun() {
     Value v = r.parse();
     check("frame response decodes as bin(3)", v.kind == Value::Kind::Bin && v.bin.size() == 3);
 
+    // The daemon's own method names are 17-19 bytes, so the reader must
+    // take a fixstr of 16-31 bytes (and the str8 form above it).
+    auto decodes_as = [](const std::string& s) {
+        Packer p;
+        p.str(s);
+        Reader r(p.out.data(), p.out.size());
+        Value v = r.parse();
+        return r.ok() && v.kind == Value::Kind::Str && v.s == s;
+    };
+    check("a 15-byte string decodes", decodes_as(std::string(15, 'a')));
+    check("a 17-byte string decodes", decodes_as("ob_rpc_get_frame"));
+    check("a 31-byte string decodes", decodes_as(std::string(31, 'b')));
+    check("a 32-byte string decodes", decodes_as(std::string(32, 'c')));
+
     // §2.1: response header 5242 5300 0300 0000 0000.
     check("vendor response magic 0x4252", (kHpResponseMagic & 0xff) == 0x52 && (kHpResponseMagic >> 8) == 0x42);
 
@@ -435,12 +482,164 @@ std::string HexHead(const Bytes& b, size_t max = 16) {
     return s;
 }
 
+// ---------------------------------------------------------------------------
+// The reply-structure dump (row #127)
+//
+// A reply's result is an array, so what the array holds is the open
+// question. The dump prints that structure: the kind of the unwrapped
+// result, the msgid, the array's length, and each element's kind — with
+// the byte length and a hex head for the byte-carrying ones. For a frame
+// pull the raw reply bytes follow, so the envelope's own shape sits next
+// to the unwrapped result.
+//
+// The dump is off by default: the tool's existing output is what the
+// hardware records parse, and it must not change.
+// ---------------------------------------------------------------------------
+
+// How many bytes of a bin or a string the dump shows.
+constexpr size_t kDumpHeadBytes = 32;
+// How many bytes of the raw reply message the dump shows.
+constexpr size_t kDumpRawBytes = 48;
+
+// The dump's vocabulary: the same set of kinds the "kind=N" lines record,
+// spelled out.
+const char* KindName(Value::Kind k) {
+    switch (k) {
+        case Value::Kind::Nil: return "Nil";
+        case Value::Kind::Bool: return "Bool";
+        case Value::Kind::Int: return "Int";
+        case Value::Kind::UInt: return "UInt";
+        case Value::Kind::Double: return "Double";
+        case Value::Kind::Str: return "Str";
+        case Value::Kind::Bin: return "Bin";
+        case Value::Kind::Array: return "Array";
+        case Value::Kind::Map: return "Map";
+        case Value::Kind::Error: return "Error";
+        case Value::Kind::Timeout: return "Timeout";
+    }
+    return "Unknown";
+}
+
+// The bytes of a string, for the hex head.
+Bytes BytesOfString(const std::string& s) {
+    Bytes b;
+    b.reserve(s.size());
+    for (char c : s) b.push_back(static_cast<uint8_t>(c));
+    return b;
+}
+
+// A hex head of at most max bytes: space-separated pairs, and "..." when
+// the value is longer. ASCII only, so a dump line is byte-identical
+// wherever it is captured.
+std::string HexBytes(const Bytes& b, size_t max) {
+    static const char* hex = "0123456789abcdef";
+    size_t n = b.size() < max ? b.size() : max;
+    std::string s;
+    for (size_t i = 0; i < n; ++i) {
+        if (i) s += ' ';
+        s += hex[b[i] >> 4];
+        s += hex[b[i] & 0xf];
+    }
+    if (b.size() > n) s += " ...";
+    return s;
+}
+
+// One value, described: its kind, and for the byte-carrying kinds the
+// length and a hex head.
+std::string DescribeValue(const Value& v) {
+    switch (v.kind) {
+        case Value::Kind::Nil:
+            return "Nil";
+        case Value::Kind::Bool:
+            return v.b ? "Bool(true)" : "Bool(false)";
+        case Value::Kind::Int:
+            return "Int(" + std::to_string(v.i) + ")";
+        case Value::Kind::UInt:
+            return "UInt(" + std::to_string(v.u) + ")";
+        case Value::Kind::Double:
+            return "Double(" + std::to_string(v.d) + ")";
+        case Value::Kind::Str:
+            return "Str(" + std::to_string(v.s.size()) + ") head=[" +
+                   HexBytes(BytesOfString(v.s), kDumpHeadBytes) + "]";
+        case Value::Kind::Bin:
+            return "Bin(" + std::to_string(v.bin.size()) + ") head=[" + HexBytes(v.bin, kDumpHeadBytes) + "]";
+        case Value::Kind::Array:
+            return "Array(" + std::to_string(v.array.size()) + ")";
+        case Value::Kind::Map:
+            return "Map(" + std::to_string(v.map.size()) + ")";
+        case Value::Kind::Error:
+            return "Error(" + v.error + ")";
+        case Value::Kind::Timeout:
+            return "Timeout";
+    }
+    return "Unknown";
+}
+
+// The result of a reply, with an array's elements spelled out one by one.
+std::string DescribeResult(const Value& v) {
+    if (v.kind != Value::Kind::Array) return DescribeValue(v);
+    std::string s = "array(" + std::to_string(v.array.size()) + ")";
+    for (size_t i = 0; i < v.array.size(); ++i) {
+        s += " [" + std::to_string(i) + "]=" + DescribeValue(v.array[i]);
+    }
+    return s;
+}
+
+// The frame pull, by method-name prefix: the live path calls
+// "ob_rpc_get_frame", and a captured frame's method name carries the
+// interface suffix ("ob_rpc_get_frame0-2-12").
+bool IsGetFrameMethod(const std::string& method) {
+    static const char kPrefix[] = "ob_rpc_get_frame";
+    return method.rfind(kPrefix, 0) == 0;
+}
+
+// The dump's text for one reply: the method, the kind of the unwrapped
+// result, the msgid, the kind of the envelope the reply arrived in, and
+// the result's shape.
+std::string FormatReplyDump(const std::string& method, const Value& envelope, const Bytes& raw) {
+    Value result = Result(envelope);
+    std::string msgid = "-";
+    if (envelope.kind == Value::Kind::Array && envelope.array.size() >= 2 &&
+        envelope.array[1].kind == Value::Kind::UInt) {
+        msgid = std::to_string(envelope.array[1].u);
+    }
+    std::string line = "[dump] reply method=" + method + " kind=" + KindName(result.kind) +
+                       " msgid=" + msgid + " envelope=" + KindName(envelope.kind) +
+                       " result=" + DescribeResult(result);
+    if (IsGetFrameMethod(method)) {
+        line += "\n[dump] get_frame raw len=" + std::to_string(raw.size()) +
+                " head=[" + HexBytes(raw, kDumpRawBytes) + "]";
+    }
+    return line;
+}
+
+// --dump-replies: off by default.
+bool g_dump_replies = false;
+
+// Where the dump goes: stdout by default; the selftest points it at a
+// string so the lines can be compared byte for byte.
+std::string* g_dump_sink = nullptr;
+
+void DumpReply(const std::string& method, const Value& envelope, const Bytes& raw) {
+    if (!g_dump_replies) return;
+    std::string text = FormatReplyDump(method, envelope, raw);
+    if (g_dump_sink) {
+        *g_dump_sink += text + "\n";
+    } else {
+        std::printf("%s\n", text.c_str());
+        std::fflush(stdout);
+    }
+}
+
 Value StartStream(RpcClient& c, const std::string& suffix, uint8_t command, uint32_t w, uint32_t h, uint32_t fps) {
     Packer p;
     p.array(5);
     p.uint(command); p.uint(9); p.uint(w); p.uint(h); p.uint(fps);
     // Unwrap the reply envelope: the result is the payload at index 3.
-    return Result(c.call("ob_rpc_start_stream" + suffix, p.out));
+    const std::string method = "ob_rpc_start_stream" + suffix;
+    Value envelope = c.call(method, p.out);
+    DumpReply(method, envelope, c.lastRaw());
+    return Result(envelope);
 }
 
 // Decode the vendor response (RespHeader: magic 5242, size, opcode, requestId,
@@ -463,7 +662,10 @@ void SetProperty(RpcClient& c, const std::string& suffix, uint32_t prop, int32_t
     p.array(2);
     p.bin(vendor);
     p.uint(64);  // expected response size for an ack (spec §2.1)
-    Value r = Result(c.call("ob_rpc_send_data" + suffix, p.out));
+    const std::string method = "ob_rpc_send_data" + suffix;
+    Value envelope = c.call(method, p.out);
+    DumpReply(method, envelope, c.lastRaw());
+    Value r = Result(envelope);
     uint16_t opcode = 0, reqid = 0, err = 0xffff;
     bool accepted = VendorAccepted(r, &opcode, &reqid, &err);
     if (log) {
@@ -507,7 +709,9 @@ int Live(const std::string& host, uint16_t port, int seconds, const std::string&
         p.array(0);
         // The reply is the envelope [1, msgid, nil, result]; the frame is
         // the payload at index 3, so unwrap before looking at it.
-        Value frame = Result(rpc.call("ob_rpc_get_frame", p.out));
+        Value envelope = rpc.call("ob_rpc_get_frame", p.out);
+        DumpReply("ob_rpc_get_frame", envelope, rpc.lastRaw());
+        Value frame = Result(envelope);
         ++get_calls;
         bool should_log = false;
         if (frame.kind == Value::Kind::Bin) {
@@ -1001,16 +1205,7 @@ int ReplayInterfaceSelftest() {
     // The two captured IR frames: the same request on the two interfaces.
     const char* ir_hex = "940005b66f625f7270635f6765745f6672616d65302d322d313290";
     const char* depth_hex = "9400cca3b66f625f7270635f6765745f6672616d65302d322d313090";
-    auto hexbytes = [](const char* h) {
-        Bytes b;
-        auto nib = [](char c) -> int {
-            if (c >= '0' && c <= '9') return c - '0';
-            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-            return -1;
-        };
-        for (size_t i = 0; h[i] && h[i + 1]; i += 2) b.push_back((uint8_t)((nib(h[i]) << 4) | nib(h[i + 1])));
-        return b;
-    };
+    auto hexbytes = [](const char* h) { return FromHex(h); };
     Bytes ir = hexbytes(ir_hex);
     Bytes depth = hexbytes(depth_hex);
     check("the captured frames parse to bytes", ir.size() == 27 && depth.size() == 28);
@@ -1145,6 +1340,264 @@ int ReplyResultSelftest() {
     return failures ? 1 : 0;
 }
 
+// ---------------------------------------------------------------------------
+// Row #127: the reply-structure dump.
+//
+// A loopback stand-in for the daemon's reply side: it answers each
+// msgpack-RPC request with the next canned result, echoing the request's
+// msgid. It lives in this process, so nothing outlives the test.
+// ---------------------------------------------------------------------------
+class MockReplyServer {
+public:
+    explicit MockReplyServer(std::vector<Bytes> results) : results_(std::move(results)) {}
+    ~MockReplyServer() { Stop(); }
+
+    bool Start() {
+        if (results_.empty()) return false;
+        lfd_ = socket(AF_INET, SOCK_STREAM, 0);
+        if (lfd_ < 0) return false;
+        int one = 1;
+        setsockopt(lfd_, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+        sockaddr_in addr = {};
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        addr.sin_port = 0;  // the kernel picks a free port
+        if (bind(lfd_, (sockaddr*)&addr, sizeof(addr)) != 0 || listen(lfd_, 4) != 0) {
+            close(lfd_);
+            lfd_ = -1;
+            return false;
+        }
+        socklen_t alen = sizeof(addr);
+        getsockname(lfd_, (sockaddr*)&addr, &alen);
+        port_ = ntohs(addr.sin_port);
+        thread_ = std::thread([this] { Serve(); });
+        return true;
+    }
+
+    uint16_t port() const { return port_; }
+
+    void Stop() {
+        stop_.store(true);
+        if (thread_.joinable()) thread_.join();
+        if (lfd_ >= 0) {
+            close(lfd_);
+            lfd_ = -1;
+        }
+    }
+
+private:
+    // The reply for one request: the msgpack-RPC envelope around the next
+    // canned result, carrying the request's own msgid.
+    Bytes ReplyFor(uint64_t msgid) {
+        Packer p;
+        p.array(4);
+        p.uint(1);
+        p.uint(msgid);
+        p.nil();
+        const Bytes& r = results_[served_ % results_.size()];
+        ++served_;
+        p.raw(r.data(), r.size());
+        return p.out;
+    }
+
+    static bool WriteAll(int fd, const Bytes& b) {
+        size_t sent = 0;
+        while (sent < b.size()) {
+            ssize_t n = send(fd, b.data() + sent, b.size() - sent, 0);
+            if (n <= 0) return false;
+            sent += (size_t)n;
+        }
+        return true;
+    }
+
+    void ServeConnection(int cfd) {
+        Bytes buf;
+        uint8_t tmp[4096];
+        while (!stop_.load()) {
+            // Answer every complete request in the buffer.
+            for (;;) {
+                Reader r(buf.data(), buf.size());
+                Value req = r.parse();
+                if (!r.ok()) break;  // incomplete: more bytes are needed
+                uint64_t msgid = 0;
+                if (req.kind == Value::Kind::Array && req.array.size() >= 2 &&
+                    req.array[1].kind == Value::Kind::UInt) {
+                    msgid = req.array[1].u;
+                }
+                if (!WriteAll(cfd, ReplyFor(msgid))) return;
+                buf.erase(buf.begin(), buf.begin() + static_cast<long>(r.consumed()));
+            }
+            struct pollfd p = {cfd, POLLIN, 0};
+            int pr = poll(&p, 1, 50);
+            if (pr < 0) {
+                if (errno == EINTR) continue;
+                return;
+            }
+            if (pr == 0) continue;
+            ssize_t n = recv(cfd, tmp, sizeof(tmp), 0);
+            if (n <= 0) return;  // the client hung up
+            buf.insert(buf.end(), tmp, tmp + n);
+        }
+    }
+
+    void Serve() {
+        while (!stop_.load()) {
+            struct pollfd p = {lfd_, POLLIN, 0};
+            int pr = poll(&p, 1, 50);
+            if (pr <= 0) continue;
+            int cfd = accept(lfd_, nullptr, nullptr);
+            if (cfd < 0) continue;
+            ServeConnection(cfd);
+            close(cfd);
+        }
+    }
+
+    std::vector<Bytes> results_;
+    int lfd_ = -1;
+    uint16_t port_ = 0;
+    size_t served_ = 0;
+    std::atomic<bool> stop_{false};
+    std::thread thread_;
+};
+
+// A msgpack-RPC request frame for a frame pull, with the msgid the test
+// wants the reply to carry.
+Bytes GetFrameRequest(uint64_t msgid) {
+    Packer p;
+    p.array(4);
+    p.uint(0);
+    p.uint(msgid);
+    p.str("ob_rpc_get_frame");
+    p.array(0);
+    return p.out;
+}
+
+// Row #127: the reply-structure dump.
+//
+// Three reply shapes are pinned, byte for byte: the recorded "no frame"
+// shape (an 11-element array whose bin-shaped slots are all empty), the
+// same array with a payload in one of those slots, and a top-level bin
+// result. Each shape's dump line is asserted, and the same three lines
+// are then produced end to end against the loopback mock.
+int ReplyDumpSelftest() {
+    int failures = 0;
+    auto check = [&](const char* name, bool pass) {
+        std::printf("[dump-selftest] %-52s %s\n", name, pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+
+    // The expected element lists, written out by hand so the assertion
+    // does not lean on the formatter it checks.
+    const char* kElemsEmpty =
+        "array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) "
+        "[4]=Bin(0) head=[] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) "
+        "[8]=Bin(0) head=[] [9]=UInt(2731083288) [10]=Int(-1)";
+    const char* kElemsWithPayload =
+        "array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) "
+        "[4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) "
+        "[8]=Bin(0) head=[] [9]=UInt(2731083288) [10]=Int(-1)";
+    auto expect_reply = [](const char* kind, uint64_t msgid, const char* result_text) {
+        return std::string("[dump] reply method=ob_rpc_get_frame kind=") + kind +
+               " msgid=" + std::to_string(msgid) + " envelope=Array result=" + result_text;
+    };
+    auto expect_raw = [](size_t len, const char* head) {
+        return std::string("[dump] get_frame raw len=") + std::to_string(len) + " head=[" + head + "]";
+    };
+
+    // The recorded reply head (see docs/recon/findings/streaming-replay-payloads.md
+    // §5): the whole message, envelope and result.
+    const Bytes recorded = FromHex("940105c09b000000ccffc40000c40000c400cea2c90618ff");
+    Reader rec_reader(recorded.data(), recorded.size());
+    Value rec_envelope = rec_reader.parse();
+    check("the recorded reply parses as an envelope", rec_reader.ok() && rec_envelope.kind == Value::Kind::Array);
+    check("the recorded reply's result is an array", Result(rec_envelope).kind == Value::Kind::Array);
+    check("the recorded reply's result has 11 elements", Result(rec_envelope).array.size() == 11);
+
+    // The array with its bin-shaped slots empty — the recorded shape.
+    Packer empty_p;
+    empty_p.array(11);
+    empty_p.uint(0); empty_p.uint(0); empty_p.uint(0); empty_p.uint(255);
+    empty_p.bin(Bytes{});
+    empty_p.uint(0); empty_p.bin(Bytes{});
+    empty_p.uint(0); empty_p.bin(Bytes{});
+    empty_p.uint(2731083288); empty_p.integer(-1);
+    const Bytes empty_result = empty_p.out;
+
+    // The recorded message is the envelope around that result.
+    Packer env_p;
+    env_p.array(4);
+    env_p.uint(1);
+    env_p.uint(5);
+    env_p.nil();
+    env_p.raw(empty_result.data(), empty_result.size());
+    check("the recorded message is the envelope around the empty-bin array", env_p.out == recorded);
+
+    const std::string expect_a = expect_reply("Array", 5, kElemsEmpty) + "\n" +
+                                 expect_raw(24, "94 01 05 c0 9b 00 00 00 cc ff c4 00 00 c4 00 00 c4 00 "
+                                               "ce a2 c9 06 18 ff");
+    check("the recorded reply dumps as an 11-element array",
+          FormatReplyDump("ob_rpc_get_frame", rec_envelope, recorded) == expect_a);
+
+    // The same array with a payload in the first bin-shaped slot.
+    Packer payload_p;
+    payload_p.array(11);
+    payload_p.uint(0); payload_p.uint(0); payload_p.uint(0); payload_p.uint(255);
+    payload_p.bin(Bytes{0x0a, 0x0b, 0x0c});
+    payload_p.uint(0); payload_p.bin(Bytes{});
+    payload_p.uint(0); payload_p.bin(Bytes{});
+    payload_p.uint(2731083288); payload_p.integer(-1);
+    const Bytes payload_result = payload_p.out;
+
+    // A top-level bin result.
+    Packer bin_p;
+    bin_p.bin(Bytes{0x0a, 0x0b, 0x0c});
+    const Bytes bin_result = bin_p.out;
+
+    // The same three shapes, end to end over a loopback socket: the mock
+    // echoes the request's msgid, so the first reply reproduces the
+    // recorded message byte for byte.
+    MockReplyServer server({empty_result, payload_result, bin_result});
+    if (!server.Start()) {
+        std::printf("[dump-selftest] SKIP (the loopback mock could not start)\n");
+        return 0;
+    }
+    RpcClient rpc;
+    std::string sink;
+    g_dump_sink = &sink;
+    g_dump_replies = true;
+    bool connected = rpc.connect("127.0.0.1", server.port());
+    check("connects to the loopback mock", connected);
+    if (connected) {
+        for (uint64_t msgid = 5; msgid <= 7; ++msgid) {
+            rpc.sendRaw(GetFrameRequest(msgid));
+            Value envelope = rpc.readReply();
+            DumpReply("ob_rpc_get_frame", envelope, rpc.lastRaw());
+        }
+    }
+    g_dump_sink = nullptr;
+    g_dump_replies = false;
+    server.Stop();
+
+    std::string expect_mock;
+    expect_mock += expect_reply("Array", 5, kElemsEmpty) + "\n" +
+                   expect_raw(24, "94 01 05 c0 9b 00 00 00 cc ff c4 00 00 c4 00 00 c4 00 "
+                                 "ce a2 c9 06 18 ff") + "\n";
+    expect_mock += expect_reply("Array", 6, kElemsWithPayload) + "\n" +
+                   expect_raw(27, "94 01 06 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 "
+                                 "ce a2 c9 06 18 ff") + "\n";
+    expect_mock += expect_reply("Bin", 7, "Bin(3) head=[0a 0b 0c]") + "\n" +
+                   expect_raw(9, "94 01 07 c0 c4 03 0a 0b 0c") + "\n";
+    check("the mock run's dump is byte-exact", sink == expect_mock);
+    if (sink != expect_mock) {
+        std::printf("[dump-selftest] got:\n%s", sink.c_str());
+        std::printf("[dump-selftest] want:\n%s", expect_mock.c_str());
+    }
+
+    std::printf("[dump-selftest] the mock run's dump:\n%s", sink.c_str());
+    std::printf("[dump-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
+}
+
 // The message a stalled frame produces. It names the frame AND the
 // interface the frame went to: the two connections are separate, so
 // "which request went unanswered" is only half the answer.
@@ -1225,8 +1678,10 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
     // byte goes out.
     std::vector<int> frame_route;
     std::vector<std::string> frame_suffix;
+    std::vector<std::string> frame_method;
     frame_route.reserve(frames.size());
     frame_suffix.reserve(frames.size());
+    frame_method.reserve(frames.size());
     for (size_t i = 0; i < frames.size(); ++i) {
         const InterfaceRoute* route = nullptr;
         std::string suffix;
@@ -1236,6 +1691,9 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
         }
         frame_route.push_back(routes.IndexOfSuffix(route->suffix));
         frame_suffix.push_back(suffix);
+        // The method name, for the reply dump.
+        std::string method;
+        frame_method.push_back(MethodNameOfFrame(frames[i], &method) ? method : suffix);
     }
 
     PrintCadence(stamps, deltas, backward, routes, frame_route);
@@ -1291,7 +1749,9 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
         // payload is at index 3. Unwrap it before classifying, or every
         // frame reads as the envelope array ("empty") — the bug row #122
         // names. A Timeout is not an array, so it passes through unchanged.
-        Value reply = Result(rpc.readReplyWithDeadline(reply_timeout_ms));
+        Value envelope = rpc.readReplyWithDeadline(reply_timeout_ms);
+        DumpReply(frame_method[i], envelope, rpc.lastRaw());
+        Value reply = Result(envelope);
         if (reply.kind == Value::Kind::Bin) {
             ++bins;
             if (log) std::printf("[replay] frame %zu (%s) -> bin(%zu) head=[%s]\n", i + 1,
@@ -1431,10 +1891,11 @@ int main(int argc, char** argv) {
         return rc;
     }
     if (argc >= 2 && std::string(argv[1]) == "--selftest-timeout") return ReplyTimeoutSelftest();
+    if (argc >= 2 && std::string(argv[1]) == "--selftest-dump") return ReplyDumpSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
-        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [--dry-run] [--quiet] [--reply-timeout-ms N] [--ir-port N] [--depth-port N]\n"); return 2; }
+        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [--dry-run] [--quiet] [--reply-timeout-ms N] [--ir-port N] [--depth-port N] [--dump-replies]\n"); return 2; }
         std::string path = argv[2];
         std::string host = "127.0.0.1";
         bool dry_run = false, log = true;
@@ -1448,6 +1909,7 @@ int main(int argc, char** argv) {
             if (a.rfind("--", 0) == 0) {
                 if (a == "--dry-run") dry_run = true;
                 else if (a == "--quiet") log = false;
+                else if (a == "--dump-replies") g_dump_replies = true;
                 else if (a == "--reply-timeout-ms" && i + 1 < argc) reply_timeout_ms = std::atoi(argv[++i]);
                 else if ((a == "--ir-port" || a == "--depth-port") && i + 1 < argc) {
                     int port = std::atoi(argv[++i]);
@@ -1488,6 +1950,7 @@ int main(int argc, char** argv) {
         for (int i = 2; i < argc; ++i) {
             if (std::string(argv[i]) == "--pull-ms" && i + 1 < argc) pull_ms = std::atoi(argv[++i]);
             if (std::string(argv[i]) == "--quiet") log = false;
+            if (std::string(argv[i]) == "--dump-replies") g_dump_replies = true;
         }
         return Live(host, port, seconds, out, pull_ms, log);
     }
@@ -1497,9 +1960,10 @@ int main(int argc, char** argv) {
         "  raptor_client --dry-run                  framing selftest, no device\n"
         "  raptor_client --dry-run-live             print the bytes each call would send\n"
         "  raptor_client --selftest-timeout         bounded reply read, no device\n"
+        "  raptor_client --selftest-dump            reply-structure dump, no device\n"
         "  raptor_client --discover                 GVCP discovery only\n"
         "  raptor_client --replay <file> [host] [--dry-run] [--quiet]\n"
-        "      [--reply-timeout-ms N] [--ir-port N] [--depth-port N]\n"
+        "      [--reply-timeout-ms N] [--ir-port N] [--depth-port N] [--dump-replies]\n"
         "      sends recon's captured request frames unchanged, in order; file\n"
         "      format: one hex frame per line, optional '+<ms> ' prefix,\n"
         "      '#' comments/blank lines ignored.\n"
@@ -1514,6 +1978,15 @@ int main(int argc, char** argv) {
         "      expiry the replay names the frame and its interface and exits\n"
         "      non-zero.\n"
         "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
-        "      per-call logging is ON by default (--quiet disables it); --pull-ms 0 = as fast\n");
+        "      [--dump-replies]\n"
+        "      per-call logging is ON by default (--quiet disables it); --pull-ms 0 = as fast\n"
+        "\n"
+        "  --dump-replies (OFF by default; the output above never changes)\n"
+        "      prints one line per reply: the RPC kind, the msgid, and the result's\n"
+        "      shape — for an array result its length and each element's kind, with\n"
+        "      the byte length and a hex head (32 B) for any bin or string. For a\n"
+        "      get_frame reply the raw reply bytes follow (hex head, 48 B), so the\n"
+        "      envelope's own shape sits next to the unwrapped result. The lines\n"
+        "      carry no clock and no address: the same run prints the same bytes.\n");
     return 0;
 }
