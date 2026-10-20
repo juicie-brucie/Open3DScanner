@@ -154,6 +154,51 @@ whether 24 Hz is itself the fused rate rather than the raw one is [#151]'s open 
 of CPU per second** — 0.44 % of one core ([derived] from [#147 §3]). The cadence is a **decision** (#113's) plus a
 **platform fact**; the code limit is elsewhere, and the readings below say where.
 
+### The ingest's per-frame cost, and the budget left for logic
+
+The operator's requirement is that this ingest become *"extremely efficient so it has very low latency so we can run
+near real-time compute and logic on this data"*. That is a question about the **ingest's cost against the source's
+frame budget**, and the measured numbers answer it.
+
+**What the ingest costs today** (the live tick, from #112's segments and #147's device-free profile):
+
+| part of the tick | cost | where it comes from |
+| --- | --- | --- |
+| the vendor's publish + our getter | **0.00 ms** | the `getter` segment is 0.00 ms in #112's run; [#136]'s "where the time goes" says the same |
+| the decimate + the encode of 20,000 points | **1.18 ms** (p50) | the `post` segment in #112's record |
+| the broadcast | 0.05 ms (1 client), 0.29–0.31 ms (8 clients) | #112's record; [#147 §3] |
+
+**And the composition of that 1.18 ms matters more than its size.** (The 0.00 ms is *our* call into the vendor: the
+SDK's own fusion runs on the SDK's threads, and it is what sets the source's 24.0 Hz — [#151]. The device is not idle
+while our side is cheap.) From the device-free profile, the encoder is
+**63 %** of the tick's CPU at **53.4 ns/point** ([#147 §7], [derived]) — so the encode of the live path's 20,000
+points is **1.07 ms** [derived], i.e. **~90 % of the `post` segment is the *publishing* encode, and the ingest
+proper (the getter) is free.** The remaining ~0.1 ms is the strided gather that builds the 20,000-point sample.
+
+**So, against the source's frame budget:**
+
+| source rate | frame budget | the ingest (1.2 ms) | left for logic | the ingest + the publish at 8 clients (1.5 ms) | left |
+| --- | --- | --- | --- | --- | --- |
+| **24.0 Hz** | 41.7 ms | **2.9 %** | **40.5 ms** | 3.6 % | 40.2 ms |
+| 50 Hz | 20.0 ms | **6.0 %** | **18.8 ms** | 7.5 % | 18.5 ms |
+| 60 Hz | 16.7 ms | **7.2 %** | **15.5 ms** | 9.0 % | 15.2 ms |
+
+**The answer is yes: the code is fast enough to be the start of that pipeline, and it is not close.** At the
+source's own rate the ingest uses **2.9 %** of the frame and leaves **~40 ms** per frame for logic; at 60 Hz it still
+leaves **~15 ms**. And the reason is structural rather than lucky: **the cloud is already in hand at zero measured
+cost** (the getter is 0.00 ms), and the expensive part of today's tick — the 1.07 ms encode — is the cost of
+*publishing a decimated preview*, not of ingesting.
+
+Two caveats, both of which move the answer the wrong way and therefore belong here:
+
+* **This is the ingest *as configured*.** The 1.2 ms buys a 20,000-point *preview*. If a consumer needs the full
+  cloud, the cost moves into the ingest as a **copy** (16.4 MB at 1.37 M points = 394 MB/s at 24 Hz, L2) — or it
+  costs nothing at all if the consumer reads the SDK's **borrowed** buffer before the release (`main.cpp:1297`).
+  That choice is C1's (§4.1).
+* **The fan-out rides on the same budget.** At 8 clients the publish adds 0.29 ms, and at the source's rate the
+  broadcast's *stall* (100 ms per client) is 2.2× the whole tick — so the publish path has to come off the ingest
+  before the budget above is real (S3, and C1's slot).
+
 ### A. 10× the points delivered to the UI (20,000 → 200,000 per frame)
 
 * the encode: 53.4 ns/point ([derived] 123 µs of encoding for 2,304 points, [#147 §3]+[§7]) × 200,000 = **10.7 ms**
@@ -313,6 +358,89 @@ risks, and what must **not** change.
 * **What must not change.** The ABI's ownership contract. The header states the buffers are borrowed; changing that
   is a **recon** task, not a builder's, and no step here needs it.
 
+### The two capability seams (they cost nothing today and buy everything downstream)
+
+S1–S5 are **cost** seams: each of them removes measured work. The operator's requirement needs two more, which are
+**capability** seams — they buy no CPU today, and without them the pipeline cannot exist at all.
+
+#### The shape problem, as it stands
+
+The tick is one thread (`main.cpp:1086-1331`) that does, in order: the **fetch** (`:1195`), the **decimate to
+20,000** (`:1204-1261`), the **encode** (`:1264`), the **broadcast** — inline, under the mutex (`:1268`) — the
+**record** (`:1273`), the **release** (`:1297`), and then the **pace** (`:1115`). Three facts about that shape matter
+for near-real-time logic:
+
+1. **The only path to the data is the decimated broadcast frame** — 98.5 % dropped, positions-only, no colour
+   ([#136] stages 3–4). A consumer on that stream sees **1.5 %** of the cloud. Worse for identity: the decimation
+   is a **stride over a growing cloud** (`stride = ceil(num_points / 20000)`, `main.cpp:1246-1249` — 69 at
+   1.37 M points), so as the cloud grows the stride changes and the sampled set shifts — **the decimated stream is
+   not stable frame-to-frame**, which disqualifies it for anything that needs to recognise the same point twice.
+2. **The network is inside the ingest's critical path** — the fan-out is inline, sequential, under `clients_mutex`,
+   with a 100 ms per-client timeout ([#147 §6]). At the source's rate (a 44.6 ms tick) one stalled client is 2.2× the
+   tick.
+3. **The latency is not observable.** The V1 envelope already carries two clocks — `t_capture` and `t_server`
+   (`frame_protocol.h:33-34`) — but the live path fills **both with the send time**
+   (`BuildFrame(frame_id++, NowMs(), …)` → `encode_cloud_snapshot(frame_id, capture_timestamp_ms, NowMs(), …)`,
+   `main.cpp:1264` and `:501-502`). A consumer therefore cannot tell how old the data is.
+
+#### C1 — the ingest/consumer seam
+
+* **The tick produces a frame object per ingest**, carrying: the cloud **view** — the SDK's borrowed pointer and its
+  point count, valid until the release at `main.cpp:1297` — or a shared copy of whatever the consumers were
+  configured to need; the decimated broadcast buffer; and a **per-stage timestamp set** (ingest, decimate, encode,
+  publish).
+* **It is published to a latest-frame slot** — single-writer, overwritten, never blocking — which the consumers read
+  and the network writers drain. Consumers drop older frames; that is the policy the UI already applies to live
+  frames (`ui/app.js:293`), so the server-side policy matches the client's existing one.
+* **The envelope's `t_capture` is filled with the ingest instant**, not the send time, so the age of the data at the
+  consumer becomes measurable from the wire — with **no protocol change**, because the field is already there.
+* **The consumers never block the ingest.** The ingest overwrites the slot and moves on; a consumer that falls behind
+  loses frames, which is the same loss the UI already accepts.
+* What this buys: the four named consumers get the cloud **as it arrives**, at full resolution or at a resolution
+  each of them configures, and the ingest's budget stays at the 1.2 ms measured above.
+
+#### What "fast enough" means, for the four named consumers
+
+The operator named four: **tracking, marker ID, ellipse transformations, exposure settings**. They are not four
+consumers of the same thing, and the table below is what the measured budget and the code say about each. Their own
+compute budgets are not set here — those are new stages, and #152's per-stage budgets are where they belong; what is
+settled here is the **data** each one needs and **where it runs**.
+
+| consumer | what it needs from the frame | the data volume it needs | the budget it must fit | where it runs |
+| --- | --- | --- | --- | --- |
+| **tracking** | the scanner's pose over time. The pipeline **already carries a pose as its own message type** (`MessageType::Pose`, `frame_protocol.h:22`, encoded at `:109`, broadcast every tick at `main.cpp:1175`) | the **pose**, not the cloud — unless it tracks surface features, in which case it needs a *stable* subset, and the stride decimation is not one | the whole 40.5 / 18.8 / 15.5 ms left (§3); a pose consumer is microseconds | a consumer thread |
+| **marker ID** | **identity across frames** — the same physical point in successive frames | the full cloud, or a **stable key**: the vendor already fuses at a **0.1 voxel** ([#136] stage 0), and a voxel grid stays stable as the cloud grows, unlike the stride | its own compute; the *data* cost is the copy budget (394 MB/s at 24 Hz, L2) or a borrowed read before the release at `main.cpp:1297` | a consumer thread, reading C1's slot |
+| **ellipse transformations** | the region to transform, at the resolution the transform is defined at | the full cloud, or a region of it — the decimated stream changes the fit's *input*, not just its size | as above | a consumer thread |
+| **exposure settings** | the current exposure value, and the ability to change it | not a cloud consumer at all: a **device-parameter** consumer. The tick re-asserts the exposure every tick (`main.cpp:1151`) and #153 proposes to make that on-change | the tick's own `exposure` segment ([#141]'s instrument) — and the apply must not block the tick | it must **act on** the tick: a bounded "requested value" slot — #153's dirty-flag shape — not a run in the ingest thread |
+
+**The rule that makes the table work: none of the four may run in the ingest thread.** The ingest is the pipeline's
+clock — the tick's pace *is* the pipeline's cadence — so a consumer that takes 40 ms would stall every other consumer
+behind it and would show up as a cadence failure, not as a slow consumer. The exposure consumer is the one that must
+act *on* the tick, and it does so through a bounded slot rather than by running inside it.
+
+#### C2 — the pacing primitive: a deadline-based wait, and a requestable rate
+
+* Today the wait is **relative** and the period is a **compile-time constant**: `CFRunLoopRunInMode(kCFRunLoopDefaultMode,
+  kLiveTickIntervalMs / 1000.0, false)` with `kLiveTickIntervalMs = 100` (`main.cpp:1115`, `:663`).
+* Measured: a 100 ms request realises **103.19–103.75 ms**, a 41 ms request **44.62 ms**, a 20 ms request
+  **24.29 ms** ([#147 §5]) — the platform's overshoot (3.2–4.3 ms) is charged **per wait**, and a relative wait
+  accumulates it.
+* A **deadline-based wait** (`sleep_until(t0 + n × period)`, the deadline advanced by the *period* rather than by the
+  elapsed time) turns that into a **bounded** error: a late tick does not push the next one out, and the realised
+  rate converges on the requested one instead of drifting.
+* It also makes the rate **requestable**: the period becomes a parameter, so #113's "a tick with comfortable margin
+  above the device's mode rate" becomes a *setting* rather than a rebuild — and it is **measurable with what is
+  already on main**: the instrument reports `nominal_wait_us` and the `overshoot` distribution
+  (`perf_window.h:143-146`), so a requested rate's realised rate is a report, not an estimate.
+* Two caveats. (a) The platform's overshoot does not go away: a 50 Hz request (20 ms) still realises ~24 ms (41 Hz),
+  so the **request** must be set below the target and the overshoot reported. (b) Our code registers **no run-loop
+  source or timer** (no `CFRunLoopTimer`/`CFRunLoopSource` anywhere in `engine/`, `mesh/`, `tools/`, `ui/`), so the
+  run-loop wait has nothing of ours to service — but it would also service any source the **SDK or the OS**
+  installed on the worker's run loop, which a `sleep_until` would not. The migration step must check that before
+  switching.
+* The stop path is unaffected: the tick tests `g_stop_requested` at the top of every tick (`main.cpp:1101`), so the
+  wait is already the worst-case stop latency.
+
 ### Why this order
 
 S1 is first because it is the largest measured share of the tick's CPU, it changes **no observable behaviour**, and it
@@ -329,9 +457,17 @@ archive's format and location decide what S5 is allowed to carry.
 | --- | --- | --- | --- |
 | **0** | **S1 — the encoder's `memcpy`** | **yes**: the tick's work drops from 0.53 % to ~0.2 % of itself, which is what makes every later budget sayable (#152) and is a regression guard for the wire format (a golden-vector test) | yes |
 | 1 | S2 — one write per client per frame | yes: half the syscalls, same bytes | yes |
-| 2 | S3 — the latest-frame slot + per-client writers | yes: the fan-out leaves the tick, and the 100 ms stall leaves the tick | **partly** — the drop semantics change (S3 risk 3) |
-| 3 | S4 — persistence, off the tick (#149) | yes: the product starts keeping the scan | **no — this is the irreversible one** |
-| 4 | S5 — the full cloud in our pipeline | yes: the data hole closes | no (the archive format is now fixed) |
+| 2 | **C2 — the pacing primitive**: a deadline-based wait and a requestable period | yes: the publish rate becomes a *setting* and its realised rate becomes a *report* (`nominal_wait_us` and the `overshoot` distribution are already in the instrument) | yes |
+| 3 | **C1 — the ingest/consumer seam**: the frame object, the latest-frame slot, the per-stage timestamps | yes: it is the enabler of all four downstream consumers, and the budget table in §3 only becomes true once the publish is off the critical path | yes — additive, the existing broadcast path is untouched |
+| 4 | S3 — the broadcast's shape: per-client writers | yes: the fan-out leaves the tick, and the 100 ms stall leaves with it | **partly** — the drop semantics change (S3 risk 3) |
+| 5 | S4 — persistence, off the tick (#149) | yes: the product starts keeping the scan | **no — this is the irreversible one** |
+| 6 | S5 — the full cloud in our pipeline | yes: the data hole closes | no (the archive format is now fixed) |
+
+**The order's logic, in one line each.** Steps 0–1 make the tick's *work* negligible, so the §3 budget table is true
+at 24–60 Hz; step 2 makes the *rate* requestable; step 3 gives the *data* to the consumers; step 4 takes the
+*network* off the tick; steps 5–6 are the data plane, and S4's format decision has to precede S5's copy budget
+because it decides what S5 is allowed to carry. C1 comes before S3 because C1 is **additive** (a new slot beside
+the existing broadcast) while S3 changes the existing clients' semantics — the cheaper change first.
 
 **The smallest first step that is independently valuable: step 0, the encoder.** It is a pure function, it changes no
 bytes on the wire, it needs no device, and it is verifiable by an equivalence test — and it is what turns the tick's
@@ -348,7 +484,7 @@ work from a number every other budget has to subtract into a number nobody has t
 | *Reversible* | yes |
 | *Then* | re-run [#147]'s method (§2.4 there) to re-baseline the tick's CPU, so step 1's budget starts from the new number |
 
-**The irreversible one: step 3, persistence (#149) — the archive's format and location.** Once scans are written in
+**The irreversible one: step 5, persistence (#149) — the archive's format and location.** Once scans are written in
 a format, changing the format means migrating archives; once `output_dir` moves off `/tmp` ([#136 stage 8]), the
 existing runs' artifacts are stranded. (A second, quieter one-way door: if colour is ever added to the frame — #136b
 — the recorded archives and the UI have to move together, so that decision should not be smuggled in through a
@@ -369,7 +505,9 @@ seam.)
 * **The tick's measured pacing** — the wait at `main.cpp:1115` and the 100 ms budget stay as they are. The steps
   above shrink the *work inside* the tick; **the cadence itself is #113's decision**, and the 9.68 Hz ceiling
   ([#147 §5]) is a platform fact, not a bug to be optimised away. The **2.8× publish headroom** that changing the
-  pace would unlock ([#151], §3) is #113's to take, not this note's to spend.
+  pace would unlock ([#151], §3) is #113's to take, not this note's to spend. C2 changes the *primitive* the wait uses
+  (a deadline instead of a relative sleep) so that the rate *can* be requested — it does not request one, and it does
+  not change the period: the requested period stays 100 ms until #113 says otherwise.
 
 ---
 
@@ -377,7 +515,7 @@ seam.)
 
 * **Colour** (#136b): it changes the frame size (12 B/point → 24 or 36 B/point) and therefore every budget in §3.
   It must be settled **before** S5, and it is a product decision, not a structural one.
-* **The archive format and the disk budget** (#149): with the operator, in step 3.
+* **The archive format and the disk budget** (#149): with the operator, in step 5.
 * **Whether the 20,000-point live budget stays.** [#136]'s #136c says it should — the UI needs a bounded frame — and
   §3/A is consistent with that: "10× points" needs a **different stream**, not a bigger budget on the same one.
 * **The cadence** (#113): what that row needs is the **2.8× publish headroom** (a 24.0 Hz source against 8.7 Hz
@@ -386,4 +524,15 @@ seam.)
   10 / 24 / 50 Hz, whose own constraint is the platform's wait floor ([#147 §14]).
 * **The per-stage budgets** (#152) and the end-to-end frame benchmark (#156), and the full stage map with costs
   (#155) — this note is the *structure* argument those rows instantiate; the numbers in §3 are the inputs, not the
-  budgets.
+  budgets. The four consumers' own compute budgets are new stages and belong to #152.
+* **Each consumer's data volume and identity model** — whether marker ID keys on the vendor's 0.1 voxel grid
+  ([#136] stage 0) or on the raw cloud, and what resolution an ellipse transform is defined at, are product
+  decisions with the operator; §4.1's table states what each one *needs*, not what it will get.
+* **Borrowed view or shared copy** (C1): a consumer may read the SDK's borrowed buffer before the release
+  (`main.cpp:1297`) — free, but bounded by the tick — or the ingest may copy what the consumers need (the 394 MB/s
+  copy budget, L2). Which one is right depends on the consumers' latencies, which are not specified yet.
+* **A device-level capture instant.** The OBScan ABI does expose timestamp getters — `obscan_frame_get_timestamp`
+  (`obscan_api.h:924`) and `obscan_image_get_timestamp` (`:950`) — but on the **frame** and **image** handles, not on
+  the model cloud the live tick publishes, and our loader resolves neither (`engine/src/obscan_loader.cpp`). So the
+  *device's* capture time is not available on the path we use; C1's per-stage timestamps measure our pipeline's own
+  latencies, which is what the operator asked to see.
