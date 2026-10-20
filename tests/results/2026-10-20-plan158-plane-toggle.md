@@ -70,8 +70,8 @@ ctest --test-dir build -LE hardware --output-on-failure
 ### ctest summary
 
 ```
- 4/10 Test  #4: plane_toggle_test ................   Passed    0.00 sec
-100% tests passed out of 10
+ 4/11 Test  #4: plane_toggle_test ................   Passed    0.00 sec
+100% tests passed out of 11
 ```
 
 ## Checks
@@ -88,7 +88,17 @@ ctest --test-dir build -LE hardware --output-on-failure
 | 8 | Another command is left alone | **[PASS]** `{"cmd":"set_fov","value":"wide"}` made 0 vendor calls |
 | 9 | The command travels over a real WebSocket and comes back in the status message | **[PASS]** the selftest's own client: `handshake: HTTP/1.1 101 Switching Protocols`, the status carries `"planeRemoval":{"auto":true,"turntable":true,"manual":true}` |
 | 10 | The shipped binary's command path works (the synthetic server, the real `scan_server` binary) | **[PASS]** `scan_server --synthetic 18899` + a WebSocket client: the status message carries `"planeRemoval":{"auto":true,"turntable":false,"manual":true}` |
-| 11 | The whole device-free suite still passes | **[PASS]** `100% tests passed out of 10` |
+| 11 | The whole device-free suite still passes | **[PASS]** `100% tests passed out of 11` (the eleven device-free entries, on the rebased tree) |
+
+## Branch note
+
+The branch was cut before row #153's PR (#371) landed, so the rebase onto
+`origin/main` hit one conflict hunk in `tools/scan_server/main.cpp`: #153
+invalidates the exposure value after a resume, and this row re-asserts the
+plane toggles after a resume — the same `if (!want_paused)` block, two
+independent vendor calls. The resolution keeps both (the controller's
+re-assert *and* `exposure_apply.Invalidate()`), and the tree above was
+rebuilt and re-tested on the new `main` (11/11 device-free entries).
 
 ## Crash sweep
 
