@@ -176,7 +176,8 @@ frame budget**, and the measured numbers answer it.
 
 **The `post` segment's cost is linear in the point count, and the live measurement says what a point costs.** The
 per-window p50s in #112's raw log run 0.04 ms at 862 points, 0.09 at 2,103, 0.19 at 4,801, 0.35 at 9,527 and 0.68 at
-17,943 — a fit of **37.5 ns per point** [derived], i.e. **0.75 ms at the 20,000-point budget**. The run's *mean*
+17,943 — the slope between those two end points is **37.5 ns per point** [derived: (0.68 − 0.04) ms over
+(17,943 − 862) points], i.e. **0.75 ms at the 20,000-point budget**. The run's *mean*
 (1.18 ms over a mean of 16,494 points) is higher than that because of a heavy right tail (max 5.05 ms).
 
 **One honest disagreement between the two datasets, stated because it changes which number to budget with.** The
