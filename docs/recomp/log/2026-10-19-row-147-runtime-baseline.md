@@ -140,17 +140,35 @@ point** sphere (**27,697 B** per frame) at a nominal 30 Hz.
   **5.3 / 8.3 / 14.0 ms of CPU per second** → **~195 / ~306 / ~514 µs of CPU per tick**.
 * **CPU vs wall: 195 µs of CPU in a 37.0 ms tick = 0.53 %.** The tick is 99.5 % *waiting*.
 
-### 3.1 The tick's period, fully accounted for
+### 3.1 The tick's period, accounted for
+
+The tick's period is the sum of the instrument's own segments (medians of the same run; they agree to ~0.1 ms,
+because medians of different distributions do not add exactly):
 
 ```
-  requested sleep                        33.00 ms   (kFrameIntervalMs = 1000.0/30.0, truncated to ms)
-+ the platform's own sleep overshoot      3.5-3.9 ms (the product's own `overshoot` segment)
-+ the timed work (post + bcast)           0.10-0.31 ms
-+ the untimed residual                    0.01 ms
-= the realised tick period               ~37.0 ms   (measured 36.9-37.7 ms)
+  tick period (p50)                      36.9 - 37.5 ms
+  = the wait segment (p50)               36.8 - 37.2 ms
+  + the post segment (p50)                0.12 - 0.20 ms
+  + the bcast segment (p50)                0.00 - 0.31 ms
+  + the residual (p50)                     0.01 ms
 ```
 
-**Nothing is missing.** The tick's period is a *wait*, and the wait is the platform's, not ours.
+And the wait itself:
+
+```
+  wait (p50)                             36.8 - 37.2 ms
+  = the sleep requested                   33.00 ms   (milliseconds(int64_t(kFrameIntervalMs)) — the 33.33 ms
+                                                        nominal is truncated to whole milliseconds)
+  + the platform's own overshoot           3.9 - 4.1 ms  (the zero-work control: 36.85 - 37.07 ms realised
+                                                         for a 33.00 ms request)
+```
+
+The product's own `overshoot` segment is measured against the **33.33 ms nominal**, not against the 33.00 ms it
+actually requests, so it reports 3.5 - 3.9 ms: the same platform overshoot, 0.33 ms lower. The two instruments
+agree once that is accounted for.
+
+**So the period is a wait, and the wait is the platform's** — but the decomposition above is a *medians* identity
+(±0.1 ms), not an exact one; the unaccounted fraction is smaller than the spread of the medians themselves.
 
 ### 3.2 Allocation behaviour (device-free)
 
@@ -310,40 +328,49 @@ tick's CPU — **synthetic-path only**; the live path decimates the vendor's buf
 
 ---
 
-## 9. What this says about #134, #136, #139 (and #113) — the contradiction check
+## 9. What this says about #134, #136, #139/#141 (and #113) — the contradiction check
 
-**#139 ("the tick's dominant cost is the pacing wait, and it is uninstrumented") — CONFIRMED and now quantified.**
-The wait is 36.8 – 37.2 ms of a 36.9 – 37.7 ms tick (99.4 %). The platform's zero-work floor for that wait is
-36.85 – 37.07 ms (§5), and the product's own `overshoot` segment reports 3.5 – 3.9 ms of the same thing measured
-independently. On the live path the wait is `CFRunLoopRunInMode(0.1)`, whose floor is **103.2 – 103.8 ms** → the live
-tick's ceiling on this machine is **9.68 Hz** — and the hardware run (#112) measured 8 – 9 Hz. **The live tick is
-already at its platform ceiling; it is not "slow", it is paced.** (The live-path figure is extrapolated from the
-same wait, measured device-free on the same machine the hardware run used.)
+**#139 ("the tick's dominant cost is the pacing wait, and it is uninstrumented") — CONFIRMED and quantified here;
+the row itself is now `DONE` on main** (the pacing wait is timed and separated — PR #352 — and the instrument was
+completed in #357/#141). What this row adds is the **device-free half** of that answer: the wait is 36.8 – 37.2 ms
+of a 36.9 – 37.7 ms tick (99.4 %), and the platform's zero-work floor for that wait is 36.85 – 37.07 ms (§5) — i.e.
+**the wait's overshoot is the platform's, not ours**. On the live path the wait is `CFRunLoopRunInMode(0.1)`, whose
+floor is **103.2 – 103.8 ms** → the live tick's ceiling on this machine is **9.68 Hz** — and the hardware run (#112)
+measured 8 – 9 Hz. **The live tick is at its platform ceiling; it is not "slow", it is paced.** (The live-path
+figure is extrapolated from the same wait, measured device-free on the same machine the hardware run used. The live
+half — the wait as the *live* tick experiences it, with the vendor calls inside the tick — is #141's job, whose status
+on main is `HW`.)
 
-**#134 ("~9.6 ms/tick outside the four timed segments") — PARTLY REFINED, and the "allocation path" part is NOT
-supported.** With the wait now timed (row #139), the synthetic tick's *untimed residual* is **0.01 ms at p50**
-(0.02 – 0.05 at p95) — the tick has no hidden work left. Of the hardware run's 9.6 ms residual:
+**#134 ("~9.6 ms/tick outside the four timed segments") — REFINED, and its own attribution is consistent with this
+measurement.** #134's audit attributed the residual to the **untimed work** — the two untimed vendor calls (the
+exposure re-assert, the cloud release) plus `BuildStatusJson` / the `printf` / `RecordFrame` — and to the
+**uninstrumented pacing wait**; it did *not* attribute it to allocations. This row measures the two halves of that
+claim, device-free:
 
-* **~3.2 – 3.9 ms is the platform's own wait overshoot** (measured here, device-free, zero work in the loop) — it was
-  never our code;
-* the remainder must be the live path's untimed work, which row #141's instrument now times explicitly
-  (`exposure`, `release` segments). **The next hardware run settles that split**; the device-free half is already
-  measured here.
+* with the wait now timed (row #139), the synthetic tick's *untimed residual* is **0.01 ms at p50** (0.02 – 0.05 at
+  p95) — the tick has no hidden work left;
+* of the hardware run's 9.6 ms residual, **~3.2 – 3.9 ms is the platform's own wait overshoot** (measured here with
+  zero work in the loop) — it was never our code, and it was never visible to #134 because the wait was outside
+  every segment;
+* the remainder is the live path's untimed work, which #141's instrument now times explicitly (`exposure`, `release`
+  segments). **The next hardware run settles that split**; the device-free half is measured here.
 
-And the hypothesis worth killing: **the residual is not an allocation path.** The live allocation footprint is flat
-(86 – 87 KB, +7-8 allocations over 30 s), the tick's allocations sit *inside* the timed `post` segment (the two
-per-tick vectors), and the allocator's share of the tick's CPU is ~2 %. There is no allocation path in the residual
-to find. The residual is a **wait**.
+**The hypothesis this row was asked to test — that the untimed residual might be dominated by an *allocation path* —
+is not supported.** The live allocation footprint is flat (86 – 87 KB, +7-8 allocations over 30 s), the tick's
+allocations sit *inside* the timed `post` segment (the two per-tick vectors), and the allocator's share of the
+tick's CPU is ~2 %. There is no allocation path in the residual to find. **The residual is a wait.**
 
-**#136 (the pipeline map) — two stage costs added, device-free.** The profile puts a number on two stages of the
-map: the *encode* is 63 % of the tick's CPU (no client) and the *broadcast* is 57.7 % at eight clients, linear in
-the client count, synchronous in the tick thread, with a 100 ms per-client send timeout. Both are on the path
-between "we have points" and "the UI has points" — the two stages #136's map lists as the ones carrying data.
+**#136 (the pipeline map; `DONE` on main) — complemented, not contradicted.** The map is the recon deliverable; what
+this profile adds is the *cost* of two of the stages it names: the *encode* is 63 % of the tick's CPU (no client) and
+the *broadcast* is 57.7 % at eight clients, linear in the client count, synchronous in the tick thread, with a 100 ms
+per-client send timeout. Both sit on the path between "we have points" and "the UI has points" — the stages #136's
+map lists as the ones carrying data. Nothing here changes the map's findings; it prices two of its arrows.
 
-**#113 (the tick's margin above the device's rate) — a ceiling, device-free.** The synthetic path's floor is
-36.85 ms (**27.1 Hz**, so the nominal 30 Hz is already unreachable) and the live path's floor is 103.2 – 103.8 ms
-(**9.68 Hz**). The hardware run's 8 – 9 Hz is at that ceiling. Any plan that needs a faster tick must change the
-cadence (or the pacing mechanism), not the code inside the tick.
+**#113 (the tick's margin above the device's rate; `TODO`) — a ceiling to plan against, nothing more.** The synthetic
+path's floor is 36.85 ms (**27.1 Hz**, so the nominal 30 Hz is already unreachable) and the live path's floor is
+103.2 – 103.8 ms (**9.68 Hz**). The hardware run's 8 – 9 Hz is at that ceiling. Any plan that needs a faster tick
+must change the cadence (or the pacing mechanism), not the code inside the tick — #113 is the row that decides
+whether to do that.
 
 ---
 
@@ -445,3 +472,28 @@ for (int i = 0; i < n; ++i) {
 * This log: `docs/recomp/log/2026-10-19-row-147-runtime-baseline.md`
 * The row: `docs/recomp/PLAN.md` #147 → `DONE`
 * **No source file was changed by this row.**
+
+---
+
+## 13. Corrections after review (2026-10-20)
+
+This log was reviewed after its first merge (PR #361) and corrected here. The reviewer's three substantive points,
+and what changed:
+
+1. **The §9 attribution of the "allocation path" hypothesis to #134 was wrong.** #134's own audit attributes the
+   untimed residual to the *untimed work* (the two untimed vendor calls, `BuildStatusJson`, the `printf`,
+   `RecordFrame`) and to the *uninstrumented pacing wait* — it never says "allocation". The hypothesis that the
+   residual might be allocation-dominated is the one this row was **asked** to test; §9 now says so, and it now
+   states plainly that #134's own attribution is *consistent* with the measurement, which refines it by quantifying
+   the platform's share (~3.2 – 3.9 ms of the 9.6 ms).
+2. **The §3.1 period decomposition was presented as an exact identity ("nothing is missing") when it is a medians
+   identity with a ±0.1 ms spread.** §3.1 now shows the identity as the instrument's own segments (tick = wait + post
+   + bcast + residual), separates the *requested* sleep (33.00 ms) from the *nominal* (33.33 ms) the `overshoot`
+   segment is measured against, and states the agreement as ±0.1 ms rather than as an exact closure.
+3. **The cross-row claims were overstated** (they read as if this row closed #139 and #136). §9 now states the status
+   of each row on main (#139 `DONE`, #136 `DONE`, #141 `HW`, #134 `SPEC-READY`, #113 `TODO`) and positions this row
+   as the *device-free half* of #139/#141's answer and as a complement to #136's map — not a substitute.
+
+The reviewer's fourth point (that the PR looked like 169 files) was an artefact of a **stale local `main` branch**
+at `51e7960` in this worktree: the merged PR was 1 commit and 2 files (`gh pr view 361` → `commits: 1, files: 2`).
+No source file was changed by this row at any point.
