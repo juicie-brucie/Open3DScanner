@@ -264,3 +264,30 @@ will show which step is slow or blocked. The builder can then fix the actual pro
   retry plan.
 - **#105** — the original "zero frames" question for IR. This finding is unrelated to
   #105 (which is about IR, not depth).
+
+## 8. Follow-up evidence (2026-10-20, post-PR)
+
+Three new hardware records were produced after this finding was written:
+
+1. **`2026-10-20-plan127-depth-retry2-hang.md`** — a second depth hang, identical
+   signature to the first, after the user confirmed the physical connection was good.
+   Command: `--live 127.0.0.1 10010 5 --dump-replies` (no `--capture` flag). This
+   **CONFIRMS** the depth hang is reproducible (2-for-2) and is NOT caused by a loose
+   physical connection. It strengthens the case that the hang is depth-interface-specific.
+
+2. **`2026-10-20-plan132-ir-retry3-hang.md`** — an IR hang (port 10013) with the
+   `--capture` flag. Command: `--live 127.0.0.1 10013 60 --frames 200 --capture ...`
+   (no `--dump-replies`). This is a **DIFFERENT hang** from the depth hang — it's in
+   the `--capture` code path, not the depth interface. The record incorrectly claims
+   "the depth hang earlier used the same flags" — but the original depth hang
+   (plan127-live-reply-dump-retry.md) did NOT use `--capture`. This IR hang is a
+   separate issue in the `--capture`/`--frames` code path and is outside the scope of
+   #161.
+
+3. **`2026-10-20-plan151-device-retry2-raceloss.md`** — a `scan_server` device-side
+   race/crash in the vendor SDK (2-for-2 reproduction). This is **UNRELATED** to #161
+   (which is about `raptor_client`, not `scan_server`). This is row #151's issue.
+
+**Summary**: The new evidence confirms the depth hang is reproducible and specific to
+the depth interface (not a physical connection issue). The IR hang with `--capture` is
+a separate issue in a different code path. The #151 crash is unrelated.
