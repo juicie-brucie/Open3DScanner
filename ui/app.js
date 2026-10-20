@@ -121,38 +121,13 @@
   let viewDistance = 4.2;
   let viewRadius = 1.0;
 
-  // Coverage (G2): a voxel grid over our own live data. Visited voxels are
-  // those the scanner has been near (pose translations); seen voxels are
-  // those with cloud points. Under-covered = seen but not visited, painted
-  // red as a second point set. Cell size follows the scene scale.
-  const coverageVisited = new Set();
-  const coverageSeen = new Set();
-  let underPositions = new Float32Array(0);
-  let underCount = 0;
-  const kUnderCoveredBudget = 20000;
-  function coverageCell() {
-    return Math.max(viewRadius / 20, 1e-4);
-  }
-  function voxelKey(x, y, z, cell) {
-    return Math.round(x / cell) + "," + Math.round(y / cell) + "," + Math.round(z / cell);
-  }
+  // Coverage (G2): voxel sets over our own live data, updated per cloud frame
+  // and per pose message. The update logic lives in ui/coverage.js; row #160's
+  // trigger fix and its observation are pointers, not copies here.
+  const coverage = new Coverage.Tracker();
   // Debug/acceptance hook: a hardware run can read the coverage counters
   // from the console without relying on the HUD's rAF refresh.
-  window.openScannerCoverage = () => ({
-    visited: coverageVisited.size, seen: coverageSeen.size, underCoveredPoints: underCount,
-  });
-  function markVisited(x, y, z) {
-    const cell = coverageCell();
-    const r = 2; // ~2 cells of scanner proximity counts as visited
-    const cx = Math.round(x / cell), cy = Math.round(y / cell), cz = Math.round(z / cell);
-    for (let i = -r; i <= r; i++) {
-      for (let j = -r; j <= r; j++) {
-        for (let k = -r; k <= r; k++) {
-          coverageVisited.add((cx + i) + "," + (cy + j) + "," + (cz + k));
-        }
-      }
-    }
-  }
+  window.openScannerCoverage = () => coverage.counters();
 
   // Driven by the server's status messages (see handleStatus below), not
   // read locally: "zoom" here means the scanner's own field of view
@@ -268,7 +243,7 @@
       const poseFrame = FrameProtocol.decodePose(buf);
       if (poseFrame) {
         scannerPose = poseFrame.translation;
-        markVisited(scannerPose[0], scannerPose[1], scannerPose[2]);
+        coverage.observePose(scannerPose[0], scannerPose[1], scannerPose[2], viewRadius);
         if (cameraMode === "follow") viewCenter = scannerPose.slice();
         return;
       }
@@ -297,21 +272,8 @@
       lastFrameId = frameId;
       framesReceived++;
 
-      // Coverage: mark every point's voxel as seen; points in unseen
-      // (under-covered) voxels go to the red overlay, capped for the wire.
-      const cell = coverageCell();
-      const under = [];
-      for (let i = 0; i < count; i++) {
-        const x = frame.positions[i * 3], y = frame.positions[i * 3 + 1], z = frame.positions[i * 3 + 2];
-        const key = voxelKey(x, y, z, cell);
-        coverageSeen.add(key);
-        if (!coverageVisited.has(key) && under.length < kUnderCoveredBudget) {
-          under.push(x, y, z);
-        }
-      }
-      underCount = under.length / 3;
-      underPositions = new Float32Array(under);
-      renderer.uploadOverlay(underPositions);
+      coverage.observe(frame.positions, count, viewRadius);
+      renderer.uploadOverlay(coverage.underPositions);
 
       // Row #142: age at receipt = server clock now - the frame's t_capture;
       // the render delay is added when draw() actually renders it. t_capture
@@ -456,7 +418,7 @@
     const proj = perspective(fovRad(), aspect, near, far);
     const view = translation(-viewCenter[0], -viewCenter[1], -viewCenter[2] - viewDistance);
     const matrix = multiply(proj, view);
-    renderer.draw(matrix, brightness, pointCount, underCount);
+    renderer.draw(matrix, brightness, pointCount, coverage.overlayPointCount());
     // Row #142: the frame just went to the GPU — that is its render time.
     if (pendingAge !== null) {
       frameAge.noteRendered(pendingAge.ageMs, pendingAge.receiptPerfMs, performance.now());
@@ -486,11 +448,9 @@
   }
 
   function coverageText() {
-    if (coverageSeen.size === 0) return "--";
-    let visited = 0;
-    for (const key of coverageSeen) if (coverageVisited.has(key)) visited++;
-    const pct = (100 * visited) / coverageSeen.size;
-    return pct.toFixed(0) + "% covered, " + underCount + " under-covered pts";
+    if (coverage.seen.size === 0) return "--";
+    return coverage.percentCovered().toFixed(0) + "% covered, " +
+      coverage.underCount + " under-covered pts";
   }
 
   // Row #142: the rolling-line ceiling. Scale to the worst recent age so the
