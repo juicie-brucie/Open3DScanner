@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="720" viewBox="0 0 940 720">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="92" y="32" font-family="Helvetica,Arial,sans-serif" font-size="18" fill="#111111">Confidence retention vs random retention</text>
+<text x="92" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555555">the synthetic plane scene - plane n=(0,0,1) d=0 - the local planarity residual (k=16)</text>
+<line x1="92" y1="338.00" x2="916" y2="338.00" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="342.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">4.17e-05</text>
+<line x1="92" y1="275.50" x2="916" y2="275.50" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="279.50" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">0.000137</text>
+<line x1="92" y1="213.00" x2="916" y2="213.00" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="217.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">0.00045</text>
+<line x1="92" y1="150.50" x2="916" y2="150.50" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="154.50" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">0.00148</text>
+<line x1="92" y1="88.00" x2="916" y2="88.00" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="92.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">0.00486</text>
+<line x1="92.00" y1="338.00" x2="92.00" y2="342.00" stroke="#999999" stroke-width="1"/>
+<text x="92.00" y="356.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.00</text>
+<line x1="256.80" y1="338.00" x2="256.80" y2="342.00" stroke="#999999" stroke-width="1"/>
+<text x="256.80" y="356.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.20</text>
+<line x1="421.60" y1="338.00" x2="421.60" y2="342.00" stroke="#999999" stroke-width="1"/>
+<text x="421.60" y="356.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.40</text>
+<line x1="586.40" y1="338.00" x2="586.40" y2="342.00" stroke="#999999" stroke-width="1"/>
+<text x="586.40" y="356.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.60</text>
+<line x1="751.20" y1="338.00" x2="751.20" y2="342.00" stroke="#999999" stroke-width="1"/>
+<text x="751.20" y="356.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.80</text>
+<line x1="916.00" y1="338.00" x2="916.00" y2="342.00" stroke="#999999" stroke-width="1"/>
+<text x="916.00" y="356.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">1.00</text>
+<rect x="92" y="88" width="824" height="250" fill="none" stroke="#333333" stroke-width="1"/>
+<text x="92" y="72" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111111">RMSE (m, log)</text>
+<text x="916" y="372" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555555" text-anchor="end">retained fraction</text>
+<polygon points="916.00,158.93 876.86,158.80 837.72,158.76 798.58,158.69 759.44,158.66 720.30,158.56 681.16,158.67 642.02,158.61 602.88,158.47 563.74,158.75 524.60,158.38 485.46,158.56 446.32,158.33 407.18,158.52 368.04,158.13 328.90,157.71 289.76,157.90 250.62,157.72 211.48,157.59 172.34,157.71 133.20,157.14 133.20,161.42 172.34,161.27 211.48,160.37 250.62,160.05 289.76,160.15 328.90,159.91 368.04,159.86 407.18,159.51 446.32,159.55 485.46,159.50 524.60,159.35 563.74,159.34 602.88,159.37 642.02,159.14 681.16,159.40 720.30,159.37 759.44,159.20 798.58,159.20 837.72,159.09 876.86,159.04 916.00,158.93 " fill="#d1495b" fill-opacity="0.16" stroke="none"/>
+<polyline points="916.00,158.93 876.86,158.92 837.72,158.92 798.58,158.94 759.44,158.93 720.30,158.97 681.16,159.03 642.02,158.87 602.88,158.91 563.74,159.05 524.60,158.86 485.46,159.03 446.32,158.94 407.18,159.01 368.04,158.98 328.90,158.80 289.76,159.01 250.62,158.87 211.48,158.96 172.34,159.46 133.20,159.24 " fill="none" stroke="#d1495b" stroke-width="2.2" stroke-dasharray="6,4"/>
+<polyline points="916.00,158.93 876.86,165.94 837.72,173.88 798.58,184.16 759.44,199.85 720.30,234.77 681.16,271.98 642.02,273.90 602.88,275.52 563.74,277.21 524.60,278.68 485.46,280.13 446.32,281.45 407.18,282.82 368.04,284.45 328.90,286.17 289.76,288.18 250.62,289.77 211.48,291.89 172.34,295.47 133.20,301.58 " fill="none" stroke="#2e6f9e" stroke-width="2.2"/>
+<line x1="92" y1="662.00" x2="916" y2="662.00" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="666.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">4.17e-05</text>
+<line x1="92" y1="599.50" x2="916" y2="599.50" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="603.50" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">0.000137</text>
+<line x1="92" y1="537.00" x2="916" y2="537.00" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="541.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">0.00045</text>
+<line x1="92" y1="474.50" x2="916" y2="474.50" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="478.50" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">0.00148</text>
+<line x1="92" y1="412.00" x2="916" y2="412.00" stroke="#dddddd" stroke-width="1"/>
+<text x="84" y="416.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="end">0.00486</text>
+<line x1="92.00" y1="662.00" x2="92.00" y2="666.00" stroke="#999999" stroke-width="1"/>
+<text x="92.00" y="680.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.00</text>
+<line x1="256.80" y1="662.00" x2="256.80" y2="666.00" stroke="#999999" stroke-width="1"/>
+<text x="256.80" y="680.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.20</text>
+<line x1="421.60" y1="662.00" x2="421.60" y2="666.00" stroke="#999999" stroke-width="1"/>
+<text x="421.60" y="680.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.40</text>
+<line x1="586.40" y1="662.00" x2="586.40" y2="666.00" stroke="#999999" stroke-width="1"/>
+<text x="586.40" y="680.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.60</text>
+<line x1="751.20" y1="662.00" x2="751.20" y2="666.00" stroke="#999999" stroke-width="1"/>
+<text x="751.20" y="680.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">0.80</text>
+<line x1="916.00" y1="662.00" x2="916.00" y2="666.00" stroke="#999999" stroke-width="1"/>
+<text x="916.00" y="680.00" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#555555" text-anchor="middle">1.00</text>
+<rect x="92" y="412" width="824" height="250" fill="none" stroke="#333333" stroke-width="1"/>
+<text x="92" y="396" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111111">p95 distance (m, log)</text>
+<text x="916" y="696" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555555" text-anchor="end">retained fraction</text>
+<polyline points="916.00,433.49 876.86,433.49 837.72,433.45 798.58,433.49 759.44,433.52 720.30,433.55 681.16,433.56 642.02,433.41 602.88,433.40 563.74,433.53 524.60,433.48 485.46,433.57 446.32,433.43 407.18,433.55 368.04,433.41 328.90,433.39 289.76,433.69 250.62,433.59 211.48,433.30 172.34,433.90 133.20,434.11 " fill="none" stroke="#d1495b" stroke-width="2.2" stroke-dasharray="6,4"/>
+<polyline points="916.00,433.49 876.86,439.94 837.72,447.69 798.58,460.21 759.44,495.34 720.30,555.22 681.16,561.03 642.02,562.81 602.88,564.41 563.74,565.83 524.60,566.92 485.46,568.13 446.32,569.29 407.18,570.34 368.04,572.11 328.90,573.88 289.76,576.29 250.62,578.04 211.48,579.98 172.34,584.16 133.20,590.93 " fill="none" stroke="#2e6f9e" stroke-width="2.2"/>
+<line x1="92" y1="704" x2="132" y2="704" stroke="#2e6f9e" stroke-width="2.2"/>
+<text x="142" y="708" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#111111">confidence retention</text>
+<line x1="322" y1="704" x2="362" y2="704" stroke="#d1495b" stroke-width="2.2" stroke-dasharray="6,4"/>
+<text x="372" y="708" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#111111">random retention (mean</text>
+<rect x="562" y="696" width="18" height="10" fill="#d1495b" fill-opacity="0.16"/>
+<text x="588" y="708" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#111111">random retention (+/- 1 s.d.)</text>
+</svg>
