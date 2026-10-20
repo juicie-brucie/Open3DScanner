@@ -43,7 +43,9 @@ path; the data is borrowed from the SDK; the product keeps almost nothing. `engi
 worker, WS broadcast, mesh bridge); the two large files are `tools/scan_server/main.cpp` (**1,839 lines** on
 `efe9253`; the board row's "1,799" predates rows #139/#141) and `tools/raptor_client/main.cpp` (**2,526 lines**; the
 row's "1,992" predates row #140's capture work). The tick is **not** CPU-bound: at 0 clients the whole tick costs
-**195 µs of CPU** — 0.53 % of its own 37.0 ms period ([#147 §3]).
+**195 µs of CPU** — 0.53 % of its own 37.0 ms period ([#147 §3]) — and it is **not rate-starved either**: the
+device's fused cloud arrives at **24.0 Hz** while we publish at **8.7 Hz** ([#151]), so there is a **2.8× publish
+headroom** today, and it is our own 100 ms pace that spends it (§3).
 
 ---
 
@@ -63,7 +65,8 @@ clients, and `__sendto` is **57.7 % of the tick's CPU** at 8 clients ([#147 §3,
 is not average: **one stalled client can hold the tick for the full 100 ms timeout**, because the send is inline and
 blocking — and because the sends are **sequential** under one mutex, N stalled clients can hold the tick for N × 100 ms.
 So the fan-out's scaling limit is the **stall policy**, not the throughput: at 80 clients the average send is
-2.96 ms/tick ([derived] 80 × 37 µs) — 3 % of the budget — while the tail is still 100 ms *per stalled client*.
+2.96 ms/tick ([derived] 80 × 37 µs) — 3 % of the current 115 ms tick, 7 % of a 44.6 ms one — while the tail is still
+100 ms *per stalled client*.
 
 ### L2 — The data we want is borrowed from the vendor and released at the end of the tick
 
@@ -95,7 +98,7 @@ budget constant is `main.cpp:1204`. So the limit here is a *product* limit (what
 machine limit. And because the record carries the same decimated buffer, the 1 GiB record cap is **4,473 frames ≈
 8.6 minutes** of a scan ([#136 stage 5]) — the archive is a wire capture, not a save.
 
-### L4 — The pacing is the platform's, and it is the first ceiling
+### L4 — The pacing is a decision and a platform fact, not the code limit
 
 **Evidence.** The live tick waits `CFRunLoopRunInMode(default, 0.1, false)` (`main.cpp:1115`). A zero-work control
 measures what that wait actually costs on this machine: **103.19 / 103.75 / 103.75 ms** for a 100 ms request
@@ -103,11 +106,12 @@ measures what that wait actually costs on this machine: **103.19 / 103.75 / 103.
 that ceiling. The wait is **99.4 % of the tick** ([#141]'s own instrument, as reported in [#147 §9]); the untimed
 residual is 0.01 ms ([#147 §3]). The source is **24.0 Hz** ([#151]).
 
-**What it costs at scale.** Under the reading "10× the scan rate", the cadence binds **before any code**: the
-platform's floor is 9.68 Hz against a 24 Hz source, and no encoder or broadcast work moves it. Two further measured
-floors: a 41 ms request (what 24 Hz asks for) realises **44.62 ms → 22.4 Hz**, and a 20 ms request (what 50 Hz asks
-for) realises **24.29 ms → 41.2 Hz** ([#147 §5, §14]) — so 24 Hz is reachable *just*, and 50 Hz is not reachable on
-this pacing mechanism at all.
+**What it costs at scale.** The wait is where the tick's time goes, and it is *ours to set*: our 100 ms pace buys
+9.68 Hz, and the source can feed **24.0 Hz** ([#151]) — a **2.8× headroom**, of which **2.57× is reachable by
+changing the pace alone** (a 41 ms wait realises 44.62 ms → 22.4 Hz; a 20 ms wait realises 24.29 ms → 41.2 Hz,
+[#147 §5, §14]). No encoder or broadcast work moves any of that: at 22.4 Hz the tick's work would be 4.4 ms of
+CPU per second ([derived]). So the cadence is **#113's decision** plus the platform's floor — it is *not* the code
+limit the other readings hit, and the 50 fps the vendor advertises is the raw frame rate, not the fused cloud's.
 
 ### L5 — The two monoliths, and where their seams are
 
@@ -129,8 +133,26 @@ eventually a writer thread), and persistence (the recorder).
 
 ## 3. What "10× capacity" actually means here
 
-"10×" is not one thing, and the limit that binds **depends entirely on which one is meant**. The four readings, in
-the order in which they bind:
+"10×" is not one thing, and the limit that binds **depends entirely on which one is meant**. But first, the number
+that reframes all of them.
+
+### The headroom we already have
+
+| | rate | where it comes from |
+| --- | --- | --- |
+| the device's **fused cloud** (what we could publish) | **24.0 Hz** | 8,119 device frames over 338.6 s in the #112 log ([#151]) |
+| **our publish rate** | **8.7 Hz** | our 100 ms tick ([#151]) |
+| the ceiling of **our current pace** | **9.68 Hz** | the run-loop floor: `CFRunLoopRunInMode(0.1)` realises 103.19–103.75 ms ([#147 §5]) |
+| what the **pacing mechanism** can do when asked for the source's rate | **22.4 Hz** | a 41 ms wait realises 44.62 ms ([#147 §5]) |
+
+So the publish headroom is **24.0 / 8.7 = 2.8×**, and **2.57× of it is reachable by changing the pace alone**
+(8.7 → 22.4 Hz) — the remaining 7 % is the platform's timer. The 8–9 Hz we publish is **our pacing, not the
+source** ([#151]), and the vendor's advertised **50 fps** is the *raw* frame rate: the fused cloud is 24 Hz, and
+whether 24 Hz is itself the fused rate rather than the raw one is [#151]'s open question.
+
+**The tick cadence is therefore not a code limit.** At 22.4 Hz the tick's work would be 0.195 ms × 22.4 = **4.4 ms
+of CPU per second** — 0.44 % of one core ([derived] from [#147 §3]). The cadence is a **decision** (#113's) plus a
+**platform fact**; the code limit is elsewhere, and the readings below say where.
 
 ### A. 10× the points delivered to the UI (20,000 → 200,000 per frame)
 
@@ -138,18 +160,20 @@ the order in which they bind:
   per tick;
 * the broadcast per client: 2.4 MB per frame at the measured ~748 MB/s = **3.2 ms** per client, so **25.6 ms** at
   8 clients ([derived] from [#147 §6]);
-* the tick's work ≈ **36.3 ms** against the live tick's 103.2–103.8 ms budget ([#147 §5]) — it fits at 8.7 Hz, but the
-  fan-out is ~71 % of it;
-* at 24 Hz (a 44.62 ms realised budget, [#147 §5]) it **does not fit**.
+* the tick's work ≈ **36.3 ms** — against the current pace's 115 ms budget that fits, but against the source's rate
+  (a 44.62 ms realised budget, [#147 §5]) it is **81 % of the tick at 8 clients**, and 31 % at one client.
 
-**The binding limit is the fan-out**, and the fixes are S2 + S3 — not a faster machine.
+**The binding limit is the fan-out** — the server's synchronous broadcast — and the fixes are S2 + S3, not a faster
+machine. The source and the consumer are not what binds (see the consumer subsection below).
 
 ### B. 10× the clients (8 → 80)
 
-* the average send: 2.96 ms/tick ([derived] 80 × 37 µs) — 3 % of the budget;
-* the tail: still **100 ms**, because a stalled client blocks the tick inline.
+* the average send: 2.96 ms/tick ([derived] 80 × 37 µs) — 3 % of the current 115 ms tick, 7 % of a 44.6 ms one;
+* the tail: **100 ms per stalled client**, and the sends are sequential under one mutex
+  (`ws_broadcast_server.cpp:503-517`), so a stalled client is **2.2× the whole 44.6 ms tick** at the source's rate.
 
-**The binding limit is the stall policy**, not throughput. Only S3 changes it.
+**The binding limit is the stall policy, not throughput** — and it binds at *one* stalled client, not eighty. Only
+S3 changes it.
 
 ### C. 10× the capture size (1.37M → 13.7M points per scan)
 
@@ -160,14 +184,21 @@ the order in which they bind:
 **The binding limit is disk** — and it binds *first*, because the vendor writes that file whether or not we ask it
 to. #149's "bounded by disk" is the constraint, not a detail.
 
-### D. 10× the scan rate (8.7 → 87 Hz)
+### D. Publish the source's full rate (8.7 → 24 Hz)
 
-* the platform's floor for the current pacing is **9.68 Hz** ([#147 §5]) — a factor of 9 short, *before any code*;
-* the synthetic path's own pace is capped at 22.4 Hz for a 24 Hz request and 41.2 Hz for a 50 Hz request
-  ([#147 §5, §14]).
+This is the reading the brief used to call "10× the scan rate", and it needs restating: **the source cannot be
+published 10× faster than it arrives.** The meaningful version is *publish everything the source produces*, and
+against that:
 
-**The binding limit is the tick cadence, and it binds before any of the code.** The only lever is the pacing
-*mechanism* (a deadline-based timer instead of a fixed sleep) — which is #113's decision, not a coding detail.
+* the cadence is **not** the limit — the mechanism reaches **22.4 Hz** when asked ([#147 §5]);
+* the tick's work at 22.4 Hz is 4.4 ms/s of CPU ([derived]) — 0.44 % of a core;
+* the broadcast at 8 clients is 25.6 ms of a 44.6 ms tick (57 %) — the same 57.7 % share the profile measured
+  ([#147 §6]);
+* one stalled client (100 ms) exceeds the whole tick.
+
+**The binding limit is the synchronous broadcast, then the stall** — S2 and S3 — and the cadence is a decision
+(#113) rather than a constraint. The **50 fps** the vendor advertises is not a target for this pipeline: it is the
+raw frame rate, and the fused cloud we publish is 24 Hz.
 
 ### E. 10× the scans per day
 
@@ -176,12 +207,35 @@ to. #149's "bounded by disk" is the constraint, not a detail.
 
 **The binding limit is the teardown and the disk**, not the tick.
 
+### The consumer: where it binds, and where it does not
+
+The browser is worth separating carefully, because its two costs sit in different places:
+
+* **The live path is lossy by design and absorbs a rate increase as drops, not as lag.** The UI keeps the latest
+  frame and *drops* a live frame when the renderer is behind (`ui/app.js:293`), and it holds **one** decoded
+  20,000-point cloud (240 KB) that is replaced, not accumulated (`ui/app.js:300`). In the #112 conditions-4–6 run
+  the HUD's `data` fps (5.8–10.0) tracked the **server's** publish rate (6.1–8.5/s) while `render` ran at 59.5–60.1 fps
+  (`tests/results/2026-10-19-plan112-conditions-4-6-hud-capture.md:39-46`) — the consumer
+  was not the limit even at 8.7 Hz, and at 24 Hz it would still be 2.5× under the render loop (60 / 24). So the consumer does
+  **not** bind the publish rate; it caps the *useful* rate at the renderer's, and the cost of exceeding it is
+  dropped frames.
+* **The teardown path is where the page's memory goes**: the full-detail chunks are accumulated into one
+  `Float32Array` of 6,323,235 × 3 floats = **75.9 MB** (`ui/app.js:254`, [#136 stage 7]) — a **one-shot** cost at
+  teardown, bounded by the mesh's size, not by the publish rate.
+
+**So the ordering of limits, across the readings: the fan-out and its stall (server side) → the source's own 24.0 Hz
+ceiling (and the 50 fps raw rate beyond it) → the browser's render loop and the teardown's 75.9 MB (consumer side) →
+disk (the capture size) → the teardown (scans/day).** The tick cadence is not on that list as a *code* constraint:
+it is the one lever that is currently set to 100 ms, and moving it is #113's decision, not an optimisation.
+
 ### The plain statement
 
-**The pipeline is not CPU-bound today** — the tick spends 0.53 % of itself on work ([#147 §3]) — so "10× capacity"
-mostly does **not** need faster code. It needs the seams that let the **fan-out**, the **data volume** and the
-**cadence** move independently. And under the one reading where 10× means "10× the scan rate", **the tick cadence
-binds before any code**: the platform's own floor is 9.68 Hz against a 24.0 Hz source ([#147 §5], [#151]).
+**The pipeline is not CPU-bound today** — the tick spends 0.53 % of itself on work ([#147 §3]) — and it is **not
+rate-starved either**: the source can feed 24.0 Hz and we publish 8.7 Hz ([#151]), a 2.8× headroom that is mostly a
+pace change. So "10× capacity" mostly does **not** need faster code. It needs the seams that let the **fan-out**
+and the **data volume** move independently of the **cadence** — and, under every reading, the first thing that binds
+is the **synchronous broadcast** (57.7 % of the tick's CPU at 8 clients, with a 100 ms stall inside the tick
+thread), not the source, not the consumer, and not the cadence.
 
 ---
 
@@ -217,7 +271,9 @@ risks, and what must **not** change.
 * **What it buys.** The network leaves the tick's critical path: the tick's cost becomes **O(1) in clients** instead
   of O(N), the 100 ms stall stops being a tick event, and the drop policy becomes explicit rather than a side
   effect of a failed send ([#147 §6]; [#136]'s note that decoupling the fetch from the broadcast "would let the tick
-  carry the full cloud without touching the 100 ms floor").
+  carry the full cloud without touching the 100 ms floor"). At the source's rate a 44.6 ms tick is the unit, and
+  **one stalled client (100 ms) is 2.2× the whole tick** — so what breaks the cadence is a slow client, not the
+  rate.
 * **What it risks.** Three things, and the first is a real constraint the map does not show:
   1. **The traffic is not uniform.** The teardown's full-detail mesh chunks (`main.cpp:1374-1392`, 317 chunks of
      20,000 vertices) must arrive **in order and complete** — the page accumulates them between `full_mesh_start` and
@@ -312,7 +368,8 @@ seam.)
   (`docs/recomp/ARCHITECTURE.md`, "The walls").
 * **The tick's measured pacing** — the wait at `main.cpp:1115` and the 100 ms budget stay as they are. The steps
   above shrink the *work inside* the tick; **the cadence itself is #113's decision**, and the 9.68 Hz ceiling
-  ([#147 §5]) is a platform fact, not a bug to be optimised away.
+  ([#147 §5]) is a platform fact, not a bug to be optimised away. The **2.8× publish headroom** that changing the
+  pace would unlock ([#151], §3) is #113's to take, not this note's to spend.
 
 ---
 
@@ -323,9 +380,10 @@ seam.)
 * **The archive format and the disk budget** (#149): with the operator, in step 3.
 * **Whether the 20,000-point live budget stays.** [#136]'s #136c says it should — the UI needs a bounded frame — and
   §3/A is consistent with that: "10× points" needs a **different stream**, not a bigger budget on the same one.
-* **The cadence** (#113): the 9.68 Hz ceiling against a 24.0 Hz source ([#151]) is the number that has to go into
-  that row, together with #151's load test at 10 / 24 / 50 Hz — whose own constraint is the platform's wait floor
-  ([#147 §14]).
+* **The cadence** (#113): what that row needs is the **2.8× publish headroom** (a 24.0 Hz source against 8.7 Hz
+  published, [#151]), the **22.4 Hz** the pacing mechanism can reach when asked ([#147 §5]), and the fact that the
+  9.68 Hz ceiling is the ceiling of our *current pace*, not of the hardware — together with #151's load test at
+  10 / 24 / 50 Hz, whose own constraint is the platform's wait floor ([#147 §14]).
 * **The per-stage budgets** (#152) and the end-to-end frame benchmark (#156), and the full stage map with costs
   (#155) — this note is the *structure* argument those rows instantiate; the numbers in §3 are the inputs, not the
   budgets.
