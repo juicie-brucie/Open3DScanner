@@ -21,11 +21,17 @@ what lives where.)
 | **[#141]** | the tick instrument: seven timed segments plus the overshoot and the residual | `tools/scan_server/perf_window.h:27-30`, `:99-100`, `:143-146` |
 | **[#151]** | the board's rate finding: the source is **24.0 Hz**, our publish is **8.7 Hz** | `docs/recomp/PLAN.md`, row #151's note |
 | **[SPEC]** | the vendor's advertised rates and what we have measured of them | `docs/recomp/SPEC-TARGETS.md` |
+| **[STAGES]** | the stage map: every stage end-to-end, **with time in it** — the measured cost, the budget and the latency contribution per stage, and the future logic stages as placeholders | `docs/recomp/STAGES.md` |
 
 **Citation convention.** `[#147 §7]` is §7 of the baseline log; `[#136 stage 3]` is the stage-3 row of the map's
-table; `[#141 perf_window.h:27-30]` is the instrument; `main.cpp:1295` is `tools/scan_server/main.cpp` line 1264 **on
+table; `[#141 perf_window.h:27-30]` is the instrument; `main.cpp:1295` is `tools/scan_server/main.cpp` line 1295 **on
 `origin/main` = `5656a6b`**, the commit this note was written against; `[derived]` means arithmetic on cited numbers,
-with the arithmetic shown inline.
+with the arithmetic shown inline. **A line number is a convenience, not the citation: the anchor (the function or the
+statement) is.** Main moves, line numbers rot, and every citation here names the code it means as well.
+
+**[STAGES]** is this note's companion table: every stage end-to-end with its measured cost, its budget and its
+latency contribution — and the cells that say "not measured", which are the places this note's argument had to reason
+without a number.
 
 **The lesson this note is written to.** Row #134's audit found that the "tick improvement" was an instrument
 mismatch — two different instruments, compared as if they were one ([#134] `docs/recomp/log/2026-10-19-row-134-tick-audit.md`).
@@ -170,7 +176,8 @@ frame budget**, and the measured numbers answer it.
 
 **The `post` segment's cost is linear in the point count, and the live measurement says what a point costs.** The
 per-window p50s in #112's raw log run 0.04 ms at 862 points, 0.09 at 2,103, 0.19 at 4,801, 0.35 at 9,527 and 0.68 at
-17,943 — a fit of **37.5 ns per point** [derived], i.e. **0.75 ms at the 20,000-point budget**. The run's *mean*
+17,943 — the slope between those two end points is **37.5 ns per point** [derived: (0.68 − 0.04) ms over
+(17,943 − 862) points], i.e. **0.75 ms at the 20,000-point budget**. The run's *mean*
 (1.18 ms over a mean of 16,494 points) is higher than that because of a heavy right tail (max 5.05 ms).
 
 **One honest disagreement between the two datasets, stated because it changes which number to budget with.** The
