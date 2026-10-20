@@ -1,0 +1,114 @@
+{
+  "contract": "docs/recomp/PERFORMANCE-CONTRACT.md",
+  "budget_version": 1,
+  "reference": {
+    "measured_machine": "Apple M1, 8 cores / 17 GB (macOS 27.0.1, arm64)",
+    "measured_source": "docs/recomp/log/2026-10-19-row-147-runtime-baseline.md",
+    "measured_commit": "f20fc46",
+    "lower_end_target": "a 4-core Intel machine, ~3x slower than the M1 on this workload",
+    "lower_end_status": "ASSUMED \u2014 the operator has not named the target machine; every budget below is labelled with the factor it would need re-basing",
+    "lower_end_factor": 3.0,
+    "factor_note": "the factor scales CPU-time budgets only; the data-volume budgets (bytes/frame, MB/s) are the wire volume and are machine-independent"
+  },
+  "allowances": {
+    "ingest_us_per_frame": 8000,
+    "ingest_us_ours": 2000,
+    "ingest_us_vendor_calls": 6000,
+    "ingest_note": "per CONSUMED frame: our post-processing + encode (the live post segment, measured 1.18-1.68 ms in #112) plus the two untimed vendor calls' allowance (~5.6-6.4 ms, from #134's 9.6 ms residual less the platform's wait overshoot, #147 section 9)"
+  },
+  "rates": [
+    24,
+    50,
+    60
+  ],
+  "budgets": [
+    {
+      "metric": "platform.wait_ms.41",
+      "stage": "platform",
+      "max": 47.0,
+      "factor": false,
+      "unit": "ms",
+      "derived_from": "#147 section 5 measured 44.62 ms for a 41 ms request (zero work in the loop); this is the platform's own timer, so it caps the rate at ~22 Hz whatever the code does"
+    },
+    {
+      "metric": "platform.wait_ms.20",
+      "stage": "platform",
+      "max": 26.5,
+      "factor": false,
+      "unit": "ms",
+      "derived_from": "#147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a 50 Hz pace"
+    },
+    {
+      "metric": "platform.wait_ms.16",
+      "stage": "platform",
+      "max": 21.5,
+      "factor": false,
+      "unit": "ms",
+      "derived_from": "the same control at the 60 Hz pace (16 ms request); measured by this harness, not in #147"
+    },
+    {
+      "metric": "encode.bytes.live",
+      "stage": "encode",
+      "max": 240036,
+      "factor": false,
+      "unit": "bytes",
+      "derived_from": "#136's live V1 frame: 20,000 points (kLiveBroadcastPointBudget) = 240,036 B; a change means a different point budget or a format change"
+    },
+    {
+      "metric": "encode.us.live",
+      "stage": "encode",
+      "max": 1200.0,
+      "factor": true,
+      "unit": "us/frame",
+      "derived_from": "the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode + encode; the encoder alone must stay under 1.2 ms"
+    },
+    {
+      "metric": "encode.us.2304",
+      "stage": "encode",
+      "max": 300.0,
+      "factor": true,
+      "unit": "us/frame",
+      "derived_from": "#147 section 7: the encoder is 63% of the tick's CPU with no client, i.e. ~123 us of the 195 us tick, for the 2,304-point synthetic frame"
+    },
+    {
+      "metric": "bcast.us_per_client.8",
+      "stage": "broadcast",
+      "max": 60.0,
+      "factor": true,
+      "unit": "us/client/frame",
+      "derived_from": "#147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (the tick's own condition, where the client drains in the background); the harness measures the same fan-out with a 4 MB receive buffer on the client, so its number is the less contended one"
+    },
+    {
+      "metric": "bcast.us.8",
+      "stage": "broadcast",
+      "max": 400.0,
+      "factor": true,
+      "unit": "us/frame",
+      "derived_from": "#147 section 6: the bcast segment was 0.29-0.31 ms per tick at 8 clients for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame"
+    },
+    {
+      "metric": "tick.post_ms",
+      "stage": "ingest",
+      "max": 0.4,
+      "factor": true,
+      "unit": "ms/frame",
+      "derived_from": "#147 section 3 measured the synthetic tick's post segment at 0.12-0.20 ms p50 (2,304 points, copy + rotate + encode)"
+    },
+    {
+      "metric": "tick.bcast_ms",
+      "stage": "broadcast",
+      "max": 0.25,
+      "factor": true,
+      "unit": "ms/frame",
+      "derived_from": "#147 section 3 measured the bcast segment at 0.10 ms p50 with one client"
+    },
+    {
+      "metric": "server.live_bytes",
+      "stage": "memory",
+      "max": 131072,
+      "factor": false,
+      "unit": "bytes",
+      "derived_from": "#147 section 3.2 measured the live allocation footprint flat at 86-87 KB over 30 s (the tick allocates and frees every cycle); the harness reads the same malloc zone's ALLOCATED column from the running synthetic server"
+    }
+  ]
+}
