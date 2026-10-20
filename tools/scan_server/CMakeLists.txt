@@ -1,4 +1,5 @@
 add_executable(scan_server main.cpp)
+# probe
 target_link_libraries(scan_server PRIVATE openscanner_engine)
 
 # Hardware-free smoke test for the tracking-verdict name rendering (row #91).
@@ -31,6 +32,13 @@ if(NODE_EXECUTABLE)
              COMMAND ${NODE_EXECUTABLE} ${CMAKE_SOURCE_DIR}/ui/frame_age_test.js
                      $<TARGET_FILE:scan_server>)
 endif()
+
+# Hardware-free selftest for the runtime plane-removal command (row #158):
+# the command, the transition log and the WebSocket round trip, with a mock
+# vendor in place of the SDK.
+add_executable(plane_toggle_test plane_toggle_test.cpp)
+target_link_libraries(plane_toggle_test PRIVATE openscanner_engine)
+add_test(NAME plane_toggle_test COMMAND plane_toggle_test)
 
 if(APPLE)
     find_library(CORE_FOUNDATION_LIBRARY CoreFoundation REQUIRED)
