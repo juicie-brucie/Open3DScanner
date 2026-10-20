@@ -1,0 +1,8 @@
+# raw: #151 addendum — content-change validation + pacing primitive
+# synthetic cloud change (validates the tracker):
+[perf] cloud window 5.0s clock=steady_clock ticks=209 changes=208 change_rate=41.6/s run_ticks p50=1 p95=1 max=1
+# pacing mode comparison (50/60 Hz, 20k points, 1 client):
+50 sleep_for  realized 41.7/s wait 22.96 tick 24.1
+50 deadline   realized 41.2/s wait 23.77 tick 24.3
+60 sleep_for  realized 51.4/s wait 18.77 tick 19.4
+60 deadline   realized 51.5/s wait 18.42 tick 19.3

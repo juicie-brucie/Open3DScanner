@@ -61,3 +61,66 @@ format 9 — the raw sensor rate is not visible through `FRAME_READY`. So the
   measured; the WS probe stands in for the consumer.
 
 Raw output: `2026-10-20-plan151-publish-rate.log`.
+
+---
+
+# Addendum — source cadence by content, per-frame budget, pacing primitive
+
+## 1. Does the cloud content change at the delivery rate?
+
+Instrumentation added: every live tick hashes the cloud (first 256 points + the
+point count, FNV-1a) and reports a `[perf] cloud` line every 5 s:
+
+```
+[perf] cloud window 5.0s clock=steady_clock ticks=209 changes=208 change_rate=41.6/s run_ticks p50=1 p95=1 max=1
+```
+
+Device-free validation (synthetic, where the cloud rotates every tick) gives
+`change_rate = 41.6/s` at a 50 Hz request and `run_ticks p50=1`: the tracker sees
+every content change and the run-length logic works. **The vendor's own content
+cadence is not measurable device-free** — the live loop now emits the same line,
+so the operator's run will answer whether the ~24 Hz is a content update or a
+delivery rate, and whether the advertised 50 fps ever reaches us. Until then the
+24 Hz figure is the *listener's frame count* (#112), not a measured content rate.
+
+## 2. Ingest per source frame vs the budget
+
+Publish-side ingest at 20,000 points (post + encode + broadcast, p50):
+
+| source rate | budget/frame | publish-side ingest | remaining |
+| --- | --- | --- | --- |
+| 24 Hz | 41.7 ms | 0.84–1.06 ms (1 client); 1.06–1.70 ms (8) | **~40.0–40.9 ms** |
+| 50 Hz | 20.0 ms | 0.84–1.07 ms (1); 1.07–1.70 ms (8) | **~18.3–19.2 ms** |
+| 60 Hz | 16.7 ms | 0.84–0.97 ms (1) | **~15.7–15.8 ms** |
+
+That leaves substantial room for downstream near-real-time logic **on the
+publish side**. It is not the whole ingest: the vendor calls (getter, exposure
+re-assert, cloud release) are outside this device-free harness; #134/#136
+measured ~9.6 ms/tick outside the four segments, and #141 now splits
+`exposure`/`release` (merged) so the operator's live run can complete this
+column. If the vendor side is ~9.6 ms, the 60 Hz remainder shrinks to ~6 ms and
+the 24 Hz remainder to ~30 ms — still positive, but the vendor-side number is
+the one that decides it.
+
+## 3. Pacing primitive: `sleep_until` vs `sleep_for`
+
+`--synthetic-load` gained a `deadline` argument (absolute `sleep_until(next)`).
+Measured at 20,000 points, 1 client:
+
+| request | mode | realized | wait p50 | tick p50 |
+| --- | --- | --- | --- | --- |
+| 50 Hz | sleep_for | 41.7 /s | 22.96 ms | 24.1 ms |
+| 50 Hz | deadline | 41.2 /s | 23.77 ms | 24.3 ms |
+| 60 Hz | sleep_for | 51.4 /s | 18.77 ms | 19.4 ms |
+| 60 Hz | deadline | 51.5 /s | 18.42 ms | 19.3 ms |
+
+The deadline form removes the *accumulated* drift but **does not remove the
+wake latency**: at 60 Hz the wait still overshoots by ~1.75 ms (vs ~2.1 ms for
+`sleep_for`), and at 50 Hz the deadline case was no better at all (3.8 ms vs
+3.0 ms — run-to-run noise dominates there), so 60 Hz realizes **~51.5 Hz
+(86 %)** in both modes. The primitive
+change is therefore **necessary but not sufficient**: reaching 60 Hz needs a
+lower-latency wait (`mach_wait_until` or a tighter timer/thread priority), not
+just a smaller timeout or an absolute deadline.
+
+Raw output for this addendum: `2026-10-20-plan151-publish-rate-addendum.log`.
