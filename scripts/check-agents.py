@@ -43,11 +43,13 @@ What --sessions reports (row #109):
   * the live sessions are listed with their input-token count, flagged OVER
     above OPENSCANNER_TOKEN_THRESHOLD (default 1000000) — a session's context
     degrades with use, and the symptom is invisible until it speaks nonsense;
-  * LIVE means: the server still holds the session (/api/session/active) or it
-    was updated within OPENSCANNER_SESSION_LIVE_MINUTES (default 30). Only
-    live sessions are flagged for drift or for size; older sessions are
-    history (a session captures its model at creation, so old drift is
-    expected) and are counted, never flagged.
+  * LIVE means: the server still holds the session (/api/session/active) or the
+    session worked recently — `time.idle` is unset (it is running now) or
+    within OPENSCANNER_SESSION_LIVE_MINUTES (default 30). `time.idle` is the
+    work marker; `time.updated` is not (it also moves when a record is
+    touched without work). Only live sessions are flagged for drift or for
+    size; older sessions are history (a session captures its model at
+    creation, so old drift is expected) and are counted, never flagged.
 
 The threshold is a FLAG, not a failure: only a live model drift makes the
 check fail (exit 1), so a busy board does not report a failure for sessions
@@ -282,10 +284,15 @@ def split_live(sessions, active_ids, minutes, now_ms=None):
     """Split the sessions into (live, history).
 
     LIVE means: the server still holds the session (its id is in
-    `active_ids`) or it was updated within `minutes`. Everything else is
-    history: a session that ended long ago is not live work, and the model it
-    captured at creation is not drift to fix. An archived session is always
-    history.
+    `active_ids`), OR the session worked recently — `time.idle` is unset (it
+    is running now: it never went idle) or within `minutes` of now.
+
+    `time.idle` is the work marker; `time.updated` is NOT (it also moves when
+    a record is touched without work — a model switch, a title change), so a
+    session whose record was touched a minute ago but which has not worked for
+    hours is history, not live work. Everything else is history too: a
+    session that ended long ago is not live work, and the model it captured
+    at creation is not drift to fix. An archived session is always history.
 
     Pure — no I/O — so the selftest can drive it with fixtures.
     """
@@ -297,9 +304,11 @@ def split_live(sessions, active_ids, minutes, now_ms=None):
         if not isinstance(session, dict):
             continue
         sid = session.get("id")
-        updated = ((session.get("time") or {}).get("updated")) or 0
-        archived = session.get("archived") or ((session.get("time") or {}).get("archived"))
-        if not archived and (sid in active_ids or (updated and (now_ms - updated) <= window_ms)):
+        time_fields = session.get("time") or {}
+        idle = time_fields.get("idle") or 0
+        archived = session.get("archived") or time_fields.get("archived")
+        worked_recently = (not idle) or ((now_ms - idle) <= window_ms)
+        if not archived and (sid in active_ids or worked_recently):
             live.append(session)
         else:
             history.append(session)
@@ -405,7 +414,7 @@ def check_sessions(do_fix=False):
     threshold = token_threshold()
     minutes = live_minutes()
     live, history = split_live(sessions, active_session_ids(url, password), minutes)
-    log(f"sessions: {len(live)} live session(s) (server-active or updated in the last {minutes} min); "
+    log(f"sessions: {len(live)} live session(s) (the server holds it, or it worked in the last {minutes} min); "
         f"{len(history)} older")
 
     over = []
@@ -561,29 +570,30 @@ def selftest():
         # live: a real drift (its own model differs from the agent's)
         {"id": "ses_recon1", "agent": "openscanner/recon", "title": "recon-1",
          "model": {"id": "deepseek-v4.1-flash", "providerID": "opencode", "variant": "max"},
-         "time": {"updated": now_ms}},
+         "time": {"idle": now_ms - 60 * 1000, "updated": now_ms}},
         # live: the agent's model, nothing to report
         {"id": "ses_verify3", "agent": "openscanner/verifier", "title": "verify-3",
          "model": {"id": "qwen3.7-plus", "providerID": "opencode-go", "variant": "max"},
-         "time": {"updated": now_ms}},
+         "time": {"idle": now_ms - 60 * 1000, "updated": now_ms}},
         # live: no model of its own -> the agent's default, NOT drift
         {"id": "ses_default", "agent": "openscanner/verifier", "title": "verify-5",
-         "model": None, "time": {"updated": now_ms}},
+         "model": None, "time": {"idle": now_ms - 60 * 1000, "updated": now_ms}},
         # live: over the token threshold
         {"id": "ses_over", "agent": "openscanner/recon", "title": "recon-9",
          "model": {"id": "qwen3.8-max", "providerID": "opencode-go", "variant": "medium"},
-         "tokens": {"input": 5000000}, "time": {"updated": now_ms}},
-        # history: an old session whose model was captured at creation
+         "tokens": {"input": 5000000}, "time": {"idle": now_ms - 60 * 1000, "updated": now_ms}},
+        # history: its record was touched a minute ago, but it has not worked
+        # for an hour -> history, not live work
         {"id": "ses_history", "agent": "openscanner/verifier", "title": "old",
          "model": {"id": "stale", "providerID": "p", "variant": ""},
-         "time": {"updated": now_ms - 3600 * 1000}},
+         "time": {"idle": now_ms - 3600 * 1000, "updated": now_ms}},
         # not ours
         {"id": "ses_foreign", "agent": "some/other", "title": "unrelated",
          "model": {"id": "whatever", "providerID": "p", "variant": ""},
-         "time": {"updated": now_ms}},
+         "time": {"idle": now_ms - 60 * 1000, "updated": now_ms}},
         {"id": "ses_archived", "agent": "openscanner/recon", "title": "old",
          "model": {"id": "stale", "providerID": "p", "variant": ""},
-         "time": {"archived": 1, "updated": now_ms}},
+         "time": {"archived": 1, "idle": now_ms - 60 * 1000, "updated": now_ms}},
     ]
     drifted = [s["id"] for s, _ in model_mismatches(sessions, agents)]
     if drifted != ["ses_recon1", "ses_history"]:
@@ -606,7 +616,8 @@ def selftest():
         log("SELFTEST ok: a null record model renders as 'default (agent)'")
 
     # Row #109: the live/history split. The active map wins; otherwise the
-    # recency window decides.
+    # recency window decides — and the work marker is `time.idle`, not
+    # `time.updated` (a record touched without work is not live work).
     live, history = split_live(sessions, {"ses_verify3"}, 30, now_ms=now_ms)
     live_ids = [s["id"] for s in live]
     if live_ids != ["ses_recon1", "ses_verify3", "ses_default", "ses_over", "ses_foreign"]:
@@ -616,7 +627,7 @@ def selftest():
         log(f"SELFTEST FAIL: split_live -> history {[s['id'] for s in history]}")
         failures += 1
     else:
-        log("SELFTEST ok: live = active or recently updated; the rest is history")
+        log("SELFTEST ok: live = held by the server or worked recently; the rest is history")
 
     # Row #109: the threshold arithmetic. At the threshold is not over it.
     for value, threshold, expected_over in ((999999, 1000000, False), (1000000, 1000000, False),
