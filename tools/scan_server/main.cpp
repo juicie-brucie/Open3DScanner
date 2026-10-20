@@ -617,14 +617,16 @@ void RunSyntheticServer(uint16_t port) {
             RecordFrame(buf);
         }
 
-        tick_perf.EndTick(0, 0, s_post_us, s_bcast_us, frame_points_count, frame_bytes);
-
+        int64_t s_wait_us = 0;
         auto elapsed = std::chrono::steady_clock::now() - tick_start;
         auto sleep_for = std::chrono::milliseconds(static_cast<int64_t>(kFrameIntervalMs)) -
                           std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
         if (sleep_for > std::chrono::milliseconds(0)) {
+            perf::SegTimer t(&s_wait_us);
             std::this_thread::sleep_for(sleep_for);
         }
+        tick_perf.EndTick(0, 0, s_post_us, s_bcast_us, s_wait_us, frame_points_count, frame_bytes,
+                          static_cast<int64_t>(kFrameIntervalMs * 1000.0));
     }
 }
 
@@ -1074,7 +1076,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
 #endif
     for (int tick = 0; tick < total_ticks; ++tick) {
         tick_perf.BeginTick();
-        int64_t s_pose_us = 0, s_getter_us = 0, s_post_us = 0, s_bcast_us = 0;
+        int64_t s_pose_us = 0, s_getter_us = 0, s_post_us = 0, s_bcast_us = 0, s_wait_us = 0;
         uint32_t frame_points = 0;
         uint64_t frame_bytes = 0;
 #if !defined(_WIN32)
@@ -1093,11 +1095,17 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             std::fflush(stdout);
             break;
         }
+        {
+            // Row #139: the pacing wait is its own segment — it dominates the
+            // tick and was previously inside the period but outside every
+            // work segment.
+            perf::SegTimer wait_timer(&s_wait_us);
 #if defined(__APPLE__)
-        CFRunLoopRunInMode(kCFRunLoopDefaultMode, kLiveTickIntervalMs / 1000.0, false);
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, kLiveTickIntervalMs / 1000.0, false);
 #else
-        std::this_thread::sleep_for(std::chrono::milliseconds(kLiveTickIntervalMs));
+            std::this_thread::sleep_for(std::chrono::milliseconds(kLiveTickIntervalMs));
 #endif
+        }
 
         // Pause/resume only on a state transition, never repeated every
         // tick. obscan_scan_pause is already proven (this file already
@@ -1287,7 +1295,8 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                         hardware_paused ? 1 : 0);
             std::fflush(stdout);
         }
-        tick_perf.EndTick(s_pose_us, s_getter_us, s_post_us, s_bcast_us, frame_points, frame_bytes);
+        tick_perf.EndTick(s_pose_us, s_getter_us, s_post_us, s_bcast_us, s_wait_us, frame_points, frame_bytes,
+                          static_cast<int64_t>(kLiveTickIntervalMs) * 1000);
     }
 
     // Row #111: print before the teardown, which can hang (#89).

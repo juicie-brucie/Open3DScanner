@@ -1,0 +1,8 @@
+# raw: [perf] with the pacing wait separated (row #139)
+# cmd: scan_server --synthetic 19139  (12 s, device-free)
+# --- [perf] window lines ---
+[perf] window 5.0s n=127 rate=25.4/s points=2304.0 bytes=27698.4 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.12 p95=0.26 max=0.53 ms | bcast p50=0.00 p95=0.00 max=0.03 ms | wait p50=39.66 p95=43.03 max=43.41 ms | overshoot p50=6.33 p95=9.70 max=10.07 ms | tick p50=39.87 p95=43.27 max=43.56 ms
+[perf] window 5.0s n=128 rate=25.5/s points=2304.0 bytes=27698.4 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.12 p95=0.24 max=0.35 ms | bcast p50=0.00 p95=0.00 max=0.00 ms | wait p50=39.35 p95=43.03 max=43.93 ms | overshoot p50=6.02 p95=9.70 max=10.60 ms | tick p50=39.57 p95=43.27 max=44.12 ms
+# --- perf_window_test ---
+[perf_window_test] PASS: four work segments unchanged; wait recorded separately; overshoot = wait - nominal
+# exit=0

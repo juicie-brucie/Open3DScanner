@@ -6,6 +6,11 @@ add_executable(tracking_status_test tracking_status_test.cpp)
 target_link_libraries(tracking_status_test PRIVATE openscanner_engine)
 add_test(NAME tracking_status_test COMMAND tracking_status_test)
 
+# Hardware-free test for the per-tick timing fields (rows #111/#139).
+add_executable(perf_window_test perf_window_test.cpp)
+target_link_libraries(perf_window_test PRIVATE openscanner_engine)
+add_test(NAME perf_window_test COMMAND perf_window_test)
+
 # Hardware-free smoke test for the per-call bound protocol (row #89).
 add_executable(bounded_watchdog_test bounded_watchdog_test.cpp)
 target_link_libraries(bounded_watchdog_test PRIVATE openscanner_engine)
