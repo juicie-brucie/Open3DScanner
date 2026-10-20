@@ -15,6 +15,14 @@
 //         OPENSCANNER_PLANE_REMOVE=1            auto plane removal on
 //         OPENSCANNER_TURNTABLE_PLANE_REMOVE=1  turntable plane removal on
 //         OPENSCANNER_MANUAL_PLANE=a,b,c,d      manual plane for the SDK
+//       The same three toggles can also be changed mid-session, over the
+//       WebSocket (row #158) — the env vars still apply at startup:
+//         {"cmd":"set_plane_removal","auto":true,"turntable":false,
+//          "manual":"0,0,1,-0.33"}
+//       Every field is optional; "manual":"" reverts the manual plane.
+//       Each transition is logged with the old -> new state and the vendor's
+//       verdict, with the tick and the last published point count, so a
+//       run's point-count series can be aligned with the toggle.
 //       Our own removal decision (row #77), independent of the toggles:
 //         OPENSCANNER_OUR_PLANE_REMOVE=1        fit a plane, cut below it
 //         OPENSCANNER_PLANE_MARGIN=<float>      keep signed distance >= margin
@@ -72,6 +80,9 @@
 #include "openscanner/obscan_loader.h"
 #include "openscanner/ws_broadcast_server.h"
 #include "openscanner/worker_process.h"
+#include "control_json.h"    // the flat-JSON field readers
+#include "control_state.h"   // the control state and the WS command handler
+#include "plane_toggle.h"    // the runtime plane-removal command (row #158)
 #include "tracking_status.h"  // the vendor's per-frame verdict, by pinned name (row #91)
 #include "bounded_watchdog.h"  // the per-call bound that survives a stuck caller (row #89)
 #include "perf_window.h"       // per-tick latency instrumentation (row #111)
@@ -340,63 +351,20 @@ void AppendF32(std::vector<uint8_t>* buf, float v) {
 // shape we actually need" style (see ws_broadcast_server.cpp's SHA-1/
 // Base64 for the same reasoning). Only flat {"key": value, ...} objects
 // with string/number/bool leaves are supported — nothing here ever nests.
+//
+// The readers, the control state and the command handler live in
+// control_json.h / control_state.h, so the command path can be exercised
+// without a device (row #158).
 
-// Finds "key": <value> in `json` and returns the raw, unparsed value text
-// (quotes kept on if it was a string). false if the key isn't present.
-bool FindJsonValue(const std::string& json, const std::string& key, std::string* out_value) {
-    std::string needle = "\"" + key + "\"";
-    size_t pos = json.find(needle);
-    if (pos == std::string::npos) return false;
-    pos += needle.size();
-    pos = json.find(':', pos);
-    if (pos == std::string::npos) return false;
-    ++pos;
-    while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos]))) ++pos;
-    size_t end = pos;
-    if (end < json.size() && json[end] == '"') {
-        end = json.find('"', end + 1);
-        if (end == std::string::npos) return false;
-        *out_value = json.substr(pos + 1, end - pos - 1);
-        return true;
-    }
-    while (end < json.size() && json[end] != ',' && json[end] != '}') ++end;
-    *out_value = json.substr(pos, end - pos);
-    // Trim trailing whitespace left over from the scan above.
-    while (!out_value->empty() && std::isspace(static_cast<unsigned char>(out_value->back()))) {
-        out_value->pop_back();
-    }
-    return true;
-}
+using openscanner::controljson::FindJsonBool;
+using openscanner::controljson::FindJsonInt;
+using openscanner::controljson::FindJsonValue;
 
-bool FindJsonBool(const std::string& json, const std::string& key, bool* out_value) {
-    std::string raw;
-    if (!FindJsonValue(json, key, &raw)) return false;
-    if (raw == "true") {
-        *out_value = true;
-        return true;
-    }
-    if (raw == "false") {
-        *out_value = false;
-        return true;
-    }
-    return false;
-}
-
-bool FindJsonInt(const std::string& json, const std::string& key, int* out_value) {
-    std::string raw;
-    if (!FindJsonValue(json, key, &raw)) return false;
-    if (raw.empty()) return false;
-    *out_value = std::atoi(raw.c_str());
-    return true;
-}
-
-// Combined exposure/laser-current range per obscan_api.h
-// (fn_obscan_scan_config_combined_exposure_and_laser_current); reused as
-// the UI's manual exposure/brightness slider range for both modes so one
-// value means the same thing everywhere.
-constexpr int kExposureMin = 1;
-constexpr int kExposureMax = 1000;
-constexpr int kDefaultExposure = 900;  // Matches the value this file already drove live scans with.
+// The combined exposure/laser-current range (per obscan_api.h's
+// fn_obscan_scan_config_combined_exposure_and_laser_current) is the UI's
+// manual exposure/brightness slider range for both modes, so one value
+// means the same thing everywhere. The constants live in control_state.h
+// with the state they belong to.
 
 // Last per-frame tracking status (findings scan-quality-gate.md §2), surfaced
 // in the status JSON so a consumer can show the vendor's per-pose verdict.
@@ -409,58 +377,14 @@ std::atomic<int> g_last_tracking_status{-1};
 std::atomic<uint64_t> g_tracking_samples{0};
 std::atomic<uint64_t> g_tracking_hist[16];
 
-// Shared between the WS reader thread(s) (writer, via HandleControlMessage)
-// and whichever thread owns the scan loop (reader, via its tick) — hence
-// all-atomic, no locking. Mirrors the synthetic/live scan lifecycle: a
-// scan is idle, scanning, or paused; exposure is either auto or a held
-// manual value; FOV is a two-position switch on the real scanner (no
-// continuous zoom exists in the hardware API — see obscan_api.h's
-// ObScanFov) applied at scan creation, so for live mode this field is
-// informational only once scanning has started (see RunLiveServer).
-struct ControlState {
-    std::atomic<bool> scanning{false};
-    std::atomic<bool> paused{false};
-    std::atomic<bool> finish_requested{false};
-    std::atomic<bool> auto_exposure{true};
-    std::atomic<int> exposure_value{kDefaultExposure};
-    std::atomic<bool> fov_wide{false};
-};
-
-// Applies one control command to `state`. Safe to call from any thread;
-// callers that also need the command to affect real hardware (RunLiveServer)
-// check the same atomics from their own loop rather than acting here, so
-// nothing in this function ever touches the vendor SDK directly.
-void HandleControlMessage(const std::string& json, ControlState* state) {
-    std::string cmd;
-    if (!FindJsonValue(json, "cmd", &cmd)) return;
-    if (cmd == "start") {
-        state->scanning = true;
-        state->paused = false;
-    } else if (cmd == "pause") {
-        state->paused = true;
-    } else if (cmd == "finish") {
-        state->scanning = false;
-        state->paused = false;
-        state->finish_requested = true;
-    } else if (cmd == "set_exposure") {
-        bool is_auto = false;
-        if (FindJsonBool(json, "auto", &is_auto) && is_auto) {
-            state->auto_exposure = true;
-        } else {
-            int value = kDefaultExposure;
-            if (FindJsonInt(json, "value", &value)) {
-                value = std::max(kExposureMin, std::min(kExposureMax, value));
-                state->exposure_value = value;
-            }
-            state->auto_exposure = false;
-        }
-    } else if (cmd == "set_fov") {
-        std::string value;
-        if (FindJsonValue(json, "value", &value)) {
-            state->fov_wide = (value == "wide");
-        }
-    }
-}
+// The control state and the command handler live in control_state.h (row
+// #158 moved them out so the command path can be exercised without a
+// device).
+using openscanner::control::ControlState;
+using openscanner::control::HandleControlMessage;
+using openscanner::control::kDefaultExposure;
+using openscanner::control::kExposureMax;
+using openscanner::control::kExposureMin;
 
 // mode is "synthetic" or "live"; fov_controllable is false once a live
 // scan has actually started, since the real SDK has no call to change FOV
@@ -490,6 +414,10 @@ std::string BuildStatusJson(const char* mode, const ControlState& state, bool fo
     // assuming the two machines' clocks agree. See ui/frame_age.js.
     json += ",\"server_now_ms\":";
     json += std::to_string(static_cast<long long>(NowMs()));
+    // Row #158: the plane-removal state the operator asked for, so a client
+    // can show what the toggles are set to without reading the log.
+    json += ",\"planeRemoval\":";
+    openscanner::plane::AppendPlaneStateJson(state.plane.Desired(), &json);
     json += openscanner::tracking::TrackingStatusJsonTail(g_last_tracking_status.load());
     uint64_t tracking_counts[openscanner::tracking::kTrackingStatusCount];
     for (int32_t i = 0; i < openscanner::tracking::kTrackingStatusCount; ++i) {
@@ -552,6 +480,10 @@ void RunSyntheticServer(uint16_t port) {
     ConfigureStatic(server);
     ControlState control;
     control.scanning = true;  // Streams immediately, as before, if no UI ever sends a command.
+    // Row #158: the synthetic sphere has no vendor, so a plane-removal
+    // command only records the desired state here (the status JSON shows
+    // it); there is nothing to apply.
+    control.plane.SetLogger(&openscanner::plane::WritePlaneLogLine, nullptr);
 
     server.SetTextMessageHandler([&control, &server](const std::string& msg) {
         HandleControlMessage(msg, &control);
@@ -875,6 +807,51 @@ void Report(const char* step, ObScanStatus status) {
     std::fflush(stdout);
 }
 
+// The manual-plane config's state word: see
+// docs/recon/findings/plane-removal.md §4.
+constexpr int32_t kManualPlaneState = 2;
+
+// The three vendor calls the plane-removal controller makes (row #158). The
+// controller owns the state machine and the transition log; this is the only
+// place the vendor SDK is touched for the plane toggles.
+struct LivePlaneSink : openscanner::plane::VendorSink {
+    openscanner::ObscanLibrary* lib = nullptr;
+    ObScanScanHandle scan = nullptr;
+
+    openscanner::plane::VendorResult SetAutoRemove(bool enabled) override {
+        openscanner::plane::VendorResult result;
+        result.status = lib->obscan_scan_plane_remove(scan, enabled);
+        result.ok = (result.status == OB_SCAN_SUCCESS);
+        result.name = StatusName(static_cast<ObScanStatus>(result.status));
+        return result;
+    }
+
+    openscanner::plane::VendorResult SetTurntableRemove(bool enabled) override {
+        openscanner::plane::VendorResult result;
+        result.status = lib->obscan_scan_turntable_plane_remove(scan, enabled);
+        result.ok = (result.status == OB_SCAN_SUCCESS);
+        result.name = StatusName(static_cast<ObScanStatus>(result.status));
+        return result;
+    }
+
+    openscanner::plane::VendorResult SetManualRemove(bool enabled, const float plane[4]) override {
+        // The setter's layout: {int state, bool enabled, pad, plane} - see
+        // docs/recon/findings/plane-removal.md §4.
+        ObScanManualRPConfig config = {};
+        config.state = kManualPlaneState;
+        config.enabled = enabled;
+        config.plane.a = plane[0];
+        config.plane.b = plane[1];
+        config.plane.c = plane[2];
+        config.plane.d = plane[3];
+        openscanner::plane::VendorResult result;
+        result.status = lib->obscan_scan_config_manaul_remove_plane(scan, &config);
+        result.ok = (result.status == OB_SCAN_SUCCESS);
+        result.name = StatusName(static_cast<ObScanStatus>(result.status));
+        return result;
+    }
+};
+
 int RunLiveServer(const std::string& library_path, uint16_t port, const std::string& record_path = "") {
     g_record_path = record_path;
     QuitTraceInit();
@@ -1008,50 +985,35 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     // are live-callable and gate-free, so enabling them is lawful at any
     // step. The vendor's own per-frame executor then does the work; the
     // effect is only observable through the cloud getters (compare point
-    // counts). Env-driven surface (inherited by the worker):
+    // counts).
+    //
+    // Row #158: the state now lives in a controller, so the same three
+    // calls can also be made mid-session by the WS command. The env surface
+    // (inherited by the worker) still seeds it:
     // OPENSCANNER_PLANE_REMOVE=1, OPENSCANNER_TURNTABLE_PLANE_REMOVE=1,
     // OPENSCANNER_MANUAL_PLANE="a,b,c,d".
     //
     // Persistence is unconfirmed: whether the toggles survive a pause is
-    // not stated in the findings, so re-assert them after every successful
-    // resume rather than assuming they persist. Re-calling is lawful
-    // (gate-free), and the log shows each re-assert.
-    auto apply_plane_config = [&lib, scan]() {
-        if (const char* pr = std::getenv("OPENSCANNER_PLANE_REMOVE");
-            pr != nullptr && std::string(pr) == "1") {
-            Report("obscan_scan_plane_remove(true)", lib.obscan_scan_plane_remove(scan, true));
-        }
-        if (const char* tpr = std::getenv("OPENSCANNER_TURNTABLE_PLANE_REMOVE");
-            tpr != nullptr && std::string(tpr) == "1") {
-            Report("obscan_scan_turntable_plane_remove(true)",
-                   lib.obscan_scan_turntable_plane_remove(scan, true));
-        }
-        if (const char* mp = std::getenv("OPENSCANNER_MANUAL_PLANE"); mp != nullptr && mp[0] != '\0') {
-            float a = 0, b = 0, c = 0, d = 0;
-            if (std::sscanf(mp, "%f,%f,%f,%f", &a, &b, &c, &d) == 4) {
-                // Setter's layout: {int state, bool enabled, pad, plane}
-                // (findings §4); state==2 is the native's observed int read.
-                ObScanManualRPConfig cfg = {};
-                cfg.state = 2;
-                cfg.enabled = true;
-                cfg.plane.a = a;
-                cfg.plane.b = b;
-                cfg.plane.c = c;
-                cfg.plane.d = d;
-                Report("obscan_scan_config_manaul_remove_plane(a,b,c,d)",
-                       lib.obscan_scan_config_manaul_remove_plane(scan, &cfg));
-            } else {
-                std::fprintf(stderr, "[worker] OPENSCANNER_MANUAL_PLANE must be \"a,b,c,d\"\n");
-            }
-        }
-    };
-    apply_plane_config();
-
+    // not stated in the findings, so they are re-asserted after every
+    // successful resume rather than assumed to persist. Re-calling is
+    // lawful (gate-free), and the log shows each re-assert.
     ControlState control;
     control.scanning = true;  // obscan_scan_start above has already run.
     control.auto_exposure = false;  // Manual, as before: the value was pushed before the scan started.
     control.exposure_value = kDefaultExposure;
     control.fov_wide = (scan_config.mode_config.scan_fov == OB_SCAN_FOV_WIDE);
+    control.plane.SetLogger(&openscanner::plane::WritePlaneLogLine, nullptr);
+
+    LivePlaneSink plane_sink;
+    plane_sink.lib = &lib;
+    plane_sink.scan = scan;
+
+    control.plane.SeedFromEnv();
+    {
+        // The startup apply - not inside a tick, so the log line says so.
+        openscanner::plane::ApplyContext apply_context;
+        control.plane.ApplyPending(&plane_sink, apply_context);
+    }
 
     openscanner::WsBroadcastServer server;
     ConfigureStatic(server);
@@ -1082,6 +1044,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     perf::TickPerf tick_perf;
     if (!tick_perf.enabled()) std::printf("[perf] per-tick timing disabled by OPENSCANNER_TICK_PERF=0\n");
     uint32_t max_points_seen = 0;
+    // The point count of the last published cloud (row #158): the plane
+    // transition line carries it, so a run's point-count series can be
+    // aligned with the toggle moment.
+    uint32_t last_cloud_points = 0;
     bool hardware_paused = false;
     // Separate from hardware_paused: records what we last *attempted*
     // (regardless of outcome), so a failed resume on fragile hardware is
@@ -1148,13 +1114,33 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             if (toggle_status == OB_SCAN_SUCCESS) {
                 hardware_paused = want_paused;
                 if (!want_paused) {
-                    apply_plane_config();  // toggles may not survive pause
+                    // The toggles may not survive a pause, so they are
+                    // re-asserted after a successful resume (row #158: the
+                    // state re-asserted is the current one, the env seed or
+                    // whatever the operator set since).
+                    openscanner::plane::ApplyContext apply_context;
+                    apply_context.tick = tick;
+                    apply_context.points = last_cloud_points;
+                    control.plane.ReassertEnabled(&plane_sink, apply_context);
                     // Row #153: the resume re-runs the SDK's scan-mode setup,
                     // which writes the laser current itself — so the value we
                     // pushed is no longer known to be held.
                     exposure_apply.Invalidate();
                 }
             }
+        }
+
+        // Row #158: a plane-removal change the operator asked for over the
+        // WS. It is applied here, on the scan thread - the same thread that
+        // makes every other vendor call, so it cannot race them - and before
+        // the publish getter, so the effect shows in this tick's cloud. The
+        // transition line carries the tick and the last published point
+        // count, so a run's point-count series can be aligned with it.
+        {
+            openscanner::plane::ApplyContext apply_context;
+            apply_context.tick = tick;
+            apply_context.points = last_cloud_points;
+            control.plane.ApplyPending(&plane_sink, apply_context);
         }
 
         ObScanPointColorClouds cloud = {};
@@ -1227,6 +1213,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             }
             if (status == OB_SCAN_SUCCESS) {
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
+                last_cloud_points = cloud.num_points;  // row #158: the transition line's point count
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
                     perf::SegTimer post_timer(&s_post_us);
                     // Our own decision layer (row #77): fit a dominant plane
