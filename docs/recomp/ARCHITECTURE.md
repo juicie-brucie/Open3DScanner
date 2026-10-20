@@ -117,6 +117,7 @@ Open3DScanner/
   docs/recomp/ROADMAP.md                    # critical path + round objective (planner)
   docs/recomp/ARCHITECTURE.md               # this file (the recomp process)
   docs/recomp/SCALE-ARCHITECTURE.md         # the product pipeline at scale (row #148)
+  docs/recomp/STAGES.md                     # the stage map, with time in it (row #155)
   scripts/verify-pr.py                      # deterministic PR checks (CI + verifier)
   tests/hardware/*                          # test programs (builder)
   tests/results/*                           # observed behavior (hardware agent)
