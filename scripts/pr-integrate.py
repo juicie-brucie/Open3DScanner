@@ -49,7 +49,7 @@ def sh(*args, cwd=None, check=True, capture=True):
 
 
 def parse_plan(text: str):
-    """Board rows only: the first occurrence of each 3-digit row number."""
+    """Board rows only: the first occurrence of each row number."""
     rows, order = {}, []
     for line in text.split("\n"):
         m = ROW_RE.match(line)
