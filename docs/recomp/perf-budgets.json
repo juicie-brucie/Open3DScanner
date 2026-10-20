@@ -237,7 +237,7 @@
         "e2e_frame_age_ms": 4.5,
         "user_visible_age_ms": 45.0
       },
-      "derived_from": "the High preset's measured costs scaled by the point budget (12,000/20,000 = 0.6): the encode 538.6 x 0.6 = 326.5 us against a 490 us budget (1.5x), the broadcast 21.7 x 0.6 = 15.1 us against 23, the frame 144,036 B x 24 Hz = 3.46 MB/s against 3.5. The publish rate is unchanged, so the interval - and the latency budget - is High's."
+      "derived_from": "the High preset's measured costs scaled by the point budget (12,000/20,000 = 0.6): the encode 538.6 x 0.6 = 323.2 us against a 490 us budget (1.5x), the broadcast 21.7 x 0.6 = 13.0 us against 23, the frame 144,036 B x 24 Hz = 3.46 MB/s against 3.5. The publish rate is unchanged, so the interval - and the latency budget - is High's."
     },
     "lite": {
       "label": "Lite",
@@ -260,7 +260,7 @@
         "e2e_frame_age_ms": 4.0,
         "user_visible_age_ms": 90.0
       },
-      "derived_from": "the High preset's measured costs scaled by the point budget (5,000/20,000 = 0.25) and the publish rate (12/24): the encode 538.6 x 0.25 = 136.1 us against a 205 us budget, the broadcast 21.7 x 0.25 = 6.3 us against 10, the frame 60,036 B x 12 Hz = 0.72 MB/s against 0.75. The colours axis is off, so the frame stays positions-only (it already is, #136)."
+      "derived_from": "the High preset's measured costs scaled by the point budget (5,000/20,000 = 0.25) and the publish rate (12/24): the encode 538.6 x 0.25 = 134.7 us against a 205 us budget, the broadcast 21.7 x 0.25 = 5.4 us against 10, the frame 60,036 B x 12 Hz = 0.72 MB/s against 0.75. The colours axis is off, so the frame stays positions-only (it already is, #136)."
     },
     "capture-only": {
       "label": "Capture-only",
