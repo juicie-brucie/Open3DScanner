@@ -238,6 +238,13 @@ def main():
     else:
         server_out, lines = run_synthetic_server(server_bin, args.seconds, args.quick)
     if server_out:
+        # Only trust the server's numbers if it actually reported a window:
+        # a server that failed to start would otherwise read as zero work,
+        # which is a false pass.
+        if server_out.get("windows", 0) == 0:
+            print("perf-budget: the synthetic server reported no [perf] window — its numbers are skipped")
+            server_out = {}
+    if server_out:
         measured["tick.post_ms"] = server_out.get("post_p50_ms", 0.0)
         measured["tick.bcast_ms"] = server_out.get("bcast_p50_ms", 0.0)
         measured["tick.period_ms"] = server_out.get("tick_p50_ms", 0.0)
