@@ -7,6 +7,9 @@
   to either.
 - Scope: the four-segment `[perf]` data for the moments already identified, checked directly — no new run, no
   device work.
+- Raw evidence: `2026-10-19-plan112-conditions-4-6-hud-capture.raw.log` (the segment windows and both pause
+  clusters cited here) and `2026-10-19-plan112-tick-latency-baseline.raw.log` (the baseline's 1373 ms and
+  6410 ms spikes). Line numbers are against those two files.
 
 #112 — Per-segment latency breakdown vs. tick-level latency
 (Reported in chat only; not yet written to any tests/results/ file, per instruction to hold file edits.)
