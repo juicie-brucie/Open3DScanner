@@ -377,11 +377,13 @@ inline int PlaneController::ApplyPending(VendorSink* sink, const ApplyContext& c
         const float plane[4] = {want.manual_a, want.manual_b, want.manual_c, want.manual_d};
         const VendorResult result = sink->SetManualRemove(want.manual_enabled, plane);
         if (result.ok) {
-            applied_manual_.store(want.manual_enabled, std::memory_order_release);
+            // The plane coefficients are stored before the flag that publishes
+            // them, the same discipline the desired state uses.
             applied_a_.store(want.manual_a, std::memory_order_relaxed);
             applied_b_.store(want.manual_b, std::memory_order_relaxed);
             applied_c_.store(want.manual_c, std::memory_order_relaxed);
             applied_d_.store(want.manual_d, std::memory_order_relaxed);
+            applied_manual_.store(want.manual_enabled, std::memory_order_release);
         }
         char plane_text[64] = {0};
         if (want.manual_enabled) {
@@ -418,11 +420,11 @@ inline int PlaneController::ReassertEnabled(VendorSink* sink, const ApplyContext
         const float plane[4] = {want.manual_a, want.manual_b, want.manual_c, want.manual_d};
         const VendorResult result = sink->SetManualRemove(true, plane);
         if (result.ok) {
-            applied_manual_.store(true, std::memory_order_release);
             applied_a_.store(want.manual_a, std::memory_order_relaxed);
             applied_b_.store(want.manual_b, std::memory_order_relaxed);
             applied_c_.store(want.manual_c, std::memory_order_relaxed);
             applied_d_.store(want.manual_d, std::memory_order_relaxed);
+            applied_manual_.store(true, std::memory_order_release);
         }
         char plane_text[64] = {0};
         std::snprintf(plane_text, sizeof(plane_text), "%g,%g,%g,%g", want.manual_a, want.manual_b, want.manual_c,
