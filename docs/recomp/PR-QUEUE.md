@@ -12,38 +12,47 @@ used because it would test a queue head no verifier has read.
 - **A verdict expires when the head moves.** Re-take it; never carry it across.
 - **Never merge a `NEEDS CHANGE`.**
 - **A branch name is single-use.** After a merge: return the slot to its base,
-  then delete the branch locally and on `origin`.
+  then delete the branch locally and on `origin` (GitHub does the remote half).
 - **WIP cap:** no new build while open agent-tier PRs exceed the four verify
-  slots. Drain first.
+  slots.
 
 States: `LANDING` (auto-merge armed) · `VERIFY` (waiting on a verdict) ·
 `QUEUED` (verdict at head, waiting for the slot) · `FIX` (NEEDS CHANGE) ·
-`HOLD` (not mergeable for a non-code reason).
+`HOLD` (not mergeable for a non-code reason) · `IN FLIGHT` (the WO is running).
 
-## Queue — 2026-10-20
+## Queue — 2026-10-20 evening
 
-| order | PR | head sha | board row | verify-pr | verdict @ head | state | next action |
+| order | PR | head sha | board row | gate | verdict @ head | state | next action |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | #144 salvage | pending | #144 | pending | — | QUEUED | recon1 opens it; verify at head |
-| 2 | planner rev 25 | pending | — | pending | — | QUEUED | planner opens it; verify at head |
-| — | #392 | `02e0870a0b15bcd9c4feb5bfd20b50aed4bddc93` | HW records | FAIL | none | HOLD | draft; fix `verify-pr` before it enters the queue |
+| 1 | board/trust pass | pending | #134/#155/#138 closed; #162-#166 filed | pending | — | LANDING | verify at head; then merge |
+| 2 | #160 | pending | #160 | pending | — | IN FLIGHT | build1 opens the coverage fix |
+| 3 | #161 | pending | #161 | pending | — | IN FLIGHT | recon1 opens the depth-hang finding |
+| — | #392 | `02e0870` | HW records | FAIL | none | HOLD | repair the three records, rebase, undraft, re-gate, verify |
+| — | P9-P12 / #166 | — | #162-#166 | — | — | QUEUED | dispatch after the current three |
 
-## Landed this round
+## Landed this round (recent)
 
-| PR | head sha | verdict | merge commit | landed |
-| --- | --- | --- | --- | --- |
-| #399 | `92cc3264c785c44f0c82c1ae7c9af71be42929c0` | `MERGEABLE @ 92cc326` (verify1) | `e1c5e2b4e991bf5caa1b831b4ad57a5e9db6645b` | 2026-10-20T08:59:30Z |
-| #400 | `91e6514f0267eb7fd1d1ea2568cab1c984dd2b72` | `MERGEABLE @ 91e6514` (verify2, after the re-read) | `ff898398baad2347577563cc68fabaff792346d1` | 2026-10-20T09:14:42Z |
-| #401 | `85c676e5645ad6a035efaa0c50d3a15680b8db4f` | `MERGEABLE @ 85c676e` (verify3) | `4d47fe007f2d9a649ae8d8f3b90065299c06e517` | 2026-10-20T09:22:33Z |
-| #402 | `51ec9000bd71b5a411a01e20b9e787f2e8c263ad` | script-tier (auto-verdict) | `83f9e273a691dbea755e20c6f66f5000e5d723ae` | 2026-10-20T09:24:28Z |
+| PR | merge | verdict |
+| --- | --- | --- |
+| #399 | `e1c5e2b` | `MERGEABLE @ 92cc326` (verify1) |
+| #400 | `ff89839` | `MERGEABLE @ 91e6514` (verify2) |
+| #401 | `4d47fe0` | `MERGEABLE @ 85c676e` (verify3) |
+| #402 | `83f9e27` | script-tier |
+| #403 | `3add5e9` | script-tier |
+| #404 | `807a9f1` | script-tier |
+| #405 | `c2d6d6d` | `MERGEABLE @ f3ab589` (verify2) |
+| #406 | `3382c87` | script-tier |
+| #407 | `fc6a081` | script-tier |
+| #408 | `003dd74` | `MERGEABLE @ df6c6dd` (verify3) |
+| #409 | `f3c32ff` | script-tier (test queue) |
+| #410 | `3bfd8b5` | `MERGEABLE @ ba5ce6e` (verify1) |
+| #411 | `b13da57` | `MERGEABLE @ 882e7ad` (verify2) |
 
 ## Merge order
 
-1. The #144 salvage PR — the completed recon deliverable; it also carries the
-   `TODO` -> `SPEC-READY` row move.
-2. The planner's rev 25 PR — the single-session revision plus the stray-verdict
-   entry.
-3. `#392` — not in the queue while it is a draft and failing its gate.
+1. The board/trust pass (this PR) — docs/board only.
+2. **#160** and **#161** when their PRs open; verify at each head.
+3. **#392** after the record repairs: rebase, undraft, re-gate, verify.
+4. P9-P12 / #166 after the current three are drained.
 
-A PR is added here when it opens; it leaves when it is merged or closed. The
-dispatcher updates this file in the same turn as the state change.
+A PR is added here when it opens; it leaves when it is merged or closed.
