@@ -23,7 +23,12 @@ namespace openscanner::perf {
 
 // The four work segments keep their indices and meaning (#111); the pacing wait
 // is appended so historical numbers stay comparable (row #139).
-enum Segment : int { kPose = 0, kGetter = 1, kPostproc = 2, kBroadcast = 3, kWait = 4, kSegmentCount = 5 };
+enum Segment : int {
+    kPose = 0, kGetter = 1, kPostproc = 2, kBroadcast = 3,  // #111: unchanged
+    kWait = 4,                                              // #139: pacing wait
+    kExposure = 5, kRelease = 6,                            // #141: the untimed vendor calls
+    kSegmentCount = 7
+};
 
 inline const char* SegmentName(int segment) {
     switch (segment) {
@@ -32,6 +37,8 @@ inline const char* SegmentName(int segment) {
         case kPostproc: return "post";
         case kBroadcast: return "bcast";
         case kWait: return "wait";
+        case kExposure: return "exposure";
+        case kRelease: return "release";
         default: return "?";
     }
 }
@@ -73,42 +80,76 @@ public:
 
     bool enabled() const { return enabled_; }
 
+    static int64_t SteadyNowUs() {
+        return std::chrono::duration_cast<std::chrono::microseconds>(
+                   std::chrono::steady_clock::now().time_since_epoch())
+            .count();
+    }
+
     // Call at the very top of the tick: the realized period is start-to-start.
-    void BeginTick() {
+    void BeginTick() { BeginTickAt(SteadyNowUs()); }
+
+    // The `...At` form is the deterministic seam: the test supplies the clock.
+    void BeginTickAt(int64_t now_us) {
         if (!enabled_) return;
-        const auto now = std::chrono::steady_clock::now();
         if (have_last_) {
-            Push(periods_, period_n_, std::chrono::duration_cast<std::chrono::microseconds>(now - last_).count());
+            const int64_t period_us = now_us - last_us_;
+            Push(periods_, period_n_, period_us);
+            // #141: the untimed residual for the tick that just ended.
+            const int64_t residual = period_us - pending_work_us_;
+            Push(residual_us_, residual_n_, residual);
+            cumulative_residual_us_ += residual;
         }
-        last_ = now;
+        last_us_ = now_us;
         have_last_ = true;
         if (!flush_started_) {
-            flush_start_ = now;
+            flush_start_us_ = now_us;
             flush_started_ = true;
         }
     }
 
-    // Call once at the end of the tick. Microseconds per segment. `wait_us` is
-    // the pacing wait (the run-loop/sleep), and `nominal_wait_us` its budget;
-    // the overshoot distribution is `wait_us - nominal_wait_us` (#139).
-    void EndTick(int64_t pose_us, int64_t getter_us, int64_t post_us, int64_t broadcast_us, int64_t wait_us,
-                 uint32_t points, uint64_t bytes, int64_t nominal_wait_us) {
+    // One tick's measurement. All times are steady_clock microseconds; the
+    // window/line reports ms. `nominal_wait_us` is the pacing budget, so the
+    // overshoot is `wait_us - nominal_wait_us` (#139).
+    struct Sample {
+        int64_t pose_us = 0;
+        int64_t getter_us = 0;
+        int64_t post_us = 0;
+        int64_t broadcast_us = 0;
+        int64_t wait_us = 0;
+        int64_t exposure_us = 0;   // obscan_scan_config_combined_exposure_and_laser_current
+        int64_t release_us = 0;    // obscan_scan_model_clouds_release
+        uint32_t points = 0;
+        uint64_t bytes = 0;
+        uint32_t clients = 0;      // connected at broadcast time (0 = no send)
+        int64_t nominal_wait_us = 0;
+    };
+
+    // Call once at the end of the tick.
+    void EndTick(const Sample& sample) {
         if (!enabled_) return;
-        const int64_t values[kSegmentCount] = {pose_us, getter_us, post_us, broadcast_us, wait_us};
+        const int64_t values[kSegmentCount] = {sample.pose_us,       sample.getter_us,  sample.post_us,
+                                                sample.broadcast_us, sample.wait_us,    sample.exposure_us,
+                                                sample.release_us};
+        int64_t work_us = 0;
         for (int s = 0; s < kSegmentCount; ++s) {
             Push(samples_[s], counts_[s], values[s]);
             cumulative_us_[s] += values[s];
             if (values[s] > max_us_[s]) max_us_[s] = values[s];
+            work_us += values[s];
         }
-        const int64_t overshoot = wait_us - nominal_wait_us;
+        pending_work_us_ = work_us;
+        last_nominal_wait_us_ = sample.nominal_wait_us;
+        const int64_t overshoot = sample.wait_us - sample.nominal_wait_us;
         Push(overshoot_us_, overshoot_n_, overshoot);
         cumulative_overshoot_us_ += overshoot;
         if (overshoot > max_overshoot_us_) max_overshoot_us_ = overshoot;
-        Push(points_, points_n_, static_cast<int64_t>(points));
-        Push(bytes_, bytes_n_, static_cast<int64_t>(bytes));
+        Push(points_, points_n_, static_cast<int64_t>(sample.points));
+        Push(bytes_, bytes_n_, static_cast<int64_t>(sample.bytes));
+        Push(clients_, clients_n_, static_cast<int64_t>(sample.clients));
         ++ticks_;
-        cumulative_points_ += points;
-        cumulative_bytes_ += bytes;
+        cumulative_points_ += sample.points;
+        cumulative_bytes_ += sample.bytes;
         MaybeFlush();
     }
 
@@ -125,7 +166,10 @@ public:
         double mean_bytes = 0.0;
         Percentiles segment[kSegmentCount];
         Percentiles overshoot;
+        Percentiles residual;
         Percentiles tick;
+        double mean_clients = 0.0;
+        int64_t nominal_wait_us = 0;
     };
 
     // Compute the current window without printing or resetting (used by the
@@ -133,15 +177,17 @@ public:
     Snapshot TakeSnapshot() const {
         Snapshot snap;
         snap.n = period_n_;
-        snap.window_s =
-            std::chrono::duration<double>(std::chrono::steady_clock::now() - flush_start_).count();
+        snap.window_s = static_cast<double>(last_us_ - flush_start_us_) / 1e6;
         const double mean_period_us = period_n_ > 0 ? static_cast<double>(Sum(periods_, period_n_)) / period_n_ : 0.0;
         snap.rate = mean_period_us > 0 ? 1e6 / mean_period_us : 0.0;
         snap.mean_points = points_n_ > 0 ? static_cast<double>(Sum(points_, points_n_)) / points_n_ : 0.0;
         snap.mean_bytes = bytes_n_ > 0 ? static_cast<double>(Sum(bytes_, bytes_n_)) / bytes_n_ : 0.0;
         for (int s = 0; s < kSegmentCount; ++s) snap.segment[s] = PercentilesOf(samples_[s], counts_[s]);
         snap.overshoot = PercentilesOf(overshoot_us_, overshoot_n_);
+        snap.residual = PercentilesOf(residual_us_, residual_n_);
         snap.tick = PercentilesOf(periods_, period_n_);
+        snap.mean_clients = clients_n_ > 0 ? static_cast<double>(Sum(clients_, clients_n_)) / clients_n_ : 0.0;
+        snap.nominal_wait_us = last_nominal_wait_us_;
         return snap;
     }
 
@@ -163,37 +209,45 @@ public:
                     static_cast<double>(cumulative_overshoot_us_) / ticks_ / 1000.0,
                     static_cast<double>(max_overshoot_us_) / 1000.0,
                     " (wait - nominal; positive = the pacing call ran long)");
+        std::printf(" residual_mean=%.2fms", static_cast<double>(cumulative_residual_us_) / ticks_ / 1000.0);
         std::printf("\n");
         std::fflush(stdout);
     }
 
 private:
     void MaybeFlush() {
-        const auto now = std::chrono::steady_clock::now();
-        const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - flush_start_).count();
-        if (elapsed_ms < kWindowMs) return;
+        // Use the tick clock (`last_us_`) so the `BeginTickAt` seam is honored;
+        // in production `last_us_` is "now" as of BeginTick.
+        if ((last_us_ - flush_start_us_) / 1000 < kWindowMs) return;
         Flush("window");
-        flush_start_ = now;
+        flush_start_us_ = last_us_;
     }
 
     void Flush(const char* tag) {
         if (period_n_ == 0 && counts_[kPose] == 0) return;
         const Snapshot snap = TakeSnapshot();
-        std::printf("[perf] %s %.1fs n=%d rate=%.1f/s points=%.1f bytes=%.1f", tag, snap.window_s, snap.n,
-                    snap.rate, snap.mean_points, snap.mean_bytes);
+        std::printf("[perf] %s %.1fs clock=steady_clock n=%d rate=%.1f/s points=%.1f bytes=%.1f", tag,
+                    snap.window_s, snap.n, snap.rate, snap.mean_points, snap.mean_bytes);
         for (int s = 0; s < kSegmentCount; ++s) {
             std::printf(" | %s p50=%.2f p95=%.2f max=%.2f ms", SegmentName(s),
                         snap.segment[s].p50 / 1000.0, snap.segment[s].p95 / 1000.0, snap.segment[s].max / 1000.0);
         }
         std::printf(" | overshoot p50=%.2f p95=%.2f max=%.2f ms", snap.overshoot.p50 / 1000.0,
                     snap.overshoot.p95 / 1000.0, snap.overshoot.max / 1000.0);
-        std::printf(" | tick p50=%.2f p95=%.2f max=%.2f ms\n", snap.tick.p50 / 1000.0, snap.tick.p95 / 1000.0,
-                    snap.tick.max / 1000.0);
+        std::printf(" | residual p50=%.2f p95=%.2f max=%.2f ms", snap.residual.p50 / 1000.0,
+                    snap.residual.p95 / 1000.0, snap.residual.max / 1000.0);
+        std::printf(" | tick p50=%.2f p95=%.2f max=%.2f ms | nominal=%.2f ms | clients=%.1f",
+                    snap.tick.p50 / 1000.0, snap.tick.p95 / 1000.0, snap.tick.max / 1000.0,
+                    snap.nominal_wait_us / 1000.0, snap.mean_clients);
+        std::printf(" | bcast_per_client=%.2f us (derived mean; per-client send stats need engine/**)\n",
+                    snap.mean_clients > 0 ? (snap.segment[kBroadcast].p50 / snap.mean_clients) : 0.0);
         std::fflush(stdout);
 
         for (int s = 0; s < kSegmentCount; ++s) counts_[s] = 0;
         period_n_ = points_n_ = bytes_n_ = 0;
         overshoot_n_ = 0;
+        residual_n_ = 0;
+        clients_n_ = 0;
     }
 
     static Percentiles PercentilesOf(const int64_t* values, int count) {
@@ -227,8 +281,8 @@ private:
         return scratch[index];
     }
 
-    std::chrono::steady_clock::time_point last_{};
-    std::chrono::steady_clock::time_point flush_start_{};
+    int64_t last_us_ = 0;
+    int64_t flush_start_us_ = 0;
     bool have_last_ = false;
     bool flush_started_ = false;
 
@@ -242,6 +296,12 @@ private:
     int bytes_n_ = 0;
     int64_t overshoot_us_[kCapacity] = {};
     int overshoot_n_ = 0;
+    int64_t residual_us_[kCapacity] = {};
+    int residual_n_ = 0;
+    int64_t clients_[kCapacity] = {};
+    int clients_n_ = 0;
+    int64_t pending_work_us_ = 0;
+    int64_t last_nominal_wait_us_ = 0;
 
     long long ticks_ = 0;
     long long cumulative_points_ = 0;
@@ -249,6 +309,7 @@ private:
     int64_t cumulative_us_[kSegmentCount] = {};
     int64_t max_us_[kSegmentCount] = {};
     long long cumulative_overshoot_us_ = 0;
+    long long cumulative_residual_us_ = 0;
     int64_t max_overshoot_us_ = 0;
     bool enabled_ = true;
 };

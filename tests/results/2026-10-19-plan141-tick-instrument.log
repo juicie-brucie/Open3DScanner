@@ -1,0 +1,7 @@
+# raw: [perf] with the tick instrument completed (row #141)
+# cmd: scan_server --synthetic 19141 (12 s, device-free)
+[perf] window 5.0s clock=steady_clock n=138 rate=27.5/s points=2304.0 bytes=27697.3 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.12 p95=0.20 max=0.24 ms | bcast p50=0.00 p95=0.00 max=0.00 ms | wait p50=36.63 p95=38.04 max=38.06 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=3.30 p95=4.71 max=4.73 ms | residual p50=0.00 p95=0.01 max=0.04 ms | tick p50=36.74 p95=38.25 max=38.28 ms | nominal=33.33 ms | clients=0.0 | bcast_per_client=0.00 us (derived mean; per-client send stats need engine/**)
+[perf] window 5.0s clock=steady_clock n=136 rate=27.0/s points=2304.0 bytes=27697.6 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.11 p95=0.22 max=0.38 ms | bcast p50=0.00 p95=0.00 max=0.00 ms | wait p50=38.01 p95=38.04 max=38.08 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=4.68 p95=4.71 max=4.74 ms | residual p50=0.00 p95=0.01 max=0.50 ms | tick p50=38.08 p95=38.25 max=38.31 ms | nominal=33.33 ms | clients=0.0 | bcast_per_client=0.00 us (derived mean; per-client send stats need engine/**)
+# --- perf_window_test ---
+[perf_window_test] PASS: 4 work segments unchanged; wait/exposure/release separate; overshoot = wait - nominal; residual = period - sum
+# exit=0
