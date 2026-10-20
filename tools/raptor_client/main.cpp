@@ -23,7 +23,10 @@
 //       between stamps. Each frame is routed by the interface suffix on
 //       its method name to that interface's own port.
 //   raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]
-//       per-call logging is on by default: every get_frame result (bin size /
+//       one interface per run: the port picks the interface and every method
+//       name carries that interface's suffix (ob_rpc_start_stream0-2-12 on
+//       port 10013, ob_rpc_start_stream0-2-10 on port 10010).
+//       per-call logging is on by default: every get_frame result (band size /
 //       empty / error) and every SET_PROPERTY (prop, value, ACCEPT/REJECT).
 //       [--dump-replies] adds one structure line per reply: the RPC kind, the
 //       msgid, and the result's shape (an array's length and each element's
@@ -36,6 +39,7 @@
 //       port plus a manifest with the run's identity and every file's hash.
 //   raptor_client --selftest-dump              the reply-structure dump, no device
 //   raptor_client --selftest-capture           the capture round-trip, no device
+//   raptor_client --selftest-live              the live path's method names, no device
 //   raptor_client --capture-dump <dir>         read a capture bundle back
 //
 // Wall: tools/** only. Clean-room: implements the spec; no vendor binary.
@@ -60,6 +64,7 @@
 #include <fstream>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <variant>
@@ -904,13 +909,141 @@ Bytes Envelope(uint64_t msgid, const Bytes& result) {
     return p.out;
 }
 
-Value StartStream(RpcClient& c, const std::string& suffix, uint8_t command, uint32_t w, uint32_t h, uint32_t fps) {
+// ---------------------------------------------------------------------------
+// Interface routing (rows #120 and #157)
+//
+// A method name ends in a suffix that identifies the device and the
+// interface it addresses (protocol-spec.md §1.1): the device id is
+// "0-2-1" and the interface index follows it — "0-2-12" is interface 2 (IR),
+// "0-2-10" is interface 0 (depth). Each interface has its own TCP port on
+// the daemon, so a client that mixes interfaces must use one connection
+// per interface, not one connection for everything.
+//
+// The replay reads the suffix out of the captured frame and never
+// re-encodes it (row #120); the live path resolves its port to the
+// interface and builds every method name with that interface's suffix
+// (row #157).
+// ---------------------------------------------------------------------------
+
+// The two interfaces the capture file exercises, and the port each was
+// observed on (protocol-spec.md §1.1: depth 10010, IR 10013).
+struct InterfaceRoute {
+    std::string suffix;  // the method-name suffix, e.g. "0-2-12"
+    std::string name;    // a short label for the diagnostics
+    uint16_t port;       // the daemon port for that interface
+    // The first parameter of start_stream/stop_stream for this interface:
+    // 6 on IR, 7 on depth (protocol-spec.md §1.2/§7). It is the STREAM
+    // TYPE, not a start/stop command — the method name carries that.
+    uint32_t stream_type;
+};
+
+// The suffix→interface→port table. The ports are overridable on the
+// command line (--ir-port / --depth-port) for a daemon on other ports.
+class RouteTable {
+public:
+    RouteTable() {
+        routes_.push_back({"0-2-12", "IR", 10013, 6});
+        routes_.push_back({"0-2-10", "depth", 10010, 7});
+    }
+    const std::vector<InterfaceRoute>& routes() const { return routes_; }
+    // The index of a suffix in the table, or -1 when it is not one this
+    // client knows.
+    int IndexOfSuffix(const std::string& suffix) const {
+        for (size_t i = 0; i < routes_.size(); ++i) {
+            if (routes_[i].suffix == suffix) return (int)i;
+        }
+        return -1;
+    }
+    // The index of an interface by its label, or -1.
+    int IndexOfName(const std::string& name) const {
+        for (size_t i = 0; i < routes_.size(); ++i) {
+            if (routes_[i].name == name) return (int)i;
+        }
+        return -1;
+    }
+    // Point an interface at another port. Returns false for an unknown
+    // name, so a typo is an error rather than a silent no-op.
+    bool SetPortByName(const std::string& name, uint16_t port) {
+        int i = IndexOfName(name);
+        if (i < 0) return false;
+        routes_[(size_t)i].port = port;
+        return true;
+    }
+    // The known suffixes, for an error message.
+    std::string KnownSuffixes() const {
+        std::string s;
+        for (const InterfaceRoute& r : routes_) {
+            if (!s.empty()) s += ", ";
+            s += r.suffix;
+        }
+        return s;
+    }
+
+    // The known interfaces, for an error message: name, suffix and port.
+    std::string KnownRoutes() const {
+        std::string s;
+        for (const InterfaceRoute& r : routes_) {
+            if (!s.empty()) s += ", ";
+            s += r.name + " " + r.suffix + " -> " + std::to_string(r.port);
+        }
+        return s;
+    }
+
+private:
+    std::vector<InterfaceRoute> routes_;
+};
+
+// The route for a port, or nullptr when the port is not one of the known
+// interfaces' ports. The live path resolves its interface this way: the
+// port picks the interface, and the interface's suffix is what the
+// daemon's method names carry (protocol-spec.md §1.1).
+const InterfaceRoute* RouteForPort(const RouteTable& table, uint16_t port) {
+    for (const InterfaceRoute& r : table.routes()) {
+        if (r.port == port) return &r;
+    }
+    return nullptr;
+}
+
+// The error text for a port that is not an interface port. It names the
+// map, so a typo is a message and not a silent default to the wrong
+// interface.
+std::string UnknownPortMessage(const RouteTable& table, uint16_t port) {
+    return "port " + std::to_string(port) + " is not an interface port (known: " + table.KnownRoutes() + ")";
+}
+
+// The daemon's method names carry the interface suffix (protocol-spec.md
+// §1.1): "ob_rpc_start_stream0-2-12" addresses the IR interface, and a
+// name without a suffix is a name the daemon does not have — it answers
+// "could not find function '<name>' with argument count <n>". Every
+// live-path call is therefore "<base><suffix>".
+std::string MethodFor(const InterfaceRoute& route, const char* base) {
+    return std::string(base) + route.suffix;
+}
+
+// The stream parameters: [streamtype, format, width, height, fps]
+// (protocol-spec.md §1.2/§7). The first field is the interface's own
+// stream type (6 IR, 7 depth) and the same array is sent to stop.
+Bytes StreamParams(const InterfaceRoute& route, uint32_t w, uint32_t h, uint32_t fps) {
     Packer p;
     p.array(5);
-    p.uint(command); p.uint(9); p.uint(w); p.uint(h); p.uint(fps);
+    p.uint(route.stream_type); p.uint(9); p.uint(w); p.uint(h); p.uint(fps);
+    return p.out;
+}
+
+Value StartStream(RpcClient& c, const InterfaceRoute& route, uint32_t w, uint32_t h, uint32_t fps) {
     // Unwrap the reply envelope: the result is the payload at index 3.
-    const std::string method = "ob_rpc_start_stream" + suffix;
-    Value envelope = c.call(method, p.out);
+    const std::string method = MethodFor(route, "ob_rpc_start_stream");
+    Value envelope = c.call(method, StreamParams(route, w, h, fps));
+    DumpReply(method, envelope, c.lastRaw());
+    return Result(envelope);
+}
+
+// The stop is its own method — the method name carries start/stop, not
+// the parameters (protocol-spec.md §7). The parameters are the same
+// array the start sent, so the stream type is the interface's own.
+Value StopStream(RpcClient& c, const InterfaceRoute& route, uint32_t w, uint32_t h, uint32_t fps) {
+    const std::string method = MethodFor(route, "ob_rpc_stop_stream");
+    Value envelope = c.call(method, StreamParams(route, w, h, fps));
     DumpReply(method, envelope, c.lastRaw());
     return Result(envelope);
 }
@@ -928,14 +1061,14 @@ bool VendorAccepted(const Value& rpc_result, uint16_t* out_opcode, uint16_t* out
     return le16(8) == 0;
 }
 
-void SetProperty(RpcClient& c, const std::string& suffix, uint32_t prop, int32_t value, uint16_t request_id,
+void SetProperty(RpcClient& c, const InterfaceRoute& route, uint32_t prop, int32_t value, uint16_t request_id,
                  bool log) {
     Bytes vendor = BuildVendorRequest(kOpSetProperty, request_id, SetPropertyPayload(prop, value));
     Packer p;
     p.array(2);
     p.bin(vendor);
     p.uint(64);  // expected response size for an ack (spec §2.1)
-    const std::string method = "ob_rpc_send_data" + suffix;
+    const std::string method = MethodFor(route, "ob_rpc_send_data");
     Value envelope = c.call(method, p.out);
     DumpReply(method, envelope, c.lastRaw());
     Value r = Result(envelope);
@@ -956,84 +1089,115 @@ void SetProperty(RpcClient& c, const std::string& suffix, uint32_t prop, int32_t
     }
 }
 
-int Live(const std::string& host, uint16_t port, int seconds, const std::string& out_path, int pull_ms, bool log,
-         capture::Recorder* capture) {
+// What a live run saw. The counters are the run's verdict: a run that
+// pulled frames is a success, whatever shape the replies had.
+struct LiveStats {
+    uint64_t get_calls = 0;
+    uint64_t data = 0;    // replies that carried a frame
+    uint64_t empty = 0;   // replies that carried none
+    uint64_t errors = 0;  // error replies
+    bool started = false;  // start_stream was accepted
+    bool stopped = false;  // stop_stream was sent
+};
+
+// The live session: ONE interface, ONE connection.
+//
+// The port picks the interface (protocol-spec.md §1.1): every method name
+// on this connection carries that interface's suffix, because the daemon
+// has no method without one. The daemon serves one interface per port, so
+// a run streams the interface its port names and nothing else — a second
+// interface is a second run.
+int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, int seconds,
+         const std::string& out_path, int pull_ms, int max_frames, bool log, capture::Recorder* capture,
+         LiveStats* stats) {
+    LiveStats local;
+    LiveStats& st = stats ? *stats : local;
     RpcClient rpc;
     if (!rpc.connect(host, port)) {
         std::fprintf(stderr, "[live] cannot connect to %s:%u (is RPCServer running?)\n", host.c_str(), port);
         return 1;
     }
     rpc.set_capture(capture);
-    std::printf("[live] connected %s:%u (pull_ms=%d, per-call logging=%s)\n", host.c_str(), port, pull_ms,
-                log ? "on" : "off");
-    Value started = StartStream(rpc, "", 6, 1920, 1200, 50);
+    std::printf("[live] connected %s:%u (%s, suffix %s, pull_ms=%d, per-call logging=%s)\n", host.c_str(), port,
+                route.name.c_str(), route.suffix.c_str(), pull_ms, log ? "on" : "off");
+    Value started = StartStream(rpc, route, 1920, 1200, 50);
     if (started.kind == Value::Kind::Error) {
         std::fprintf(stderr, "[live] start_stream failed: %s\n", started.error.c_str());
         return 1;
     }
+    st.started = true;
     std::printf("[live] start_stream -> %s\n", started.kind == Value::Kind::Bool && started.b ? "true" : "non-error");
     std::fflush(stdout);
 
-    uint64_t get_calls = 0, bins = 0, empties = 0, errors = 0;
+    const std::string get_frame_method = MethodFor(route, "ob_rpc_get_frame");
     uint16_t request_id = 0;
     bool saved = false;
     FrameTally tally;
     auto last_log = std::chrono::steady_clock::now() - std::chrono::seconds(1);
     auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
     while (std::chrono::steady_clock::now() < deadline) {
+        if (max_frames > 0 && st.get_calls >= (uint64_t)max_frames) break;
         Packer p;
         p.array(0);
         // The reply is the envelope [1, msgid, nil, result]; the frame is
         // the payload at index 3, so unwrap before looking at it.
-        Value envelope = rpc.call("ob_rpc_get_frame", p.out);
-        DumpReply("ob_rpc_get_frame", envelope, rpc.lastRaw());
+        Value envelope = rpc.call(get_frame_method, p.out);
+        DumpReply(get_frame_method, envelope, rpc.lastRaw());
         Value frame = Result(envelope);
         // The result is the 11-element array: what it holds is the band's
         // length, or the no-data form.
         FrameArray fa = ParseFrameArray(frame);
         DumpFrameSummary(fa, frame);
         tally.Add(port, fa);
-        ++get_calls;
+        ++st.get_calls;
+        // The bytes that carry the frame: the primary data buffer of the
+        // array form, or the whole payload of the older bare-bin form.
+        const Bytes* payload = nullptr;
+        if (fa.is_form) {
+            payload = &frame.array[kFrameBufferElement].bin;
+        } else if (frame.kind == Value::Kind::Bin) {
+            payload = &frame.bin;
+        }
         bool should_log = false;
-        if (frame.kind == Value::Kind::Bin) {
-            ++bins;
+        if (frame.kind == Value::Kind::Error) {
+            ++st.errors;
+            should_log = true;  // always show errors
+        } else if (payload && !payload->empty()) {
+            ++st.data;
             if (!saved) {
                 std::ofstream f(out_path, std::ios::binary);
-                f.write(reinterpret_cast<const char*>(frame.bin.data()), frame.bin.size());
-                std::printf("[live] saved first frame: %s (%zu bytes)\n", out_path.c_str(), frame.bin.size());
+                f.write(reinterpret_cast<const char*>(payload->data()), (std::streamsize)payload->size());
+                std::printf("[live] saved first frame: %s (%zu bytes)\n", out_path.c_str(), payload->size());
                 saved = true;
                 should_log = true;
             } else {
                 auto now = std::chrono::steady_clock::now();
                 should_log = now - last_log >= std::chrono::milliseconds(250);
             }
-        } else if (frame.kind == Value::Kind::Error) {
-            ++errors;
-            should_log = true;  // always show errors
         } else {
-            ++empties;
-            should_log = get_calls <= 5 || (get_calls % 100 == 0);
+            ++st.empty;
+            should_log = st.get_calls <= 5 || (st.get_calls % 100 == 0);
         }
         if (log && should_log) {
             last_log = std::chrono::steady_clock::now();
-            if (frame.kind == Value::Kind::Bin) {
-                std::printf("[live] GET_FRAME #%llu -> bin(%zu) head=[%s]\n", (unsigned long long)get_calls,
-                            frame.bin.size(), HexHead(frame.bin).c_str());
-            } else if (frame.kind == Value::Kind::Error) {
-                std::printf("[live] GET_FRAME #%llu -> ERROR: %s\n", (unsigned long long)get_calls,
+            if (frame.kind == Value::Kind::Error) {
+                std::printf("[live] GET_FRAME #%llu -> ERROR: %s\n", (unsigned long long)st.get_calls,
                             frame.error.c_str());
+            } else if (payload && !payload->empty()) {
+                std::printf("[live] GET_FRAME #%llu -> %s(%zu) head=[%s]\n", (unsigned long long)st.get_calls,
+                            fa.is_form ? "band" : "bin", payload->size(), HexHead(*payload).c_str());
             } else {
-                std::printf("[live] GET_FRAME #%llu -> empty (kind=%d)\n", (unsigned long long)get_calls,
+                std::printf("[live] GET_FRAME #%llu -> empty (kind=%d)\n", (unsigned long long)st.get_calls,
                             (int)frame.kind);
             }
             std::fflush(stdout);
         }
         // §3.1 host-driven loops: laser trio and exposure, at the observed cadence.
-        SetProperty(rpc, "", 3, 0, ++request_id, log);
-        SetProperty(rpc, "", 152, 0, ++request_id, log);
-        SetProperty(rpc, "", 153, 1, ++request_id, log);
-        SetProperty(rpc, "", 154, 866000, ++request_id, log);
-        SetProperty(rpc, "", 155, 866000, ++request_id, log);
+        SetProperty(rpc, route, 3, 0, ++request_id, log);
+        SetProperty(rpc, route, 152, 0, ++request_id, log);
+        SetProperty(rpc, route, 153, 1, ++request_id, log);
+        SetProperty(rpc, route, 154, 866000, ++request_id, log);
+        SetProperty(rpc, route, 155, 866000, ++request_id, log);
         if (pull_ms > 0) std::this_thread::sleep_for(std::chrono::milliseconds(pull_ms));
         // The capture's bounds end the run when they are hit, so a capture
         // cannot outlive its own budget.
@@ -1042,34 +1206,43 @@ int Live(const std::string& host, uint16_t port, int seconds, const std::string&
             break;
         }
     }
-    StartStream(rpc, "", 7, 1920, 1200, 50);  // stop
-    std::printf("[live] done: get_frame=%llu bin=%llu empty=%llu error=%llu; stream stopped\n",
-                (unsigned long long)get_calls, (unsigned long long)bins, (unsigned long long)empties,
-                (unsigned long long)errors);
+    // The stop is its own method, with the same parameters the start
+    // sent (protocol-spec.md §7).
+    Value stopped = StopStream(rpc, route, 1920, 1200, 50);
+    st.stopped = stopped.kind != Value::Kind::Error;
+    if (stopped.kind == Value::Kind::Error) {
+        std::fprintf(stderr, "[live] stop_stream failed: %s\n", stopped.error.c_str());
+    }
+    std::printf("[live] done: get_frame=%llu data=%llu empty=%llu error=%llu; stream stopped\n",
+                (unsigned long long)st.get_calls, (unsigned long long)st.data, (unsigned long long)st.empty,
+                (unsigned long long)st.errors);
     DumpTally(tally);
-    return bins > 0 ? 0 : 1;
+    return st.data > 0 ? 0 : 1;
 }
 
-// Prints the exact bytes each call would send, so the logging path is
-// exercisable without the daemon (the row's "what can be tested locally").
+// Prints the exact method names and bytes each call would send, so the
+// logging path is exercisable without the daemon (the row's "what can be
+// tested locally"). The names carry the interface suffix: the daemon has
+// no method without one.
 int DryRunLive() {
     int failures = 0;
-    auto show = [&](const char* what, const Bytes& b) {
-        std::printf("[dry-run-live] %-28s %zu B: %s\n", what, b.size(), HexHead(b, 24).c_str());
+    auto show = [&](const std::string& what, const Bytes& b) {
+        std::printf("[dry-run-live] %-42s %zu B: %s\n", what.c_str(), b.size(), HexHead(b, 24).c_str());
         if (b.empty()) ++failures;
     };
-    RpcClient unused;  // not connected; we only encode here
-    (void)unused;
-    Packer start;
-    start.array(5);
-    start.uint(6); start.uint(9); start.uint(1920); start.uint(1200); start.uint(50);
-    show("start_stream params", start.out);
-    Packer getf;
-    getf.array(0);
-    show("get_frame params", getf.out);
+    RouteTable routes;
+    for (const InterfaceRoute& route : routes.routes()) {
+        std::printf("[dry-run-live] %s (suffix %s, port %u):\n", route.name.c_str(), route.suffix.c_str(),
+                    (unsigned)route.port);
+        show(MethodFor(route, "ob_rpc_start_stream") + " params", StreamParams(route, 1920, 1200, 50));
+        show(MethodFor(route, "ob_rpc_stop_stream") + " params", StreamParams(route, 1920, 1200, 50));
+        Packer getf;
+        getf.array(0);
+        show(MethodFor(route, "ob_rpc_get_frame") + " params", getf.out);
+    }
     for (uint32_t prop : {3u, 152u, 153u, 154u, 155u}) {
         Bytes vendor = BuildVendorRequest(kOpSetProperty, (uint16_t)(prop & 0xffff), SetPropertyPayload(prop, 0));
-        show("SET_PROPERTY vendor", vendor);
+        show("ob_rpc_send_data vendor (prop " + std::to_string(prop) + ")", vendor);
     }
     std::printf("[dry-run-live] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
     return failures ? 1 : 0;
@@ -1211,74 +1384,6 @@ int64_t FirstFrameWaitMs(int64_t first_delta_ms) {
     if (first_delta_ms > kFirstFrameWaitCapMs) return kFirstFrameWaitCapMs;
     return first_delta_ms < 0 ? 0 : first_delta_ms;
 }
-
-// ---------------------------------------------------------------------------
-// Interface routing (row #120)
-//
-// A captured method name ends in a suffix that identifies the device and
-// the interface it addresses (protocol-spec.md §1.1): the device id is
-// "0-2-1" and the interface index follows it — "0-2-12" is interface 2 (IR),
-// "0-2-10" is interface 0 (depth). Each interface has its own TCP port on
-// the daemon, so a replay that mixes interfaces must use one connection
-// per interface, not one connection for everything.
-//
-// The suffix is read out of the frame; the frame itself is never re-encoded
-// and goes out byte for byte as captured.
-// ---------------------------------------------------------------------------
-
-// The two interfaces the capture file exercises, and the port each was
-// observed on (protocol-spec.md §1.1: depth 10010, IR 10013).
-struct InterfaceRoute {
-    std::string suffix;  // the method-name suffix, e.g. "0-2-12"
-    std::string name;    // a short label for the diagnostics
-    uint16_t port;       // the daemon port for that interface
-};
-
-// The suffix→interface→port table. The ports are overridable on the
-// command line (--ir-port / --depth-port) for a daemon on other ports.
-class RouteTable {
-public:
-    RouteTable() {
-        routes_.push_back({"0-2-12", "IR", 10013});
-        routes_.push_back({"0-2-10", "depth", 10010});
-    }
-    const std::vector<InterfaceRoute>& routes() const { return routes_; }
-    // The index of a suffix in the table, or -1 when it is not one this
-    // client knows.
-    int IndexOfSuffix(const std::string& suffix) const {
-        for (size_t i = 0; i < routes_.size(); ++i) {
-            if (routes_[i].suffix == suffix) return (int)i;
-        }
-        return -1;
-    }
-    // The index of an interface by its label, or -1.
-    int IndexOfName(const std::string& name) const {
-        for (size_t i = 0; i < routes_.size(); ++i) {
-            if (routes_[i].name == name) return (int)i;
-        }
-        return -1;
-    }
-    // Point an interface at another port. Returns false for an unknown
-    // name, so a typo is an error rather than a silent no-op.
-    bool SetPortByName(const std::string& name, uint16_t port) {
-        int i = IndexOfName(name);
-        if (i < 0) return false;
-        routes_[(size_t)i].port = port;
-        return true;
-    }
-    // The known suffixes, for an error message.
-    std::string KnownSuffixes() const {
-        std::string s;
-        for (const InterfaceRoute& r : routes_) {
-            if (!s.empty()) s += ", ";
-            s += r.suffix;
-        }
-        return s;
-    }
-
-private:
-    std::vector<InterfaceRoute> routes_;
-};
 
 // The method name of a captured request frame. The frame is a msgpack
 // array [0, msgid, method, params]; this reads the method out of it
@@ -1906,6 +2011,390 @@ int ReplyDumpSelftest() {
 }
 
 // ---------------------------------------------------------------------------
+// Row #157: the live path's method names.
+//
+// A loopback stand-in for the daemon's ONE interface. It answers the
+// methods that interface has and refuses every other name the way the
+// daemon refuses it — "could not find function '<name>' with argument
+// count <n>" — so a client that sends a bare name is caught here and not
+// on the hardware.
+// ---------------------------------------------------------------------------
+
+// The frame the mock serves: a short, recognisable band.
+const Bytes kMockBand = {0xde, 0xad, 0xbe, 0xef};
+
+// The vendor's ack for a SET_PROPERTY: the RespHeader of protocol-spec
+// §2.1 (magic 0x4252, errorCode 0).
+Bytes MockVendorAck(uint16_t opcode, uint16_t request_id) {
+    Bytes b;
+    b.push_back(0x52); b.push_back(0x42);  // magic LE 0x4252
+    b.push_back(0x53); b.push_back(0x00);  // size in half-words
+    b.push_back(opcode & 0xff); b.push_back(opcode >> 8);
+    b.push_back(request_id & 0xff); b.push_back(request_id >> 8);
+    b.push_back(0x00); b.push_back(0x00);  // errorCode
+    return b;
+}
+
+class MockInterfaceDaemon {
+public:
+    // One call the mock saw.
+    struct Call {
+        std::string method;
+        Value params;
+    };
+
+    explicit MockInterfaceDaemon(const InterfaceRoute& route) : route_(route) {}
+    ~MockInterfaceDaemon() { Stop(); }
+
+    bool Start() {
+        lfd_ = socket(AF_INET, SOCK_STREAM, 0);
+        if (lfd_ < 0) return false;
+        int one = 1;
+        setsockopt(lfd_, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+        sockaddr_in addr = {};
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        addr.sin_port = 0;  // the kernel picks a free port
+        if (bind(lfd_, (sockaddr*)&addr, sizeof(addr)) != 0 || listen(lfd_, 4) != 0) {
+            close(lfd_);
+            lfd_ = -1;
+            return false;
+        }
+        socklen_t alen = sizeof(addr);
+        getsockname(lfd_, (sockaddr*)&addr, &alen);
+        port_ = ntohs(addr.sin_port);
+        thread_ = std::thread([this] { Serve(); });
+        return true;
+    }
+
+    uint16_t port() const { return port_; }
+
+    void Stop() {
+        stop_.store(true);
+        if (thread_.joinable()) thread_.join();
+        if (lfd_ >= 0) {
+            close(lfd_);
+            lfd_ = -1;
+        }
+    }
+
+    // The calls the mock saw, in order.
+    std::vector<Call> calls() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return calls_;
+    }
+    // The method names, in order.
+    std::vector<std::string> Methods() const {
+        std::vector<std::string> out;
+        for (const Call& c : calls()) out.push_back(c.method);
+        return out;
+    }
+    // How many times a method was called.
+    size_t CountOf(const std::string& method) const {
+        size_t n = 0;
+        for (const Call& c : calls()) {
+            if (c.method == method) ++n;
+        }
+        return n;
+    }
+    // The parameters of the first call to a method.
+    bool ParamsOf(const std::string& method, Value* params) const {
+        for (const Call& c : calls()) {
+            if (c.method == method) {
+                *params = c.params;
+                return true;
+            }
+        }
+        return false;
+    }
+
+private:
+    // The reply for one request. The mock knows the methods of ONE
+    // interface; every other name is refused the way the daemon refuses
+    // it, with the method name and the argument count in the message.
+    Bytes ReplyFor(const std::string& method, const Value& params, uint64_t msgid) {
+        Packer p;
+        p.array(4);
+        p.uint(1);
+        p.uint(msgid);
+        const std::string start = "ob_rpc_start_stream" + route_.suffix;
+        const std::string stop = "ob_rpc_stop_stream" + route_.suffix;
+        const std::string get_frame = "ob_rpc_get_frame" + route_.suffix;
+        const std::string send_data = "ob_rpc_send_data" + route_.suffix;
+        if (method == start || method == stop) {
+            p.nil();
+            p.boolean(true);  // the daemon's start/stop result
+        } else if (method == get_frame) {
+            p.nil();
+            Bytes result = FrameArrayResult(kMockBand, Bytes{}, Bytes{}, -1);
+            p.raw(result.data(), result.size());
+        } else if (method == send_data) {
+            p.nil();
+            Bytes ack = MockVendorAck(kOpSetProperty, 1);
+            p.bin(ack);
+        } else {
+            // The daemon's own words for a method it does not have.
+            size_t argc = (params.kind == Value::Kind::Array) ? params.array.size() : 0;
+            p.str("could not find function '" + method + "' with argument count " + std::to_string(argc));
+            p.nil();
+        }
+        return p.out;
+    }
+
+    static bool WriteAll(int fd, const Bytes& b) {
+        size_t sent = 0;
+        while (sent < b.size()) {
+            ssize_t n = send(fd, b.data() + sent, b.size() - sent, 0);
+            if (n <= 0) return false;
+            sent += (size_t)n;
+        }
+        return true;
+    }
+
+    void ServeConnection(int cfd) {
+        Bytes buf;
+        uint8_t tmp[4096];
+        while (!stop_.load()) {
+            for (;;) {
+                Reader r(buf.data(), buf.size());
+                Value req = r.parse();
+                if (!r.ok()) break;  // incomplete: more bytes are needed
+                uint64_t msgid = 0;
+                std::string method;
+                Value params;
+                if (req.kind == Value::Kind::Array && req.array.size() >= 4) {
+                    if (req.array[1].kind == Value::Kind::UInt) msgid = req.array[1].u;
+                    if (req.array[2].kind == Value::Kind::Str) method = req.array[2].s;
+                    params = req.array[3];
+                }
+                {
+                    std::lock_guard<std::mutex> lock(mutex_);
+                    calls_.push_back(Call{method, params});
+                }
+                if (!WriteAll(cfd, ReplyFor(method, params, msgid))) return;
+                buf.erase(buf.begin(), buf.begin() + static_cast<long>(r.consumed()));
+            }
+            struct pollfd p = {cfd, POLLIN, 0};
+            int pr = poll(&p, 1, 50);
+            if (pr < 0) {
+                if (errno == EINTR) continue;
+                return;
+            }
+            if (pr == 0) continue;
+            ssize_t n = recv(cfd, tmp, sizeof(tmp), 0);
+            if (n <= 0) return;  // the client hung up
+            buf.insert(buf.end(), tmp, tmp + n);
+        }
+    }
+
+    void Serve() {
+        while (!stop_.load()) {
+            struct pollfd p = {lfd_, POLLIN, 0};
+            int pr = poll(&p, 1, 50);
+            if (pr <= 0) continue;
+            int cfd = accept(lfd_, nullptr, nullptr);
+            if (cfd < 0) continue;
+            ServeConnection(cfd);
+            close(cfd);
+        }
+    }
+
+    InterfaceRoute route_;
+    std::vector<Call> calls_;
+    mutable std::mutex mutex_;
+    int lfd_ = -1;
+    uint16_t port_ = 0;
+    std::atomic<bool> stop_{false};
+    std::thread thread_;
+};
+
+// The number of property sets the live path sends per frame pull (the
+// laser trio and the exposure pair, protocol-spec §3.1).
+constexpr int kLivePropertySets = 5;
+
+// Row #157: the live path's method names, its call sequence and the
+// reply unwrap — no device.
+//
+// The daemon's methods carry the interface suffix (protocol-spec.md
+// §1.1), so a name without one is a name the daemon does not have. The
+// mock serves ONE interface and refuses every other name, exactly as the
+// daemon refuses one; the client must therefore address the IR port as
+// "…0-2-12" and the depth port as "…0-2-10".
+int LiveSuffixSelftest() {
+    int failures = 0;
+    auto check = [&](const char* name, bool pass) {
+        std::printf("[live-selftest] %-56s %s\n", name, pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+
+    // The port picks the interface, and the interface carries the suffix.
+    RouteTable routes;
+    const InterfaceRoute* ir = RouteForPort(routes, 10013);
+    const InterfaceRoute* depth = RouteForPort(routes, 10010);
+    check("the IR port resolves to the IR interface", ir && ir->suffix == "0-2-12" && ir->name == "IR");
+    check("the depth port resolves to the depth interface", depth && depth->suffix == "0-2-10" && depth->name == "depth");
+    check("the IR interface's stream type is 6", ir && ir->stream_type == 6);
+    check("the depth interface's stream type is 7", depth && depth->stream_type == 7);
+
+    // A port that is not an interface port is an error naming the map.
+    check("a port that is not an interface port resolves to nothing", RouteForPort(routes, 10011) == nullptr);
+    const std::string unknown = UnknownPortMessage(routes, 10011);
+    check("the unknown-port error names the port and the map",
+          unknown.find("10011") != std::string::npos && unknown.find("0-2-12") != std::string::npos &&
+              unknown.find("0-2-10") != std::string::npos);
+
+    // The method names are the base name plus the interface's suffix.
+    if (ir) {
+        check("the IR method names carry the IR suffix",
+              MethodFor(*ir, "ob_rpc_start_stream") == "ob_rpc_start_stream0-2-12" &&
+                  MethodFor(*ir, "ob_rpc_get_frame") == "ob_rpc_get_frame0-2-12" &&
+                  MethodFor(*ir, "ob_rpc_send_data") == "ob_rpc_send_data0-2-12" &&
+                  MethodFor(*ir, "ob_rpc_stop_stream") == "ob_rpc_stop_stream0-2-12");
+    }
+    if (depth) {
+        check("the depth method names carry the depth suffix",
+              MethodFor(*depth, "ob_rpc_start_stream") == "ob_rpc_start_stream0-2-10" &&
+                  MethodFor(*depth, "ob_rpc_get_frame") == "ob_rpc_get_frame0-2-10" &&
+                  MethodFor(*depth, "ob_rpc_send_data") == "ob_rpc_send_data0-2-10" &&
+                  MethodFor(*depth, "ob_rpc_stop_stream") == "ob_rpc_stop_stream0-2-10");
+    }
+
+    // One live run per interface, against the mock that serves it.
+    struct Run {
+        const char* label;
+        const InterfaceRoute* route;
+        const char* suffix;
+        uint32_t stream_type;
+    };
+    const Run runs[] = {
+        {"IR", ir, "0-2-12", 6},
+        {"depth", depth, "0-2-10", 7},
+    };
+    for (const Run& run : runs) {
+        if (!run.route) continue;
+        MockInterfaceDaemon daemon(*run.route);
+        if (!daemon.Start()) {
+            std::printf("[live-selftest] SKIP (the loopback mock could not start)\n");
+            return 0;
+        }
+        // The mock's port takes the interface's place in the table, so
+        // the live path resolves it exactly as it resolves a real port.
+        RouteTable live_routes;
+        live_routes.SetPortByName(run.route->name, daemon.port());
+        const InterfaceRoute* live_route = RouteForPort(live_routes, daemon.port());
+        check(std::string("the mock's port resolves to the interface's route").c_str(),
+              live_route && live_route->suffix == run.suffix);
+
+        // The frame the live path saves.
+        char path[] = "/tmp/raptor_live_XXXXXX";
+        int fd = mkstemp(path);
+        if (fd < 0) {
+            std::printf("[live-selftest] SKIP (mkstemp failed)\n");
+            return 0;
+        }
+        close(fd);
+
+        LiveStats stats;
+        int rc = Live("127.0.0.1", daemon.port(), *live_route, 5, path, 0, 3, false, nullptr, &stats);
+        daemon.Stop();
+
+        const std::string tag = std::string(run.label) + ": ";
+        check((tag + "the live run succeeds").c_str(), rc == 0);
+        check((tag + "the run pulled the three frames it asked for").c_str(),
+              stats.get_calls == 3 && stats.data == 3 && stats.empty == 0 && stats.errors == 0);
+        check((tag + "the stream was started and stopped").c_str(), stats.started && stats.stopped);
+
+        const std::vector<std::string> methods = daemon.Methods();
+        const std::string start = "ob_rpc_start_stream" + std::string(run.suffix);
+        const std::string stop = "ob_rpc_stop_stream" + std::string(run.suffix);
+        const std::string get_frame = "ob_rpc_get_frame" + std::string(run.suffix);
+        const std::string send_data = "ob_rpc_send_data" + std::string(run.suffix);
+        check((tag + "the first call is the suffixed start_stream").c_str(),
+              !methods.empty() && methods.front() == start);
+        check((tag + "the last call is the suffixed stop_stream").c_str(),
+              methods.size() >= 2 && methods.back() == stop);
+        check((tag + "every call carries the interface suffix").c_str(), !methods.empty());
+        bool all_suffixed = true;
+        const std::string suffix(run.suffix);
+        for (const std::string& m : methods) {
+            if (m.size() < suffix.size() || m.compare(m.size() - suffix.size(), suffix.size(), suffix) != 0) {
+                all_suffixed = false;
+            }
+        }
+        check((tag + "no call uses a bare method name").c_str(), all_suffixed);
+        check((tag + "the frame pulls are the suffixed get_frame").c_str(),
+              daemon.CountOf(get_frame) == 3);
+        check((tag + "the property sets are the suffixed send_data").c_str(),
+              daemon.CountOf(send_data) == (size_t)(3 * kLivePropertySets));
+
+        // The sequence: start, then each frame pull with its property
+        // sets, then the stop.
+        size_t i = 1;
+        bool sequence = true;
+        for (int n = 0; n < 3 && sequence; ++n) {
+            if (i >= methods.size() || methods[i] != get_frame) { sequence = false; break; }
+            ++i;
+            for (int k = 0; k < kLivePropertySets; ++k) {
+                if (i >= methods.size() || methods[i] != send_data) { sequence = false; break; }
+                ++i;
+            }
+        }
+        check((tag + "the sequence is start, frame pull with its property sets, stop").c_str(),
+              sequence && i < methods.size() && methods[i] == stop && i + 1 == methods.size());
+
+        // The parameters: the interface's own stream type, and the same
+        // array for the stop.
+        Value start_params;
+        Value stop_params;
+        bool have_start = daemon.ParamsOf(start, &start_params);
+        bool have_stop = daemon.ParamsOf(stop, &stop_params);
+        auto is_stream_params = [&](const Value& v, uint32_t stream_type) {
+            if (v.kind != Value::Kind::Array || v.array.size() != 5) return false;
+            for (size_t k = 0; k < v.array.size(); ++k) {
+                if (v.array[k].kind != Value::Kind::UInt) return false;
+            }
+            return v.array[0].u == stream_type && v.array[1].u == 9 && v.array[2].u == 1920 &&
+                   v.array[3].u == 1200 && v.array[4].u == 50;
+        };
+        check((tag + "the start carries [streamtype,9,1920,1200,50]").c_str(),
+              have_start && is_stream_params(start_params, run.stream_type));
+        check((tag + "the stop carries the same array as the start").c_str(),
+              have_stop && is_stream_params(stop_params, run.stream_type));
+
+        // The reply unwrap: the frame the mock served is the frame the
+        // live path saved.
+        std::ifstream in(path, std::ios::binary);
+        Bytes saved((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        in.close();
+        unlink(path);
+        check((tag + "the saved frame is the band the mock served").c_str(), saved == kMockBand);
+    }
+
+    // The mock refuses a bare method name the way the daemon does — the
+    // reply the 2026-10-20 hardware runs recorded.
+    if (ir) {
+        MockInterfaceDaemon daemon(*ir);
+        if (daemon.Start()) {
+            RpcClient rpc;
+            if (rpc.connect("127.0.0.1", daemon.port())) {
+                Packer p;
+                p.array(5);
+                p.uint(6); p.uint(9); p.uint(1920); p.uint(1200); p.uint(50);
+                Value envelope = rpc.call("ob_rpc_start_stream", p.out);
+                Value result = Result(envelope);
+                check("a bare method name is refused with the daemon's message",
+                      result.kind == Value::Kind::Error &&
+                          result.error == "could not find function 'ob_rpc_start_stream' with argument count 5");
+            }
+            daemon.Stop();
+        }
+    }
+
+    std::printf("[live-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
+}
+
+// ---------------------------------------------------------------------------
 // Row #140: the capture round-trip.
 //
 // The recorder writes the replies; the reader reads them back; the bytes
@@ -2372,6 +2861,7 @@ int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--selftest-timeout") return ReplyTimeoutSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--selftest-dump") return ReplyDumpSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--selftest-capture") return CaptureSelftest();
+    if (argc >= 2 && std::string(argv[1]) == "--selftest-live") return LiveSuffixSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
     if (argc >= 2 && std::string(argv[1]) == "--capture-dump") {
@@ -2439,32 +2929,77 @@ int main(int argc, char** argv) {
         return rc;
     }
     if (argc >= 2 && std::string(argv[1]) == "--live") {
-        std::string host = argc > 2 ? argv[2] : "127.0.0.1";
-        uint16_t port = argc > 3 ? (uint16_t)std::atoi(argv[3]) : 10013;
-        int seconds = argc > 4 ? std::atoi(argv[4]) : 5;
-        std::string out = argc > 5 ? argv[5] : "/tmp/raptor_frame.raw";
+        std::string host = "127.0.0.1";
+        uint16_t port = 10013;
+        int seconds = 5;
+        std::string out = "/tmp/raptor_frame.raw";
         int pull_ms = 0;
+        int max_frames = 0;
         bool log = true;
         std::string capture_dir;
         int capture_seconds = kDefaultCaptureSeconds;
         uint64_t capture_bytes = kDefaultCaptureBytes;
+        RouteTable routes;
+        // Positionals are host, port, seconds and the output path; a
+        // flag may appear before them.
+        std::vector<std::string> positionals;
         for (int i = 2; i < argc; ++i) {
-            if (std::string(argv[i]) == "--pull-ms" && i + 1 < argc) pull_ms = std::atoi(argv[++i]);
-            if (std::string(argv[i]) == "--quiet") log = false;
-            if (std::string(argv[i]) == "--dump-replies") g_dump_replies = true;
-            if (std::string(argv[i]) == "--capture" && i + 1 < argc) capture_dir = argv[++i];
-            if (std::string(argv[i]) == "--capture-seconds" && i + 1 < argc) capture_seconds = std::atoi(argv[++i]);
-            if (std::string(argv[i]) == "--capture-bytes" && i + 1 < argc) {
-                capture_bytes = std::strtoull(argv[++i], nullptr, 10);
+            std::string a = argv[i];
+            if (a.rfind("--", 0) == 0) {
+                if (a == "--pull-ms" && i + 1 < argc) pull_ms = std::atoi(argv[++i]);
+                else if (a == "--quiet") log = false;
+                else if (a == "--dump-replies") g_dump_replies = true;
+                else if (a == "--frames" && i + 1 < argc) max_frames = std::atoi(argv[++i]);
+                else if (a == "--capture" && i + 1 < argc) capture_dir = argv[++i];
+                else if (a == "--capture-seconds" && i + 1 < argc) capture_seconds = std::atoi(argv[++i]);
+                else if (a == "--capture-bytes" && i + 1 < argc) capture_bytes = std::strtoull(argv[++i], nullptr, 10);
+                else if ((a == "--ir-port" || a == "--depth-port") && i + 1 < argc) {
+                    int p = std::atoi(argv[++i]);
+                    std::string name = (a == "--ir-port") ? "IR" : "depth";
+                    if (p <= 0 || p > 65535) {
+                        std::fprintf(stderr, "%s must be a valid port (got %s)\n", a.c_str(), argv[i]);
+                        return 2;
+                    }
+                    if (!routes.SetPortByName(name, (uint16_t)p)) {
+                        std::fprintf(stderr, "unknown interface: %s\n", name.c_str());
+                        return 2;
+                    }
+                } else { std::fprintf(stderr, "unknown option: %s\n", a.c_str()); return 2; }
+            } else {
+                positionals.push_back(a);
             }
+        }
+        if (positionals.size() > 0) host = positionals[0];
+        if (positionals.size() > 1) port = (uint16_t)std::atoi(positionals[1].c_str());
+        if (positionals.size() > 2) seconds = std::atoi(positionals[2].c_str());
+        if (positionals.size() > 3) out = positionals[3];
+        if (positionals.size() > 4) {
+            std::fprintf(stderr, "too many arguments: usage: raptor_client --live <host> [port] [seconds] [out.raw]\n");
+            return 2;
+        }
+        if (seconds <= 0) {
+            std::fprintf(stderr, "the live window must be positive (got %d)\n", seconds);
+            return 2;
+        }
+        if (max_frames < 0) {
+            std::fprintf(stderr, "--frames must not be negative (got %d)\n", max_frames);
+            return 2;
         }
         if (capture_seconds < 0) {
             std::fprintf(stderr, "--capture-seconds must not be negative (got %d)\n", capture_seconds);
             return 2;
         }
+        // The port picks the interface: the daemon's method names carry
+        // the interface's suffix (protocol-spec.md §1.1), so a port that
+        // is not an interface port is a mistake, not a default.
+        const InterfaceRoute* route = RouteForPort(routes, port);
+        if (!route) {
+            std::fprintf(stderr, "[live] %s\n", UnknownPortMessage(routes, port).c_str());
+            return 2;
+        }
         CaptureSession capture;
         if (!capture_dir.empty() && !capture.Start(capture_dir, capture_seconds, capture_bytes)) return 2;
-        int rc = Live(host, port, seconds, out, pull_ms, log, capture.recorder());
+        int rc = Live(host, port, *route, seconds, out, pull_ms, max_frames, log, capture.recorder(), nullptr);
         capture.Stop();
         return rc;
     }
@@ -2476,6 +3011,7 @@ int main(int argc, char** argv) {
         "  raptor_client --selftest-timeout         bounded reply read, no device\n"
         "  raptor_client --selftest-dump            reply-structure dump, no device\n"
         "  raptor_client --selftest-capture         capture round-trip, no device\n"
+        "  raptor_client --selftest-live            live-path method names, no device\n"
         "  raptor_client --discover                 GVCP discovery only\n"
         "  raptor_client --capture-dump <dir>       read a capture bundle back\n"
         "  raptor_client --replay <file> [host] [--dry-run] [--quiet]\n"
@@ -2495,8 +3031,25 @@ int main(int argc, char** argv) {
         "      expiry the replay names the frame and its interface and exits\n"
         "      non-zero.\n"
         "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
-        "      [--dump-replies] [--capture DIR] [--capture-seconds N] [--capture-bytes N]\n"
-        "      per-call logging is ON by default (--quiet disables it); --pull-ms 0 = as fast\n"
+        "      [--frames N] [--dump-replies] [--capture DIR] [--capture-seconds N]\n"
+        "      [--capture-bytes N] [--ir-port N] [--depth-port N]\n"
+        "      ONE interface per run: the port picks the interface, and every\n"
+        "      method name on that connection carries the interface's suffix,\n"
+        "      because the daemon has no method without one:\n"
+        "        port 10013  IR     ob_rpc_start_stream0-2-12  (and get_frame,\n"
+        "                                            send_data, stop_stream)\n"
+        "        port 10010  depth  ob_rpc_start_stream0-2-10  (and get_frame,\n"
+        "                                            send_data, stop_stream)\n"
+        "      A port that is not an interface port is an error naming the map.\n"
+        "      The stream's first parameter is the interface's stream type\n"
+        "      (6 IR, 7 depth), not a start/stop command; the stop is its own\n"
+        "      method (ob_rpc_stop_stream<suffix>) with the same parameters.\n"
+        "      Both interfaces are two runs, one per port — the daemon serves\n"
+        "      one interface per port, so a run cannot pull the other's frames.\n"
+        "      --frames N stops the run after N frame pulls (the window ends\n"
+        "      first if it is shorter); --pull-ms 0 = as fast as the daemon\n"
+        "      answers.\n"
+        "      per-call logging is ON by default (--quiet disables it).\n"
         "\n"
         "  --dump-replies (OFF by default; the output above never changes)\n"
         "      prints one line per reply: the RPC kind, the msgid, and the result's\n"
