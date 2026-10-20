@@ -1,0 +1,153 @@
+# Row #130 — the precondition-vs-FAIL contract, captured output (mac lane)
+# Date: 2026-10-19   Run start: 2026-10-19 22:41:58
+# Branch: build/plan130-preconditions
+# The vendor SDK was NOT loaded in any run below: the tests are pointed at
+# the SDK test double (tests/hardware/stub_sdk) and the two precondition
+# verdicts are forced through the probe's test-only overrides.
+
+=== 1. the probe's own verdict on this host (loads nothing) ===
+$ build/tests/hardware/device_message_listener_test/device_message_listener_test --precondition-probe
+[probe] daemon: satisfied (RPCServer running)
+[probe] device: satisfied (VID 0x2BC5 enumerated)
+[probe] preconditions satisfied
+exit: 0
+
+=== 2. scripts/hw-preflight.sh device_message_listener_test (daemon up) ===
+hw-preflight: OK
+
+----8<---- paste into the record ----8<----
+- Date: 2026-10-19
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5
+- Branch: build/plan130-preconditions
+- Target: ./build/tests/hardware/device_message_listener_test/device_message_listener_test  (explicit argument (the binary this run will execute))
+- Other copy: build/tests/hardware/device_message_listener_test/device_message_listener_test (22:40:40)
+- Preflight: pwd OK; no conflicting process; daemon: RPCServer(925,) running (process proxy: a vendor RPC host process exists); freshness: binary 22:40:40 >= newest source main.cpp 22:40:12
+- Interposer: expect first line: [launcher] DYLD_INSERT_LIBRARIES=...libMoltenVK.dylib:...libvulkan_disable_interpose.dylib
+- Run start: 2026-10-19 22:41:58   # pass this and 'device_message_listener_test' to hw-postflight.sh
+----8<----------------------------------8<----
+exit: 0
+
+=== 3. scripts/hw-preflight.sh with a pgrep that finds nothing (daemon down) ===
+# (a stub pgrep on PATH that always reports 'not found' — the daemon-down case)
+hw-preflight: FAIL — the CrealityScan RPC daemon host is not running (no 'CrealityScan' or 'RPCServer' process) — fix: start CrealityScan (macOS: the 'com.creality.RPCServer' LaunchAgent; the CrealityScan app counts as the RPC host too).
+exit: 1
+
+=== 4. tests/hardware/precondition_evidence.sh ===
+$ tests/hardware/precondition_evidence.sh build
+
+--- device_message_listener_test: probe verdict on this host ---
+$ build/tests/hardware/device_message_listener_test/device_message_listener_test --precondition-probe
+[probe] daemon: satisfied (RPCServer running)
+[probe] device: satisfied (VID 0x2BC5 enumerated)
+[probe] preconditions satisfied
+exit: 0 (want 0)
+
+--- device_message_listener_test: daemon missing -> skip ---
+$ OPENSCANNER_HW_DAEMON_STATE=absent build/tests/hardware/device_message_listener_test/device_message_listener_test build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] SKIP: precondition not met: CrealityScan (RPC daemon host) is not running; listener checks NOT exercised.
+worker exit code: 2
+exit: 2 (want 2)
+
+--- device_message_listener_test: device missing -> skip ---
+$ OPENSCANNER_HW_DEVICE_STATE=absent build/tests/hardware/device_message_listener_test/device_message_listener_test build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] SKIP: precondition not met: no VID_2BC5 device enumerated; listener checks NOT exercised.
+worker exit code: 2
+exit: 2 (want 2)
+
+--- device_message_listener_test: probe indeterminate -> skip ---
+$ OPENSCANNER_HW_DAEMON_STATE=unknown build/tests/hardware/device_message_listener_test/device_message_listener_test build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] SKIP: precondition probe failed (CrealityScan: probe indeterminate (forced); VID_2BC5: VID 0x2BC5 enumerated); listener checks NOT exercised.
+worker exit code: 2
+exit: 2 (want 2)
+
+--- device_message_listener_test: SDK refuses to create a context -> failure ---
+$ OPENSCANNER_HW_DAEMON_STATE=present OPENSCANNER_HW_DEVICE_STATE=present build/tests/hardware/device_message_listener_test/device_message_listener_test build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] Loading OBScan SDK from: build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] Resolved bootstrap symbols OK.
+[worker] remove entry point resolved: NO (OQ-3 untestable)
+[worker] obscan_context_create() -> OB_SCAN_ERROR_FATAL (845283585)
+worker exit code: 1
+exit: 1 (want 1)
+
+--- data_process_message_listener_test: probe verdict on this host ---
+$ build/tests/hardware/data_process_message_listener_test/data_process_message_listener_test --precondition-probe
+[probe] daemon: satisfied (RPCServer running)
+[probe] device: satisfied (VID 0x2BC5 enumerated)
+[probe] preconditions satisfied
+exit: 0 (want 0)
+
+--- data_process_message_listener_test: daemon missing -> skip ---
+$ OPENSCANNER_HW_DAEMON_STATE=absent build/tests/hardware/data_process_message_listener_test/data_process_message_listener_test build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] SKIP: precondition not met: CrealityScan (RPC daemon host) is not running; listener checks NOT exercised.
+worker exit code: 2
+exit: 2 (want 2)
+
+--- data_process_message_listener_test: device missing -> skip ---
+$ OPENSCANNER_HW_DEVICE_STATE=absent build/tests/hardware/data_process_message_listener_test/data_process_message_listener_test build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] SKIP: precondition not met: no VID_2BC5 device enumerated; listener checks NOT exercised.
+worker exit code: 2
+exit: 2 (want 2)
+
+--- data_process_message_listener_test: probe indeterminate -> skip ---
+$ OPENSCANNER_HW_DAEMON_STATE=unknown build/tests/hardware/data_process_message_listener_test/data_process_message_listener_test build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] SKIP: precondition probe failed (CrealityScan: probe indeterminate (forced); VID_2BC5: VID 0x2BC5 enumerated); listener checks NOT exercised.
+worker exit code: 2
+exit: 2 (want 2)
+
+--- data_process_message_listener_test: SDK refuses to create a context -> failure ---
+$ OPENSCANNER_HW_DAEMON_STATE=present OPENSCANNER_HW_DEVICE_STATE=present build/tests/hardware/data_process_message_listener_test/data_process_message_listener_test build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] Loading OBScan SDK from: build/tests/hardware/stub_sdk/libobscan_stub.dylib
+[worker] obscan_context_create() -> OB_SCAN_ERROR_FATAL (845283585)
+worker exit code: 1
+exit: 1 (want 1)
+
+precondition evidence: OK — every path behaved as expected.
+exit: 0
+
+=== 5. CTest records the run as SKIPPED, not FAILED ===
+$ OPENSCANNER_HW_DAEMON_STATE=absent ctest --test-dir build -L hardware -V
+
+=== 5. CTest records the run as SKIPPED, not FAILED ===
+$ OPENSCANNER_HW_DAEMON_STATE=absent ctest --test-dir build -L hardware -V
+UpdateCTestConfiguration  from :/Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build/DartConfiguration.tcl
+Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 8
+    Start 8: device_message_listener_test
+
+8: Test command: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build/tests/hardware/device_message_listener_test/device_message_listener_test
+8: Working Directory: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build/tests/hardware/device_message_listener_test
+8: Test timeout computed to be: 10000000
+8: [launcher] DYLD_INSERT_LIBRARIES=/Applications/CrealityScan.app/Contents/PlugIns/libMoltenVK.dylib:/Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build/engine/libvulkan_disable_interpose.dylib
+8: [vulkan_disable_interpose] loaded
+8: [worker] SKIP: precondition not met: CrealityScan (RPC daemon host) is not running; listener checks NOT exercised.
+8: worker exit code: 2
+1/2 Test #8: device_message_listener_test .........***Skipped   0.11 sec
+test 9
+    Start 9: data_process_message_listener_test
+
+9: Test command: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build/tests/hardware/data_process_message_listener_test/data_process_message_listener_test
+9: Working Directory: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build/tests/hardware/data_process_message_listener_test
+9: Test timeout computed to be: 10000000
+9: [launcher] DYLD_INSERT_LIBRARIES=/Applications/CrealityScan.app/Contents/PlugIns/libMoltenVK.dylib:/Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build/engine/libvulkan_disable_interpose.dylib
+9: [vulkan_disable_interpose] loaded
+9: [worker] SKIP: precondition not met: CrealityScan (RPC daemon host) is not running; listener checks NOT exercised.
+9: worker exit code: 2
+2/2 Test #9: data_process_message_listener_test ...***Skipped   0.11 sec
+
+100% tests passed out of 2
+
+Label Time Summary:
+hardware    =   0.22 sec*proc (2 tests)
+
+Total Test time (real) =   0.22 sec
+
+The following tests did not run:
+	  8 - device_message_listener_test (Skipped)
+	  9 - data_process_message_listener_test (Skipped)
+exit: 0

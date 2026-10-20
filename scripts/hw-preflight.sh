@@ -9,9 +9,9 @@
 # Exit 0  -> all checks pass; a pre-filled record header block is printed to stdout.
 # Exit 1  -> a check failed; the reason is on stderr. The agent STOPS and reports it.
 #
-# Folds hw-test rules 1, 7, 12, 13 (+ the interposer expectation) into one gate so
-# the two most common correction causes — a stale binary (#107) and a bad process
-# check (#13) — are code, not memory.
+# Folds hw-test rules 1, 7, 12, 13 (+ the interposer expectation, + the RPC
+# daemon host check) into one gate so the two most common correction causes —
+# a stale binary (#107) and a bad process check (#13) — are code, not memory.
 #
 # Two determinism rules, because both caused real misreads:
 #   * BINARY SELECTION is a fixed order, never `find | head -1`: the explicit
@@ -120,7 +120,32 @@ for p in scan_server raptor_client device_message_listener_test data_process_mes
 done
 [ -z "$CONFLICT" ] || die "a conflicting SDK client is already running:$CONFLICT — one run at a time."
 
-# 5. Interposer expectation for the record (rule 6). raptor_client links no vendor SDK.
+# 5. The vendor's RPC daemon host must be up for the targets that create an
+#    OBScan context: with the daemon down the SDK cannot reach the device, so
+#    the run would report a failure for a missing precondition.
+#
+#    This is a PROCESS PROXY, not a service query: it says "a vendor RPC host
+#    process exists", nothing more. On macOS the RPC server is Creality's root
+#    daemon (RPCServer, /Library/Creation/RPCServer) and the CrealityScan app
+#    is that daemon's GUI client, so either process counts — a host where the
+#    daemon runs and the app is closed must not be reported as a missing
+#    daemon (see docs/recomp/FULL-INDEPENDENCE.md §1, layer L3). On Windows
+#    the daemon host is CrealityScan.exe.
+DAEMON_STATE="n/a — the target does not create an OBScan context"
+case "$TARGET" in
+  device_message_listener_test|data_process_message_listener_test|smoke_test|live_capture_test|scan_server)
+    DAEMON_FOUND=""
+    for p in CrealityScan RPCServer; do
+      if pgrep -x "$p" >/dev/null 2>&1; then
+        DAEMON_FOUND="$p($(pgrep -x "$p" | tr '\n' ','))"
+      fi
+    done
+    [ -n "$DAEMON_FOUND" ] || die "the CrealityScan RPC daemon host is not running (no 'CrealityScan' or 'RPCServer' process) — fix: start CrealityScan (macOS: the 'com.creality.RPCServer' LaunchAgent; the CrealityScan app counts as the RPC host too)."
+    DAEMON_STATE="$DAEMON_FOUND running (process proxy: a vendor RPC host process exists)"
+    ;;
+esac
+
+# 6. Interposer expectation for the record (rule 6). raptor_client links no vendor SDK.
 case "$TARGET" in
   raptor_client) INTERP="n/a — links no vendor SDK (socket/STL only); vendor-artifact & interposer rules do not apply" ;;
   scan_server)   INTERP="expect line 2: [vulkan_disable_interpose] loaded  (scan_server sets DYLD_INSERT_LIBRARIES itself)" ;;
@@ -140,7 +165,7 @@ hw-preflight: OK
 - Branch: $BRANCH
 - Target: $BIN  ($WHY)
 - Other copy: ${ALT:-none}
-- Preflight: pwd OK; no conflicting process; freshness: $FRESH
+- Preflight: pwd OK; no conflicting process; daemon: $DAEMON_STATE; freshness: $FRESH
 - Interposer: $INTERP
 - Run start: $(date '+%Y-%m-%d %H:%M:%S')   # pass this and '$TARGET' to hw-postflight.sh
 ----8<----------------------------------8<----
