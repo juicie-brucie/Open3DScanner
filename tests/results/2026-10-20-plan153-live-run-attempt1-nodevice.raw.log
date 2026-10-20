@@ -1,0 +1,37 @@
+[launcher] Running live scan server in a worker process (up to 300s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/20 06:23:07.476729][info][1329356][Context.cpp:67] Context created with config: default config!
+[10/20 06:23:07.476771][info][1329356][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/20 06:23:07.485136][info][1329356][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/20 06:23:07.485205][info][1329356][DeviceManager.cpp:15] Current found device(s): (0)
+[10/20 06:23:07.485216][info][1329356][Context.cpp:82] EnumerateNetDevice:true
+[10/20 06:23:07.485516][info][1329370][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/20 06:23:07.485555][info][1329370][GVCPClient.cpp:325] bind 0.0.0.0:61506
+[10/20 06:23:07.485624][info][1329370][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/20 06:23:07.485661][info][1329370][GVCPClient.cpp:325] bind 0.0.0.0:64924
+[10/20 06:23:07.485693][info][1329370][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/20 06:23:07.485887][info][1329370][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/20 06:23:07.485943][info][1329370][GVCPClient.cpp:325] bind 0.0.0.0:55342
+[10/20 06:23:07.485972][info][1329370][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/20 06:23:07.485995][info][1329370][GVCPClient.cpp:325] bind 169.254.113.120:0
+[10/20 06:23:07.486033][info][1329370][GVCPClient.cpp:325] bind 0.0.0.0:50082
+[10/20 06:23:07.486057][info][1329370][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en9
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/20 06:23:07.486251][error][1329372][GVCPClient.cpp:355] sendto failed with error:49
+[10/20 06:23:11.505945][error][1329431][GVCPClient.cpp:355] sendto failed with error:49 [**2 logs in 4019ms**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=0
+[launcher] Worker crashed or timed out inside the vendor SDK (child killed by signal Segmentation fault: 11).
