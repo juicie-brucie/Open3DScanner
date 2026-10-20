@@ -70,7 +70,7 @@ ctest --test-dir build -LE hardware --output-on-failure
 ### ctest summary
 
 ```
- 4/12 Test  #4: plane_toggle_test ................   Passed    0.00 sec
+ 6/12 Test  #6: plane_toggle_test ................   Passed    0.00 sec
 100% tests passed out of 12
 ```
 
@@ -108,6 +108,18 @@ independent features touching the same place.
 The tree above was rebuilt and re-tested on the new `main` (12/12 device-free
 entries).
 
+**A third rebase (the rebuild onto the newest `main`):** `main` moved by 19
+commits that touch only `docs/recomp/**`, `docs/recomp/log/**` and
+`scripts/**` — no code under `tools/scan_server/**`. The only conflict was
+again `docs/recomp/PLAN.md`, and the dispatcher is the board's single writer:
+this PR's board hunk was dropped (`git checkout --ours
+docs/recomp/PLAN.md`), so the row move rides the board PR and this branch
+now leaves `PLAN.md` exactly as `main` has it (row #158 still reads `TODO`).
+No code conflict occurred, and the three resolutions above — `server_now_ms`
++ `planeRemoval` in the status JSON, `exposure_apply.Invalidate()` +
+`ReassertEnabled` in the resume block, and both ctest entries — are intact
+(the status message the probe captured carries both fields).
+
 ## Crash sweep
 
 Not run — hardware-free; neither target loads the vendor SDK, so nothing here
@@ -140,7 +152,10 @@ could produce a device-process crash report.
 
 ## Board
 
-- Row move: #158 `BUILD` → `HW` — the command, the transition log and the
-  device-free selftest are done (42 checks, 0 failures; the full suite 10/10);
-  the *effect* needs the device, because the evidence is the vendor call's
-  own verdict on a live scan.
+- Row move: #158 `TODO` → `HW` — the command, the transition log and the
+  device-free selftest are done (42 checks, 0 failures; the full suite
+  12/12); the *effect* needs the device, because the evidence is the vendor
+  call's own verdict on a live scan.
+- **The move is not in this branch.** The dispatcher is the board's single
+  writer, so this PR leaves `docs/recomp/PLAN.md` exactly as `main` has it
+  (row #158 still reads `TODO`); the row move rides the board PR.

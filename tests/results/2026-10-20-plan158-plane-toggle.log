@@ -78,13 +78,13 @@ Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build7/build
       Start  4: bounded_watchdog_test
  4/12 Test  #4: bounded_watchdog_test ............   Passed    0.00 sec
       Start  5: ui_frame_age_test
- 5/12 Test  #5: ui_frame_age_test ................   Passed    1.27 sec
+ 5/12 Test  #5: ui_frame_age_test ................   Passed    1.25 sec
       Start  6: plane_toggle_test
  6/12 Test  #6: plane_toggle_test ................   Passed    0.00 sec
       Start  7: frame_bins_test
- 7/12 Test  #7: frame_bins_test ..................   Passed    0.21 sec
+ 7/12 Test  #7: frame_bins_test ..................   Passed    0.24 sec
       Start  8: frame_decode_test
- 8/12 Test  #8: frame_decode_test ................   Passed    0.24 sec
+ 8/12 Test  #8: frame_decode_test ................   Passed    0.31 sec
       Start  9: raptor_client_selftest
  9/12 Test  #9: raptor_client_selftest ...........   Passed    0.00 sec
       Start 10: raptor_client_reply_timeout
@@ -96,8 +96,8 @@ Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build7/build
 
 100% tests passed out of 12
 
-Total Test time (real) =   2.13 sec
+Total Test time (real) =   2.21 sec
 
 $ ./build/tools/scan_server/scan_server --synthetic 18899   # then a WebSocket client sends the command
 handshake: HTTP/1.1 101 Switching Protocols
-status: {"type":"status","mode":"synthetic","state":"scanning","autoExposure":true,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":true,"server_now_ms":1792476499634,"planeRemoval":{"auto":true,"turntable":false,"manual":true},"tracking":-1,"trackingName":"UNKNOWN","trackingCounts":{"SUCCESS":0,"LOST":0,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+status: {"type":"status","mode":"synthetic","state":"scanning","autoExposure":true,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":true,"server_now_ms":1792479658703,"planeRemoval":{"auto":true,"turntable":false,"manual":true},"tracking":-1,"trackingName":"UNKNOWN","trackingCounts":{"SUCCESS":0,"LOST":0,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
