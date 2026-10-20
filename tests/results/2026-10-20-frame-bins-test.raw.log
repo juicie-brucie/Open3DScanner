@@ -1,0 +1,12 @@
+[frame_bins_test] PASS: tsv top-level + array-shaped (slots 4/6) bins, order/bytes/index/determinism; pcap 3-segment nested reassembly + gapped message dropped
+
+---
+$ ctest --test-dir build -R frame_bins_test --output-on-failure
+Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build
+    Start 8: frame_bins_test
+1/1 Test #8: frame_bins_test ..................   Passed    0.20 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.21 sec
+EXIT:0
