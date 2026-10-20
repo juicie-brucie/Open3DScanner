@@ -22,13 +22,19 @@ artifact: the only thing both sides agree on, and the thing a human reviews.
 
 | Agent | Mode | Writes | Model |
 | --- | --- | --- | --- |
-| `openscanner/dispatch` | primary | `docs/recomp/**`, `.claude/**`, `README.md` | `opencode/nemotron-3-ultra-free` |
-| `openscanner/planner` | primary | `docs/recomp/ROADMAP.md` | `opencode/nemotron-3-ultra-free` |
-| `openscanner/recon` | primary | `obscan_api.h`, `docs/recon/**` | `opencode/glm-5.3-flash-free#max` |
-| `openscanner/builder` | primary | `engine/src`, `mesh`, `ui`, `tools` | `opencode/beam-free#high` |
-| `openscanner/recon-sweep` | subagent | `docs/recon/findings/**` (draft) | `opencode/deepseek-v4.1-flash-free#low` |
-| `openscanner/verifier` | all | PR comments (verdicts); no edits | `opencode/space-bunny-free#max` |
+| `openscanner/dispatch` | primary | `docs/recomp/**`, `scripts/**`, `.claude/**`, `README.md` | agent file |
+| `openscanner/planner` | primary | `docs/recomp/ROADMAP.md` | agent file |
+| `openscanner/recon` | primary | `obscan_api.h`, `docs/recon/**` | agent file |
+| `openscanner/recon-sweep` | subagent | `docs/recon/findings/**` (draft) | agent file |
+| `openscanner/builder` | primary | `engine/src`, `mesh`, `ui`, `tools` | agent file |
+| `openscanner/verifier` | all | PR comments (verdicts); no edits | agent file |
+| `openscanner/intake` | subagent | read-only: quotes and returns; the `pr-rebase.py` sweep is its only write | agent file |
 | hardware tester | external | `tests/results/**` | Claude Code, driven by hand |
+
+The model for each agent is the model in its agent file
+(`~/.config/opencode/agents/openscanner/<agent>.md`); this table does not restate
+it. The "Why these models" section below explains the cost tiers, not current
+model IDs.
 
 ### Why these models
 
