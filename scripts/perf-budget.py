@@ -214,6 +214,82 @@ def median_of_runs(runs):
     return out
 
 
+# The summary block the record's raw log carries for the recorded dataset:
+# "<metric>  min= <a>  median= <b>  max= <c>".
+SUMMARY_RE = re.compile(r"^([a-z0-9_.]+)\s+min=\s*([0-9.]+)\s+median=\s*([0-9.]+)\s+max=\s*([0-9.]+)\s*$")
+
+RECORD_LOG = os.path.join(ROOT, "tests", "results",
+                          "2026-10-19-perf-contract-budget-harness.raw.log")
+
+
+def dataset_from_log(path):
+    """The per-metric (min, median, max) the log's summary block records."""
+    if not os.path.exists(path):
+        return None
+    out = {}
+    with open(path) as f:
+        for line in f:
+            m = SUMMARY_RE.match(line.rstrip("\n"))
+            if m:
+                out[m.group(1)] = [float(m.group(2)), float(m.group(3)), float(m.group(4))]
+    return out or None
+
+
+def sync_dataset(contract, path):
+    """Copy the log's dataset into the budget file, and recompute each k."""
+    data = dataset_from_log(path)
+    if not data:
+        print("perf-budget: no dataset summary in %s" % path)
+        return 1
+    contract["dataset"]["measured"] = data
+    for b in contract["budgets"]:
+        m = b["metric"]
+        if m in data:
+            b["median_measured"] = data[m][1]
+            lo, med, hi = data[m]
+            # A metric whose dataset holds a single sample (max == min) has
+            # no K to recompute - the file's own value stands, and the
+            # budget's derivation says why.
+            if med > 0 and hi > lo:
+                b["k"] = round(b["max"] / med, 2)
+            # The {DATASET} token is filled from the same place, so the
+            # derivation's numbers cannot drift from the data.
+            unit = b.get("unit", "").split("/")[0]
+            fill = "%.3f-%.3f %s (median %.3f)" % (lo, hi, unit, med)
+            b["derived_from"] = b["derived_from"].replace("{DATASET}", fill)
+    with open(BUDGETS, "w") as f:
+        json.dump(contract, f, indent=2)
+        f.write("\n")
+    print("perf-budget: the budget file's dataset is now the log's")
+    for m in sorted(data):
+        print("  %-26s min=%9.3f median=%9.3f max=%9.3f" % (m, data[m][0], data[m][1], data[m][2]))
+    return 0
+
+
+def check_dataset(contract, path):
+    """The budget file's dataset must be the log's, to the third decimal."""
+    data = dataset_from_log(path)
+    if not data:
+        print("perf-budget: no dataset summary in %s" % path)
+        return 1
+    recorded = contract.get("dataset", {}).get("measured", {})
+    failures = 0
+    for m in sorted(set(list(data.keys()) + list(recorded.keys()))):
+        if m not in data or m not in recorded:
+            print("  %-26s only in one of the two" % m)
+            failures += 1
+        elif [round(x, 3) for x in recorded[m]] != [round(x, 3) for x in data[m]]:
+            print("  %-26s budget file %s vs log %s" % (m, recorded[m], data[m]))
+            failures += 1
+        else:
+            print("  %-26s %s" % (m, data[m]))
+    if failures:
+        print("perf-budget: the budget file and the log disagree on %d metric(s)" % failures)
+        return 1
+    print("perf-budget: the budget file's dataset matches the log")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -226,6 +302,10 @@ def main():
                     help="how many times to run the measurement; the median is checked (default 3)")
     ap.add_argument("--seconds", type=float, default=12.0,
                     help="how long the synthetic server runs (default 12)")
+    ap.add_argument("--sync-dataset", action="store_true",
+                    help="copy the recorded dataset from the record's raw log into the budget file")
+    ap.add_argument("--check-dataset", action="store_true",
+                    help="check that the budget file's dataset is the record's raw log's")
     args = ap.parse_args()
 
     if not os.path.exists(BUDGETS):
@@ -233,6 +313,11 @@ def main():
         return 2
     with open(BUDGETS) as f:
         contract = json.load(f)
+
+    if args.sync_dataset or args.check_dataset:
+        if args.sync_dataset:
+            return sync_dataset(contract, RECORD_LOG)
+        return check_dataset(contract, RECORD_LOG)
 
     ok, perf_bin, server_bin = ensure_binaries(args.build_dir, args.quick)
     if not ok:

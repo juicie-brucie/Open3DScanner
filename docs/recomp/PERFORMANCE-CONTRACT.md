@@ -95,7 +95,7 @@ vendor calls' allowance.
 
 The synthetic tick's own post segment (the device-free proxy) has its own budget: **≤ 0.15 ms**
 (M1) / ≤ 0.45 ms (lower-end), from #147 §3's measured 0.12 – 0.20 ms p50; this harness measures
-0.07 – 0.13 ms (median 0.10), so 0.15 ms is **1.5× the median**.
+0.07 ms in the recorded run (the server's window is one sample per run; across the builder's runs it ranged 0.07 – 0.13 ms), so 0.15 ms is **1.15× the worst observed value** — this metric is too noisy to gate a doubling, and the encoder's and the broadcast's budgets carry that gate.
 
 **The rates.** The platform's own wait floor sets the ceiling, and it is measured by the harness
 every run (zero work in the loop, the same control as #147 §5):
@@ -129,15 +129,15 @@ publish rate.
 | metric | M1 budget | lower-end budget | derived from | the harness measured |
 | --- | --- | --- | --- | --- |
 | bytes per frame (the live 20,000-point frame) | **240,036 B** (exact) | the same — the wire volume is machine-independent | #136's live V1 frame | 240,036 B |
-| CPU per frame, 20,000 points | **≤ 820 µs** | ≤ 2,460 µs | the live `post` segment (1.18 – 1.68 ms, #112) covers decode + encode; the encoder alone is 535.8 – 562.7 µs over the 8 recorded runs (median 545.7), so 820 µs is **1.5× the median** | 535.8 – 562.7 µs |
-| CPU per frame, 2,304 points (the synthetic sphere) | **≤ 95 µs** | ≤ 285 µs | #147 §7: the encoder is 63 % of the 195 µs tick ≈ 123 µs; this harness measures 61.5 – 64.5 µs over the 8 recorded runs (median 62.2), so 95 µs is **1.5× the median** | 61.5 – 64.5 µs |
+| CPU per frame, 20,000 points | **≤ 820 µs** | ≤ 2,460 µs | the live `post` segment (1.18 – 1.68 ms, #112) covers decode + encode; the encoder alone is 532.5 – 562.7 µs (median 544.2) over the 8 recorded runs, so 820 µs is **1.51× the median** | 532.5 – 562.7 µs (median 544.2) |
+| CPU per frame, 2,304 points (the synthetic sphere) | **≤ 95 µs** | ≤ 285 µs | #147 §7: the encoder is 63 % of the 195 µs tick ≈ 123 µs; this harness measures 61.3 – 64.5 µs (median 62.1) over the 8 recorded runs, so 95 µs is **1.53× the median** | 61.3 – 64.5 µs (median 62.1) |
 
 ### 2.3 Broadcast, per client
 
 | metric | M1 budget | lower-end budget | derived from | the harness measured |
 | --- | --- | --- | --- | --- |
-| CPU per client per frame | **≤ 50 µs** | ≤ 150 µs | #147 §6: 35.9 – 38.4 µs per client per tick at 8 clients (the tick's own condition, where the client drains in the background); this harness measures 23.5 – 33.3 µs over the 8 recorded runs (median 26.7) with a 4 MB receive buffer on its client, so 50 µs is **1.9× the median** — the widest budget, because this measurement is the noisiest | 23.5 – 33.3 µs |
-| CPU per frame, 8 clients (the live frame) | **≤ 400 µs** | ≤ 1,200 µs | #147 §6's 0.29 – 0.31 ms per tick for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame, measured 188.4 – 266.2 µs over the 8 recorded runs (median 213.2), so 400 µs is **1.9× the median** | 188.4 – 266.2 µs |
+| CPU per client per frame | **≤ 50 µs** | ≤ 150 µs | #147 §6: 35.9 – 38.4 µs per client per tick at 8 clients (the tick's own condition, where the client drains in the background); this harness measures 19.3 – 33.3 µs (median 25.2) over the 8 recorded runs with a 4 MB receive buffer on its client, so 50 µs is **1.98× the median** — the widest budget, because this measurement is the noisiest | 19.3 – 33.3 µs (median 25.2) |
+| CPU per frame, 8 clients (the live frame) | **≤ 400 µs** | ≤ 1,200 µs | #147 §6's 0.29 – 0.31 ms per tick for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame, which measures 154.3 – 266.2 µs (median 201.6) over the 8 recorded runs, so 400 µs is **1.98× the median** | 154.3 – 266.2 µs (median 201.6) |
 | syscalls per client per frame | **2 today** (`ws_broadcast_server.cpp:255` sends the 2 – 4 B header, `:256` the payload) → **1** is the target | | the source | 2 |
 | the stall risk | **≤ 100 ms per client** — the `SO_SNDTIMEO` at `ws_broadcast_server.cpp:304-307`, the fan-out is **synchronous and holds `clients_mutex`** for the whole fan-out (`:503-517`), there is no queue and no drop policy | | the source | — |
 
@@ -218,10 +218,10 @@ python3 scripts/perf-budget.py --factor 3      # check the budgets as if this ma
 
   | budget | K | what it catches |
   | --- | --- | --- |
-  | the encoder, 20,000 points | 1.50 | a 1.5× regression |
+  | the encoder, 20,000 points | 1.51 | a 1.5× regression |
   | the encoder, 2,304 points | 1.53 | a 1.5× regression |
-  | the broadcast per client, and at 8 clients | 1.87 – 1.88 | a 1.9× regression (the noisiest measurement) |
-  | the tick's post segment | 1.50 | a 1.5× regression |
+  | the broadcast per client, and at 8 clients | 1.98 | a 2.0× regression (the noisiest measurement) |
+  | the tick's post segment | — (one sample) | **none**: 0.07 – 0.13 ms across the runs, so the 0.15 ms budget sits just above the worst observed value and cannot gate a doubling |
   | the platform's wait floors | 1.10 – 1.27 | a ~1.1–1.3× change — that number is the machine's timer and moves with its load |
   | the server's live footprint | 1.31 | a 1.3× regression |
 
