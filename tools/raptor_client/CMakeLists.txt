@@ -17,3 +17,9 @@ add_test(NAME raptor_client_reply_dump COMMAND raptor_client --selftest-dump)
 # round-trip of the recorded replies, the manifest's hashes, and the
 # refusal to write a bundle inside a repository.
 add_test(NAME raptor_client_capture COMMAND raptor_client --selftest-capture)
+
+# Hardware-free smoke test for the live path's method names (row #157): the
+# interface suffix on every call, the call sequence, and the reply
+# unwrap, against a loopback mock that refuses a bare method name the
+# way the daemon does.
+add_test(NAME raptor_client_live_suffix COMMAND raptor_client --selftest-live)
