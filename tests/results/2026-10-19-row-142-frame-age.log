@@ -1,7 +1,8 @@
 row #142 — HUD frame age: raw capture
-date: 2026-10-20T03:09:31Z (UTC)
+date: 2026-10-20T04:04:59Z (UTC)
 host: Darwin arm64, node v26.12.0
-base: d84aa99 Merge pull request #356 from juicie-brucie/recon/row138-imu-decode
+base: be5f6b7 Merge pull request #362 from juicie-brucie/dispatch/board-139
+build: Release (build-release, CMAKE_BUILD_TYPE=Release) — row #357's Sample API
 tree: the row #142 working tree on that base (changes only under tools/scan_server + ui + this record)
 
 ======================================================================
@@ -16,24 +17,54 @@ tree: the row #142 working tree on that base (changes only under tools/scan_serv
 [frame-age] the rolling window drops samples older than 60 s                PASS
 [frame-age] the sparkline: oldest left, newest right, 0 ms at the floor     PASS
 [frame-age] synthetic: a status clock + a frame give a real age             PASS
-[frame-age] synthetic HUD line: p50 0.2 / p95 0.2 ms
+[frame-age] synthetic HUD line: p50 0.4 / p95 0.4 ms
 [frame-age] ok (0 failure(s))
 exit: 0
 
 ======================================================================
-2. the same check as registered with ctest (no device)
+2. all device-free tests (ctest -LE hardware, Release build)
 ======================================================================
-Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build3/build
+Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build3/build-release
+      Start  1: tracking_status_test
+ 1/10 Test  #1: tracking_status_test .............   Passed    0.00 sec
+      Start  2: perf_window_test
+ 2/10 Test  #2: perf_window_test .................   Passed    0.00 sec
+      Start  3: bounded_watchdog_test
+ 3/10 Test  #3: bounded_watchdog_test ............   Passed    0.00 sec
+      Start  4: ui_frame_age_test
+ 4/10 Test  #4: ui_frame_age_test ................   Passed    1.26 sec
+      Start  5: frame_bins_test
+ 5/10 Test  #5: frame_bins_test ..................   Passed    0.19 sec
+      Start  6: frame_decode_test
+ 6/10 Test  #6: frame_decode_test ................   Passed    0.26 sec
+      Start  7: raptor_client_selftest
+ 7/10 Test  #7: raptor_client_selftest ...........   Passed    0.00 sec
+      Start  8: raptor_client_reply_timeout
+ 8/10 Test  #8: raptor_client_reply_timeout ......   Passed    0.31 sec
+      Start  9: raptor_client_reply_dump
+ 9/10 Test  #9: raptor_client_reply_dump .........   Passed    0.06 sec
+      Start 10: raptor_client_capture
+10/10 Test #10: raptor_client_capture ............   Passed    0.02 sec
+
+100% tests passed out of 10
+
+Total Test time (real) =   2.12 sec
+exit: 0
+
+   ui_frame_age_test on its own:
+Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build3/build-release
     Start 4: ui_frame_age_test
-1/1 Test #4: ui_frame_age_test ................   Passed    1.22 sec
+1/1 Test #4: ui_frame_age_test ................   Passed    1.24 sec
 
 100% tests passed out of 1
 
-Total Test time (real) =   1.23 sec
+Total Test time (real) =   1.25 sec
 exit: 0
 
 ======================================================================
 3. HUD text, read from the live page in the tool's browser
+   (captured 2026-10-20T03:09Z, before the rebase onto be5f6b7; the rebase
+    changed C++ only — ui/ is byte-identical, so the HUD is unchanged)
    (http server on :18099 serving ui/, ?port=18098&backend=webgl2,
     against scan_server --synthetic 18098)
 ======================================================================
@@ -54,10 +85,10 @@ NOTE ON THAT CAPTURE: the tool's browser runs behind a proxied transport and
       the socket arrives in bursts there (data 1.8 fps, render 5.3 fps). The
       multi-second age is that transport, not the local pipeline — which is
       what the metric is for. The same arithmetic on the same binary over
-      local loopback is item 1: p50 ~0.1-1.2 ms. The headless tab also
-      throttles requestAnimationFrame to zero, so the page's render loop was
-      driven with timers for the capture; in a normal visible window it runs
-      on rAF. The screenshot tool needs a visible desktop window, so item 3 is
-      the HUD text read back from the live page rather than an image.
+      local loopback is item 1. The headless tab also throttles
+      requestAnimationFrame to zero, so the page's render loop was driven with
+      timers for the capture; in a normal visible window it runs on rAF. The
+      screenshot tool needs a visible desktop window, so item 3 is the HUD text
+      read back from the live page rather than an image.
 
 4. no device was touched; no --live run was started.
