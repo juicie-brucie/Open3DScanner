@@ -4,9 +4,14 @@
 Usage:
     scripts/check-agents.py [path]        # default: ~/.config/opencode/agents/openscanner
     scripts/check-agents.py --loaded      # also confirm the six agents are registered
-    scripts/check-agents.py --sessions    # also report session/agent model drift
-    scripts/check-agents.py --fix         # switch drifting sessions to their agent's model
+    scripts/check-agents.py --sessions    # also report the live sessions: model drift, context size
+    scripts/check-agents.py --fix         # switch drifting *live* sessions to their agent's model
     scripts/check-agents.py --selftest    # assert the checker catches the known classes
+
+Environment:
+    OPENSCANNER_TOKEN_THRESHOLD     input-token flag for a live session (default 1000000)
+    OPENSCANNER_SESSION_LIVE_MINUTES how recently a session must be updated to count as live
+                                    (default 30)
 
 Scope: this validates *configuration*, not policy. It checks the shape of each
 permission entry (a complete {action, resource, effect} triple), that the
@@ -30,6 +35,23 @@ edited keeps running the model its *sessions* were born with — the file (and
 `/api/agent`) can be right while the session drifts. --sessions reports the
 drift; --fix switches each drifting session via
 `POST /api/session/{sessionID}/model` with `{"model": {...}}` (returns 204).
+
+What --sessions reports (row #109):
+  * a session whose record carries no model of its own (`model: null`) runs the
+    AGENT's configured model — that is what the record means — so it is
+    rendered as "default (agent)" and is NOT drift;
+  * the live sessions are listed with their input-token count, flagged OVER
+    above OPENSCANNER_TOKEN_THRESHOLD (default 1000000) — a session's context
+    degrades with use, and the symptom is invisible until it speaks nonsense;
+  * LIVE means: the server still holds the session (/api/session/active) or it
+    was updated within OPENSCANNER_SESSION_LIVE_MINUTES (default 30). Only
+    live sessions are flagged for drift or for size; older sessions are
+    history (a session captures its model at creation, so old drift is
+    expected) and are counted, never flagged.
+
+The threshold is a FLAG, not a failure: only a live model drift makes the
+check fail (exit 1), so a busy board does not report a failure for sessions
+that are merely large.
 """
 
 import base64
@@ -41,9 +63,12 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import urllib.request
 
 DEFAULT_DIR = os.path.expanduser("~/.config/opencode/agents/openscanner")
+DEFAULT_TOKEN_THRESHOLD = 1000000
+DEFAULT_LIVE_MINUTES = 30
 EXPECTED = [
     "openscanner/builder",
     "openscanner/dispatch",
@@ -187,13 +212,109 @@ def format_model(model):
     return text
 
 
+def session_model_is_default(session):
+    """True when the session record carries no model of its own.
+
+    A null (or empty) model in the record means the session runs the AGENT's
+    configured model — that is what the record means (row #109's checker
+    note) — so it is not drift.
+    """
+    model = session.get("model") if isinstance(session, dict) else None
+    return not isinstance(model, dict) or not model.get("id")
+
+
+def format_session_model(session):
+    """Render a session's model; the agent's default is named as such."""
+    if session_model_is_default(session):
+        return "default (agent)"
+    return format_model(session.get("model"))
+
+
+def token_threshold():
+    """The input-token threshold a live session is flagged over."""
+    raw = (os.environ.get("OPENSCANNER_TOKEN_THRESHOLD") or "").strip()
+    if not raw:
+        return DEFAULT_TOKEN_THRESHOLD
+    try:
+        value = int(raw)
+    except ValueError:
+        log(f"sessions: OPENSCANNER_TOKEN_THRESHOLD '{raw}' is not an integer; using {DEFAULT_TOKEN_THRESHOLD}")
+        return DEFAULT_TOKEN_THRESHOLD
+    if value < 0:
+        log(f"sessions: OPENSCANNER_TOKEN_THRESHOLD '{raw}' is negative; using {DEFAULT_TOKEN_THRESHOLD}")
+        return DEFAULT_TOKEN_THRESHOLD
+    return value
+
+
+def live_minutes():
+    """How recently a session must be updated to count as live."""
+    raw = (os.environ.get("OPENSCANNER_SESSION_LIVE_MINUTES") or "").strip()
+    if not raw:
+        return DEFAULT_LIVE_MINUTES
+    try:
+        value = int(raw)
+    except ValueError:
+        log(f"sessions: OPENSCANNER_SESSION_LIVE_MINUTES '{raw}' is not an integer; using {DEFAULT_LIVE_MINUTES}")
+        return DEFAULT_LIVE_MINUTES
+    if value < 0:
+        return DEFAULT_LIVE_MINUTES
+    return value
+
+
+def session_input_tokens(session):
+    """The session's input-token count (0 when the record has none)."""
+    tokens = session.get("tokens") if isinstance(session, dict) else None
+    if not isinstance(tokens, dict):
+        return 0
+    value = tokens.get("input")
+    return value if isinstance(value, int) else 0
+
+
+def is_over_threshold(input_tokens, threshold):
+    """True when a session's input tokens are over the threshold.
+
+    Strictly greater: a session exactly at the threshold is not over it.
+    """
+    return input_tokens > threshold
+
+
+def split_live(sessions, active_ids, minutes, now_ms=None):
+    """Split the sessions into (live, history).
+
+    LIVE means: the server still holds the session (its id is in
+    `active_ids`) or it was updated within `minutes`. Everything else is
+    history: a session that ended long ago is not live work, and the model it
+    captured at creation is not drift to fix. An archived session is always
+    history.
+
+    Pure — no I/O — so the selftest can drive it with fixtures.
+    """
+    if now_ms is None:
+        now_ms = int(time.time() * 1000)
+    window_ms = max(0, int(minutes)) * 60 * 1000
+    live, history = [], []
+    for session in sessions:
+        if not isinstance(session, dict):
+            continue
+        sid = session.get("id")
+        updated = ((session.get("time") or {}).get("updated")) or 0
+        archived = session.get("archived") or ((session.get("time") or {}).get("archived"))
+        if not archived and (sid in active_ids or (updated and (now_ms - updated) <= window_ms)):
+            live.append(session)
+        else:
+            history.append(session)
+    return live, history
+
+
 def model_mismatches(sessions, agents):
     """Return [(session, expected_model)] for openscanner sessions whose running
     model differs from their agent's configured model.
 
     Pure — no I/O — so the selftest can drive it with fixtures. Sessions whose
     agent is not one of the six, archived sessions, and agents the server does
-    not report are ignored (the last is --loaded's job).
+    not report are ignored (the last is --loaded's job). A session whose record
+    carries no model of its own runs the agent's default (row #109's checker
+    note), so it is never a mismatch.
     """
     expected = {a.get("id"): a.get("model") for a in agents if isinstance(a, dict) and a.get("id")}
     out = []
@@ -207,6 +328,8 @@ def model_mismatches(sessions, agents):
             continue
         want = expected.get(agent)
         if want is None:
+            continue
+        if session_model_is_default(session):
             continue
         if model_key(session.get("model")) != model_key(want):
             out.append((session, want))
@@ -241,11 +364,32 @@ def fetch_sessions_agents(url, password):
     return as_list(sessions), as_list(agents)
 
 
-def check_sessions(do_fix=False):
-    """Report (and with do_fix, switch) sessions whose model drifts from their agent.
+def active_session_ids(url, password):
+    """The ids the server still holds (/api/session/active).
 
-    Returns 0 (clean or fixed), 1 (drift, or drift remains after --fix), or None
-    (skipped: no server).
+    Empty when the endpoint is missing or fails: the recency rule then decides
+    what is live on its own.
+    """
+    try:
+        data, _ = api_request(url, password, "GET", "/api/session/active")
+    except Exception:  # noqa: BLE001 - the recency rule still works without it
+        return set()
+    if not isinstance(data, dict):
+        return set()
+    payload = data.get("data")
+    if isinstance(payload, dict):
+        return set(payload.keys())
+    if isinstance(payload, list):
+        return {s.get("id") for s in payload if isinstance(s, dict)}
+    return set()
+
+
+def check_sessions(do_fix=False):
+    """Report the live sessions: their model, their context size, and what is
+    history — and with do_fix, switch the live sessions whose model drifts.
+
+    Returns 0 (clean or fixed), 1 (a live session drifts, or drift remains
+    after --fix), or None (skipped: no server).
     """
     url, password = local_server_url()
     if url is None:
@@ -258,19 +402,44 @@ def check_sessions(do_fix=False):
         log(f"sessions: SKIPPED (could not query {url}: {e})")
         return None
 
-    watched = sum(1 for s in sessions if isinstance(s, dict) and s.get("agent") in EXPECTED)
-    mismatches = model_mismatches(sessions, agents)
-    if not mismatches:
-        log(f"sessions: ok — {watched} openscanner session(s) run their agent's configured model")
-        return 0
+    threshold = token_threshold()
+    minutes = live_minutes()
+    live, history = split_live(sessions, active_session_ids(url, password), minutes)
+    log(f"sessions: {len(live)} live session(s) (server-active or updated in the last {minutes} min); "
+        f"{len(history)} older")
 
+    over = []
+    for session in live:
+        tokens = session_input_tokens(session)
+        flag = ""
+        if is_over_threshold(tokens, threshold):
+            flag = f"  OVER (> {threshold})"
+            over.append(session)
+        log(f"sessions: LIVE {session.get('id')}  {session.get('agent')}  \"{session.get('title')}\"  "
+            f"model={format_session_model(session)}  tokens.input={tokens}{flag}")
+
+    mismatches = model_mismatches(live, agents)
     for session, want in mismatches:
         log(f"sessions: DRIFT {session.get('id')}  {session.get('agent')}  \"{session.get('title')}\"")
         log(f"    running:  {format_model(session.get('model'))}")
         log(f"    expected: {format_model(want)}")
+        log(f"    tokens:   input={session_input_tokens(session)}")
+
+    history_drift = model_mismatches(history, agents)
+    if history_drift:
+        log(f"sessions: {len(history_drift)} older session(s) drift (history — a session captures its model "
+            f"at creation; not live work)")
+    if over:
+        log(f"sessions: {len(over)} live session(s) over the {threshold}-input-token threshold — recreate one "
+            f"with: scripts/new-session.sh <agent> <room>")
+
+    if not mismatches:
+        log(f"sessions: ok — no live session drifts from its agent's model"
+            + (f"; {len(over)} over the token threshold (a flag, not a failure)" if over else ""))
+        return 0
 
     if not do_fix:
-        log(f"sessions: {len(mismatches)} session(s) drift from their agent's model; re-run with --fix to switch them")
+        log(f"sessions: {len(mismatches)} live session(s) drift from their agent's model; re-run with --fix to switch them")
         return 1
 
     switched = 0
@@ -292,7 +461,8 @@ def check_sessions(do_fix=False):
     except Exception as e:  # noqa: BLE001
         log(f"sessions: could not re-check after --fix: {e}")
         return 1
-    remaining = model_mismatches(sessions2, agents2)
+    live2, _ = split_live(sessions2, active_session_ids(url, password), minutes)
+    remaining = model_mismatches(live2, agents2)
     if remaining:
         log(f"sessions: {len(remaining)} session(s) still drift after --fix")
         return 1
@@ -324,6 +494,10 @@ def _mock_server(agents, sessions):
                 self._json(200, {"data": agents})
             elif self.path == "/api/session":
                 self._json(200, {"data": state["sessions"]})
+            elif self.path == "/api/session/active":
+                # No session is "active" in the fixture: the recency rule
+                # decides what is live on its own.
+                self._json(200, {"data": {}})
             else:
                 self._json(404, {})
 
@@ -374,7 +548,9 @@ def selftest():
         else:
             log("SELFTEST ok: check_dir rejects a malformed entry")
 
-    # Session-model drift (row #104): the comparison logic against fixtures.
+    # Session-model drift (row #104) and the live/history split + the token
+    # threshold (row #109): the comparison logic against fixtures.
+    now_ms = int(time.time() * 1000)
     agents = [
         {"id": "openscanner/recon",
          "model": {"id": "qwen3.8-max", "providerID": "opencode-go", "variant": "medium"}},
@@ -382,26 +558,80 @@ def selftest():
          "model": {"id": "qwen3.7-plus", "providerID": "opencode-go", "variant": "max"}},
     ]
     sessions = [
+        # live: a real drift (its own model differs from the agent's)
         {"id": "ses_recon1", "agent": "openscanner/recon", "title": "recon-1",
-         "model": {"id": "deepseek-v4.1-flash", "providerID": "opencode", "variant": "max"}},
+         "model": {"id": "deepseek-v4.1-flash", "providerID": "opencode", "variant": "max"},
+         "time": {"updated": now_ms}},
+        # live: the agent's model, nothing to report
         {"id": "ses_verify3", "agent": "openscanner/verifier", "title": "verify-3",
-         "model": {"id": "qwen3.7-plus", "providerID": "opencode-go", "variant": "max"}},
+         "model": {"id": "qwen3.7-plus", "providerID": "opencode-go", "variant": "max"},
+         "time": {"updated": now_ms}},
+        # live: no model of its own -> the agent's default, NOT drift
+        {"id": "ses_default", "agent": "openscanner/verifier", "title": "verify-5",
+         "model": None, "time": {"updated": now_ms}},
+        # live: over the token threshold
+        {"id": "ses_over", "agent": "openscanner/recon", "title": "recon-9",
+         "model": {"id": "qwen3.8-max", "providerID": "opencode-go", "variant": "medium"},
+         "tokens": {"input": 5000000}, "time": {"updated": now_ms}},
+        # history: an old session whose model was captured at creation
+        {"id": "ses_history", "agent": "openscanner/verifier", "title": "old",
+         "model": {"id": "stale", "providerID": "p", "variant": ""},
+         "time": {"updated": now_ms - 3600 * 1000}},
+        # not ours
         {"id": "ses_foreign", "agent": "some/other", "title": "unrelated",
-         "model": {"id": "whatever", "providerID": "p", "variant": ""}},
+         "model": {"id": "whatever", "providerID": "p", "variant": ""},
+         "time": {"updated": now_ms}},
         {"id": "ses_archived", "agent": "openscanner/recon", "title": "old",
-         "model": {"id": "stale", "providerID": "p", "variant": ""}, "time": {"archived": 1}},
+         "model": {"id": "stale", "providerID": "p", "variant": ""},
+         "time": {"archived": 1, "updated": now_ms}},
     ]
     drifted = [s["id"] for s, _ in model_mismatches(sessions, agents)]
-    if drifted != ["ses_recon1"]:
-        log(f"SELFTEST FAIL: model_mismatches -> {drifted}, expected ['ses_recon1']")
+    if drifted != ["ses_recon1", "ses_history"]:
+        log(f"SELFTEST FAIL: model_mismatches -> {drifted}, expected ['ses_recon1', 'ses_history']")
         failures += 1
     else:
-        log("SELFTEST ok: model drift detected on the matching session only")
+        log("SELFTEST ok: model drift detected on the matching sessions only")
     if format_model(agents[0]["model"]) != "opencode-go/qwen3.8-max#medium":
         log(f"SELFTEST FAIL: format_model -> {format_model(agents[0]['model'])}")
         failures += 1
     else:
         log("SELFTEST ok: model formatting")
+
+    # Row #109: a null record model is the agent's default, not drift, and it
+    # is rendered as such.
+    if format_session_model(sessions[2]) != "default (agent)":
+        log(f"SELFTEST FAIL: format_session_model -> {format_session_model(sessions[2])}")
+        failures += 1
+    else:
+        log("SELFTEST ok: a null record model renders as 'default (agent)'")
+
+    # Row #109: the live/history split. The active map wins; otherwise the
+    # recency window decides.
+    live, history = split_live(sessions, {"ses_verify3"}, 30, now_ms=now_ms)
+    live_ids = [s["id"] for s in live]
+    if live_ids != ["ses_recon1", "ses_verify3", "ses_default", "ses_over", "ses_foreign"]:
+        log(f"SELFTEST FAIL: split_live -> live {live_ids}")
+        failures += 1
+    elif [s["id"] for s in history] != ["ses_history", "ses_archived"]:
+        log(f"SELFTEST FAIL: split_live -> history {[s['id'] for s in history]}")
+        failures += 1
+    else:
+        log("SELFTEST ok: live = active or recently updated; the rest is history")
+
+    # Row #109: the threshold arithmetic. At the threshold is not over it.
+    for value, threshold, expected_over in ((999999, 1000000, False), (1000000, 1000000, False),
+                                             (1000001, 1000000, True), (0, 0, False), (1, 0, True)):
+        if is_over_threshold(value, threshold) != expected_over:
+            log(f"SELFTEST FAIL: is_over_threshold({value}, {threshold}) != {expected_over}")
+            failures += 1
+            break
+    else:
+        log("SELFTEST ok: the token threshold is exclusive")
+    if session_input_tokens(sessions[3]) != 5000000 or session_input_tokens({}) != 0:
+        log("SELFTEST FAIL: session_input_tokens")
+        failures += 1
+    else:
+        log("SELFTEST ok: the input-token count is read (and defaults to 0)")
 
     # End-to-end report+fix against the mock server (catches -> switches -> clean).
     httpd, url, password, _ = _mock_server([dict(a) for a in agents], [dict(s) for s in sessions])
