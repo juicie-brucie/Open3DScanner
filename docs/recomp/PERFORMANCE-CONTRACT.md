@@ -264,7 +264,7 @@ Every CPU budget is **K × the median of the recorded dataset**, and K is stated
 (the encoder), **2.30** (the broadcast), **1.10 – 1.27** (the platform's wait floors — that number is
 the machine's timer), **1.31** (the footprint). A **K× regression trips it** and a **K× contention does
 not**. The tick's post segment has **no K**: the dataset holds one sample and the value ranged
-one sample in the recorded dataset (0.07 ms), so its budget gates no specific regression size and
+one sample in the recorded dataset (0.090 ms), so its budget gates no specific regression size and
 **cannot gate a doubling** — the contract says so, and the encoder's and the broadcast's budgets carry that gate.
 
 **The numbers are derived, not typed.** `--sync-dataset` copies the record's raw log's summary block
