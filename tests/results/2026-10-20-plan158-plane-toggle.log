@@ -70,32 +70,34 @@ exit=0
 $ ctest -LE hardware --output-on-failure
 Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build7/build
       Start  1: tracking_status_test
- 1/11 Test  #1: tracking_status_test .............   Passed    0.00 sec
+ 1/12 Test  #1: tracking_status_test .............   Passed    0.00 sec
       Start  2: perf_window_test
- 2/11 Test  #2: perf_window_test .................   Passed    0.00 sec
+ 2/12 Test  #2: perf_window_test .................   Passed    0.00 sec
       Start  3: exposure_apply_test
- 3/11 Test  #3: exposure_apply_test ..............   Passed    0.00 sec
+ 3/12 Test  #3: exposure_apply_test ..............   Passed    0.00 sec
       Start  4: bounded_watchdog_test
- 4/11 Test  #4: bounded_watchdog_test ............   Passed    0.00 sec
-      Start  5: plane_toggle_test
- 5/11 Test  #5: plane_toggle_test ................   Passed    0.00 sec
-      Start  6: frame_bins_test
- 6/11 Test  #6: frame_bins_test ..................   Passed    0.20 sec
-      Start  7: frame_decode_test
- 7/11 Test  #7: frame_decode_test ................   Passed    0.29 sec
-      Start  8: raptor_client_selftest
- 8/11 Test  #8: raptor_client_selftest ...........   Passed    0.00 sec
-      Start  9: raptor_client_reply_timeout
- 9/11 Test  #9: raptor_client_reply_timeout ......   Passed    0.31 sec
-      Start 10: raptor_client_reply_dump
-10/11 Test #10: raptor_client_reply_dump .........   Passed    0.05 sec
-      Start 11: raptor_client_capture
-11/11 Test #11: raptor_client_capture ............   Passed    0.02 sec
+ 4/12 Test  #4: bounded_watchdog_test ............   Passed    0.00 sec
+      Start  5: ui_frame_age_test
+ 5/12 Test  #5: ui_frame_age_test ................   Passed    1.27 sec
+      Start  6: plane_toggle_test
+ 6/12 Test  #6: plane_toggle_test ................   Passed    0.00 sec
+      Start  7: frame_bins_test
+ 7/12 Test  #7: frame_bins_test ..................   Passed    0.21 sec
+      Start  8: frame_decode_test
+ 8/12 Test  #8: frame_decode_test ................   Passed    0.24 sec
+      Start  9: raptor_client_selftest
+ 9/12 Test  #9: raptor_client_selftest ...........   Passed    0.00 sec
+      Start 10: raptor_client_reply_timeout
+10/12 Test #10: raptor_client_reply_timeout ......   Passed    0.31 sec
+      Start 11: raptor_client_reply_dump
+11/12 Test #11: raptor_client_reply_dump .........   Passed    0.05 sec
+      Start 12: raptor_client_capture
+12/12 Test #12: raptor_client_capture ............   Passed    0.02 sec
 
-100% tests passed out of 11
+100% tests passed out of 12
 
-Total Test time (real) =   0.89 sec
+Total Test time (real) =   2.13 sec
 
 $ ./build/tools/scan_server/scan_server --synthetic 18899   # then a WebSocket client sends the command
 handshake: HTTP/1.1 101 Switching Protocols
-status: {"type":"status","mode":"synthetic","state":"scanning","autoExposure":true,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":true,"planeRemoval":{"auto":true,"turntable":false,"manual":true},"tracking":-1,"trackingName":"UNKNOWN","trackingCounts":{"SUCCESS":0,"LOST":0,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
+status: {"type":"status","mode":"synthetic","state":"scanning","autoExposure":true,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":true,"server_now_ms":1792476499634,"planeRemoval":{"auto":true,"turntable":false,"manual":true},"tracking":-1,"trackingName":"UNKNOWN","trackingCounts":{"SUCCESS":0,"LOST":0,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
