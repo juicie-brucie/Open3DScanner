@@ -55,8 +55,13 @@ is dirty and unbound (not reused until clean).
 
 `build1 (Build #93 — tracking-line double-debounce)` was dispatched one board
 row at a time. It removed `effectiveTracking()`/`markerlessRun` from
-`ui/app.js` and opened `#399` at `92cc326`; the local gate is green. The
-verifier is next; the row is recommended `BUILD` → `HW` because the markerless
+`ui/app.js` and opened `#399` at `92cc326`; the local gate was green.
+
+**Merged** at 2026-10-20T08:59:30Z, merge commit
+`e1c5e2b4e991bf5caa1b831b4ad57a5e9db6645b`, on verify1's
+`VERDICT: MERGEABLE @ 92cc3264c785c44f0c82c1ae7c9af71be42929c0`. The slot
+returned to `build1/next` and the task branch was deleted locally and on
+`origin`. The row is recommended `BUILD` -> `HW` because the markerless
 rendering observation needs the scanner.
 
 ## Open

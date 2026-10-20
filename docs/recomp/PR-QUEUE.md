@@ -24,17 +24,19 @@ States: `LANDING` (auto-merge armed) · `VERIFY` (waiting on a verdict) ·
 
 | order | PR | head sha | board row | verify-pr | verdict @ head | state | next action |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | #399 | `92cc3264c785c44f0c82c1ae7c9af71be42929c0` | #93 | PASS | none | VERIFY | verify1 posts the anchored verdict |
+| 1 | #400 | `32738de004473bde0c4147919bf2ee58d7231a83` | — | PASS | none | VERIFY | verify2 posts the anchored verdict |
 | — | #392 | `02e0870a0b15bcd9c4feb5bfd20b50aed4bddc93` | HW records | FAIL | none | HOLD | draft; fix `verify-pr` before it enters the queue |
-| — | tooling PR | pending | — | pending | auto (script-tier) | QUEUED | open, then arm auto-merge |
+
+## Landed this round
+
+| PR | head sha | verdict | merge commit | landed |
+| --- | --- | --- | --- | --- |
+| #399 | `92cc3264c785c44f0c82c1ae7c9af71be42929c0` | `MERGEABLE @ 92cc326` (verify1) | `e1c5e2b4e991bf5caa1b831b4ad57a5e9db6645b` | 2026-10-20T08:59:30Z |
 
 ## Merge order
 
-1. `#399` — the only open agent-tier PR; verify at its head, then arm
-   auto-merge.
-2. The tooling PR — script-tier; it lands independently once `verify-pr` is
-   green.
-3. `#392` — not in the queue while it is a draft and failing its gate.
+1. `#400` — gate green; verify at its head, then arm auto-merge.
+2. `#392` — not in the queue while it is a draft and failing its gate.
 
 A PR is added here when it opens; it leaves when it is merged or closed. The
 dispatcher updates this file in the same turn as the state change.
