@@ -164,49 +164,57 @@ frame budget**, and the measured numbers answer it.
 
 | part of the tick | cost | where it comes from |
 | --- | --- | --- |
-| the vendor's publish + our getter | **0.00 ms** | the `getter` segment is 0.00 ms in #112's run; [#136]'s "where the time goes" says the same |
-| the decimate + the encode of 20,000 points | **1.18 ms** (p50) | the `post` segment in #112's record |
-| the broadcast | 0.05 ms (1 client), 0.29–0.31 ms (8 clients) | #112's record; [#147 §3] |
+| the vendor's publish + our getter | **0.00 ms** (mean; max 0.18 ms) | the `getter` segment in #112's summary line; [#136]'s "where the time goes" says the same |
+| the decimate + the encode of the broadcast's points | **1.18 ms mean, 5.05 ms max** over 2,522 ticks | the `post` segment in #112's summary line |
+| the broadcast | **0.05 ms mean, 0.96 ms max** (1 client); 0.29–0.31 ms p50 (8 clients) | #112's summary line; [#147 §3] |
 
-**And the composition of that 1.18 ms matters more than its size.** (The 0.00 ms is *our* call into the vendor: the
-SDK's own fusion runs on the SDK's threads, and it is what sets the source's 24.0 Hz — [#151]. The device is not idle
-while our side is cheap.) From the device-free profile, the encoder is
-**63 %** of the tick's CPU at **53.4 ns/point** ([#147 §7], [derived]) — so the encode of the live path's 20,000
-points is **1.07 ms** [derived], i.e. **~90 % of the `post` segment is the *publishing* encode, and the ingest
-proper (the getter) is free.** The remaining ~0.1 ms is the strided gather that builds the 20,000-point sample.
+**The `post` segment's cost is linear in the point count, and the live measurement says what a point costs.** The
+per-window p50s in #112's raw log run 0.04 ms at 862 points, 0.09 at 2,103, 0.19 at 4,801, 0.35 at 9,527 and 0.68 at
+17,943 — a fit of **37.5 ns per point** [derived], i.e. **0.75 ms at the 20,000-point budget**. The run's *mean*
+(1.18 ms over a mean of 16,494 points) is higher than that because of a heavy right tail (max 5.05 ms).
+
+**One honest disagreement between the two datasets, stated because it changes which number to budget with.** The
+device-free profile attributes **63 %** of the tick's CPU to the *encoder alone* — **53.4 ns/point**
+([#147 §3]+[§7], [derived]) — which is *more* than the live path's whole `post` segment costs per point (37.5 ns).
+The two are not reconcilable from the data in hand: the synthetic tick's encoder is a different code path on a
+different point count, and the attribution is by leaf frames. **The budget below uses the live figure** (0.75 ms
+typical, 1.18 ms mean), because it is the one measured on the path that ships; the synthetic figure is the
+*conservative* one, and it is the reason S1 (the encoder) is worth doing at all.
 
 **So, against the source's frame budget:**
 
-| source rate | frame budget | the ingest (1.2 ms) | left for logic | the ingest + the publish at 8 clients (1.5 ms) | left |
-| --- | --- | --- | --- | --- | --- |
-| **24.0 Hz** | 41.7 ms | **2.9 %** | **40.5 ms** | 3.6 % | 40.2 ms |
-| 50 Hz | 20.0 ms | **6.0 %** | **18.8 ms** | 7.5 % | 18.5 ms |
-| 60 Hz | 16.7 ms | **7.2 %** | **15.5 ms** | 9.0 % | 15.2 ms |
+| source rate | frame budget | the ingest, typical (0.75 ms) | left for logic | the ingest, the run's mean (1.2 ms) | left | + the publish at 8 clients (1.5 ms) | left |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **24.0 Hz** | 41.7 ms | **1.8 %** | **41.0 ms** | **2.8 %** | **40.5 ms** | 3.6 % | 40.2 ms |
+| 50 Hz | 20.0 ms | **3.8 %** | **19.3 ms** | **5.9 %** | **18.8 ms** | 7.5 % | 18.5 ms |
+| 60 Hz | 16.7 ms | **4.5 %** | **15.9 ms** | **7.1 %** | **15.5 ms** | 9.0 % | 15.2 ms |
 
-**The answer is yes: the code is fast enough to be the start of that pipeline, and it is not close.** At the
-source's own rate the ingest uses **2.9 %** of the frame and leaves **~40 ms** per frame for logic; at 60 Hz it still
-leaves **~15 ms**. And the reason is structural rather than lucky: **the cloud is already in hand at zero measured
-cost** (the getter is 0.00 ms), and the expensive part of today's tick — the 1.07 ms encode — is the cost of
-*publishing a decimated preview*, not of ingesting.
+**The answer is yes: the code is fast enough to be the start of that pipeline, and it is not close.** At the source's
+own rate the ingest uses **1.8 %** of the frame typically (**2.8 %** as the run's mean) and leaves **~40 ms** per
+frame for logic; at 60 Hz it still leaves **~15 ms**. And the reason is structural rather than lucky: **the cloud is
+already in hand at zero measured cost** (the getter is 0.00 ms), and the tick's measurable work is the cost of
+*publishing a preview* — 0.75 ms of encoding for 20,000 points — not of ingesting.
 
 Two caveats, both of which move the answer the wrong way and therefore belong here:
 
-* **This is the ingest *as configured*.** The 1.2 ms buys a 20,000-point *preview*. If a consumer needs the full
-  cloud, the cost moves into the ingest as a **copy** (16.4 MB at 1.37 M points = 394 MB/s at 24 Hz, L2) — or it
+* **This is the ingest *as configured*.** The 0.75–1.18 ms buys a 20,000-point *preview*. If a consumer needs the
+  full cloud, the cost moves into the ingest as a **copy** (16.4 MB at 1.37 M points = 394 MB/s at 24 Hz, L2) — or it
   costs nothing at all if the consumer reads the SDK's **borrowed** buffer before the release (`main.cpp:1297`).
   That choice is C1's (§4.1).
 * **The fan-out rides on the same budget.** At 8 clients the publish adds 0.29 ms, and at the source's rate the
   broadcast's *stall* (100 ms per client) is 2.2× the whole tick — so the publish path has to come off the ingest
   before the budget above is real (S3, and C1's slot).
 
+
 ### A. 10× the points delivered to the UI (20,000 → 200,000 per frame)
 
-* the encode: 53.4 ns/point ([derived] 123 µs of encoding for 2,304 points, [#147 §3]+[§7]) × 200,000 = **10.7 ms**
-  per tick;
+* the encode: **37.5 ns/point** (the live `post` fit above) × 200,000 = **7.5 ms** per tick — or **10.7 ms** at the
+  conservative synthetic figure of 53.4 ns/point ([derived] 123 µs of encoding for 2,304 points, [#147 §3]+[§7]);
 * the broadcast per client: 2.4 MB per frame at the measured ~748 MB/s = **3.2 ms** per client, so **25.6 ms** at
   8 clients ([derived] from [#147 §6]);
-* the tick's work ≈ **36.3 ms** — against the current pace's 115 ms budget that fits, but against the source's rate
-  (a 44.62 ms realised budget, [#147 §5]) it is **81 % of the tick at 8 clients**, and 31 % at one client.
+* the tick's work ≈ **33–36 ms** (the live or the conservative encode) — against the current pace's 115 ms budget
+  that fits, but against the source's rate (a 44.62 ms realised budget, [#147 §5]) it is **74–81 % of the tick at
+  8 clients**, and 31 % at one client.
 
 **The binding limit is the fan-out** — the server's synchronous broadcast — and the fixes are S2 + S3, not a faster
 machine. The source and the consumer are not what binds (see the consumer subsection below).
@@ -397,7 +405,7 @@ for near-real-time logic:
 * **The consumers never block the ingest.** The ingest overwrites the slot and moves on; a consumer that falls behind
   loses frames, which is the same loss the UI already accepts.
 * What this buys: the four named consumers get the cloud **as it arrives**, at full resolution or at a resolution
-  each of them configures, and the ingest's budget stays at the 1.2 ms measured above.
+  each of them configures, and the ingest's budget stays at the 0.75–1.2 ms measured above.
 
 #### What "fast enough" means, for the four named consumers
 
