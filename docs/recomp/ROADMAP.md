@@ -20,6 +20,14 @@ a record that survives the gate. Rev 23 and this revision land together, so read
 a merge commit; rev 22 and earlier are superseded — see **Superseded plans**. **Provenance:** written
 against `origin/main` `2dd8a7e` (board through `#159`; PRs #392, #387, #375 and #366 open)._
 
+**Post-rebase note (2026-10-20, the landing of revs 20–24).** `main` moved between rev 24's provenance
+(`2dd8a7e`) and this landing (`ff89839`). Three of rev 24's four *evidence-chain* PRs have merged —
+#366 (`#151` → `HW`), #375 (`#150` → `SPEC-READY`) and #387 (`#159` → `SPEC-READY`) — and #93's fix
+landed as PR #399, so order 2 is down to **PR #392** (still `HOLD`). Rev 24 also lists `#109` as open
+work in *Ready now* and in order 7; it was already `DONE` when rev 24 was written (PR #395), so read the
+board for that row. Nothing above is amended: the revision stands as written, so the reversal stays
+legible.
+
 ## Objective for the next round
 
 **Spend the next room session once and make its output citable: replay first, then one live run per
