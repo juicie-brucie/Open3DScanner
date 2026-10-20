@@ -268,7 +268,9 @@ def collect(repo: str, roster: list[dict]):
         row["dirty"] = dirty(path)
         if wt["branch"]:
             row["ahead"], row["behind"] = ahead_behind(repo, wt["branch"])
-        allowed = wt["branch"] in (entry["base"],) or (wt["branch"] or "").startswith(slot + "/")
+        branch = wt["branch"] or ""
+        base_ns = entry["base"].split("/", 1)[0] + "/"
+        allowed = branch in (entry["base"],) or branch.startswith(slot + "/") or branch.startswith(base_ns)
         if slot.startswith("verify") and wt["detached"]:
             allowed = True
         if not allowed:
