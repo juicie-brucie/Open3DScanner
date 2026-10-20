@@ -203,8 +203,10 @@ case the header sits at offset 0; in the 11 odd records it sits at offset 16.
 
 ## 8. OPEN QUESTIONS
 
-*§10 (added by row #150) settles or narrows items 1, 4 and 5 of this list and
-bounds item 3; see §10.7 for the row's own open questions.*
+*§10 (added by row #150) settles or narrows items 1, 2, 4 and 5 of this list and
+bounds item 3; see §10.7 for the row's own open questions. §10.1 was corrected on
+2026-10-20 after the verifier's re-derivation — an "independent confirmation" in it
+was wrong and is withdrawn.*
 
 1. **Axis order — not settled.** The three int16 channels are fixed in order and the
    *gravity-dominant* one is the **second** (`accel_1`), but which of them is X / Y / Z in the
@@ -258,7 +260,10 @@ Raw evidence: `session4/small_payloads.tsv` (354 430 lines; 33 130 on port 10011
 
 ## 10. The remaining unknowns, settled as far as the bytes allow (row #150)
 
-*Added 2026-10-19, row #150 (recon room). **Capture-only, no device**: the same
+*Added 2026-10-19, row #150 (recon room). **Corrected 2026-10-20** after the
+verifier's re-derivation: §10.1's *independent cross-check* was **wrong and is
+withdrawn** (§10.1.2–§10.1.3), §10.2's peak and drift figures are corrected, and
+§10.5's sample-loss and duplicate-delivery figures are corrected. **Capture-only, no device**: the same
 `session4/small_payloads.tsv` / `session4.pcapng` that row #138 read, decoded again
 with the capture set's own `msgpack_decode.py`. No vendor headers, no
 `.recon-cache`, no new capture. Every claim below is **`[inferred]`** from static
@@ -274,7 +279,8 @@ tag applies. §1–§9 are unchanged; this section only adds to them.*
 | `ob_rpc_get_device_report_infomation0-2-16` | 671 | empty |
 | `ob_rpc_stop_imu_stream0-2-16` | 1 | **empty** |
 
-16 563 replies carry a binary payload; **8 643** are 248 B and **7 920** are empty.
+16 563 replies have a binary result: **8 643** carry a 248-byte payload and
+**7 920** are empty (0 B).
 Of the 8 643, **8 556** are `get_imu_frame` and **87** are
 `get_device_report_infomation`. Decoding the cells yields **17 112 genuine IMU
 samples** (8 556 records × 2) — the same count row #138 measured, so the decode
@@ -289,62 +295,122 @@ after a valid header; 24-byte cells, wrapping at 248): the grid starts at
 
 ### 10.1 Item 1 — axis order: the vertical axis and the horizontal pair are settled; the X/Z naming and the absolute handedness are not
 
-**Method.** Mean acceleration over a still window before the pick-up and one after;
-the rotation that carries the first mean direction to the second; and an
-independent cross-check with the **invariant-axis estimator** (the eigenvector of
-the sample covariance with the smallest eigenvalue — the axis along which the
-acceleration vector does not change).
+*Corrected 2026-10-20 after the verifier's re-derivation. **The three exact
+reproductions stand; the claimed independent cross-check was wrong and is
+withdrawn** (§10.1.2).*
+
+**Method.** Mean acceleration over a still window before the pick-up and one
+after; the shortest rotation carrying the first mean direction to the second;
+and the per-sample rotation axis through the motion window.
 
 | quantity | value |
 | --- | --- |
 | PRE still (t = 26.00–27.50 s, n = 300) mean | (78.5, −8021.9, −1676.8), \|a\| = **8195.6** |
 | PRE still, unit direction | (0.0096, −0.9788, −0.2046) |
+| **ch0 · the gravity direction (PRE)** | **0.0096** — ch0 is ⊥ gravity to **0.55°** |
 | POST still (t = 29.75–31.50 s, n = 352) mean | (−5899.7, −1799.9, −5328.7), \|a\| = **8151.1** |
 | POST still, unit direction | (−0.7238, −0.2208, −0.6537) |
 | **net rotation of the gravity direction in device coordinates** | **69.94°** |
-| **rotation axis, in the device's channel frame** | **(0.6331, 0.1643, −0.7564)** |
+| **end-to-end rotation axis, in the device's channel frame** | **(0.6331, 0.1643, −0.7564)** = u_pre × u_post |
 | per-channel mean change, PRE → POST | ch0 −5978.2, ch1 +6222.0, ch2 −3651.9 |
 | the device's vertical axis vs `ch1` | **11.82° apart** |
-| the rotation axis vs the (ch0, ch2) plane | **9.46°** |
-| invariant-axis estimator, whole run | (0.655, 0.193, −0.730) — **the same axis to 0.03** |
-| second eigenvector of the run's covariance | (−0.271, +0.963, +0.011) ≈ **+ch1** |
+| tilt of the end-to-end axis out of the (ch0, ch2) plane | 9.46° — *a geometric consequence, not evidence (§10.1.3)* |
+| instantaneous-axis wander through the motion window (t = 27.5–30.0 s, 499 steps) | median consecutive change **30.6°**, p90 **113.7°**, max **170.2°**; only 150/499 steps within 26° of the end-to-end axis |
 
-**What is settled.**
+#### 10.1.1 What is settled — the three exact reproductions
 
-1. **`ch1` is the vertical (gravity) axis.** At rest the whole of the 8192-count
-   gravity vector lies in the (ch1, ch2) plane: ch1 = −8021.9 = 8192·cos 11.8°,
-   ch2 = −1676.8 = 8192·sin 11.8°, and ch0 ≈ 0. The scanner was **not exactly
-   upright** before the pick-up — it was tilted 11.8° away from `ch1`.
-2. **`ch0` and `ch2` are the horizontal pair.** The pick-up's rotation axis is
-   perpendicular to gravity by construction (a *tip* about a horizontal axis, not
-   a yaw — a yaw would not move the gravity direction at all), and that axis lies
-   in the (ch0, ch2) plane to within **9.5°**, which is the 11.8° tilt of the
-   device's own vertical away from `ch1`. The two numbers agree, so this is not
-   a coincidence. The invariant-axis estimator over the whole 86 s returns the
-   same axis independently, and the run's *largest*-variance direction is +ch1 —
-   the gravity direction, as it must be.
+1. **The gravity vector lies in the (ch1, ch2) plane and is 11.82° from `ch1`.**
+   At rest the whole of the 8192-count gravity vector is carried by those two
+   channels: ch1 = −8021.9 = 8192·cos 11.8°, ch2 = −1676.8 = 8192·sin 11.8°, and
+   **ch0 is perpendicular to gravity to 0.55°** (ch0 · u_pre = 0.0096). The
+   scanner was therefore **not exactly upright** before the pick-up: it was
+   tilted 11.82° about `ch0`. *This is the measurement; the labelling of `ch1`
+   as "the vertical axis" is an inference from that resting pose* — the capture
+   contains **no pose in which gravity lies exactly along a channel** (in the
+   POST pose it is 46° from ch0, 77° from ch1 and 41° from ch2), so the naming is
+   a convention the capture cannot see. → **OQ-150-1.**
+2. **The pick-up re-oriented the device by 69.94°.** The gravity direction in
+   device coordinates moves from (0.0096, −0.9788, −0.2046) to
+   (−0.7238, −0.2208, −0.6537) — a **+69.94°** rotation, with end-to-end axis
+   u_pre × u_post = **(0.6331, 0.1643, −0.7564)** (right-hand sense of the
+   channel frame; the device's own rotation is the inverse about the same axis).
+   Because the gravity *direction* moved at all, this was a **re-orientation
+   (a tip), not a yaw** — a pure yaw about the vertical leaves the gravity
+   direction in the device frame unchanged.
 3. **The sign on the vertical channel.** `ch1` reads **negative** at rest
    (−8021.9). Under the standard MEMS convention — a stationary accelerometer
    reads +1 g on the axis that points **up** — the device's **+ch1 points down**,
    so the scanner's "up" direction is **−ch1**. *[inferred: the convention is
    assumed, not measured.]*
-4. **The rotation sense.** The gravity vector, expressed in device coordinates,
-   rotates from (0.0096, −0.9788, −0.2046) to (−0.7238, −0.2208, −0.6537): a
-   **+69.94°** rotation about the device-frame axis (0.633, 0.164, −0.756) in the
-   right-hand sense of the channel frame (equivalently, the device's own rotation
-   is the inverse rotation about the same axis). The path is not monotone: the
-   cumulative direction change per 0.25 s runs 0.3° before t = 27.75 s, then
-   11.1 + 21.9 + 21.5 + 11.9 + 11.4° through t = 28.88 s (≈78°, an overshoot),
-   settling back to the net 69.9° by t ≈ 29.6 s, with ±1–3° of jitter after.
 
-**What the bytes cannot settle.** Which of `ch0` / `ch2` is the device's **X**
-and which is its **Z**, and the **absolute handedness** of the (ch0, ch1, ch2)
-triple relative to the world. An accelerometer yields three numbers; with no gyro
-and no absolute world reference in the capture, the *labelling* of the horizontal
-pair is a manufacturer convention the capture cannot see. **Needs:** a controlled
-capture in which the scanner is rotated by a *known* angle about a *known* axis
-(e.g. 90° about the table normal, recorded on video) **plus** the device's own
-axis convention. → **OQ-150-1.**
+#### 10.1.2 The withdrawn cross-check — what was wrong
+
+**Withdrawn.** The earlier text carried an *"invariant-axis estimator, whole run
+→ (0.655, 0.193, −0.730) — the same axis to 0.03"* row and called it an
+**independent confirmation** of the rotation axis. That claim is **wrong** and is
+removed. Two things were wrong with it:
+
+* **The analysis code was buggy.** The Jacobi eigensolver used for it had a
+  sign error in its rotation angle, so the vectors it returned were not
+  eigenvectors; the quoted vector only came out right by luck of the sign flip.
+  Re-derived with a correct solver (analytic characteristic polynomial, residual
+  ‖(C − λI)v‖ checked against each eigenvalue) on the **raw** whole-run
+  acceleration covariance (trace 6.6966e7 = ⟨|a|²⟩, as it must be), the
+  smallest-eigenvalue eigenvector is **(0.6553, 0.1927, −0.7304)** with
+  eigenvalue 3.884e5 — the same *line* as the end-to-end axis, 2.58° away — and
+  the unit-vector covariance gives the same axes (2.45°). So the **numbers were
+  right for that matrix**; the **conclusion was not**.
+* **The verifier's re-derivation does not match either matrix.** It reports the
+  whole-run covariance's eigenvalues as (1.47e5, 4.34e5, 7.72e6) with
+  smallest-eigenvalue eigenvector (0.678, 0.694, 0.243) — 69° from the pick-up
+  axis. That set does not sum to the 6.6966e7 the raw covariance **must** have
+  (its trace is ⟨|a|²⟩), and the unit-vector covariance's trace is 1 by
+  construction; so the two computations are of **different matrices** (a
+  normalisation or subset difference), not of the same one with different
+  arithmetic. Which is why the "independent confirmation" is not portable and
+  cannot carry a conclusion. *This finding therefore quotes no eigenvector as
+  evidence either way.*
+
+#### 10.1.3 Why the cross-check could not have been evidence anyway
+
+Even with the right matrix, the check is **not independent**. The whole-run
+covariance is dominated by the two still clusters and the arc between them; its
+smallest-variance direction is therefore *forced* into the plane perpendicular
+to (u_post − u_pre) — and the end-to-end rotation axis u_pre × u_post lies in
+exactly that plane. **A check that cannot come out otherwise is not
+evidence.** The same applies to the 9.46° figure above: the end-to-end axis is
+⊥ u_pre *by construction*, and u_pre is 11.82° from `ch1`, so the axis's tilt
+out of the (ch0, ch2) plane is **predicted to be ≤ 12.05°** — the observed
+9.46° is a **consequence, not a confirmation**, and the earlier text's use of
+it as one is withdrawn with the cross-check.
+
+#### 10.1.4 The pick-up was not a rotation about one fixed axis
+
+New measurement, and it qualifies what the "axis" above is. Over the motion
+window (t = 27.5–30.0 s, 499 sample steps) the **per-step rotation axis**
+(unit(a_i × a_{i+1})) wanders: the median change between consecutive axes is
+**30.6°**, the 90th percentile **113.7°** and the maximum **170.2°**; only
+**150 of 499** steps put the axis within 26° of the end-to-end axis. The path
+is also not monotone — it overshoots (≈78° of cumulative direction change by
+t = 28.88 s) and settles back to the net 69.9° by t ≈ 29.6 s, with ±1–3° of
+residual jitter afterwards.
+
+⇒ **The end-to-end axis (0.6331, 0.1643, −0.7564) is a summary of the net
+change, not a physical rotation axis.** The device was tipped in a curved,
+general re-orientation, not spun about one hinge. This is consistent with the
+record's own "the path is not monotone … an overshoot", and it is the reason
+the cross-check was never going to be independent.
+
+#### 10.1.5 What the bytes cannot settle
+
+Which of `ch0` / `ch2` is the device's **X** and which is its **Z**, and the
+**absolute handedness** of the (ch0, ch1, ch2) triple relative to the world. An
+accelerometer yields three numbers; with no gyro and no absolute world reference
+in the capture, the *labelling* of the horizontal pair is a manufacturer
+convention the capture cannot see. **Needs:** a controlled capture in which the
+scanner is rotated by a *known* angle about a *known* axis (e.g. 90° about the
+table normal, recorded on video) **plus** the device's own axis convention.
+→ **OQ-150-1.**
 
 ---
 
@@ -359,7 +425,7 @@ axis convention. → **OQ-150-1.**
 | sample-to-sample noise | sd of successive differences = **1.56 counts** |
 | correlation with \|a\| (all 17 112 samples) | **−0.018** |
 | correlation with \|a\| (pick-up window) | **−0.136** |
-| macro shape | 1248 at t = 25.37 s → 1304 at t = 39 s → **peak 1310 at t ≈ 41 s** → plateau 1298–1310 to t ≈ 57 s → steady decline to **1260 at t = 111.4 s** |
+| macro shape | 1248 at t = 25.37 s, rising to the run's maximum **1318 at t = 46.081 s** (2 samples), then a slow decline to **1260 at t = 111.4 s** — a **+70-count rise over 20.7 s** and a **−58-count decay over the last 65 s** |
 
 So the field is a **live, slowly-varying analog channel**, not a counter, and it
 **does not track motion** (|corr| ≤ 0.02 over the whole run) — so it is not an
@@ -379,8 +445,9 @@ acceleration-coupled artefact such as a supply-rail droop.
 (or a scaled value with an unknown scale and/or an unknown offset). Several
 scalings *would* land in a 20–25 °C room — 1/64 (19.4 … 20.6 °C), 1/100 with a
 +10 °C offset (22.4 … 23.2 °C), ≈1/62 (20.1 … 21.3 °C) — and the capture cannot
-choose between them. The drift does not help either: **+62 counts in the first
-15.6 s, then flat for ~16 s, then −50 counts over the last 54 s.** That shape is
+choose between them. The drift does not help either: **+70 counts over the first
+20.7 s, peaking at 1318 at t = 46.081 s, then −58 counts over the last 65 s.**
+That shape is
 consistent with a **self-heating die** equilibrating after the stream starts, but
 it is equally consistent with the room's own drift, and a pure exponential
 warm-up does not fall afterwards.
@@ -470,26 +537,60 @@ Row #138 read the geometry correctly; this row measures it.
 * **They are not short reads and not corrupt.** All 11 are exactly 248 B; all
   decode to two valid samples (index 0 and 1, a device µs timestamp inside the
   run, a temperature in range); none fails the decode.
-* **They duplicate samples.** The device-timestamp sequence over the run has
-  **33 zero-length gaps** — the same timestamp delivered twice — and the
-  anomalous records sit exactly on them. At t = 41.142 s the spacings around the
-  record are `34873, 0, 4983, 0, 4981` µs; the same pattern holds for the other
-  ten.
+* **They duplicate samples — and the duplication is visible in the delivered
+  order, not only after sorting.** The earlier text quoted the spacings around
+  t = 41.142 s as `34873, 0, 4983, 0, 4981` µs; **that list is an artefact of
+  sorting the timestamps and is withdrawn.** In the **delivered** order the
+  sequence around that record is `4981, 24910, 4982, 34873, 4983` µs, and the
+  device clock **runs backwards** at 11 points in the run — **11 negative
+  spacings of −4 981 … −14 945 µs** — because a repeated sample arrives with an
+  *earlier* timestamp than its predecessor.
+  The cleanest example is at t = 31.850 s, where slots 1278–1283 deliver the
+  **same two device timestamps (6 175 314 834, 6 175 319 816) three times**, with
+  the grid-24 (anomalous) copy in the middle:
+
+  ```
+  slot 1278  t=31.850  k=0  ts=6175314834  grid=8
+  slot 1279  t=31.850  k=1  ts=6175319816  grid=8    <- backwards (delta -4982)
+  slot 1280  t=31.850  k=0  ts=6175314834  grid=24   <- the anomalous record
+  slot 1281  t=31.850  k=1  ts=6175319816  grid=24   <- backwards (delta -4982)
+  slot 1282  t=31.850  k=0  ts=6175314834  grid=8
+  slot 1283  t=31.850  k=1  ts=6175319816  grid=8
+  ```
+
+  The 33 re-deliveries therefore appear in the delivered order as **11 backwards
+  steps** (the repeats come in A B A B groups), and **7 of the 11 coincide with
+  a grid-24 record** (at t = 31.850, 32.691, 41.169, 43.289, 85.943, 99.539 and
+  the second sample of the 31.850 group); the other 4 (t = 43.327, 56.004,
+  56.005, 84.802) are re-deliveries **without** the framing anomaly.
 * ⇒ **Interpretation [inferred]:** the daemon's 248-byte payload is a **window
   into a byte ring**; when the ring's write pointer is not on a record boundary
   the window overlaps the previous one, and the client is served the same sample
   again with the previous header still in the window. This is a **framing
   artifact**, not data loss and not a short read.
 
-**Separately, the run is not gap-free.** 191 samples are missing over the
-86.028 s, in 36 gaps of 2, 3, 4, 5, 7, 9, 11, 15, 17, 19 and 21 sample
-intervals; the nominal count in the span is 17 268 against 17 112 delivered
-(33 of the delivered are the duplicates above). **Capture loss is the likely
-cause** — the record rate is a steady 99.5/s and the client polls at 184.7/s, so
-the daemon is never starved — but that is **not** proved from the payload alone.
-**Discriminator:** the same gaps must be absent from the pcap's TCP sequence
-accounting; if they are *not* capture loss, then the daemon's ring overwrote
-samples and a consumer's 200 Hz stream has holes. → **OQ-150-6.**
+**Separately, the run is not gap-free — and the earlier figure was wrong.**
+The earlier text said *"191 samples are missing … in 36 gaps"*; that number was
+**computed by summing independently-rounded per-gap sizes over the delivered
+order**, where the 33 re-deliveries were counted as gaps of their own, and it
+**over-counts**. The exact figure is:
+
+| quantity | value |
+| --- | --- |
+| sample slots delivered | **17 112** |
+| **distinct** device timestamps | **17 079** (33 of the delivered are repeats) |
+| nominal intervals over the 86.028 s span (÷ 4 982 µs) | **17 268** |
+| **missing sample intervals** | **17 268 − 17 079 = 189** |
+| real gaps on the distinct-timestamp series (a spacing > 1.5 × the 4 982 µs median, with ≥ 1 absent sample) | **30**, sizes 1 (×8), 2 (×4), 3 (×1), 4 (×3), 5 (×3), 6 (×1), 7 (×2), 9 (×3), 10 (×1), 13, 16, 17, 19 (×1 each) |
+| absent samples inside those 30 gaps | **168** |
+| the remaining ~21 of the 189 | the accumulated 1–2 µs shortfall of the ~17 043 normal intervals — the true total is 189.7 intervals |
+
+**Capture loss is the likely cause** — the record rate is a steady 99.5/s and the
+client polls at 184.7/s, so the daemon is never starved — but that is **not**
+proved from the payload alone. **Discriminator:** the same gaps must be absent
+from the pcap's TCP sequence accounting; if they are *not* capture loss, then
+the daemon's ring overwrote samples and a consumer's 200 Hz stream has holes.
+→ **OQ-150-6.**
 
 ---
 
@@ -511,8 +612,14 @@ scope). → **OQ-150-5.**
 
 1. **OQ-150-1 — which of `ch0` / `ch2` is X, and the absolute handedness of the
    channel triple.** Not settleable from this capture: no gyro, no world
-   reference. §10.1 settles the vertical axis (`ch1`, with +ch1 pointing down),
-   the horizontal pair (`ch0`, `ch2`) and the rotation sense.
+   reference, and **no pose in which gravity lies exactly along a channel**.
+   §10.1 settles the measurements — gravity lies in the (ch1, ch2) plane and is
+   11.82° from `ch1`, `ch0` is ⊥ gravity to 0.55° in the PRE pose, the pick-up
+   re-oriented the device by 69.94°, and `ch1` reads negative at rest (so +ch1
+   points down) — and names the labelling as an inference from the resting
+   pose. The cross-check that was withdrawn (§10.1.2) was never going to settle
+   it: the whole-run covariance's smallest-variance direction is *forced* into
+   the plane the rotation axis already lies in.
 2. **OQ-150-2 — the temperature unit and the zero.** No offset-free scaling
    lands in a 20–25 °C room (§10.2), so the field is raw counts; a
    known-temperature soak settles it.
@@ -524,5 +631,6 @@ scope). → **OQ-150-5.**
    value; bytes 4–7 are constant zero.
 5. **OQ-150-5 — the device-report record's 16-byte cell.** Not decoded (§10.6);
    it is a different record kind, not an IMU frame.
-6. **OQ-150-6 — capture loss or daemon overwrite** for the 191 missing samples
-   (§10.5).
+6. **OQ-150-6 — capture loss or daemon overwrite** for the **189** missing
+   sample intervals (§10.5) — the exact figure, and the 11 backwards clock steps
+   that are the ring artifact's signature.
