@@ -283,8 +283,10 @@ capture stamp to the moment the consumer has it. The per-stage split comes from 
 stage                             value     unit  where it comes from
 encode + post                     0.070       ms  the server's [perf] window: post p50
 broadcast                         0.030       ms  the server's [perf] window: bcast p50
-transfer + consume                0.090       ms  the age minus the two stages above
-TOTAL (the frame age)             0.190       ms  the consumer's measurement: p50
+transfer + consume                0.099       ms  the age minus the two stages above
+TOTAL (the frame age)             0.199       ms  the consumer's measurement: p50
+  the age at p95                  0.377       ms  the consumer's measurement
+  the age at max                  0.599       ms  the consumer's measurement
 ```
 
 The **total is the regression threshold** (the preset's `e2e_frame_age_ms`): the harness fails when it
@@ -307,7 +309,7 @@ report rather than pretending the knobs were set. The live split — the hardwar
    above their tier.
 3. **The browser's render cost is unmeasured.** The volumes and the page's memory are budgeted; the
    render and the drop rate are #155's (and #151's browser side).
-4. **The frame age's transfer half is the kernel's.** The device-free measurement (0.194 ms p50) is on a
+4. **The frame age's transfer half is the kernel's.** The device-free measurement (0.199 ms p50) is on a
    loopback; the real network and the real browser add to it, and #142's frame age is the number that
    closes that gap.
 5. **The ladder's step-down threshold (1 s of misses) and its step-up hysteresis (10 s within budget at
