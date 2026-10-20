@@ -263,7 +263,13 @@ Raw evidence: `session4/small_payloads.tsv` (354 430 lines; 33 130 on port 10011
 *Added 2026-10-19, row #150 (recon room). **Corrected 2026-10-20** after the
 verifier's re-derivation: §10.1's *independent cross-check* was **wrong and is
 withdrawn** (§10.1.2–§10.1.3), §10.2's peak and drift figures are corrected, and
-§10.5's sample-loss and duplicate-delivery figures are corrected. **Capture-only, no device**: the same
+§10.5's sample-loss and duplicate-delivery figures are corrected. **Corrected
+again 2026-10-20 (second round):** the withdrawal of the cross-check **stands**,
+but the sample-loss census that rode in with it was **wrong in the other
+direction** and is **restored to 191** on an explicitly stated rounding rule
+(§10.5); the per-step axis, the POST-pose angles, the temperature's noise and
+correlation, and §10.6's header split are corrected to the re-derived values.
+**Capture-only, no device**: the same
 `session4/small_payloads.tsv` / `session4.pcapng` that row #138 read, decoded again
 with the capture set's own `msgpack_decode.py`. No vendor headers, no
 `.recon-cache`, no new capture. Every claim below is **`[inferred]`** from static
@@ -315,7 +321,7 @@ and the per-sample rotation axis through the motion window.
 | per-channel mean change, PRE → POST | ch0 −5978.2, ch1 +6222.0, ch2 −3651.9 |
 | the device's vertical axis vs `ch1` | **11.82° apart** |
 | tilt of the end-to-end axis out of the (ch0, ch2) plane | 9.46° — *a geometric consequence, not evidence (§10.1.3)* |
-| instantaneous-axis wander through the motion window (t = 27.5–30.0 s, 499 steps) | median consecutive change **30.6°**, p90 **113.7°**, max **170.2°**; only 150/499 steps within 26° of the end-to-end axis |
+| instantaneous-axis wander through the motion window (t = 27.5–30.0 s, 499 steps) | median consecutive change **34.4°**, p90 **126.7°**, max **179.8°**; only **99/499** steps within 26° of the end-to-end axis on the signed angle, **152/499** treating the axis as a line |
 
 #### 10.1.1 What is settled — the three exact reproductions
 
@@ -327,7 +333,9 @@ and the per-sample rotation axis through the motion window.
    tilted 11.82° about `ch0`. *This is the measurement; the labelling of `ch1`
    as "the vertical axis" is an inference from that resting pose* — the capture
    contains **no pose in which gravity lies exactly along a channel** (in the
-   POST pose it is 46° from ch0, 77° from ch1 and 41° from ch2), so the naming is
+   POST pose it is **43.6° from −ch0**, **77.2° from −ch1** and **49.2° from
+   −ch2** — the angles are to the *negative* channel axes, because the device
+   reads gravity negative on `ch1` at rest), so the naming is
    a convention the capture cannot see. → **OQ-150-1.**
 2. **The pick-up re-oriented the device by 69.94°.** The gravity direction in
    device coordinates moves from (0.0096, −0.9788, −0.2046) to
@@ -348,7 +356,7 @@ and the per-sample rotation axis through the motion window.
 **Withdrawn.** The earlier text carried an *"invariant-axis estimator, whole run
 → (0.655, 0.193, −0.730) — the same axis to 0.03"* row and called it an
 **independent confirmation** of the rotation axis. That claim is **wrong** and is
-removed. Two things were wrong with it:
+removed. Three things were wrong with it:
 
 * **The analysis code was buggy.** The Jacobi eigensolver used for it had a
   sign error in its rotation angle, so the vectors it returned were not
@@ -356,20 +364,31 @@ removed. Two things were wrong with it:
   Re-derived with a correct solver (analytic characteristic polynomial, residual
   ‖(C − λI)v‖ checked against each eigenvalue) on the **raw** whole-run
   acceleration covariance (trace 6.6966e7 = ⟨|a|²⟩, as it must be), the
-  smallest-eigenvalue eigenvector is **(0.6553, 0.1927, −0.7304)** with
-  eigenvalue 3.884e5 — the same *line* as the end-to-end axis, 2.58° away — and
-  the unit-vector covariance gives the same axes (2.45°). So the **numbers were
-  right for that matrix**; the **conclusion was not**.
-* **The verifier's re-derivation does not match either matrix.** It reports the
-  whole-run covariance's eigenvalues as (1.47e5, 4.34e5, 7.72e6) with
-  smallest-eigenvalue eigenvector (0.678, 0.694, 0.243) — 69° from the pick-up
-  axis. That set does not sum to the 6.6966e7 the raw covariance **must** have
-  (its trace is ⟨|a|²⟩), and the unit-vector covariance's trace is 1 by
-  construction; so the two computations are of **different matrices** (a
-  normalisation or subset difference), not of the same one with different
-  arithmetic. Which is why the "independent confirmation" is not portable and
-  cannot carry a conclusion. *This finding therefore quotes no eigenvector as
-  evidence either way.*
+  smallest-eigenvalue eigenvector is **(0.6553, 0.1927, −0.7304)** (sign
+  arbitrary) with eigenvalue **3.88411e5** — the same *line* as the end-to-end
+  axis, **2.55°** away — and the unit-vector covariance gives the same axes
+  (**2.42°**). So the **numbers were right for that matrix**; the
+  **conclusion was not**.
+* **The verifier's re-derivation is of a different matrix — a *centering*
+  difference, not a normalisation or subset one.** It reports the eigenvalues as
+  (1.47e5, 4.34e5, 7.72e6) with smallest-eigenvalue eigenvector (0.678, 0.694,
+  0.243). Re-derived, that set is the **mean-centred** covariance
+  Σ(a − ⟨a⟩)(a − ⟨a⟩)ᵀ over the same 17 112 samples: trace **8.29788e6**,
+  eigenvalues **1.46513e5 / 4.33814e5 / 7.71755e6**, smallest-eigenvalue
+  eigenvector **(−0.6782, −0.6936, −0.2429)** — the same line. It cannot be
+  the raw second moment, whose trace is ⟨|a|²⟩ = 6.6966e7, nor the
+  unit-vector covariance, whose trace is 1 by construction. The two
+  computations are therefore of the *same samples* under a **centering**
+  convention, not of different data. Which is why the "independent confirmation"
+  is not portable and cannot carry a conclusion. *This finding therefore quotes
+  no eigenvector as evidence either way.*
+* **Also withdrawn: "the run's largest-variance direction is +ch1 — the gravity
+  direction, as it must be."** That was false for the matrix the earlier text
+  used. On the **raw** whole-run second moment the largest-eigenvalue
+  eigenvector is **(0.7052, 0.1907, 0.6829)** (λ = 6.08082e7) — **79.0° from
+  +ch1**, not along it. It is the **second** eigenvector
+  **(−0.2709, 0.9625, 0.0110)** (λ = 5.76947e6) that lies **15.7° from
+  +ch1**. The claim is withdrawn, with the numbers that replace it.
 
 #### 10.1.3 Why the cross-check could not have been evidence anyway
 
@@ -380,7 +399,8 @@ to (u_post − u_pre) — and the end-to-end rotation axis u_pre × u_post lies 
 exactly that plane. **A check that cannot come out otherwise is not
 evidence.** The same applies to the 9.46° figure above: the end-to-end axis is
 ⊥ u_pre *by construction*, and u_pre is 11.82° from `ch1`, so the axis's tilt
-out of the (ch0, ch2) plane is **predicted to be ≤ 12.05°** — the observed
+out of the (ch0, ch2) plane is **predicted to be ≤ 12.08°**
+(asin(tan 11.82°)) — the observed
 9.46° is a **consequence, not a confirmation**, and the earlier text's use of
 it as one is withdrawn with the cross-check.
 
@@ -389,11 +409,14 @@ it as one is withdrawn with the cross-check.
 New measurement, and it qualifies what the "axis" above is. Over the motion
 window (t = 27.5–30.0 s, 499 sample steps) the **per-step rotation axis**
 (unit(a_i × a_{i+1})) wanders: the median change between consecutive axes is
-**30.6°**, the 90th percentile **113.7°** and the maximum **170.2°**; only
-**150 of 499** steps put the axis within 26° of the end-to-end axis. The path
-is also not monotone — it overshoots (≈78° of cumulative direction change by
-t = 28.88 s) and settles back to the net 69.9° by t ≈ 29.6 s, with ±1–3° of
-residual jitter afterwards.
+**34.4°**, the 90th percentile **126.7°** and the maximum **179.8°**; only
+**99 of 499** steps put the axis within 26° of the end-to-end axis on the
+signed angle, or **152 of 499** treating the axis as a line (an axis has no
+sign, so the line reading is the honest one). The path is also not monotone —
+the gravity direction **overshoots**: its angle from the PRE direction reaches
+a maximum of **76.9° at t = 29.18 s** (against a net **69.9°**), then settles
+back to **66.8–70.2°** over t ≥ 29.6 s with **under 1°** of per-sample jitter
+afterwards.
 
 ⇒ **The end-to-end axis (0.6331, 0.1643, −0.7564) is a summary of the net
 change, not a physical rotation axis.** The device was tipped in a curved,
@@ -421,11 +444,11 @@ table normal, recorded on video) **plus** the device's own axis convention.
 | property | value |
 | --- | --- |
 | range over the run | **1244 … 1318** counts (a 5.8 % swing) |
-| sampled per | **sample**, not per record — the two cells of a record differ in 5 496/8 556 records (by ±2, ±4, ±6 counts) and are equal in 3 060 |
-| sample-to-sample noise | sd of successive differences = **1.56 counts** |
-| correlation with \|a\| (all 17 112 samples) | **−0.018** |
-| correlation with \|a\| (pick-up window) | **−0.136** |
-| macro shape | 1248 at t = 25.37 s, rising to the run's maximum **1318 at t = 46.081 s** (2 samples), then a slow decline to **1260 at t = 111.4 s** — a **+70-count rise over 20.7 s** and a **−58-count decay over the last 65 s** |
+| sampled per | **sample**, not per record — the two cells of a record differ in 5 496/8 556 records (by 2–10 counts) and are equal in 3 060 |
+| sample-to-sample noise | sd of successive differences = **2.33 counts** (2.329 over the delivered order, 2.324 over the distinct-timestamp series) |
+| correlation with \|a\| (all 17 112 samples) | **−0.018** (−0.0175) |
+| correlation with \|a\| (pick-up window) | **−0.14 … −0.34**, window-dependent: **−0.1405** over t = 25.0–31.5 s (n = 1 226), **−0.3385** over the 27.5–30.0 s motion window (n = 500) |
+| macro shape | 1248 at t = 25.37 s, rising to the run's maximum **1318 at t = 46.081 s** (2 samples), then a slow decline to **1262 at t = 111.395 s** — a **+70-count rise over 20.7 s** and a **−56-count decay over the last 65 s** |
 
 So the field is a **live, slowly-varying analog channel**, not a counter, and it
 **does not track motion** (|corr| ≤ 0.02 over the whole run) — so it is not an
@@ -446,7 +469,7 @@ acceleration-coupled artefact such as a supply-rail droop.
 scalings *would* land in a 20–25 °C room — 1/64 (19.4 … 20.6 °C), 1/100 with a
 +10 °C offset (22.4 … 23.2 °C), ≈1/62 (20.1 … 21.3 °C) — and the capture cannot
 choose between them. The drift does not help either: **+70 counts over the first
-20.7 s, peaking at 1318 at t = 46.081 s, then −58 counts over the last 65 s.**
+20.7 s, peaking at 1318 at t = 46.081 s, then −56 counts over the last 65 s.**
 That shape is
 consistent with a **self-heating die** equilibrating after the stream starts, but
 it is equally consistent with the room's own drift, and a pure exponential
@@ -551,17 +574,19 @@ Row #138 read the geometry correctly; this row measures it.
 
   ```
   slot 1278  t=31.850  k=0  ts=6175314834  grid=8
-  slot 1279  t=31.850  k=1  ts=6175319816  grid=8    <- backwards (delta -4982)
-  slot 1280  t=31.850  k=0  ts=6175314834  grid=24   <- the anomalous record
-  slot 1281  t=31.850  k=1  ts=6175319816  grid=24   <- backwards (delta -4982)
-  slot 1282  t=31.850  k=0  ts=6175314834  grid=8
+  slot 1279  t=31.850  k=1  ts=6175319816  grid=8
+  slot 1280  t=31.850  k=0  ts=6175314834  grid=24   <- the anomalous record; arrival of the backwards step 1279->1280 (delta -4982)
+  slot 1281  t=31.850  k=1  ts=6175319816  grid=24
+  slot 1282  t=31.850  k=0  ts=6175314834  grid=8    <- arrival of the backwards step 1281->1282 (delta -4982)
   slot 1283  t=31.850  k=1  ts=6175319816  grid=8
   ```
 
+  (The backwards step is a property of the *arrival*: the marker belongs to the
+  slot that carries the earlier timestamp, not to the one that precedes it.)
   The 33 re-deliveries therefore appear in the delivered order as **11 backwards
-  steps** (the repeats come in A B A B groups), and **7 of the 11 coincide with
-  a grid-24 record** (at t = 31.850, 32.691, 41.169, 43.289, 85.943, 99.539 and
-  the second sample of the 31.850 group); the other 4 (t = 43.327, 56.004,
+  steps** (the repeats come in A B A B groups), and **7 of the 11 arrive at a
+  moment when a grid-24 record was also delivered** (t = 31.850 ×2, 32.691,
+  41.169, 43.289, 85.943, 99.539); the other 4 (t = 43.327, 56.004,
   56.005, 84.802) are re-deliveries **without** the framing anomaly.
 * ⇒ **Interpretation [inferred]:** the daemon's 248-byte payload is a **window
   into a byte ring**; when the ring's write pointer is not on a record boundary
@@ -569,21 +594,56 @@ Row #138 read the geometry correctly; this row measures it.
   again with the previous header still in the window. This is a **framing
   artifact**, not data loss and not a short read.
 
-**Separately, the run is not gap-free — and the earlier figure was wrong.**
-The earlier text said *"191 samples are missing … in 36 gaps"*; that number was
-**computed by summing independently-rounded per-gap sizes over the delivered
-order**, where the 33 re-deliveries were counted as gaps of their own, and it
-**over-counts**. The exact figure is:
+**Separately, the run is not gap-free — and the census is now stated with its
+rounding rule.**
+
+**The rule.** On the **sorted distinct** timestamp series (17 079 timestamps,
+17 078 spacings), a *gap* is a spacing **> 1.5 × the 4 982 µs median** (i.e.
+> 7 473 µs), and the number of sample intervals a gap spans is
+**round(δ / 4 982)**; the absent samples inside it are **round(δ / 4 982) − 1**.
+Nearest-integer is the rule that answers "how many samples are missing";
+`floor()` does not, because it loses one on every spacing that lands a hair
+below a whole number of intervals.
 
 | quantity | value |
 | --- | --- |
 | sample slots delivered | **17 112** |
 | **distinct** device timestamps | **17 079** (33 of the delivered are repeats) |
-| nominal intervals over the 86.028 s span (÷ 4 982 µs) | **17 268** |
-| **missing sample intervals** | **17 268 − 17 079 = 189** |
-| real gaps on the distinct-timestamp series (a spacing > 1.5 × the 4 982 µs median, with ≥ 1 absent sample) | **30**, sizes 1 (×8), 2 (×4), 3 (×1), 4 (×3), 5 (×3), 6 (×1), 7 (×2), 9 (×3), 10 (×1), 13, 16, 17, 19 (×1 each) |
-| absent samples inside those 30 gaps | **168** |
-| the remaining ~21 of the 189 | the accumulated 1–2 µs shortfall of the ~17 043 normal intervals — the true total is 189.7 intervals |
+| nominal intervals over the 86.028 s span (÷ 4 982 µs) | **17 268** (17 267.73) |
+| **the exact number of missing sample intervals** | **189.73** — span/median − (distinct − 1) |
+| real gaps on the distinct-timestamp series (the rule above) | **35** |
+| absent samples inside those 35 gaps | **191** — sizes 1 (×8), 2 (×8), 3 (×1), 4 (×4), 6 (×4), 8 (×2), 10 (×4), 14, 16, 18, 20 (×1 each) |
+| **the reconciliation** | **191 − 1.26 = 189.74 ≈ the exact 189.73** |
+
+**Why 191 and not 168 — and why the residual is 1.26, not ~21.** The
+nearest-integer census of the **35** real gaps gives **191** absent samples. A
+`floor()` census of the *same* 35 spacings gives **168**, because the true
+sample period is **4 981.63 µs** — 0.37 µs *under* the 4 982 µs nominal — so
+most gap spacings land a hair **below** a whole number of intervals (2 ×
+4 982 = 9 964 µs, but the gap measures 9 963 µs) and `floor()` loses one on
+**23 of the 35**. The earlier "30 real gaps / 168 absent" text was that
+`floor()` census, and its leftover "~21" was the floor-rule undercount
+(23 − 1.26) — **not** the shortfall of the normal intervals.
+
+The ~17 043 *normal* spacings average **4 981.63 µs**: each is 0.37 µs short of
+the 4 982 µs nominal, and over 17 043 intervals that accumulates to
+**6 279 µs = 1.26 intervals**. Hence
+
+    191 (gap census) − 1.26 (normal-interval shortfall) = 189.74 ≈ 189.73 exact.
+
+**What the earlier "191 … in 36 gaps" text got right — and why it was still
+withdrawn.** 191 is the nearest-integer census of the **same 35 real gaps**,
+computed on the **sorted distinct** series, where the 33 re-deliveries
+contribute nothing at all; the "36 gaps" was those 35 plus the single
+zero-length spacing of the *delivered* order. The reason the first correction
+gave for withdrawing it — *"it summed independently-rounded per-gap sizes over
+the delivered order, where the 33 re-deliveries were counted as gaps of their
+own"* — is **not** what produces 191: over the *delivered* order the same
+threshold selects **35 forward gaps carrying 191 absent samples** (a
+re-delivery adds a **negative** spacing, not a gap), and it is only if the
+negative spacings are taken by absolute value that the count becomes **40 gaps
+/ 201**. The withdrawal of the *cross-check* stands; the sample-loss figure
+that rode in with it moved in the wrong direction and is **restored to 191**.
 
 **Capture loss is the likely cause** — the record rate is a steady 99.5/s and the
 client polls at 184.7/s, so the daemon is never starved — but that is **not**
@@ -598,12 +658,17 @@ the daemon's ring overwrote samples and a consumer's 200 Hz stream has holes.
 
 §1 records that "both methods return the **same** 248-byte payload and it
 carries the same cell array". That is **wrong for 66 of the 87**
-`get_device_report_infomation` records: those carry a **different 248-byte
-record** whose header is `02 00 10 01 00 00 00 00` (cell size 16, one cell) —
-a device report, not an IMU frame. The remaining 21 device-report records happen
-to show an *IMU* header (16 of them at offset 16, 5 at offset 232) because they
-are victims of the same windowing artifact as §10.5. The **device-report cell
-layout is not decoded here** (it is not an IMU record and not in this row's
+`get_device_report_infomation` records: they carry a **different 248-byte
+record**, not an IMU frame. But the correction is *not* "all 66 carry the
+device-report header" — only **34 of the 87** carry
+`02 00 10 01 00 00 00 00` (cell size 16, one cell) at offset 0; the other **32
+carry no header at all** — they are **stale ring residue**, their first bytes
+being the tail of an earlier IMU cell grid (`00 00 00 00 00 00 xx 04`, …).
+The remaining **21** device-report records show an *IMU* header (16 of them at
+offset 16, 5 at offset 232) because they are victims of the same windowing
+artifact as §10.5. So the 87 split three ways: **34** device-report header,
+**32** headerless residue, **21** showing an IMU header. The **device-report
+cell layout is not decoded here** (it is not an IMU record and not in this row's
 scope). → **OQ-150-5.**
 
 ---
@@ -631,6 +696,6 @@ scope). → **OQ-150-5.**
    value; bytes 4–7 are constant zero.
 5. **OQ-150-5 — the device-report record's 16-byte cell.** Not decoded (§10.6);
    it is a different record kind, not an IMU frame.
-6. **OQ-150-6 — capture loss or daemon overwrite** for the **189** missing
-   sample intervals (§10.5) — the exact figure, and the 11 backwards clock steps
-   that are the ring artifact's signature.
+6. **OQ-150-6 — capture loss or daemon overwrite** for the **191** missing
+   sample intervals (§10.5; the exact figure is **189.73**) — and the 11
+   backwards clock steps that are the ring artifact's signature.

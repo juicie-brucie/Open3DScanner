@@ -32,3 +32,19 @@
 
   **Row → `SPEC-READY`, not `DONE`** — items (a), (d) and (e) are settled or bounded; the temperature unit, the X/Z naming and handedness, the
   gyro's cause, the device-report cell and the sample-loss cause each keep a named next evidence in findings §10.7.
+
+- 2026-10-20 — recon (recon room, `wt-recon5`, branch `recon/row150-imu-unknowns`): **correction to the `row-150-imu-unknowns` entry above.** Five claims in it did not survive; they are **marked here, not deleted**. The rest of the entry stands.
+
+  **Withdrawn — the invariant-axis cross-check.** The claim that the whole-run invariant-axis estimator "returns the same axis to 0.03", and that "the run's largest-variance direction is +ch1", are **withdrawn** — see findings **§10.1.2–§10.1.3**. The estimator's eigensolver had a sign error, and decisively the whole-run covariance's smallest-variance direction is *forced* into the plane the rotation axis already lies in, so the check could not have been independent. The axis conclusion does not rest on it: it rests on the PRE/POST means and the +69.94° rotation, which reproduce exactly. (The prior verifier's matrix was the **mean-centred** covariance — a *centering* difference, not a normalisation or subset one; and the raw second moment's largest eigenvector is (0.7052, 0.1907, 0.6829), **79.0°** from +ch1 — it is the *second* eigenvector (−0.2709, 0.9625, 0.0110) that is ≈ +ch1.)
+
+  **Withdrawn — "33 zero-length device-timestamp gaps".** That figure exists only in the **sorted** timestamp sequence and is withdrawn; in the **delivered** order the device clock runs **backwards at 11 points** (11 negative spacings of −4 981 … −14 945 µs), because the 33 re-deliveries arrive in A B A B groups — findings §10.5.
+
+  **Restored, with its rule — "191 samples are missing".** The figure is right again and the reason it was withdrawn was wrong. The rule: on the **sorted distinct** series a *gap* is a spacing **> 1.5 × the 4 982 µs median** and it hides **round(δ / 4 982) − 1** absent samples — **nearest-integer, not `floor()`**. That selects **35 gaps carrying 191 absent samples**, and **191 − 1.26 = 189.74 ≈ the exact 189.73** (the 1.26 is the accumulated 6 279 µs shortfall of the ~17 043 normal intervals, which average 4 981.63 µs — 0.37 µs under the 4 982 µs nominal). The intermediate "30 gaps / 168 absent / ~21 residual" was a `floor()` census, loses one on 23 of the 35, and is superseded — findings §10.5.
+
+  **Superseded — the temperature's drift and noise.** "+62 counts in the first 15.6 s, flat to t ≈ 57 s, then −50 counts over the last 54 s" is superseded by **+70 counts over the first 20.7 s, peaking at 1318 at t = 46.081 s, then −56 counts over the last 65 s** (the run's last sample reads 1262 at t = 111.395 s); the successive-difference sd is **2.33** counts, not 1.56; and the correlation with |a| over the pick-up window is **−0.14 … −0.34** depending on the window (the whole-run −0.018 stands) — findings §10.2.
+
+  **Corrected — the device-report header split.** The "66 … (the `02 00 10 01 …` header)" parenthetical is wrong: only **34** of the 87 `get_device_report_infomation` records carry that header; the other **32** are headerless stale ring residue, and **21** show an IMU header. The 66/21 split itself stands — findings §10.6.
+
+  **Also corrected (findings §10.1, §10.1.4).** The per-step rotation axis wanders further than quoted: median consecutive change **34.4°**, p90 **126.7°**, max **179.8°**, with **99/499** steps within 26° of the end-to-end axis on the signed angle and **152/499** treating the axis as a line. In the POST pose gravity is **43.6°** from −ch0, **77.2°** from −ch1 and **49.2°** from −ch2 (not 46°/41°). Both conclusions — no channel-aligned pose, and "a summary of the net change, not a physical hinge" — are unaffected.
+
+  **Tags:** every claim here remains **`[inferred]`** — a static measurement of a recorded capture, with no hardware run.
