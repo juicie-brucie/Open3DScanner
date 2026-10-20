@@ -1,0 +1,206 @@
+=== 1. the reply-structure selftest, with the parsed summary (no device) ===
+$ build/tools/raptor_client/raptor_client --selftest-dump
+[dump-selftest] the recorded reply parses as an envelope             PASS
+[dump-selftest] the recorded reply's result is an array              PASS
+[dump-selftest] the recorded reply's result has 11 elements          PASS
+[dump-selftest] the recorded message is the envelope around the empty-bin array PASS
+[dump-selftest] the recorded reply dumps as an 11-element array      PASS
+[dump-selftest] connects to the loopback mock                        PASS
+[dump-selftest] the mock run's dump is byte-exact                    PASS
+[dump-selftest] the tally counts data, empty and other per port      PASS
+[dump-selftest] the mock run's dump:
+[dump] reply method=ob_rpc_get_frame kind=Array msgid=5 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(0) head=[] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(2731083288) [10]=Int(-1)
+[dump] get_frame raw len=24 head=[94 01 05 c0 9b 00 00 00 cc ff c4 00 00 c4 00 00 c4 00 ce a2 c9 06 18 ff]
+[dump] GET_FRAME -> empty
+[dump] reply method=ob_rpc_get_frame kind=Array msgid=6 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(2731083288) [10]=Int(-1)
+[dump] get_frame raw len=27 head=[94 01 06 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 ce a2 c9 06 18 ff]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame kind=Bin msgid=7 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] get_frame raw len=9 head=[94 01 07 c0 c4 03 0a 0b 0c]
+[dump] GET_FRAME -> Bin(3) head=[0a 0b 0c]
+[dump-selftest] ok (0 failure(s))
+exit=0
+
+=== 2. the capture selftest (no device) ===
+$ build/tools/raptor_client/raptor_client --selftest-capture
+[capture-selftest] sha256("abc") matches the standard vector            PASS
+[capture-selftest] sha256("") matches the standard vector               PASS
+[capture-selftest] sha256 of a million 'a' matches the standard vector  PASS
+[capture-selftest] the capture opens outside the repository             PASS
+[capture-selftest] the manifest is written                              PASS
+[capture-selftest] the manifest names the branch                        PASS
+[capture-selftest] the manifest names the commit                        PASS
+[capture-selftest] the manifest carries the binary's sha256             PASS
+[capture-selftest] the manifest carries the run's start and end         PASS
+[capture-selftest] the manifest counts the records                      PASS
+[capture-selftest] the manifest hashes replies/port-10010.bin           PASS
+[capture-selftest] the manifest hashes replies/port-10013.bin           PASS
+[capture-selftest] the reader opens the bundle                          PASS
+[capture-selftest] the reader read every record once                    PASS
+[capture-selftest] the reader read every record                         PASS
+[capture-selftest] the reader found both port files                     PASS
+[capture-selftest] the reader's file order is the name order            PASS
+[capture-selftest] the no-data reply reads back byte for byte           PASS
+[capture-selftest] the band reply reads back byte for byte              PASS
+[capture-selftest] the bare bin reply reads back byte for byte          PASS
+[capture-selftest] the record keeps its port                            PASS
+[capture-selftest] the record keeps its method                          PASS
+[capture-selftest] the reader stops at the end of the bundle            PASS
+[capture-selftest] the reader reports no error                          PASS
+[capture-selftest] a capture inside a repository is refused             PASS
+[capture-selftest] a capture through a symlink into a repository is refused PASS
+[capture-selftest] the byte bound stops the recording                   PASS
+[capture-selftest] ok (0 failure(s))
+exit=0
+
+=== 3. the whole client test suite ===
+$ ctest --test-dir build -R raptor_client --output-on-failure
+    Start 6: raptor_client_selftest
+1/4 Test #6: raptor_client_selftest ...........   Passed    0.00 sec
+    Start 7: raptor_client_reply_timeout
+2/4 Test #7: raptor_client_reply_timeout ......   Passed    0.31 sec
+    Start 8: raptor_client_reply_dump
+3/4 Test #8: raptor_client_reply_dump .........   Passed    0.05 sec
+    Start 9: raptor_client_capture
+4/4 Test #9: raptor_client_capture ............   Passed    0.01 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   0.38 sec
+
+=== 4. the dump and the capture, against the loopback mock ===
+(the mock answers a get_frame with the 11-element array and the rest with a bin)
+$ build/tools/raptor_client/raptor_client --replay docs/recon/findings/streaming-replay-payloads.hex 127.0.0.1 --ir-port 20010 --depth-port 20010 --dump-replies --capture /tmp/rc-cap-record
+[capture] recording every reply into /private/tmp/rc-cap-record (bounds: 30 s, 67108864 B)
+[dump] reply method=ob_set_ir_frame_light_type0-2-12 kind=Bin msgid=1 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_set_ir_frame_light_type0-2-10 kind=Bin msgid=140 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=159 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=160 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=161 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_set_ir_frame_light_type0-2-12 kind=Bin msgid=3 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_set_ir_frame_light_type0-2-10 kind=Bin msgid=161 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_start_stream0-2-12 kind=Bin msgid=4 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_start_stream0-2-10 kind=Bin msgid=162 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=5 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 05 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=6 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 06 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=7 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 07 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=8 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 08 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=13 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 0d c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=14 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 0e c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=21 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 15 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=23 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 17 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=24 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 18 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=28 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=23 head=[94 01 1c c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=163 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc a3 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=201 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc c9 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=202 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc ca c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=205 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc cd c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=208 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc d0 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=209 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc d1 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=210 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc d2 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=211 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc d3 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=214 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc d6 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_get_frame0-2-10 kind=Array msgid=215 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(3) head=[0a 0b 0c] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(0) [10]=UInt(2)
+[dump] get_frame raw len=24 head=[94 01 cc d7 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 00 02]
+[dump] GET_FRAME -> band(3)
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=164 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=165 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=166 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=167 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=168 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=169 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[dump] reply method=ob_rpc_send_data0-2-10 kind=Bin msgid=170 envelope=Array result=Bin(3) head=[0a 0b 0c]
+[replay] done: bin=16 empty=20 error=0
+[dump] tally: port 20010 data=20 empty=0 other=0 (data share 100.0%)
+[capture] 36 record(s), 2617 byte(s) written
+[capture] manifest: /private/tmp/rc-cap-record/manifest.json
+
+=== 5. the capture bundle's layout ===
+/tmp/rc-cap-record/manifest.json
+/tmp/rc-cap-record/replies/port-20010.bin
+--- the manifest:
+{
+  "tool": "raptor_client",
+  "format": "RCRP",
+  "format_version": 1,
+  "capture_dir": "/private/tmp/rc-cap-record",
+  "run_start_unix_ms": 1792465630480,
+  "run_end_unix_ms": 1792465631188,
+  "run_start_utc": "2026-10-20T03:07:10Z",
+  "run_end_utc": "2026-10-20T03:07:11Z",
+  "branch": "build/plan140-frame-array-capture",
+  "commit": "7c041a5c7d1079d0d53eae927d51fadfd64f08ae",
+  "binary_path": "/Users/brucemackay/DevReposiMac/Open3DScanner-wt-build4/build/tools/raptor_client/raptor_client",
+  "binary_sha256": "1a0e21c8f01123f02d233233d87c7a0f87235b7aa565c1816cbcb43ac0cc3424",
+  "limits": {"seconds": 30, "bytes": 67108864},
+  "limits_hit": {"seconds": false, "bytes": false},
+  "record_count": 36,
+  "bytes_written": 2617,
+  "files": [
+    {"path": "replies/port-20010.bin", "port": 20010, "size": 2629, "sha256": "cc07f1e26974221926a0ef535e1808003c97853396f09729638b3aad0a05fb74", "records": 36}
+  ]
+}
+--- the bundle's own hash (the manifest does not cover itself):
+bd61cf8b01f24fa77799de7e4014958b549c647eb98536751ac0244e89521fbb  /tmp/rc-cap-record/manifest.json
+--- the replies file's hash, as the manifest records it:
+cc07f1e26974221926a0ef535e1808003c97853396f09729638b3aad0a05fb74  /tmp/rc-cap-record/replies/port-20010.bin
+
+=== 6. the bundle read back ===
+$ build/tools/raptor_client/raptor_client --capture-dump /tmp/rc-cap-record
+[capture-dump] port=20010 ts=1792465630732 method=ob_set_ir_frame_light_type0-2-12 msgid=1 len=9 head=[94 01 01 c0 c4 03 0a 0b 0c]
+[capture-dump] port=20010 ts=1792465630735 method=ob_set_ir_frame_light_type0-2-10 msgid=140 len=10 head=[94 01 cc 8c c0 c4 03 0a 0b 0c]
+[capture-dump] port=20010 ts=1792465630760 method=ob_rpc_send_data0-2-10 msgid=159 len=10 head=[94 01 cc 9f c0 c4 03 0a 0b 0c]
+[capture-dump] port=20010 ts=1792465630761 method=ob_rpc_send_data0-2-10 msgid=160 len=10 head=[94 01 cc a0 c0 c4 03 0a 0b 0c]
+...
+[capture-dump] 36 record(s), 627 byte(s) of replies, 1 file(s)
+
+=== 7. the existing output is unchanged when the new flags are off ===
+(the pre-change binary and this one, same mock, same capture file)
+replay output, pre-change vs this build: byte-identical
+lines with the new prefixes in the flag-off run: 0
+the last line of the flag-off run:
+[replay] done: bin=16 empty=20 error=0
+
+=== 8. a capture inside the repository is refused ===
+$ build/tools/raptor_client/raptor_client --live 127.0.0.1 20010 1 /tmp/rc_frame.raw --capture ./cap-inside-the-repo
+[capture] the capture directory is inside a git repository (/Users/brucemackay/DevReposiMac/Open3DScanner-wt-build4/cap-inside-the-repo); the bundle is never committed — choose a directory outside the repository
+exit=2
+was a directory created? no

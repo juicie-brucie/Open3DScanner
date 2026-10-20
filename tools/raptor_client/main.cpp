@@ -16,6 +16,7 @@
 //   raptor_client --discover                 # GVCP discovery only
 //   raptor_client --replay <file> [host] [--dry-run] [--quiet]
 //       [--reply-timeout-ms N] [--ir-port N] [--depth-port N] [--dump-replies]
+//       [--capture DIR] [--capture-seconds N] [--capture-bytes N]
 //       recon's captured request frames, unchanged, in order (hex lines).
 //       The '+<ms>' prefix is an ABSOLUTE capture timestamp (ms since the
 //       capture started), so the replay paces on the inter-arrival deltas
@@ -30,7 +31,12 @@
 //       the raw reply bytes follow, so the envelope sits next to the
 //       unwrapped result. It is off by default: the output above must not
 //       change.
+//       [--capture DIR] records every reply, byte for byte, into a directory
+//       outside the repository (the bundle is never committed): one file per
+//       port plus a manifest with the run's identity and every file's hash.
 //   raptor_client --selftest-dump              the reply-structure dump, no device
+//   raptor_client --selftest-capture           the capture round-trip, no device
+//   raptor_client --capture-dump <dir>         read a capture bundle back
 //
 // Wall: tools/** only. Clean-room: implements the spec; no vendor binary.
 
@@ -38,6 +44,7 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
 
@@ -57,6 +64,8 @@
 #include <thread>
 #include <variant>
 #include <vector>
+
+#include "capture.h"
 
 namespace {
 
@@ -302,6 +311,7 @@ public:
         a.sin_port = htons(port);
         a.sin_addr.s_addr = inet_addr(host.c_str());
         if (::connect(fd_, (sockaddr*)&a, sizeof(a)) != 0) { close(fd_); fd_ = -1; return false; }
+        port_ = port;
         return true;
     }
     ~RpcClient() { if (fd_ >= 0) close(fd_); }
@@ -317,6 +327,9 @@ public:
         p.raw(params.data(), params.size());
         if (!WriteAll(p.out)) return Error("write failed");
         Value resp = ReadMessage();
+        // The capture records the bytes as they arrived, so it runs before
+        // the shape checks: a reply that fails them is still evidence.
+        RecordCapture(method, resp);
         if (resp.kind != Value::Kind::Array || resp.array.size() < 4) return Error("bad response");
         if (resp.array[0].kind != Value::Kind::UInt || resp.array[0].u != 1) return Error("not a response");
         return resp;
@@ -330,24 +343,54 @@ public:
     // Raw send/receive for --replay: the bytes come from recon's dump, not
     // from our own encoder.
     bool sendRaw(const Bytes& frame) { return WriteAll(frame); }
-    Value readReply() { return ReadMessage(); }
+    Value readReply(const std::string& method = "") {
+        Value v = ReadMessage();
+        RecordCapture(method, v);
+        return v;
+    }
 
     // Bounded read for the replay path (row #117): the WHOLE reply must
     // arrive within timeout_ms, not just its first segment — a reply that
     // trickles in forever still times out. Returns a Timeout value when the
     // deadline passes. The live path keeps the unbounded ReadMessage(): this
     // bound belongs to the replay diagnostic only.
-    Value readReplyWithDeadline(int timeout_ms) { return ReadMessageWithDeadline(timeout_ms); }
+    Value readReplyWithDeadline(int timeout_ms, const std::string& method = "") {
+        Value v = ReadMessageWithDeadline(timeout_ms);
+        RecordCapture(method, v);
+        return v;
+    }
 
     // The bytes of the last reply read, as they arrived. The reply dump
     // prints a head of them, so the envelope's own bytes sit next to the
     // unwrapped result.
     const Bytes& lastRaw() const { return last_raw_; }
 
+    // The port this connection talks to.
+    uint16_t port() const { return port_; }
+
+    // The capture recorder (row #140). When set, every reply this
+    // connection reads is written to the bundle, byte for byte.
+    void set_capture(capture::Recorder* c) { capture_ = c; }
+
 private:
+    // Hand the reply to the capture, if one is running. A read that did
+    // not complete (a timeout) records nothing.
+    void RecordCapture(const std::string& method, const Value& envelope) {
+        if (!capture_ || !last_read_ok_) return;
+        uint64_t msgid = 0;
+        if (envelope.kind == Value::Kind::Array && envelope.array.size() >= 2 &&
+            envelope.array[1].kind == Value::Kind::UInt) {
+            msgid = envelope.array[1].u;
+        }
+        capture_->Record(port_, method, msgid, last_raw_);
+    }
+
     int fd_ = -1;
     uint32_t msgid_ = 0;
+    uint16_t port_ = 0;
     Bytes last_raw_;
+    bool last_read_ok_ = false;
+    capture::Recorder* capture_ = nullptr;
     bool WriteAll(const Bytes& b) {
         size_t sent = 0;
         while (sent < b.size()) {
@@ -362,10 +405,11 @@ private:
         // (a partial value reports an error, so we read more and retry).
         Bytes buf;
         uint8_t tmp[65536];
+        last_read_ok_ = false;
         for (;;) {
             Reader r(buf.data(), buf.size());
             Value v = r.parse();
-            if (r.ok()) { last_raw_ = buf; return v; }
+            if (r.ok()) { last_raw_ = buf; last_read_ok_ = true; return v; }
             ssize_t n = recv(fd_, tmp, sizeof(tmp), 0);
             if (n <= 0) return Error("eof");
             buf.insert(buf.end(), tmp, tmp + n);
@@ -382,10 +426,11 @@ private:
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
         Bytes buf;
         uint8_t tmp[65536];
+        last_read_ok_ = false;
         for (;;) {
             Reader r(buf.data(), buf.size());
             Value v = r.parse();
-            if (r.ok()) { last_raw_ = buf; return v; }
+            if (r.ok()) { last_raw_ = buf; last_read_ok_ = true; return v; }
             auto now = std::chrono::steady_clock::now();
             if (now >= deadline) return Timeout();
             int remaining = (int)std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
@@ -631,6 +676,234 @@ void DumpReply(const std::string& method, const Value& envelope, const Bytes& ra
     }
 }
 
+// ---------------------------------------------------------------------------
+// The capture bundle (row #140)
+//
+// --capture DIR records every reply, byte for byte, into a directory
+// OUTSIDE the repository: one file per port plus a manifest with the run's
+// identity and every file's hash. The bundle is evidence for the hardware
+// room and is never committed, so the recorder refuses a directory inside a
+// repository.
+// ---------------------------------------------------------------------------
+
+// The capture's default bounds. The capture is opt-in; when it is on, it is
+// bounded so a run cannot fill the disk.
+constexpr int kDefaultCaptureSeconds = 30;
+constexpr uint64_t kDefaultCaptureBytes = 64ull * 1024 * 1024;
+
+// The path of this binary, for the manifest's hash.
+std::string g_binary_path;
+
+// The capture session: the bundle's lifetime.
+class CaptureSession {
+public:
+    ~CaptureSession() { Stop(); }
+    bool Start(const std::string& dir, int seconds_cap, uint64_t bytes_cap) {
+        recorder_.reset(new capture::Recorder());
+        std::string err;
+        if (!recorder_->Open(dir, g_binary_path, seconds_cap, bytes_cap, &err)) {
+            std::fprintf(stderr, "[capture] %s\n", err.c_str());
+            recorder_.reset();
+            return false;
+        }
+        std::printf("[capture] recording every reply into %s (bounds: %d s, %llu B)\n",
+                    recorder_->dir().c_str(), seconds_cap, (unsigned long long)bytes_cap);
+        return true;
+    }
+    capture::Recorder* recorder() { return recorder_.get(); }
+    // Close the bundle and write the manifest.
+    void Stop() {
+        if (!recorder_) return;
+        std::string branch, commit;
+        capture::ReadGitBranchAndCommit(".", &branch, &commit);
+        std::string manifest = recorder_->Close(branch, commit);
+        std::printf("[capture] %llu record(s), %llu byte(s) written\n",
+                    (unsigned long long)recorder_->RecordCount(),
+                    (unsigned long long)recorder_->BytesWritten());
+        if (!manifest.empty()) std::printf("[capture] manifest: %s\n", manifest.c_str());
+        recorder_.reset();
+    }
+
+private:
+    std::unique_ptr<capture::Recorder> recorder_;
+};
+
+// Read a capture bundle back and print what it holds. The bundle is never
+// committed, so this is how it is looked at.
+int CaptureDump(const std::string& dir) {
+    capture::Reader reader;
+    std::string err;
+    if (!reader.Open(dir, &err)) {
+        std::fprintf(stderr, "[capture-dump] %s\n", err.c_str());
+        return 1;
+    }
+    uint64_t records = 0, bytes = 0;
+    capture::Record r;
+    while (reader.Next(&r)) {
+        ++records;
+        bytes += r.bytes.size();
+        std::printf("[capture-dump] port=%u ts=%llu method=%s msgid=%llu len=%zu head=[%s]\n", (unsigned)r.port,
+                    (unsigned long long)r.ts_ms, r.method.c_str(), (unsigned long long)r.msgid, r.bytes.size(),
+                    HexBytes(r.bytes, 32).c_str());
+    }
+    if (!reader.error().empty()) {
+        std::fprintf(stderr, "[capture-dump] %s\n", reader.error().c_str());
+        return 1;
+    }
+    std::printf("[capture-dump] %llu record(s), %llu byte(s) of replies, %zu file(s)\n",
+                (unsigned long long)records, (unsigned long long)bytes, reader.files().size());
+    return 0;
+}
+
+// ---------------------------------------------------------------------------
+// The frame array (row #140)
+//
+// The `get_frame` result is the 11-element array the producer writes; the
+// element layout is in docs/recon/findings/frame-codec.md §10.3. Element 4
+// is the frame's primary data buffer, and the no-data form is the same
+// array with all three buffers empty — a decoder branches on the buffers,
+// never on the wire types (§10.4).
+// ---------------------------------------------------------------------------
+constexpr size_t kFrameArrayElements = 11;
+constexpr size_t kFrameBufferElement = 4;   // the primary data buffer
+constexpr size_t kFrameBuffer2Element = 6;  // the second data plane
+constexpr size_t kFrameBuffer3Element = 8;  // the third data plane
+
+// What a frame result holds.
+struct FrameArray {
+    bool is_form = false;  // the result is the 11-element array
+    bool no_data = false;  // all three buffers are empty: no frame, no error
+    size_t band_len = 0;   // element 4's length
+    size_t data2_len = 0;  // element 6's length
+    size_t data3_len = 0;  // element 8's length
+};
+
+FrameArray ParseFrameArray(const Value& result) {
+    FrameArray fa;
+    if (result.kind != Value::Kind::Array || result.array.size() != kFrameArrayElements) return fa;
+    const Value& primary = result.array[kFrameBufferElement];
+    const Value& second = result.array[kFrameBuffer2Element];
+    const Value& third = result.array[kFrameBuffer3Element];
+    // The three data planes are bins; anything else is not this form.
+    if (primary.kind != Value::Kind::Bin || second.kind != Value::Kind::Bin || third.kind != Value::Kind::Bin) {
+        return fa;
+    }
+    fa.is_form = true;
+    fa.band_len = primary.bin.size();
+    fa.data2_len = second.bin.size();
+    fa.data3_len = third.bin.size();
+    fa.no_data = (fa.band_len == 0 && fa.data2_len == 0 && fa.data3_len == 0);
+    return fa;
+}
+
+// The dump's summary of a frame result: what the array holds.
+std::string FormatFrameSummary(const FrameArray& fa, const Value& result) {
+    if (fa.is_form) {
+        if (fa.no_data) return "empty";
+        return "band(" + std::to_string(fa.band_len) + ")";
+    }
+    // Not the array form: say what it is, rather than guess.
+    return DescribeValue(result);
+}
+
+// The per-port frame tally: how many replies carried data and how many were
+// empty.
+class FrameTally {
+public:
+    void Add(uint16_t port, const FrameArray& fa) {
+        Counts& c = counts_[port];
+        if (!fa.is_form) {
+            ++c.other;
+        } else if (fa.no_data) {
+            ++c.empty;
+        } else {
+            ++c.data;
+        }
+    }
+    // One line per port, with the share of replies that carried data.
+    std::string Lines() const {
+        std::string out;
+        for (const auto& kv : counts_) {
+            const Counts& c = kv.second;
+            uint64_t frames = c.data + c.empty;
+            char share[32];
+            if (frames == 0) {
+                std::snprintf(share, sizeof(share), "n/a");
+            } else {
+                std::snprintf(share, sizeof(share), "%.1f%%", 100.0 * (double)c.data / (double)frames);
+            }
+            if (!out.empty()) out += "\n";
+            out += "[dump] tally: port " + std::to_string(kv.first) + " data=" + std::to_string(c.data) +
+                   " empty=" + std::to_string(c.empty) + " other=" + std::to_string(c.other) +
+                   " (data share " + share + ")";
+        }
+        return out;
+    }
+    bool Empty() const { return counts_.empty(); }
+
+private:
+    struct Counts {
+        uint64_t data = 0;
+        uint64_t empty = 0;
+        uint64_t other = 0;
+    };
+    std::map<uint16_t, Counts> counts_;
+};
+
+// The dump's frame summary, printed next to the reply's own lines.
+void DumpFrameSummary(const FrameArray& fa, const Value& result) {
+    if (!g_dump_replies) return;
+    std::string text = "[dump] GET_FRAME -> " + FormatFrameSummary(fa, result);
+    if (g_dump_sink) {
+        *g_dump_sink += text + "\n";
+    } else {
+        std::printf("%s\n", text.c_str());
+        std::fflush(stdout);
+    }
+}
+
+// The tally, printed at the end of a run.
+void DumpTally(const FrameTally& tally) {
+    if (!g_dump_replies || tally.Empty()) return;
+    std::string text = tally.Lines();
+    if (g_dump_sink) {
+        *g_dump_sink += text + "\n";
+    } else {
+        std::printf("%s\n", text.c_str());
+        std::fflush(stdout);
+    }
+}
+
+// The 11-element frame array, as the producer writes it: the three data
+// planes and their lengths, and the IR light type.
+Bytes FrameArrayResult(const Bytes& band, const Bytes& data2, const Bytes& data3, int64_t light_type) {
+    Packer p;
+    p.array(kFrameArrayElements);
+    p.uint(0);
+    p.uint(0);
+    p.uint(0);
+    p.uint(255);
+    p.bin(band);
+    p.uint(band.size());
+    p.bin(data2);
+    p.uint(data2.size());
+    p.bin(data3);
+    p.uint(data3.size());
+    p.integer(light_type);
+    return p.out;
+}
+
+// The msgpack-RPC envelope around a result.
+Bytes Envelope(uint64_t msgid, const Bytes& result) {
+    Packer p;
+    p.array(4);
+    p.uint(1);
+    p.uint(msgid);
+    p.nil();
+    p.raw(result.data(), result.size());
+    return p.out;
+}
+
 Value StartStream(RpcClient& c, const std::string& suffix, uint8_t command, uint32_t w, uint32_t h, uint32_t fps) {
     Packer p;
     p.array(5);
@@ -683,12 +956,14 @@ void SetProperty(RpcClient& c, const std::string& suffix, uint32_t prop, int32_t
     }
 }
 
-int Live(const std::string& host, uint16_t port, int seconds, const std::string& out_path, int pull_ms, bool log) {
+int Live(const std::string& host, uint16_t port, int seconds, const std::string& out_path, int pull_ms, bool log,
+         capture::Recorder* capture) {
     RpcClient rpc;
     if (!rpc.connect(host, port)) {
         std::fprintf(stderr, "[live] cannot connect to %s:%u (is RPCServer running?)\n", host.c_str(), port);
         return 1;
     }
+    rpc.set_capture(capture);
     std::printf("[live] connected %s:%u (pull_ms=%d, per-call logging=%s)\n", host.c_str(), port, pull_ms,
                 log ? "on" : "off");
     Value started = StartStream(rpc, "", 6, 1920, 1200, 50);
@@ -702,6 +977,7 @@ int Live(const std::string& host, uint16_t port, int seconds, const std::string&
     uint64_t get_calls = 0, bins = 0, empties = 0, errors = 0;
     uint16_t request_id = 0;
     bool saved = false;
+    FrameTally tally;
     auto last_log = std::chrono::steady_clock::now() - std::chrono::seconds(1);
     auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
     while (std::chrono::steady_clock::now() < deadline) {
@@ -712,6 +988,11 @@ int Live(const std::string& host, uint16_t port, int seconds, const std::string&
         Value envelope = rpc.call("ob_rpc_get_frame", p.out);
         DumpReply("ob_rpc_get_frame", envelope, rpc.lastRaw());
         Value frame = Result(envelope);
+        // The result is the 11-element array: what it holds is the band's
+        // length, or the no-data form.
+        FrameArray fa = ParseFrameArray(frame);
+        DumpFrameSummary(fa, frame);
+        tally.Add(port, fa);
         ++get_calls;
         bool should_log = false;
         if (frame.kind == Value::Kind::Bin) {
@@ -754,11 +1035,18 @@ int Live(const std::string& host, uint16_t port, int seconds, const std::string&
         SetProperty(rpc, "", 154, 866000, ++request_id, log);
         SetProperty(rpc, "", 155, 866000, ++request_id, log);
         if (pull_ms > 0) std::this_thread::sleep_for(std::chrono::milliseconds(pull_ms));
+        // The capture's bounds end the run when they are hit, so a capture
+        // cannot outlive its own budget.
+        if (capture && capture->Capped()) {
+            std::printf("[live] the capture's bound was reached; stopping\n");
+            break;
+        }
     }
     StartStream(rpc, "", 7, 1920, 1200, 50);  // stop
     std::printf("[live] done: get_frame=%llu bin=%llu empty=%llu error=%llu; stream stopped\n",
                 (unsigned long long)get_calls, (unsigned long long)bins, (unsigned long long)empties,
                 (unsigned long long)errors);
+    DumpTally(tally);
     return bins > 0 ? 0 : 1;
 }
 
@@ -1485,6 +1773,7 @@ int ReplyDumpSelftest() {
         std::printf("[dump-selftest] %-52s %s\n", name, pass ? "PASS" : "FAIL");
         if (!pass) ++failures;
     };
+    FrameTally tally;
 
     // The expected element lists, written out by hand so the assertion
     // does not lean on the formatter it checks.
@@ -1572,6 +1861,11 @@ int ReplyDumpSelftest() {
             rpc.sendRaw(GetFrameRequest(msgid));
             Value envelope = rpc.readReply();
             DumpReply("ob_rpc_get_frame", envelope, rpc.lastRaw());
+            // The parsed summary, as the runtime paths print it.
+            Value result = Result(envelope);
+            FrameArray fa = ParseFrameArray(result);
+            DumpFrameSummary(fa, result);
+            tally.Add(server.port(), fa);
         }
     }
     g_dump_sink = nullptr;
@@ -1581,16 +1875,29 @@ int ReplyDumpSelftest() {
     std::string expect_mock;
     expect_mock += expect_reply("Array", 5, kElemsEmpty) + "\n" +
                    expect_raw(24, "94 01 05 c0 9b 00 00 00 cc ff c4 00 00 c4 00 00 c4 00 "
-                                 "ce a2 c9 06 18 ff") + "\n";
+                                 "ce a2 c9 06 18 ff") + "\n" +
+                   "[dump] GET_FRAME -> empty\n";
     expect_mock += expect_reply("Array", 6, kElemsWithPayload) + "\n" +
                    expect_raw(27, "94 01 06 c0 9b 00 00 00 cc ff c4 03 0a 0b 0c 00 c4 00 00 c4 00 "
-                                 "ce a2 c9 06 18 ff") + "\n";
+                                 "ce a2 c9 06 18 ff") + "\n" +
+                   "[dump] GET_FRAME -> band(3)\n";
     expect_mock += expect_reply("Bin", 7, "Bin(3) head=[0a 0b 0c]") + "\n" +
-                   expect_raw(9, "94 01 07 c0 c4 03 0a 0b 0c") + "\n";
+                   expect_raw(9, "94 01 07 c0 c4 03 0a 0b 0c") + "\n" +
+                   "[dump] GET_FRAME -> Bin(3) head=[0a 0b 0c]\n";
     check("the mock run's dump is byte-exact", sink == expect_mock);
     if (sink != expect_mock) {
         std::printf("[dump-selftest] got:\n%s", sink.c_str());
         std::printf("[dump-selftest] want:\n%s", expect_mock.c_str());
+    }
+
+    // The tally: one empty reply, one with a band, one that is not the
+    // array form at all.
+    const std::string expect_tally = "[dump] tally: port " + std::to_string(server.port()) +
+                                     " data=1 empty=1 other=1 (data share 50.0%)";
+    check("the tally counts data, empty and other per port", tally.Lines() == expect_tally);
+    if (tally.Lines() != expect_tally) {
+        std::printf("[dump-selftest] got:  %s\n", tally.Lines().c_str());
+        std::printf("[dump-selftest] want: %s\n", expect_tally.c_str());
     }
 
     std::printf("[dump-selftest] the mock run's dump:\n%s", sink.c_str());
@@ -1598,11 +1905,163 @@ int ReplyDumpSelftest() {
     return failures ? 1 : 0;
 }
 
+// ---------------------------------------------------------------------------
+// Row #140: the capture round-trip.
+//
+// The recorder writes the replies; the reader reads them back; the bytes
+// must be identical. The manifest's hashes are checked against the files
+// on disk, and a directory inside a repository must be refused.
+// ---------------------------------------------------------------------------
+int CaptureSelftest() {
+    int failures = 0;
+    auto check = [&](const char* name, bool pass) {
+        std::printf("[capture-selftest] %-52s %s\n", name, pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+
+    // The manifest's hashes must be right, not merely self-consistent: the
+    // standard SHA-256 vectors.
+    {
+        capture::Sha256 h;
+        h.Update(std::string("abc"));
+        check("sha256(\"abc\") matches the standard vector",
+              h.HexDigest() == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        capture::Sha256 empty;
+        check("sha256(\"\") matches the standard vector",
+              empty.HexDigest() == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+        // A long input, so the multi-block path is exercised.
+        capture::Sha256 million;
+        million.Update(std::string(1000000, 'a'));
+        check("sha256 of a million 'a' matches the standard vector",
+              million.HexDigest() == "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0");
+    }
+
+    // A temporary directory outside the repository.
+    char dir_template[] = "/tmp/raptor_capture_XXXXXX";
+    char* dir = mkdtemp(dir_template);
+    if (!dir) {
+        std::printf("[capture-selftest] SKIP (mkdtemp failed)\n");
+        return 0;
+    }
+    const std::string bundle = dir;
+
+    // The replies: the recorded no-data array, the same array with a band,
+    // and a bare top-level bin — on two ports.
+    const Bytes no_data = Envelope(5, FrameArrayResult(Bytes{}, Bytes{}, Bytes{}, -1));
+    const Bytes with_band = Envelope(6, FrameArrayResult(Bytes{0x0a, 0x0b, 0x0c}, Bytes{}, Bytes{}, 2));
+    Packer bin_p;
+    bin_p.bin(Bytes{0x0a, 0x0b, 0x0c});
+    const Bytes bare_bin = Envelope(7, bin_p.out);
+
+    capture::Recorder recorder;
+    std::string err;
+    bool opened = recorder.Open(bundle, g_binary_path, 0, 0, &err);
+    check("the capture opens outside the repository", opened);
+    recorder.Record(10013, "ob_rpc_get_frame0-2-12", 5, no_data);
+    recorder.Record(10013, "ob_rpc_get_frame0-2-12", 6, with_band);
+    recorder.Record(10010, "ob_rpc_get_frame0-2-10", 7, bare_bin);
+    const std::string manifest = recorder.Close("selftest-branch", "0123456789abcdef0123456789abcdef01234567");
+    check("the manifest is written", !manifest.empty());
+
+    // The manifest names the run and hashes every file.
+    std::string text;
+    {
+        std::ifstream in(manifest, std::ios::binary);
+        if (in) {
+            std::ostringstream ss;
+            ss << in.rdbuf();
+            text = ss.str();
+        }
+    }
+    check("the manifest names the branch", text.find("\"branch\": \"selftest-branch\"") != std::string::npos);
+    check("the manifest names the commit",
+          text.find("\"commit\": \"0123456789abcdef0123456789abcdef01234567\"") != std::string::npos);
+    check("the manifest carries the binary's sha256",
+          text.find(capture::FileSha256(g_binary_path)) != std::string::npos);
+    check("the manifest carries the run's start and end",
+          text.find("\"run_start_unix_ms\"") != std::string::npos &&
+              text.find("\"run_end_unix_ms\"") != std::string::npos);
+    check("the manifest counts the records", text.find("\"record_count\": 3") != std::string::npos);
+    for (const char* rel : {"replies/port-10010.bin", "replies/port-10013.bin"}) {
+        const std::string file = bundle + "/" + rel;
+        const std::string sha = capture::FileSha256(file);
+        check((std::string("the manifest hashes ") + rel).c_str(), !sha.empty() && text.find(sha) != std::string::npos);
+    }
+
+    // Read the bundle back: the bytes must be identical.
+    capture::Reader reader;
+    bool opened_reader = reader.Open(bundle, &err);
+    check("the reader opens the bundle", opened_reader);
+    std::map<uint64_t, capture::Record> read;
+    size_t read_count = 0;
+    capture::Record r;
+    while (reader.Next(&r)) {
+        read[r.msgid] = r;
+        ++read_count;
+    }
+    check("the reader read every record once", read_count == 3);
+    check("the reader read every record", read.size() == 3);
+    check("the reader found both port files", reader.files().size() == 2);
+    check("the reader's file order is the name order",
+          reader.files().size() == 2 && reader.files()[0] == "port-10010.bin" &&
+              reader.files()[1] == "port-10013.bin");
+    check("the no-data reply reads back byte for byte",
+          read.count(5) == 1 && read[5].bytes == no_data);
+    check("the band reply reads back byte for byte",
+          read.count(6) == 1 && read[6].bytes == with_band);
+    check("the bare bin reply reads back byte for byte",
+          read.count(7) == 1 && read[7].bytes == bare_bin);
+    check("the record keeps its port",
+          read.count(5) == 1 && read[5].port == 10013 && read.count(7) == 1 && read[7].port == 10010);
+    check("the record keeps its method",
+          read.count(5) == 1 && read[5].method == "ob_rpc_get_frame0-2-12" &&
+              read.count(7) == 1 && read[7].method == "ob_rpc_get_frame0-2-10");
+    check("the reader stops at the end of the bundle", !reader.Next(&r));
+    check("the reader reports no error", reader.error().empty());
+
+    // A directory inside a repository is refused: the bundle is never
+    // committed.
+    const std::string fake_repo = bundle + "/fake-repo";
+    mkdir(fake_repo.c_str(), 0755);
+    mkdir((fake_repo + "/.git").c_str(), 0755);
+    capture::Recorder inside;
+    std::string inside_err;
+    check("a capture inside a repository is refused",
+          !inside.Open(fake_repo + "/cap", g_binary_path, 0, 0, &inside_err) &&
+              inside_err.find("git repository") != std::string::npos);
+
+    // A symlink is a way to aim a bundle at the repository, so the path is
+    // resolved before it is judged.
+    const std::string link = bundle + "/link-into-the-repo";
+    if (symlink(fake_repo.c_str(), link.c_str()) == 0) {
+        capture::Recorder via_link;
+        std::string link_err;
+        check("a capture through a symlink into a repository is refused",
+              !via_link.Open(link + "/cap", g_binary_path, 0, 0, &link_err) &&
+                  link_err.find("git repository") != std::string::npos);
+    } else {
+        std::printf("[capture-selftest] SKIP (the symlink could not be made)\n");
+    }
+
+    // The byte bound stops the recording.
+    capture::Recorder bounded;
+    if (bounded.Open(bundle + "/bounded", g_binary_path, 0, 64, &err)) {
+        for (int i = 0; i < 20; ++i) bounded.Record(10013, "ob_rpc_get_frame0-2-12", (uint64_t)i, no_data);
+        check("the byte bound stops the recording", bounded.Capped() && bounded.BytesCapHit());
+        bounded.Close("selftest-branch", "0123456789abcdef0123456789abcdef01234567");
+    } else {
+        check("the byte bound stops the recording", false);
+    }
+
+    capture::RemoveTree(bundle);
+    std::printf("[capture-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
+}
+
 // The message a stalled frame produces. It names the frame AND the
 // interface the frame went to: the two connections are separate, so
 // "which request went unanswered" is only half the answer.
-std::string ReplayTimeoutMessage(size_t frame_index, const std::string& suffix, int timeout_ms) {
-    char buf[160];
+std::string ReplayTimeoutMessage(size_t frame_index, const std::string& suffix, int timeout_ms) {    char buf[160];
     std::snprintf(buf, sizeof(buf), "[replay] frame %zu (%s): no reply within %d ms", frame_index,
                   suffix.c_str(), timeout_ms);
     return buf;
@@ -1658,7 +2117,7 @@ void PrintCadence(const std::vector<int64_t>& stamps, const std::vector<int64_t>
 }
 
 int Replay(const std::string& host, const RouteTable& routes, const std::string& path, bool dry_run,
-           bool log, int reply_timeout_ms) {
+           bool log, int reply_timeout_ms, capture::Recorder* capture) {
     std::vector<Bytes> frames;
     std::vector<int64_t> stamps;
     std::string err;
@@ -1731,10 +2190,12 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
         }
         std::printf("[replay] connected %s:%u for interface %s (%s)\n", host.c_str(),
                      (unsigned)route.port, route.name.c_str(), route.suffix.c_str());
+        rpc->set_capture(capture);
         conns[route.suffix] = std::move(rpc);
     }
     std::printf("[replay] sending unchanged request frames (reply timeout %d ms)\n", reply_timeout_ms);
     uint64_t bins = 0, empties = 0, errors = 0;
+    FrameTally tally;
     for (size_t i = 0; i < frames.size(); ++i) {
         int64_t wait = (i == 0) ? FirstFrameWaitMs(deltas[i]) : deltas[i];
         if (wait > 0) std::this_thread::sleep_for(std::chrono::milliseconds(wait));
@@ -1749,9 +2210,16 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
         // payload is at index 3. Unwrap it before classifying, or every
         // frame reads as the envelope array ("empty") — the bug row #122
         // names. A Timeout is not an array, so it passes through unchanged.
-        Value envelope = rpc.readReplyWithDeadline(reply_timeout_ms);
+        Value envelope = rpc.readReplyWithDeadline(reply_timeout_ms, frame_method[i]);
         DumpReply(frame_method[i], envelope, rpc.lastRaw());
         Value reply = Result(envelope);
+        if (IsGetFrameMethod(frame_method[i])) {
+            // The result is the 11-element array: the band's length, or the
+            // no-data form.
+            FrameArray fa = ParseFrameArray(reply);
+            DumpFrameSummary(fa, reply);
+            tally.Add(rpc.port(), fa);
+        }
         if (reply.kind == Value::Kind::Bin) {
             ++bins;
             if (log) std::printf("[replay] frame %zu (%s) -> bin(%zu) head=[%s]\n", i + 1,
@@ -1776,6 +2244,7 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
     }
     std::printf("[replay] done: bin=%llu empty=%llu error=%llu\n", (unsigned long long)bins,
                 (unsigned long long)empties, (unsigned long long)errors);
+    DumpTally(tally);
     return bins > 0 ? 0 : 1;
 }
 
@@ -1881,6 +2350,16 @@ int ReplyTimeoutSelftest() {
 }  // namespace
 
 int main(int argc, char** argv) {
+    // The manifest names the binary that made a capture, so the path is
+    // resolved once, here.
+    {
+        char resolved[4096];
+        if (realpath(argv[0], resolved)) {
+            g_binary_path = resolved;
+        } else {
+            g_binary_path = argv[0];
+        }
+    }
     if (argc >= 2 && std::string(argv[1]) == "--dry-run") {
         int rc = DryRun();
         if (rc) return rc;
@@ -1892,14 +2371,22 @@ int main(int argc, char** argv) {
     }
     if (argc >= 2 && std::string(argv[1]) == "--selftest-timeout") return ReplyTimeoutSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--selftest-dump") return ReplyDumpSelftest();
+    if (argc >= 2 && std::string(argv[1]) == "--selftest-capture") return CaptureSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
+    if (argc >= 2 && std::string(argv[1]) == "--capture-dump") {
+        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --capture-dump <dir>\n"); return 2; }
+        return CaptureDump(argv[2]);
+    }
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
-        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [--dry-run] [--quiet] [--reply-timeout-ms N] [--ir-port N] [--depth-port N] [--dump-replies]\n"); return 2; }
+        if (argc < 3) { std::fprintf(stderr, "usage: raptor_client --replay <file> [host] [--dry-run] [--quiet] [--reply-timeout-ms N] [--ir-port N] [--depth-port N] [--dump-replies] [--capture DIR]\n"); return 2; }
         std::string path = argv[2];
         std::string host = "127.0.0.1";
         bool dry_run = false, log = true;
         int reply_timeout_ms = kDefaultReplyTimeoutMs;
+        std::string capture_dir;
+        int capture_seconds = kDefaultCaptureSeconds;
+        uint64_t capture_bytes = kDefaultCaptureBytes;
         RouteTable routes;
         // Positionals are host then port; anything starting with "--" is a
         // flag, so a flag may appear before them.
@@ -1910,6 +2397,9 @@ int main(int argc, char** argv) {
                 if (a == "--dry-run") dry_run = true;
                 else if (a == "--quiet") log = false;
                 else if (a == "--dump-replies") g_dump_replies = true;
+                else if (a == "--capture" && i + 1 < argc) capture_dir = argv[++i];
+                else if (a == "--capture-seconds" && i + 1 < argc) capture_seconds = std::atoi(argv[++i]);
+                else if (a == "--capture-bytes" && i + 1 < argc) capture_bytes = std::strtoull(argv[++i], nullptr, 10);
                 else if (a == "--reply-timeout-ms" && i + 1 < argc) reply_timeout_ms = std::atoi(argv[++i]);
                 else if ((a == "--ir-port" || a == "--depth-port") && i + 1 < argc) {
                     int port = std::atoi(argv[++i]);
@@ -1938,7 +2428,15 @@ int main(int argc, char** argv) {
             std::fprintf(stderr, "--reply-timeout-ms must be positive (got %d)\n", reply_timeout_ms);
             return 2;
         }
-        return Replay(host, routes, path, dry_run, log, reply_timeout_ms);
+        if (capture_seconds < 0) {
+            std::fprintf(stderr, "--capture-seconds must not be negative (got %d)\n", capture_seconds);
+            return 2;
+        }
+        CaptureSession capture;
+        if (!capture_dir.empty() && !capture.Start(capture_dir, capture_seconds, capture_bytes)) return 2;
+        int rc = Replay(host, routes, path, dry_run, log, reply_timeout_ms, capture.recorder());
+        capture.Stop();
+        return rc;
     }
     if (argc >= 2 && std::string(argv[1]) == "--live") {
         std::string host = argc > 2 ? argv[2] : "127.0.0.1";
@@ -1947,12 +2445,28 @@ int main(int argc, char** argv) {
         std::string out = argc > 5 ? argv[5] : "/tmp/raptor_frame.raw";
         int pull_ms = 0;
         bool log = true;
+        std::string capture_dir;
+        int capture_seconds = kDefaultCaptureSeconds;
+        uint64_t capture_bytes = kDefaultCaptureBytes;
         for (int i = 2; i < argc; ++i) {
             if (std::string(argv[i]) == "--pull-ms" && i + 1 < argc) pull_ms = std::atoi(argv[++i]);
             if (std::string(argv[i]) == "--quiet") log = false;
             if (std::string(argv[i]) == "--dump-replies") g_dump_replies = true;
+            if (std::string(argv[i]) == "--capture" && i + 1 < argc) capture_dir = argv[++i];
+            if (std::string(argv[i]) == "--capture-seconds" && i + 1 < argc) capture_seconds = std::atoi(argv[++i]);
+            if (std::string(argv[i]) == "--capture-bytes" && i + 1 < argc) {
+                capture_bytes = std::strtoull(argv[++i], nullptr, 10);
+            }
         }
-        return Live(host, port, seconds, out, pull_ms, log);
+        if (capture_seconds < 0) {
+            std::fprintf(stderr, "--capture-seconds must not be negative (got %d)\n", capture_seconds);
+            return 2;
+        }
+        CaptureSession capture;
+        if (!capture_dir.empty() && !capture.Start(capture_dir, capture_seconds, capture_bytes)) return 2;
+        int rc = Live(host, port, seconds, out, pull_ms, log, capture.recorder());
+        capture.Stop();
+        return rc;
     }
     std::printf(
         "raptor_client — Phase B (C1) client for the Creality RPCServer daemon\n"
@@ -1961,9 +2475,12 @@ int main(int argc, char** argv) {
         "  raptor_client --dry-run-live             print the bytes each call would send\n"
         "  raptor_client --selftest-timeout         bounded reply read, no device\n"
         "  raptor_client --selftest-dump            reply-structure dump, no device\n"
+        "  raptor_client --selftest-capture         capture round-trip, no device\n"
         "  raptor_client --discover                 GVCP discovery only\n"
+        "  raptor_client --capture-dump <dir>       read a capture bundle back\n"
         "  raptor_client --replay <file> [host] [--dry-run] [--quiet]\n"
         "      [--reply-timeout-ms N] [--ir-port N] [--depth-port N] [--dump-replies]\n"
+        "      [--capture DIR] [--capture-seconds N] [--capture-bytes N]\n"
         "      sends recon's captured request frames unchanged, in order; file\n"
         "      format: one hex frame per line, optional '+<ms> ' prefix,\n"
         "      '#' comments/blank lines ignored.\n"
@@ -1978,7 +2495,7 @@ int main(int argc, char** argv) {
         "      expiry the replay names the frame and its interface and exits\n"
         "      non-zero.\n"
         "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
-        "      [--dump-replies]\n"
+        "      [--dump-replies] [--capture DIR] [--capture-seconds N] [--capture-bytes N]\n"
         "      per-call logging is ON by default (--quiet disables it); --pull-ms 0 = as fast\n"
         "\n"
         "  --dump-replies (OFF by default; the output above never changes)\n"
@@ -1987,6 +2504,23 @@ int main(int argc, char** argv) {
         "      the byte length and a hex head (32 B) for any bin or string. For a\n"
         "      get_frame reply the raw reply bytes follow (hex head, 48 B), so the\n"
         "      envelope's own shape sits next to the unwrapped result. The lines\n"
-        "      carry no clock and no address: the same run prints the same bytes.\n");
+        "      carry no clock and no address: the same run prints the same bytes.\n"
+        "      A get_frame reply also gets its parsed summary — 'GET_FRAME ->\n"
+        "      band(N)' for the frame's data, 'GET_FRAME -> empty' for the\n"
+        "      no-data form — and the run ends with the per-port data/empty share.\n"
+        "\n"
+        "  --capture DIR (OFF by default)\n"
+        "      records every reply, byte for byte, into DIR — a directory OUTSIDE\n"
+        "      the repository (the tool refuses one inside it; the bundle is never\n"
+        "      committed):\n"
+        "        DIR/replies/port-<port>.bin   one file per port, length-prefixed\n"
+        "                                    records: ts, port, method, msgid, byte\n"
+        "                                    length, bytes (raw, unparsed)\n"
+        "        DIR/manifest.json             the run's start/end, branch, commit,\n"
+        "                                    the binary's sha256, and every file's\n"
+        "                                    sha256 and size\n"
+        "      --capture-seconds N (default 30) and --capture-bytes N (default 64 MiB)\n"
+        "      bound the capture; 0 means no bound of that kind. The live run stops\n"
+        "      when a bound is reached.\n");
     return 0;
 }
