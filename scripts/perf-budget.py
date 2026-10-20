@@ -287,6 +287,20 @@ def check_dataset(contract, path):
         print("perf-budget: the budget file and the log disagree on %d metric(s)" % failures)
         return 1
     print("perf-budget: the budget file's dataset matches the log")
+    # The contract quotes the same numbers; check that it does.
+    contract_path = os.path.join(ROOT, "docs", "recomp", "PERFORMANCE-CONTRACT.md")
+    if os.path.exists(contract_path):
+        text = open(contract_path).read()
+        missing = []
+        for m, (lo, med, hi) in sorted(data.items()):
+            if hi <= lo:
+                continue  # a single-sample metric: nothing to quote as a range
+            if ("%.1f – %.1f" % (lo, hi)) not in text:
+                missing.append("%s (%.1f – %.1f)" % (m, lo, hi))
+        if missing:
+            print("perf-budget: the contract does not quote the dataset for: %s" % ", ".join(missing))
+            return 1
+        print("perf-budget: the contract quotes the same dataset")
     return 0
 
 

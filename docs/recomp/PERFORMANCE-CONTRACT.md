@@ -102,9 +102,9 @@ every run (zero work in the loop, the same control as #147 §5):
 
 | source rate | the request it implies | the platform's floor | the ceiling that follows | M1 utilisation (at the nominal rate) | lower-end utilisation |
 | --- | --- | --- | --- | --- | --- |
-| **24 Hz** | 41 ms | 44.6 – 46.0 ms | **≈21.7 – 22.5 Hz** | **19.2 %** of a core | **57.6 %** |
-| **50 Hz** | 20 ms | 21.7 – 25.0 ms | **≈40 – 46 Hz** | **40.0 %** | **120 %** |
-| **60 Hz** | 16 ms | 18.6 – 20.0 ms | **≈50 – 60 Hz** | **48.0 %** | **144 %** |
+| **24 Hz** | 41 ms | 42.2 – 44.7 ms | **≈22.3 – 23.7 Hz** | **19.2 %** of a core | **57.6 %** |
+| **50 Hz** | 20 ms | 20.4 – 24.2 ms | **≈41 – 49 Hz** | **40.0 %** | **120 %** |
+| **60 Hz** | 16 ms | 16.3 – 19.0 ms | **≈53 – 61 Hz** | **48.0 %** | **144 %** |
 
 (The harness prints the utilisation twice — at the nominal rate and at the measured ceiling — because
 the two answer different questions: "does the code fit in the frame?" and "can this machine deliver
@@ -116,7 +116,7 @@ Three things follow, and they are the contract's findings:
 2. **50 Hz is the edge**: on the M1 the code is 40 % of a core, but on the assumed lower-end target it
    is **120 %** — the target cannot sustain 50 Hz at the current ingest cost.
 3. **60 Hz is out of reach on the assumed target** (144 % of a core), and on this platform 60 Hz is
-   at the edge of what the timer allows: the 16 ms request realises 18.6 – 20.0 ms, so the ceiling is
+   at the edge of what the timer allows: the 16 ms request realises 16.3 – 19.0 ms, so the ceiling is
    ~50 – 60 Hz and moves with the machine's load.
 
 **The binding limit at 50/60 Hz is not our code** — it is the platform's timer and, on the assumed
