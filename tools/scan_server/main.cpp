@@ -75,6 +75,7 @@
 #include "tracking_status.h"  // the vendor's per-frame verdict, by pinned name (row #91)
 #include "bounded_watchdog.h"  // the per-call bound that survives a stuck caller (row #89)
 #include "perf_window.h"       // per-tick latency instrumentation (row #111)
+#include "exposure_apply.h"    // when the exposure/laser config is pushed (row #153)
 
 namespace {
 
@@ -973,8 +974,15 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     Report("obscan_scan_preview", status);
     if (status != OB_SCAN_SUCCESS) return 1;
 
-    status = lib.obscan_scan_config_combined_exposure_and_laser_current(scan, 900);
+    // Row #153: the FIRST application of the exposure/laser config, before
+    // the scan starts (and so before its first frame). It is a setter that
+    // pushes to the device (docs/recon/findings/scan-live-data.md §18), so
+    // the tick pushes it again only when the value changes — see
+    // exposure_apply.h.
+    openscanner::scan_server::ExposureApplyTracker exposure_apply;
+    status = lib.obscan_scan_config_combined_exposure_and_laser_current(scan, kDefaultExposure);
     Report("obscan_scan_config_combined_exposure_and_laser_current", status);
+    if (status == OB_SCAN_SUCCESS) exposure_apply.NotePushed(kDefaultExposure);
 
     for (int i = 0; i < 100 && g_frame_ready_count.load() < kWantStableFrames; ++i) {
 #if defined(__APPLE__)
@@ -1035,7 +1043,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
 
     ControlState control;
     control.scanning = true;  // obscan_scan_start above has already run.
-    control.auto_exposure = false;  // Matches the unconditional 900 re-assert this loop already did.
+    control.auto_exposure = false;  // Manual, as before: the value was pushed before the scan started.
     control.exposure_value = kDefaultExposure;
     control.fov_wide = (scan_config.mode_config.scan_fov == OB_SCAN_FOV_WIDE);
 
@@ -1087,6 +1095,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
         tick_perf.BeginTick();
         int64_t s_pose_us = 0, s_getter_us = 0, s_post_us = 0, s_bcast_us = 0, s_wait_us = 0;
         int64_t s_exposure_us = 0, s_release_us = 0;
+        uint32_t exposure_applies = 0;  // row #153: pushes of the exposure config this tick
         uint32_t frame_points = 0;
         uint64_t frame_bytes = 0;
         uint32_t frame_clients = 0;
@@ -1132,7 +1141,13 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                    toggle_status);
             if (toggle_status == OB_SCAN_SUCCESS) {
                 hardware_paused = want_paused;
-                if (!want_paused) apply_plane_config();  // toggles may not survive pause
+                if (!want_paused) {
+                    apply_plane_config();  // toggles may not survive pause
+                    // Row #153: the resume re-runs the SDK's scan-mode setup,
+                    // which writes the laser current itself — so the value we
+                    // pushed is no longer known to be held.
+                    exposure_apply.Invalidate();
+                }
             }
         }
 
@@ -1140,16 +1155,26 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
         ObScanCloudBbox bbox = {};
         uint32_t published_count = 0;
         if (!hardware_paused) {
-            // No dedicated auto/manual exposure toggle exists in the ABI; the
-            // device's own auto-exposure decays a one-time value back toward
-            // its own target within ~15s (see obscan_api.h). Hold a manual
-            // value by re-asserting every tick; in auto mode, skip the call
-            // and let that decay happen.
-            if (!control.auto_exposure.load()) {
-                // #141: this vendor call used to be outside every segment.
-                perf::SegTimer exposure_timer(&s_exposure_us);
-                lib.obscan_scan_config_combined_exposure_and_laser_current(scan, control.exposure_value.load());
-            }
+            // Row #153: the exposure/laser config is a setter that pushes to
+            // the device (docs/recon/findings/scan-live-data.md §18) and the
+            // device holds the value, so it is pushed only when the value
+            // changes — not once per tick. In auto mode nothing is pushed:
+            // the call hands the IR exposure back to the device's own
+            // auto-exposure, so there is nothing to hold.
+            const bool exposure_auto = control.auto_exposure.load();
+            const int exposure_value = control.exposure_value.load();
+            const bool exposure_pushed = openscanner::scan_server::ApplyExposureIfChanged(
+                &exposure_apply, exposure_auto, exposure_value, [&](int value_to_push) {
+                    perf::SegTimer exposure_timer(&s_exposure_us);
+                    const ObScanStatus exposure_status =
+                        lib.obscan_scan_config_combined_exposure_and_laser_current(scan, value_to_push);
+                    exposure_timer.Stop();  // the log line below is not the vendor call
+                    std::printf("[worker] exposure config pushed: value=%d -> %s (%d)\n", value_to_push,
+                                StatusName(exposure_status), static_cast<int>(exposure_status));
+                    std::fflush(stdout);
+                    return exposure_status == OB_SCAN_SUCCESS;
+                });
+            if (exposure_pushed) ++exposure_applies;
 
             // Pose: use the registration pose, which is the live solve that
             // follows the scanner during a scan (the global pose only updates
@@ -1322,6 +1347,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             sample.wait_us = s_wait_us;
             sample.exposure_us = s_exposure_us;
             sample.release_us = s_release_us;
+            sample.exposure_applies = exposure_applies;
             sample.points = frame_points;
             sample.bytes = frame_bytes;
             sample.clients = frame_clients;
