@@ -24,8 +24,8 @@ The realized rate is the *server's* tick (`rate=` on the `[perf]` line); the
 consumer's per-client fps matches it in every cell (9.7 / 22.2 / 42.3), and the
 8-client aggregate is 8× (77.7 / 177.9 / 338.8 fps) — **linear, no drops and no
 send timeouts** (the probe reports no errors; every expected frame arrived). The
-broadcast p50 grows from ~0.06 to ~0.73 ms at 8 clients, still ~1–3 % of the
-tick.
+broadcast p50 grows from ~0.06 to ~0.73 ms at 8 clients — 0.7 % of the tick at
+10 Hz, 3.0 % at 50 Hz.
 
 ## The binding limit at each rate
 
@@ -68,59 +68,76 @@ Raw output: `2026-10-20-plan151-publish-rate.log`.
 
 ## 1. Does the cloud content change at the delivery rate?
 
-Instrumentation added: every live tick hashes the cloud (first 256 points + the
-point count, FNV-1a) and reports a `[perf] cloud` line every 5 s:
+Instrumentation added: every live tick hashes the cloud and reports a
+`[perf] cloud` line every 5 s:
 
 ```
 [perf] cloud window 5.0s clock=steady_clock ticks=209 changes=208 change_rate=41.6/s run_ticks p50=1 p95=1 max=1
 ```
 
+**Limitation (disclosed):** the hash covers the **first 256 points plus the
+count** (FNV-1a), a cheap proxy — a change confined to points beyond the 256th
+with an identical prefix would be missed. It is not a full-cloud digest; the
+live run can widen the window if the first result looks suspicious.
+
 Device-free validation (synthetic, where the cloud rotates every tick) gives
-`change_rate = 41.6/s` at a 50 Hz request and `run_ticks p50=1`: the tracker sees
-every content change and the run-length logic works. **The vendor's own content
+`change_rate` = the publish rate and `run_ticks p50=1`: the tracker sees every
+content change and the run-length logic works. **The vendor's own content
 cadence is not measurable device-free** — the live loop now emits the same line,
-so the operator's run will answer whether the ~24 Hz is a content update or a
+so the operator's run answers whether the ~24 Hz is a content update or a
 delivery rate, and whether the advertised 50 fps ever reaches us. Until then the
 24 Hz figure is the *listener's frame count* (#112), not a measured content rate.
 
 ## 2. Ingest per source frame vs the budget
 
-Publish-side ingest at 20,000 points (post + encode + broadcast, p50):
+Publish-side ingest (post + encode + broadcast, p50) at 20,000 points, from the
+raw lines in the two logs:
 
-| source rate | budget/frame | publish-side ingest | remaining |
-| --- | --- | --- | --- |
-| 24 Hz | 41.7 ms | 0.84–1.06 ms (1 client); 1.06–1.70 ms (8) | **~40.0–40.9 ms** |
-| 50 Hz | 20.0 ms | 0.84–1.07 ms (1); 1.07–1.70 ms (8) | **~18.3–19.2 ms** |
-| 60 Hz | 16.7 ms | 0.84–0.97 ms (1) | **~15.7–15.8 ms** |
+| source rate | budget/frame | 1 client | 8 clients | remaining (1 client) |
+| --- | --- | --- | --- | --- |
+| 24 Hz | 41.7 ms | 0.84 ms (post 0.79 + bcast 0.05) | 1.06 ms (0.71 + 0.35) | **~40.9 ms** |
+| 50 Hz | 20.0 ms | 0.64 ms (0.59 + 0.05) | 1.70 ms (0.97 + 0.73) | **~19.4 ms** |
+| 60 Hz | 16.7 ms | 0.66 ms (0.61 + 0.05) | not measured | **~16.0 ms** |
+
+The 60 Hz row is now backed by the real 60 Hz run (`post p50=0.61`,
+`bcast p50=0.05`); the 8-client cell is left blank because no 60 Hz 8-client run
+was made.
 
 That leaves substantial room for downstream near-real-time logic **on the
 publish side**. It is not the whole ingest: the vendor calls (getter, exposure
 re-assert, cloud release) are outside this device-free harness; #134/#136
 measured ~9.6 ms/tick outside the four segments, and #141 now splits
 `exposure`/`release` (merged) so the operator's live run can complete this
-column. If the vendor side is ~9.6 ms, the 60 Hz remainder shrinks to ~6 ms and
-the 24 Hz remainder to ~30 ms — still positive, but the vendor-side number is
-the one that decides it.
+column. If the vendor side is ~9.6 ms, the 60 Hz remainder shrinks to ~6.4 ms
+and the 24 Hz remainder to ~31.3 ms — still positive, but the vendor-side
+number is the one that decides it.
 
 ## 3. Pacing primitive: `sleep_until` vs `sleep_for`
 
-`--synthetic-load` gained a `deadline` argument (absolute `sleep_until(next)`).
-Measured at 20,000 points, 1 client:
+`--synthetic-load` gained a `deadline` argument (absolute
+`sleep_until(next_deadline)`). Measured at 20,000 points, 1 client, 6 s, in this
+re-run (raw lines in `2026-10-20-plan151-publish-rate-addendum.log`):
 
-| request | mode | realized | wait p50 | tick p50 |
-| --- | --- | --- | --- | --- |
-| 50 Hz | sleep_for | 41.7 /s | 22.96 ms | 24.1 ms |
-| 50 Hz | deadline | 41.2 /s | 23.77 ms | 24.3 ms |
-| 60 Hz | sleep_for | 51.4 /s | 18.77 ms | 19.4 ms |
-| 60 Hz | deadline | 51.5 /s | 18.42 ms | 19.3 ms |
+| request | mode | realized | wait p50 | overshoot p50 | tick p50 |
+| --- | --- | --- | --- | --- | --- |
+| 50 Hz | sleep_for | 43.7 /s (87.4 %) | 21.83 ms | **+1.83 ms** | 22.49 ms |
+| 50 Hz | deadline | **49.8 /s (99.6 %)** | 19.20 ms | **−0.80 ms** | 19.84 ms |
+| 60 Hz | sleep_for | 54.9 /s (91.5 %) | 17.04 ms | **+0.37 ms** | 17.78 ms |
+| 60 Hz | deadline | **59.8 /s (99.7 %)** | 15.90 ms | **−0.77 ms** | 16.57 ms |
 
-The deadline form removes the *accumulated* drift but **does not remove the
-wake latency**: at 60 Hz the wait still overshoots by ~1.75 ms (vs ~2.1 ms for
-`sleep_for`), and at 50 Hz the deadline case was no better at all (3.8 ms vs
-3.0 ms — run-to-run noise dominates there), so 60 Hz realizes **~51.5 Hz
-(86 %)** in both modes. The primitive
-change is therefore **necessary but not sufficient**: reaching 60 Hz needs a
-lower-latency wait (`mach_wait_until` or a tighter timer/thread priority), not
-just a smaller timeout or an absolute deadline.
+**Correct conclusion: the absolute-deadline primitive is the fix.** In the
+deadline path the period is the deadline advance itself, so the realized rate
+tracks the request: **99.7 % of 60 Hz and 99.6 % of 50 Hz**, with a *negative*
+p50 overshoot (the wake lands before the deadline's p50 accounting). The
+`sleep_for` path, by contrast, adds the loop's own work to every period and
+lands at 87–92 %. Wake latency is therefore **not** the binding limit at these
+rates.
 
-Raw output for this addendum: `2026-10-20-plan151-publish-rate-addendum.log`.
+*Correction note:* an earlier draft's "deadline" rows (periods 19.4 / 24.3 ms,
+positive overshoot) were produced by a **harness-argument error** — the mode word
+was passed in the `<points>` position, so those runs were `sleep_for` with the
+default 2,304-point frame. They are superseded by the raw lines above; the
+harness argument order is `--synthetic-load <port> <hz> <points> [deadline]`.
+
+Raw output for this addendum: `2026-10-20-plan151-publish-rate-addendum.log`
+(the four runs' full `[synthetic]` / `[perf]` / probe lines).
