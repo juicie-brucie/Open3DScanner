@@ -34,7 +34,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 WORKTREE = Path.home() / "DevReposiMac" / "Open3DScanner-wt-integrate"
 PLAN = "docs/recomp/PLAN.md"
-ROW_RE = re.compile(r"^\| (\d{3}) \| (.*?) \| ([A-Z-]+) \| (.*?) \|$")
+ROW_RE = re.compile(r"^\| (\d+) \| (.*?) \| ([A-Z-]+) \|\s?(.*?) \|$")
 
 
 def sh(*args, cwd=None, check=True, capture=True):
@@ -176,7 +176,7 @@ def main() -> int:
     if a.dry_run:
         print("  dry-run: not pushing")
     else:
-        sh("git", "push", "--force-with-lease", f"{branch}:{old_head}", "origin", f"HEAD:{branch}",
+        sh("git", "push", f"--force-with-lease={branch}:{old_head}", "origin", f"HEAD:{branch}",
            cwd=WORKTREE, capture=False)
         print(f"  pushed {branch} (re-verify at the new head)")
     if not a.keep_worktree:
