@@ -1,0 +1,331 @@
+# Scale architecture — the pipeline's structural limits, and the seams worth cutting first
+
+**Row #148.** A proposal, not code. **No source file is changed by this row**; the only other file it touches is
+`docs/recomp/PLAN.md` (the row's own status). Device-free: every number cited here was measured without a scanner
+attached, or is read from a code location or from a recorded run.
+
+**Why this file and not `docs/recomp/ARCHITECTURE.md`.** That file is the *recomp process* charter — the roles, the
+walls, the models, the loop and the landing gate — and it is the document the clean-room posture rests on
+(`ARCHITECTURE.md:224-228`). Overwriting it with a product-architecture proposal would destroy the charter, so this
+note lives beside it and is linked from it. (`docs/recomp/ARCHITECTURE.md:107-123` is the charter's own index of
+what lives where.)
+
+---
+
+## 0. The datasets, and how to read a number here
+
+| tag | what it is | where |
+| --- | --- | --- |
+| **[#147]** | the device-free runtime baseline: CPU samples, the syscall view, the allocation footprint, the tick's CPU-vs-wall split, and a zero-work control of the platform's wait floor | `docs/recomp/log/2026-10-19-row-147-runtime-baseline.md` |
+| **[#136]** | the pipeline map: 10 stages, the volume at each, the code path, what is kept or dropped, and the verdict *"confirmed for our pipeline, refuted for the product"* | `docs/recomp/log/2026-10-19-row-136-pipeline-map.md` |
+| **[#141]** | the tick instrument: seven timed segments plus the overshoot and the residual | `tools/scan_server/perf_window.h:27-30`, `:99-100`, `:143-146` |
+| **[#151]** | the board's rate finding: the source is **24.0 Hz**, our publish is **8.7 Hz** | `docs/recomp/PLAN.md`, row #151's note |
+| **[SPEC]** | the vendor's advertised rates and what we have measured of them | `docs/recomp/SPEC-TARGETS.md` |
+
+**Citation convention.** `[#147 §7]` is §7 of the baseline log; `[#136 stage 3]` is the stage-3 row of the map's
+table; `[#141 perf_window.h:27-30]` is the instrument; `main.cpp:1264` is `tools/scan_server/main.cpp` line 1264 **on
+`origin/main` = `efe9253`**, the commit this note was written against; `[derived]` means arithmetic on cited numbers,
+with the arithmetic shown inline.
+
+**The lesson this note is written to.** Row #134's audit found that the "tick improvement" was an instrument
+mismatch — two different instruments, compared as if they were one ([#134] `docs/recomp/log/2026-10-19-row-134-tick-audit.md`).
+So every number below names its instrument, and a number whose instrument is "read the code" is labelled as such and
+never mixed with a measured one. Where a live-path number is extrapolated from the device-free baseline, it says so.
+
+---
+
+## 1. The shape today, in one paragraph
+
+One **single-threaded** tick polls the device every 100 ms, decimates the vendor's cloud to 20,000 points, encodes a
+positions-only V1 frame, broadcasts it to every WebSocket client *inline*, records the same decimated buffer, and
+releases the vendor's borrowed cloud — then sleeps for the next tick. The network is inside the tick's critical
+path; the data is borrowed from the SDK; the product keeps almost nothing. `engine/` is already modular (loader,
+worker, WS broadcast, mesh bridge); the two large files are `tools/scan_server/main.cpp` (**1,839 lines** on
+`efe9253`; the board row's "1,799" predates rows #139/#141) and `tools/raptor_client/main.cpp` (**2,526 lines**; the
+row's "1,992" predates row #140's capture work). The tick is **not** CPU-bound: at 0 clients the whole tick costs
+**195 µs of CPU** — 0.53 % of its own 37.0 ms period ([#147 §3]).
+
+---
+
+## 2. The structural limits for scale
+
+### L1 — The tick is one thread, and the network is inside its critical path
+
+**Evidence.** The broadcast is synchronous in the tick thread: `BroadcastBinary` takes `clients_mutex` and sends to
+every client inline (`engine/src/ws_broadcast_server.cpp:503-517`); `SendFrame` writes the header and then the
+payload as **two syscalls per client per frame** (`:255-256`); each client socket has a **100 ms
+`SO_SNDTIMEO`** (`:302`, `:307`). The measured cost: `bcast` p50 **0.00 / 0.10 / 0.29–0.31 ms** at 0 / 1 / 8
+clients, and `__sendto` is **57.7 % of the tick's CPU** at 8 clients ([#147 §3, §6]). The tick calls it inline at
+`main.cpp:1268` (live) and `main.cpp:613` (synthetic).
+
+**What it costs at scale.** The tick's *average* cost is linear in clients — ~37 µs per client per tick for a
+27,697 B frame, i.e. the kernel copying the frame at ~748 MB/s ([#147 §6], [derived]) — but the tick's *worst case*
+is not average: **one stalled client can hold the tick for the full 100 ms timeout**, because the send is inline and
+blocking — and because the sends are **sequential** under one mutex, N stalled clients can hold the tick for N × 100 ms.
+So the fan-out's scaling limit is the **stall policy**, not the throughput: at 80 clients the average send is
+2.96 ms/tick ([derived] 80 × 37 µs) — 3 % of the budget — while the tail is still 100 ms *per stalled client*.
+
+### L2 — The data we want is borrowed from the vendor and released at the end of the tick
+
+**Evidence.** `obscan_scan_get_model_point_color_clouds` fills a *borrowed* cloud (`main.cpp:1195`); the tick
+decimates it into its own `xyz` vector (`main.cpp:1250-1261`) and calls `obscan_scan_model_clouds_release` at the
+end of the tick (`main.cpp:1297`) without ever copying the full cloud ([#136 stage 2]). The cloud reached
+**1,366,566 points** by the run's end — 16.4 MB as xyz, 38 MB with normals and colours ([#136 stage 1]).
+
+**What it costs at scale.** The tick's structure is forced: *read → copy out → release*, all inside one tick, because
+the buffer is only valid until the next publish. "Holding the full cloud" therefore means **copying** it: 16.4 MB
+per copy at the run's end, and the cloud grows during the scan, so a full-cloud path at 24 Hz is ~394 MB/s of memcpy
+at the run's end ([derived] 16.4 MB × 24). The honest form of this limit is a **copy budget**, not a buffer handle.
+
+### L3 — The data path is decimated, positions-only and ephemeral
+
+**Evidence** ([#136] stages 3–8). The tick keeps **20,000 of 1,366,566 points — 98.5 % dropped per frame** — at
+8.7 frames/s (174,000 points/s, 2.09 MB/s). The V1 `cloud_snapshot` has **no colour field**
+(`engine/include/openscanner/frame_protocol.h:38`) and the getter's `normals` and `colors` arrays are never read; the
+scan is configured `post_texture = OB_SCAN_NO_TEXTURE` (`main.cpp:953`), so the vendor produces no colour to begin
+with. The browser accumulates the teardown's 6,323,235 vertices in a `Float32Array` (75.9 MB) and persists nothing
+(`ui/app.js:253-262`). The only durable artifact is the **vendor's** `model.ply` (960,974 vertices, 26.9 MB) and
+`mainLOMCache.obmc` (657 MB) written into `/tmp/openscanner_live_server_session` — a path we set
+(`main.cpp:941`) and never read back.
+
+**What it costs at scale.** The 20,000-point budget is a **choice, not a time constraint** — [#136]'s "where the time
+goes" section is explicit: *"reading the full cloud costs the same 0.00 ms (getter); the decimation is a choice made
+at `:1183`, not a time constraint"* — [#136]'s line numbering, which predates rows #139/#141; on `efe9253` the
+budget constant is `main.cpp:1204`. So the limit here is a *product* limit (what we are willing to carry), not a
+machine limit. And because the record carries the same decimated buffer, the 1 GiB record cap is **4,473 frames ≈
+8.6 minutes** of a scan ([#136 stage 5]) — the archive is a wire capture, not a save.
+
+### L4 — The pacing is the platform's, and it is the first ceiling
+
+**Evidence.** The live tick waits `CFRunLoopRunInMode(default, 0.1, false)` (`main.cpp:1115`). A zero-work control
+measures what that wait actually costs on this machine: **103.19 / 103.75 / 103.75 ms** for a 100 ms request
+([#147 §5]) — so the **live tick's ceiling is 9.68 Hz**, and [#147 §9] records that #112's measured 8–9 Hz is *at*
+that ceiling. The wait is **99.4 % of the tick** ([#141]'s own instrument, as reported in [#147 §9]); the untimed
+residual is 0.01 ms ([#147 §3]). The source is **24.0 Hz** ([#151]).
+
+**What it costs at scale.** Under the reading "10× the scan rate", the cadence binds **before any code**: the
+platform's floor is 9.68 Hz against a 24 Hz source, and no encoder or broadcast work moves it. Two further measured
+floors: a 41 ms request (what 24 Hz asks for) realises **44.62 ms → 22.4 Hz**, and a 20 ms request (what 50 Hz asks
+for) realises **24.29 ms → 41.2 Hz** ([#147 §5, §14]) — so 24 Hz is reachable *just*, and 50 Hz is not reachable on
+this pacing mechanism at all.
+
+### L5 — The two monoliths, and where their seams are
+
+**Evidence.** `tools/scan_server/main.cpp` is 1,839 lines and carries the synthetic server, the live session
+lifecycle, the tick, the plane removal, the recorder, the status JSON, the teardown snapshot and the CLI
+(`main.cpp:1086-1331` is the tick alone). `tools/raptor_client/main.cpp` is 2,526 lines and carries the msgpack
+codec (`:185-241`), the RPC client (`:304-457`), the replay loop (`:2119-2213`), the live loop (`:959`), the capture
+(row #140, `:698-757`), the frame-array analysis (`:773-866`) and the selftests. `engine/` is already modular.
+
+**What it costs at scale.** The measured hot paths sit in *pure* functions with no device dependency: the encoder
+(`frame_protocol.h:39-73`) is 63 % of the tick's CPU ([#147 §7]) and the msgpack `Reader::bin`/`next`
+(`raptor_client/main.cpp:234-241`) is 50 % of the replay client's CPU ([#147 §4.1]). Both are testable without a
+scanner, and both are the kind of code that gets *worse* when it shares a file with a device lifecycle. The seam
+that the profile argues for is therefore not "split the file by line count" but **split it at the three boundaries
+the measurements expose**: frame production (fetch → decimate → encode → a V1 buffer), transport (the WS server, and
+eventually a writer thread), and persistence (the recorder).
+
+---
+
+## 3. What "10× capacity" actually means here
+
+"10×" is not one thing, and the limit that binds **depends entirely on which one is meant**. The four readings, in
+the order in which they bind:
+
+### A. 10× the points delivered to the UI (20,000 → 200,000 per frame)
+
+* the encode: 53.4 ns/point ([derived] 123 µs of encoding for 2,304 points, [#147 §3]+[§7]) × 200,000 = **10.7 ms**
+  per tick;
+* the broadcast per client: 2.4 MB per frame at the measured ~748 MB/s = **3.2 ms** per client, so **25.6 ms** at
+  8 clients ([derived] from [#147 §6]);
+* the tick's work ≈ **36.3 ms** against the live tick's 103.2–103.8 ms budget ([#147 §5]) — it fits at 8.7 Hz, but the
+  fan-out is ~71 % of it;
+* at 24 Hz (a 44.62 ms realised budget, [#147 §5]) it **does not fit**.
+
+**The binding limit is the fan-out**, and the fixes are S2 + S3 — not a faster machine.
+
+### B. 10× the clients (8 → 80)
+
+* the average send: 2.96 ms/tick ([derived] 80 × 37 µs) — 3 % of the budget;
+* the tail: still **100 ms**, because a stalled client blocks the tick inline.
+
+**The binding limit is the stall policy**, not throughput. Only S3 changes it.
+
+### C. 10× the capture size (1.37M → 13.7M points per scan)
+
+* the vendor's own write scales with it: `mainLOMCache.obmc` 657 MB → **6.6 GB**, `model.ply` 26.9 MB → **269 MB**
+  ([#136 stage 8]);
+* a full-cloud copy in our pipeline: 164 MB per copy at 24 Hz = 3.9 GB/s of memcpy ([derived], L2).
+
+**The binding limit is disk** — and it binds *first*, because the vendor writes that file whether or not we ask it
+to. #149's "bounded by disk" is the constraint, not a detail.
+
+### D. 10× the scan rate (8.7 → 87 Hz)
+
+* the platform's floor for the current pacing is **9.68 Hz** ([#147 §5]) — a factor of 9 short, *before any code*;
+* the synthetic path's own pace is capped at 22.4 Hz for a 24 Hz request and 41.2 Hz for a 50 Hz request
+  ([#147 §5, §14]).
+
+**The binding limit is the tick cadence, and it binds before any of the code.** The only lever is the pacing
+*mechanism* (a deadline-based timer instead of a fixed sleep) — which is #113's decision, not a coding detail.
+
+### E. 10× the scans per day
+
+* each session is bounded at 300 s (`main.cpp:662`) and leaves ~684 MB of vendor artifacts behind ([#136 stage 8]);
+  10× the scans/day is ~6.8 GB/day of `/tmp` churn that macOS may clear.
+
+**The binding limit is the teardown and the disk**, not the tick.
+
+### The plain statement
+
+**The pipeline is not CPU-bound today** — the tick spends 0.53 % of itself on work ([#147 §3]) — so "10× capacity"
+mostly does **not** need faster code. It needs the seams that let the **fan-out**, the **data volume** and the
+**cadence** move independently. And under the one reading where 10× means "10× the scan rate", **the tick cadence
+binds before any code**: the platform's own floor is 9.68 Hz against a 24.0 Hz source ([#147 §5], [#151]).
+
+---
+
+## 4. The seams worth cutting first, ranked
+
+Ranked by (measured cost) ÷ (behaviour risk), with the evidence for the order. Each seam states what it buys, what it
+risks, and what must **not** change.
+
+### S1 — The encoder: `push_back` per byte → one `memcpy`
+
+* **What it buys.** The encoder is **63 % of the tick's CPU** with no client ([#147 §7]: 67 ms of 106 ms in a 20 s
+  Time Profiler run) — the single largest measured item in the tick. Making it a `memcpy` takes the tick's work from
+  195 µs to ~72 µs ([derived]) and the live path's derived ~1.06 ms of encoding per 20,000 points to ~0.1 ms. It is
+  also the **precondition for every budget** in row #152: with the work at 0.2 % of the tick, the budgets become
+  statements about the *cadence* and the *fan-out* instead of about a timer.
+* **What it risks.** The output must be **byte-identical** — the UI decodes it (`ui/frame_protocol.js`) and the
+  recorded archives contain it. Mitigation: a golden-vector equivalence test against the current encoder, over
+  random point counts and payloads, device-free.
+* **What must not change.** The V1 wire format; the fact that this is *our* header
+  (`engine/include/openscanner/frame_protocol.h`), not the contract header.
+
+### S2 — The WebSocket send: two syscalls per client per frame → one
+
+* **What it buys.** `SendFrame` writes the 2–4 B header and then the payload separately
+  (`ws_broadcast_server.cpp:255-256`); one write halves the syscall count per client per frame. **Honest accounting:**
+  at 27,697 B/frame the *byte copy* dominates (the measured ~748 MB/s, [#147 §6]), so the win is the per-syscall
+  overhead, not the bytes — a fraction of the 57.7 %.
+* **What it risks.** Nothing on the wire: the same bytes in one write are still one RFC 6455 frame.
+* **What must not change.** The RFC 6455 framing; the V1 payload.
+
+### S3 — The broadcast's shape: a latest-frame slot + a per-client writer thread
+
+* **What it buys.** The network leaves the tick's critical path: the tick's cost becomes **O(1) in clients** instead
+  of O(N), the 100 ms stall stops being a tick event, and the drop policy becomes explicit rather than a side
+  effect of a failed send ([#147 §6]; [#136]'s note that decoupling the fetch from the broadcast "would let the tick
+  carry the full cloud without touching the 100 ms floor").
+* **What it risks.** Three things, and the first is a real constraint the map does not show:
+  1. **The traffic is not uniform.** The teardown's full-detail mesh chunks (`main.cpp:1374-1392`, 317 chunks of
+     20,000 vertices) must arrive **in order and complete** — the page accumulates them between `full_mesh_start` and
+     `full_mesh_done` (`ui/app.js:253-262`). A latest-frame slot cannot carry them. The seam needs **two classes of
+     traffic**, and the class has to be explicit in the API.
+  2. **Concurrency.** A producer → slot → per-client writer contract is a data race if it is wrong, and a data race
+     here is a crash, not a slowdown.
+  3. **The client-drop semantics change.** Today a failed send drops the *client*
+     (`ws_broadcast_server.cpp:506-513`); with a slot, a slow client loses *frames* instead.
+* **What makes it cheaper than it looks.** The UI is **already latest-wins**: `if (framePending) return; // drop live
+  frame: renderer is behind` (`ui/app.js:293`). A server-side drop-oldest policy would match the client's existing
+  one — but only for the live snapshots, not for the mesh chunks.
+* **What must not change.** The V1 frame's contents; the tick's *pacing* (the wait at `main.cpp:1115` and the fetch
+  at `main.cpp:1195` stay in the tick); the clean-room posture (all of this is our own code).
+
+### S4 — Persistence: a project-owned archive, written off the tick
+
+* **What it buys.** It closes the gap [#136] called "the one that matters most" — the project artifact is written
+  where nobody can find it, and nothing reads it back ([#136 stage 8]) — and it is the only seam that changes what the
+  product *keeps*. It is row **#149**'s row; this note does not duplicate it, it places it.
+* **What it risks.** The disk budget (657 MB + 27 MB per scan today, growing with scan time, [#136 stage 8]); the
+  format decision, which belongs to the operator; and — the structural point — **writing on the tick would show up in
+  the tick's work**, which is currently 0.01 ms of residual and 195 µs of CPU ([#147 §3]). So it must be a separate
+  writer, which makes it the *same shape* of change as S3.
+* **What must not change.** The ABI. The vendor's own write stays the vendor's — but **where** it is written is
+  ours to choose (`main.cpp:941`), and that choice becomes a one-way door for existing runs.
+
+### S5 — Buffer ownership: the full cloud outside the tick
+
+* **What it buys.** The ability to carry the *full* cloud — 1.37M points with normals and colours ([#136 stage 1]) —
+  in our own pipeline, which [#136] is explicit is **not** a time constraint (the getter is 0.00 ms) but a copy-budget
+  one (L2).
+* **What it risks.** The copy budget itself: 16.4 MB per copy at the run's end, growing with the cloud, and the
+  copy is what makes it expensive (394 MB/s at 24 Hz, [derived]). The seam's real form is a **budget**, not a
+  handle. And it must not be built before S4 exists — there is no point copying 16 MB per frame before we know where
+  the data is going.
+* **What must not change.** The ABI's ownership contract. The header states the buffers are borrowed; changing that
+  is a **recon** task, not a builder's, and no step here needs it.
+
+### Why this order
+
+S1 is first because it is the largest measured share of the tick's CPU, it changes **no observable behaviour**, and it
+needs no device to verify. S2 is second for the same reason at a smaller size. S3 is third because it is the first
+*behavioural* change — it needs the traffic classification and a concurrency contract, and it is the one that needs
+the UI's drop tolerance to be stated rather than assumed. S4 and S5 are the data plane; S4 precedes S5 because the
+archive's format and location decide what S5 is allowed to carry.
+
+---
+
+## 5. The migration order
+
+| step | seam | independently valuable? | reversible? |
+| --- | --- | --- | --- |
+| **0** | **S1 — the encoder's `memcpy`** | **yes**: the tick's work drops from 0.53 % to ~0.2 % of itself, which is what makes every later budget sayable (#152) and is a regression guard for the wire format (a golden-vector test) | yes |
+| 1 | S2 — one write per client per frame | yes: half the syscalls, same bytes | yes |
+| 2 | S3 — the latest-frame slot + per-client writers | yes: the fan-out leaves the tick, and the 100 ms stall leaves the tick | **partly** — the drop semantics change (S3 risk 3) |
+| 3 | S4 — persistence, off the tick (#149) | yes: the product starts keeping the scan | **no — this is the irreversible one** |
+| 4 | S5 — the full cloud in our pipeline | yes: the data hole closes | no (the archive format is now fixed) |
+
+**The smallest first step that is independently valuable: step 0, the encoder.** It is a pure function, it changes no
+bytes on the wire, it needs no device, and it is verifiable by an equivalence test — and it is what turns the tick's
+work from a number every other budget has to subtract into a number nobody has to think about.
+
+**Step 0, written as a work order** (it is small enough to be one row):
+
+| | |
+| --- | --- |
+| *What* | replace the per-byte `push_back` loop in `encode_cloud_snapshot` (`engine/include/openscanner/frame_protocol.h:39-73`) with a sized write of the same bytes; the envelope (`:59-66`) is unchanged |
+| *Accept* | the encoded bytes are **identical** to the current encoder's, for every point count including 0 and 1, proven by a device-free equivalence test over random payloads; the tick's per-tick CPU (the `[perf]` line's segments) drops by the encoder's share — the 63 % of the tick's CPU measured in [#147 §7] |
+| *Must not change* | the V1 wire format; the decoder in `ui/frame_protocol.js`; the tick's pacing (the wait at `main.cpp:1115`) |
+| *Device* | none — the equivalence test and the `[perf]` line are both device-free |
+| *Reversible* | yes |
+| *Then* | re-run [#147]'s method (§2.4 there) to re-baseline the tick's CPU, so step 1's budget starts from the new number |
+
+**The irreversible one: step 3, persistence (#149) — the archive's format and location.** Once scans are written in
+a format, changing the format means migrating archives; once `output_dir` moves off `/tmp` ([#136 stage 8]), the
+existing runs' artifacts are stranded. (A second, quieter one-way door: if colour is ever added to the frame — #136b
+— the recorded archives and the UI have to move together, so that decision should not be smuggled in through a
+seam.)
+
+---
+
+## 6. What must not change
+
+* **The ABI** — `engine/include/openscanner/obscan_api.h`. Recon owns it; the builder never edits it. Every seam
+  above is in our own code, so none of them needs an ABI change; if one ever does, it is a recon row.
+* **The wire protocol** — the V1 envelope (`frame_protocol.h:39-73`) and what the UI decodes
+  (`ui/frame_protocol.js`). The encoder change must be byte-identical; the colour question is #136b's, and it is a
+  product decision, not a refactor.
+* **The clean-room posture** — every seam named here is in `engine/` or `tools/`, i.e. code written from the header
+  alone. None of them requires reading a vendor binary, and none moves the wall that the charter records
+  (`docs/recomp/ARCHITECTURE.md`, "The walls").
+* **The tick's measured pacing** — the wait at `main.cpp:1115` and the 100 ms budget stay as they are. The steps
+  above shrink the *work inside* the tick; **the cadence itself is #113's decision**, and the 9.68 Hz ceiling
+  ([#147 §5]) is a platform fact, not a bug to be optimised away.
+
+---
+
+## 7. What this note does not decide
+
+* **Colour** (#136b): it changes the frame size (12 B/point → 24 or 36 B/point) and therefore every budget in §3.
+  It must be settled **before** S5, and it is a product decision, not a structural one.
+* **The archive format and the disk budget** (#149): with the operator, in step 3.
+* **Whether the 20,000-point live budget stays.** [#136]'s #136c says it should — the UI needs a bounded frame — and
+  §3/A is consistent with that: "10× points" needs a **different stream**, not a bigger budget on the same one.
+* **The cadence** (#113): the 9.68 Hz ceiling against a 24.0 Hz source ([#151]) is the number that has to go into
+  that row, together with #151's load test at 10 / 24 / 50 Hz — whose own constraint is the platform's wait floor
+  ([#147 §14]).
+* **The per-stage budgets** (#152) and the end-to-end frame benchmark (#156), and the full stage map with costs
+  (#155) — this note is the *structure* argument those rows instantiate; the numbers in §3 are the inputs, not the
+  budgets.

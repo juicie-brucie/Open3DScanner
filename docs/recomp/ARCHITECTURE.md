@@ -115,7 +115,8 @@ Open3DScanner/
   docs/recon/findings/*.md                  # narrative spec (recon writes)
   docs/recomp/PLAN.md                       # task board (dispatch)
   docs/recomp/ROADMAP.md                    # critical path + round objective (planner)
-  docs/recomp/ARCHITECTURE.md               # this file
+  docs/recomp/ARCHITECTURE.md               # this file (the recomp process)
+  docs/recomp/SCALE-ARCHITECTURE.md         # the product pipeline at scale (row #148)
   scripts/verify-pr.py                      # deterministic PR checks (CI + verifier)
   tests/hardware/*                          # test programs (builder)
   tests/results/*                           # observed behavior (hardware agent)
