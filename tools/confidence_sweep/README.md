@@ -23,6 +23,16 @@ same CSV and the same plot, byte for byte.
 A confidence value is **higher = more trusted**. A field file is one value per
 point, either `index,value` or `value` per line, in point order.
 
+**The truth is expressed in the cloud's own frame.** For a real capture, the
+wall is square to the scanner, so the distance from the scanner's origin to the
+wall along the wall's normal is the taped distance, and the wall's normal in
+the cloud's frame comes from fitting the wall to the cloud — `--fit-plane`
+reports the fit (normal, offset, residual), and `--fit-plane-check D` compares
+the fitted offset with the taped distance `D` and exits **4** if they disagree
+by more than `--fit-plane-tolerance` (default 2 mm). The design note's §6.2
+has the protocol, and it says which input is authoritative and why the
+vendor's `model.ply` is not it.
+
 ## The sweep
 
 `--sweep-steps N` (default 21) rows, the retained fraction running from 100 %
@@ -35,7 +45,9 @@ points down to that fraction and reports:
   `--random-trials` (default 20) draws from a fixed `--seed`.
 
 `--absolute` sweeps a raw confidence value between `--sweep-min` and
-`--sweep-max` instead of a quantile.
+`--sweep-max` instead of a quantile. There the threshold decides how many
+points survive, so the row's `retained_fraction` is the fraction **actually
+kept**, and the acceptance window is driven off that same value.
 
 ## The acceptance
 
@@ -59,15 +71,15 @@ build/tools/confidence_sweep/confidence_sweep --synthetic \
 # the acceptance, as the tool's own exit code
 build/tools/confidence_sweep/confidence_sweep --synthetic --expect-beats-random
 
-# a real capture: the vendor's model.ply against a taped wall at 400 mm
+# a real capture: the recorded session's cloud against the taped wall at 400 mm
+# (step 1 - the wall's normal, and the fit checked against the tape)
 build/tools/confidence_sweep/confidence_sweep \
-    --ply model.ply --truth plane 0 0 1 0.400 \
-    --csv sweep.csv --plot sweep.svg --expect-beats-random
+    --rec session.rec --rec-mode last --fit-plane --fit-plane-check 0.400
 
-# a recorded session: the last cloud frame in the recording
+# (step 2 - the sweep, against the taped plane with the fitted normal)
 build/tools/confidence_sweep/confidence_sweep \
-    --rec session.rec --rec-mode last --truth plane 0 0 1 0.400 \
-    --csv sweep.csv --plot sweep.svg
+    --rec session.rec --rec-mode last --truth plane 0.000 0.000 1.000 0.400 \
+    --csv sweep.csv --plot sweep.svg --expect-beats-random
 ```
 
 The CSV's columns: `threshold` (on the confidence scale), `retained_fraction`,

@@ -53,7 +53,8 @@ distance, and the plane's normal comes from a 3×3 symmetric eigen-decomposition
 
 - It is computable **offline on whatever cloud we already have** — the vendor's fused `model.ply`, a V1 frame
   from a `--record` session, or a synthetic cloud. It needs no provenance, no extra capture mode and no new
-  vendor call.
+  vendor call. (Which of those clouds the *ground truth* is expressed for is a separate question, answered in
+  §6.2.)
 - It costs nothing to be wrong: if it does not beat random, we have learned that the device's errors are not
   local roughness, which is itself the answer (and it points at option 2).
 - The curve it produces is a **ranking**, so it is insensitive to the confidence's scale and units — the sweep
@@ -210,16 +211,59 @@ record); it is stated here so the two rows agree on what "the real run" means.
   frame at every distance. It gives a second, independent length scale (its corners' spacing) and the IR path's
   cross-check.
 
-### 6.2 The ground truth
+### 6.2 The ground truth, in the frame the harness scores in
 
-- The truth surface is the **wall's plane**: the taped distance plus the wall's normal.
-- The wall is set square to the scanner with a bubble level (**≤ 0.5°**). The harness reports the plane-fit
-  residual on the clean region, so a residual larger than the expected noise is the report of a tilt that the
-  tape did not catch — the tilt must not be silently absorbed into the error.
-- The **checkerboard's spacing** is the check on the taped distance: the measured corner spacing against the
-  printed 20.0 mm is a second, independent number for the same wall.
-- Everything is recorded in the run's record: the tape readings, the level reading, the board's printed size, and
-  a photograph of the setup.
+The harness scores a cloud **in that cloud's own frame**. Two of our inputs are in **different** frames, and this
+is the trap: the same numeric plane cannot serve both.
+
+- The **published cloud** — what `--record` writes and what the live view shows — is in the **scanner's frame**,
+  with no export transform applied to it.
+- The vendor's **`model.ply`** is written *after* the SDK applies the model's **rotate pose** (the transform is
+  described in `docs/recon/findings/scan-live-data.md` §16, and the matrix is printed in the scan log as
+  "rotate pose for model.ply"). It is in the **rotated** frame.
+
+**So the recorded session is the authoritative input for this experiment.** The tape and the wall are physical;
+the scanner's frame is the frame the wall is measured in; and the published cloud is the one that is in it.
+`model.ply` is usable only with the truth plane carried through the same rotate pose (or with the pose undone) —
+its matrix is in the scan log, so the run can do it, but it is a second thing to get right and it is not needed.
+
+**How the taped distance becomes the numeric plane.** The wall is square to the scanner, so the distance from the
+scanner's origin to the wall along the wall's normal **is** the taped distance (300/400/500 mm, ±1 mm), and the
+wall's normal in the cloud's frame is the scanner's optical axis. Our findings do **not** pin the scanner's axis
+convention in the cloud's frame, so the normal is obtained by **fitting the wall to the cloud** and the **tape
+stays the anchor**:
+
+```sh
+# 1. fit the wall, and check the fitted offset against the tape
+build/tools/confidence_sweep/confidence_sweep --rec session.rec --rec-mode last \
+    --fit-plane --fit-plane-check 0.400
+#    [fit] normal (0.000, 0.000, 1.000), fitted offset 0.3998 m, fit residual: rms 0.0004 m, p95 0.0009 m
+#    [fit] the fitted offset 0.3998 m against the taped 0.400 m: delta -0.0002 m (tolerance 0.002 m)
+#    [fit] OK - the fit agrees with the tape.
+
+# 2. the sweep, against the taped plane with the fitted normal
+build/tools/confidence_sweep/confidence_sweep --rec session.rec --rec-mode last \
+    --truth plane 0.000 0.000 1.000 0.400 --csv sweep.csv --plot sweep.svg --expect-beats-random
+```
+
+**What the fit's residual is, and is not.** The fit's residual is the cloud's distance to the wall's *own*
+best-fit plane. It says whether the cloud is a single plane at all: a residual much larger than the expected noise
+means something else was in frame (the table's edge, the floor) or that the fit failed, and the run stops there
+rather than reporting a curve about the wrong surface. The wall should fill the frame, so that the fit sees the
+wall and nothing else.
+
+**The limitation, stated rather than discovered later.** Because the normal comes from the fit, a **systematic
+tilt** of the whole cloud relative to the wall would be **absorbed** by the fit and would not appear in the
+metric. That is a real limit of this truth model: the curve measures the cloud's roughness and its offset from
+the taped distance, not a global tilt. The experiment's question — *does the confidence signal rank the points by
+error?* — is not affected, because a global tilt is locally planar and the estimator does not claim to detect it
+(§2.1's assumption 1). A tilt-sensitive measurement is the checkerboard's geometry, which is #126's own metric,
+not this curve.
+
+**The other checks on the taped distance.** The **checkerboard's spacing** is the second, independent number: the
+measured corner spacing against the printed 20.0 mm. The wall is set square to the scanner with a bubble level
+(**≤ 0.5°**), and the level reading is recorded. Everything goes in the run's record: the tape readings, the level
+reading, the board's printed size, and a photograph of the setup.
 
 ### 6.3 The sequential vendor oracle run
 
@@ -230,7 +274,7 @@ never concurrent**, and the scene is not touched between them:
 1. set the scene, tape-measure, photograph it;
 2. **our** capture — one process, one SDK user (`scan_server --live --record <session>.rec`), then close it;
 3. the **vendor's** app on the same scene → the oracle's model;
-4. the harness on our cloud, against the tape-measured plane.
+4. the harness on the recorded session's cloud, against the taped plane with the fitted normal (§6.2).
 
 **One SDK user at a time** is a hard rule of the run, not a preference: the device's daemon serves one client,
 and a second SDK user is refused. So the order above is sequential by construction, and no step may be left
@@ -239,8 +283,8 @@ it is fixed, step 2 has to go through whatever path is known to work, and the ru
 
 ### 6.4 What the real run must produce
 
-- the cloud (the vendor's `model.ply` and/or the recorded session's last cloud frame) and the tape-measured
-  truth;
+- the **recorded session's last cloud frame** (the authoritative input — §6.2) and the tape-measured truth: the
+  normal from the wall's fit, the offset from the tape, and the fit's residual;
 - the **CSV** and the **SVG** from the harness, on that cloud;
 - the verdict: does the confidence curve beat the random control at the same retained fraction (§5)?
 
@@ -266,6 +310,17 @@ failure of the run.
 The recorded session's envelope is decoded with the project's own codec
 (`engine/include/openscanner/frame_protocol.h`) — the wire format is not restated in the tool.
 
+**The two modes of the sweep.** The default is a **quantile** sweep: the retained fraction is chosen, and the
+threshold is the confidence at the retention boundary. `--absolute` instead sweeps a **raw confidence value**
+between `--sweep-min` and `--sweep-max`, and there the threshold decides how many points survive — so the row's
+`retained_fraction` is the fraction **actually kept**, not the sweep's nominal one, and the acceptance window is
+driven off that same actual value (a row that is effectively full retention falls outside it, as §5 requires).
+
+**`--fit-plane`** fits a plane to the cloud (total least squares) and reports the normal, the offset and the
+fit's residual — the truth's normal for a real capture, and the run's own check that the cloud is a single
+surface (§6.2). `--fit-plane-check D` compares the fitted offset with the taped distance `D` and exits **4** if
+they disagree by more than `--fit-plane-tolerance` (default 2 mm).
+
 ### 7.1 The commands
 
 ```sh
@@ -276,16 +331,19 @@ build/tools/confidence_sweep/confidence_sweep --synthetic \
 # the acceptance, as the tool's own exit code (3 when the curve does not beat random)
 build/tools/confidence_sweep/confidence_sweep --synthetic --expect-beats-random
 
-# the real capture (#126): the vendor's model against the taped wall at 400 mm
+# the real capture (#126), step 1: fit the wall and check it against the tape
 build/tools/confidence_sweep/confidence_sweep \
-    --ply model.ply --truth plane 0 0 1 0.400 \
-    --csv sweep.csv --plot sweep.svg --expect-beats-random
+    --rec session.rec --rec-mode last --fit-plane --fit-plane-check 0.400
 
-# the real capture, from a recorded session instead of the PLY
+# the real capture, step 2: the sweep, against the taped plane with the fitted normal
 build/tools/confidence_sweep/confidence_sweep \
-    --rec session.rec --rec-mode last --truth plane 0 0 1 0.400 \
-    --csv sweep.csv --plot sweep.svg
+    --rec session.rec --rec-mode last --truth plane 0.000 0.000 1.000 0.400 \
+    --csv sweep.csv --plot sweep.svg --expect-beats-random
 ```
+
+**The vendor's `model.ply` is in the rotated frame** (§6.2), so it is not the input for this experiment: the
+same numeric plane would be measuring the wrong surface. If a run uses it anyway, the truth plane has to be
+carried through the same rotate pose (the matrix is in the scan log).
 
 ### 7.2 The synthetic self-test — the result
 
@@ -332,11 +390,15 @@ random curve, as it must). Without this check, the first result would prove noth
 
 - `confidence_sweep_test` — the scene, the estimator's separation of the two regions, the sweep, the negative
   control, determinism (the same input gives the same numbers), the PLY round trip, the recorded-session round
-  trip (against the project's own encoder) and the confidence-field round trip;
+  trip (against the project's own encoder) and the confidence-field round trip; plus the **absolute mode** (the
+  reported fraction is the fraction actually kept, and the effectively-full row is outside the acceptance
+  window), the **sweep's minimum fraction** (a non-default minimum changes the sweep) and the **fitted plane**;
 - `confidence_sweep_cli_test` — the acceptance through the command line;
 - `confidence_sweep_artifacts_test` — the CSV and the SVG are byte-reproducible across two runs, the CSV carries
-  both curves, the confidence curve beats random at every row, and the numbers still match the committed run
-  (compared with a relative tolerance of 10⁻⁶, because the last bits of a float can move between compilers).
+  both curves, the confidence curve beats random at every row, the absolute mode's fractions match what it kept,
+  `--sweep-min-fraction` reaches the sweep, the plane fit runs and its check fails loudly, and the numbers still
+  match the committed run (compared with a relative tolerance of 10⁻⁶, because the last bits of a float can move
+  between compilers).
 
 ---
 

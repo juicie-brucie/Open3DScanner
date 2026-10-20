@@ -86,6 +86,25 @@ private:
 
 // -------------------------------------------------------------- estimator --
 
+// A plane fitted to a cloud by total least squares: the unit normal, the
+// offset (the signed distance from the cloud's origin to the plane) and the
+// fit's residual.
+//
+// This is how the ground truth's normal is obtained for a real capture: the
+// wall is square to the scanner, so the distance from the scanner's origin to
+// the wall along the wall's normal is the taped distance, and the wall's
+// normal in the cloud's frame is what the fit returns. The tape stays the
+// anchor - see the design note's §6.2.
+struct PlaneFit {
+    double nx = 0.0, ny = 0.0, nz = 1.0;
+    double d = 0.0;        // the signed distance from the origin to the plane
+    double rms = 0.0;      // the fit's residual over the cloud
+    double p95 = 0.0;
+    std::size_t points = 0;
+};
+
+[[nodiscard]] PlaneFit fit_plane(const Cloud& cloud);
+
 // Options for the local-residual estimator.
 struct ResidualOptions {
     int k = 16;                     // neighbours in the local fit (including the point)
@@ -137,8 +156,9 @@ struct SweepSummary {
 
 // The sweep's shape.
 struct SweepOptions {
-    int steps = 21;              // rows in the sweep
-    bool absolute = false;       // sweep a raw confidence value instead of a quantile
+    int steps = 21;               // rows in the sweep
+    double min_fraction = 0.05;   // the smallest retained fraction the sweep reaches
+    bool absolute = false;        // sweep a raw confidence value instead of a quantile
     double absolute_min = 0.0;
     double absolute_max = 0.0;
     int random_trials = 20;      // random keeps averaged per row

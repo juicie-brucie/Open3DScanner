@@ -465,6 +465,58 @@ std::string Truth::describe() const {
 
 // ------------------------------------------------------------- estimator ----
 
+PlaneFit fit_plane(const Cloud& cloud) {
+    PlaneFit fit;
+    const std::size_t n = cloud.size();
+    if (n < 3) return fit;
+    double mean[3] = {0.0, 0.0, 0.0};
+    for (std::size_t i = 0; i < n; ++i) {
+        const float* p = cloud.point(i);
+        mean[0] += p[0];
+        mean[1] += p[1];
+        mean[2] += p[2];
+    }
+    for (int a = 0; a < 3; ++a) mean[a] /= static_cast<double>(n);
+    double cov[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+    for (std::size_t i = 0; i < n; ++i) {
+        const float* p = cloud.point(i);
+        const double d[3] = {static_cast<double>(p[0]) - mean[0], static_cast<double>(p[1]) - mean[1],
+                             static_cast<double>(p[2]) - mean[2]};
+        for (int a = 0; a < 3; ++a)
+            for (int b = 0; b < 3; ++b) cov[a][b] += d[a] * d[b];
+    }
+    for (int a = 0; a < 3; ++a)
+        for (int b = 0; b < 3; ++b) cov[a][b] /= static_cast<double>(n);
+    double eval[3], evec[3][3];
+    eigen_sym3(cov, eval, evec);
+    // The normal is the eigenvector of the smallest eigenvalue.
+    double normal[3] = {evec[0][0], evec[1][0], evec[2][0]};
+    const double len = std::sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
+    if (len <= 0.0) return fit;
+    for (int a = 0; a < 3; ++a) normal[a] /= len;
+    // The eigenvector's sign is arbitrary; fix it so the plane's numbers are
+    // reproducible from run to run: the largest component is positive.
+    int largest = 0;
+    for (int a = 1; a < 3; ++a)
+        if (std::fabs(normal[a]) > std::fabs(normal[largest])) largest = a;
+    if (normal[largest] < 0.0)
+        for (int a = 0; a < 3; ++a) normal[a] = -normal[a];
+    fit.nx = normal[0];
+    fit.ny = normal[1];
+    fit.nz = normal[2];
+    fit.d = normal[0] * mean[0] + normal[1] * mean[1] + normal[2] * mean[2];
+    fit.points = n;
+    std::vector<double> residuals(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        const float* p = cloud.point(i);
+        residuals[i] = std::fabs(normal[0] * p[0] + normal[1] * p[1] + normal[2] * p[2] - fit.d);
+    }
+    const Metrics m = metrics_of(residuals);
+    fit.rms = m.rmse;
+    fit.p95 = m.p95;
+    return fit;
+}
+
 double estimate_spacing(const Cloud& cloud, int samples) {
     if (cloud.size() < 2) return 1.0;
     double minx = cloud.xyz[0], maxx = cloud.xyz[0];
@@ -574,7 +626,7 @@ SweepSummary run_sweep(const std::vector<float>& confidence, const std::vector<d
     }
 
     const int steps = std::max(2, options.steps);
-    const double min_fraction = 0.05;
+    const double min_fraction = std::min(std::max(options.min_fraction, 0.0), 1.0);
     Rng rng(options.seed);
 
     // The random control draws a fresh permutation per trial; the array is
@@ -592,8 +644,6 @@ SweepSummary run_sweep(const std::vector<float>& confidence, const std::vector<d
         std::size_t keep = static_cast<std::size_t>(std::llround(fraction * static_cast<double>(n)));
         keep = std::min(keep, n);
         SweepRow row;
-        row.retained_fraction = fraction;
-        row.n_retained = keep;
         if (options.absolute) {
             // An absolute sweep: keep everything at or above the threshold.
             const double lo = options.absolute_min;
@@ -603,12 +653,16 @@ SweepSummary run_sweep(const std::vector<float>& confidence, const std::vector<d
             keep = 0;
             for (std::size_t i = 0; i < n; ++i)
                 if (sorted_confidence[i] >= t) ++keep;
-            row.n_retained = keep;
         } else {
             // A quantile sweep: the threshold is the confidence at the
             // retention boundary, so the row's retained fraction is exact.
             row.threshold = keep > 0 ? sorted_confidence[keep - 1] : std::numeric_limits<double>::quiet_NaN();
         }
+        // The row's fraction is the fraction actually kept, not the sweep's
+        // nominal one: in the absolute mode the threshold decides how many
+        // points survive, and the nominal quantile says nothing about it.
+        row.n_retained = keep;
+        row.retained_fraction = static_cast<double>(keep) / static_cast<double>(n);
         if (keep == 0) {
             if (rows) rows->push_back(row);
             continue;

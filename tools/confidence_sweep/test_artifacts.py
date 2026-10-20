@@ -148,6 +148,56 @@ def main(tool):
         print("the acceptance run did not exit 0:", passing.returncode, passing.stderr)
         return 1
 
+    # The absolute sweep: the reported fraction is the fraction actually kept.
+    abs_csv = "artifacts_absolute.csv"
+    absolute = run(tool, ["--synthetic", "--absolute", "--sweep-min", "-0.003",
+                          "--sweep-max", "-0.00005", "--csv", abs_csv, "--quiet"])
+    if absolute.returncode != 0:
+        print("the absolute run failed:", absolute.returncode, absolute.stderr)
+        return 1
+    abs_rows = read_rows(abs_csv)
+    if not abs_rows:
+        print("the absolute run wrote no rows")
+        return 1
+    abs_header = read_header(abs_csv)
+    abs_index = {name: i for i, name in enumerate(abs_header)}
+    total = float(abs_rows[0][abs_index["n_retained"]])
+    for row in abs_rows:
+        kept = float(row[abs_index["n_retained"]])
+        reported = float(row[abs_index["retained_fraction"]])
+        if abs(kept / total - reported) > 1e-9:
+            print("the absolute sweep misreports its fraction:", row)
+            return 1
+    os.remove(abs_csv)
+
+    # The sweep's minimum fraction reaches the sweep.
+    min_csv = "artifacts_min.csv"
+    raised = run(tool, ["--synthetic", "--sweep-min-fraction", "0.5", "--csv", min_csv, "--quiet"])
+    if raised.returncode != 0:
+        print("the raised-minimum run failed:", raised.returncode, raised.stderr)
+        return 1
+    min_rows = read_rows(min_csv)
+    if not min_rows:
+        print("the raised-minimum run wrote no rows")
+        return 1
+    if abs(float(min_rows[-1][1]) - 0.5) > 1e-9:
+        print("the sweep ignored --sweep-min-fraction:", min_rows[-1][1])
+        return 1
+    if open(min_csv, "rb").read() == csv_bytes:
+        print("--sweep-min-fraction did not change the sweep")
+        return 1
+    os.remove(min_csv)
+
+    # The fitted plane: the fit is reported, and the check fails loudly.
+    fitted = run(tool, ["--synthetic", "--fit-plane", "--fit-plane-check", "0.0"])
+    if fitted.returncode != 0 or "[fit]" not in fitted.stdout:
+        print("the plane fit did not run:", fitted.returncode, fitted.stdout, fitted.stderr)
+        return 1
+    mismatch = run(tool, ["--synthetic", "--fit-plane", "--fit-plane-check", "0.5"])
+    if mismatch.returncode != 4:
+        print("a wrong taped distance did not exit 4:", mismatch.returncode, mismatch.stderr)
+        return 1
+
     print("sha256 csv ", hashlib.sha256(csv_bytes).hexdigest())
     print("sha256 plot", hashlib.sha256(plot_bytes).hexdigest())
     print("the artefact test passed")

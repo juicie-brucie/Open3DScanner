@@ -321,6 +321,74 @@ int main() {
         std::remove(path.c_str());
     }
 
+    // ---- the absolute sweep ----------------------------------------------
+    // In the absolute mode the threshold decides how many points survive, so
+    // the row's fraction has to be the fraction actually kept - and the row
+    // that is effectively full retention has to fall outside the acceptance
+    // window (there, both curves are the same set of points).
+    {
+        SweepOptions absolute;
+        absolute.absolute = true;
+        absolute.absolute_min = -0.003;
+        absolute.absolute_max = -0.00005;
+        absolute.steps = 8;
+        std::vector<SweepRow> abs_rows;
+        const SweepSummary abs_summary = run_sweep(confidence, errors, absolute, &abs_rows);
+        check(!abs_rows.empty(), "the absolute sweep produced rows");
+        bool fractions_match = true;
+        for (const SweepRow& r : abs_rows) {
+            const double actual = static_cast<double>(r.n_retained) / static_cast<double>(cloud.size());
+            if (r.n_retained > 0 && std::fabs(r.retained_fraction - actual) > 1e-12) fractions_match = false;
+        }
+        check(fractions_match, "the absolute sweep reports the fraction it actually kept");
+        bool has_full_row = false;
+        std::size_t inside = 0;
+        for (const SweepRow& r : abs_rows) {
+            if (r.n_retained == cloud.size()) has_full_row = true;
+            if (r.retained_fraction > 0.0 && r.retained_fraction < 1.0) ++inside;
+        }
+        check(has_full_row, "the absolute sweep has an effectively-full row");
+        check(abs_summary.rows_evaluated == inside,
+              "the acceptance window counts exactly the rows that kept some but not all points");
+        check(abs_summary.rows_evaluated < abs_rows.size(),
+              "the effectively-full row is outside the acceptance window");
+    }
+
+    // ---- the sweep's minimum fraction ------------------------------------
+    {
+        SweepOptions high;
+        high.min_fraction = 0.5;
+        std::vector<SweepRow> high_rows;
+        const SweepSummary high_summary = run_sweep(confidence, errors, high, &high_rows);
+        check(high_summary.rows_evaluated > 0, "the sweep with a raised minimum produced rows");
+        check(!high_rows.empty() && std::fabs(high_rows.back().retained_fraction - 0.5) < 1e-9,
+              "the sweep stops at the requested minimum fraction");
+        check(!high_rows.empty() && high_rows.back().retained_fraction != rows.back().retained_fraction,
+              "a different minimum fraction changes the sweep");
+    }
+
+    // ---- the fitted plane ------------------------------------------------
+    // The truth's normal for a real capture: the wall is square to the
+    // scanner, so the fitted plane's normal is the wall's normal in the
+    // cloud's frame, and the tape is the anchor for its offset.
+    {
+        const PlaneFit fit = fit_plane(cloud);
+        check(fit.points == cloud.size(), "the fit used every point");
+        // The scene is a plane with a step in one quadrant, so the fit tilts
+        // by a fraction of a degree - but it must be the scene's plane.
+        check(std::fabs(fit.nz) > 0.999 && std::fabs(fit.nx) < 0.01 && std::fabs(fit.ny) < 0.01,
+              "the fitted plane's normal is the scene's");
+        check(std::fabs(fit.d) < 1e-3, "the fitted plane is at the scene's own offset");
+        check(fit.rms > 0.0 && fit.rms < 0.01, "the fitted plane's residual is the scene's own roughness");
+        // The fit's residual is the whole cloud's distance to its own best-fit
+        // plane: no worse than the distance to the truth plane, and the same
+        // order of magnitude (the fit absorbs the scene's step).
+        check(fit.rms <= rows.front().rmse + 1e-12,
+              "the fit's residual is no worse than the truth plane's");
+        check(fit.rms > 0.5 * rows.front().rmse,
+              "the fit's residual is the same order as the truth plane's");
+    }
+
     if (g_failures > 0) {
         std::printf("[FAIL] %d check(s) failed\n", g_failures);
         return 1;

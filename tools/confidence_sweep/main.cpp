@@ -12,7 +12,8 @@
 //
 // Exit codes: 0 = the run completed, 1 = a runtime failure, 2 = bad
 // arguments, 3 = --expect-beats-random and the confidence curve did not beat
-// random retention.
+// random retention, 4 = the fitted plane's offset did not agree with the
+// taped distance.
 
 #include <algorithm>
 #include <cmath>
@@ -50,6 +51,10 @@ void usage() {
                  "  --truth plane NX NY NZ D  a plane with the given normal and offset\n"
                  "  --truth sphere CX CY CZ R a sphere with the given centre and radius\n"
                  "  --truth ply FILE          a point set; a point's distance is to the nearest\n"
+                 "  --fit-plane               fit a plane to the cloud and report it (the truth's\n"
+                 "                            normal, its offset and the fit's residual)\n"
+                 "  --fit-plane-check D       check the fitted offset against the taped distance D\n"
+                 "  --fit-plane-tolerance T   the tolerance for that check, in metres (default 0.002)\n"
                  "\n"
                  "Confidence (higher = more trusted):\n"
                  "  --confidence residual     the per-point local planarity residual (default)\n"
@@ -58,7 +63,9 @@ void usage() {
                  "  --max-radius F            the search radius, in median spacings (default 24)\n"
                  "\n"
                  "Sweep:\n"
-                 "  --sweep-steps N           rows in the sweep (default 20)\n"
+                 "  --sweep-steps N           rows in the sweep (default 21)\n"
+                 "  --sweep-min-fraction F    the smallest retained fraction the sweep reaches\n"
+                 "                            (default 0.05)\n"
                  "  --absolute                sweep a raw confidence value instead of a quantile\n"
                  "  --sweep-min X --sweep-max Y   the range for --absolute\n"
                  "  --random-trials N         random keeps averaged per row (default 20)\n"
@@ -141,7 +148,6 @@ int main(int argc, char** argv) {
     std::string confidence_path;
     ResidualOptions residual_options;
     SweepOptions sweep;
-    double sweep_min_fraction = 0.05;
     std::string csv_path;
     std::string plot_path;
     bool expect_beats_random = false;
@@ -151,6 +157,10 @@ int main(int argc, char** argv) {
     bool quiet = false;
     RecMode rec_mode = RecMode::kLastFrame;
     int rec_frame = 0;
+    bool fit_plane = false;
+    bool fit_plane_check = false;
+    double fit_plane_expected = 0.0;
+    double fit_plane_tolerance = 0.002;
 
     for (int i = 1; i < argc; ++i) {
         const std::string arg = argv[i];
@@ -238,9 +248,23 @@ int main(int argc, char** argv) {
             }
             sweep.steps = static_cast<int>(v);
         } else if (arg == "--sweep-min-fraction") {
-            if (!parse_double(need("--sweep-min-fraction"), &sweep_min_fraction) || sweep_min_fraction < 0.0 ||
-                sweep_min_fraction >= 1.0) {
+            if (!parse_double(need("--sweep-min-fraction"), &sweep.min_fraction) || sweep.min_fraction < 0.0 ||
+                sweep.min_fraction >= 1.0) {
                 std::fprintf(stderr, "confidence_sweep: --sweep-min-fraction needs a number in [0, 1)\n");
+                return 2;
+            }
+        } else if (arg == "--fit-plane") {
+            fit_plane = true;
+        } else if (arg == "--fit-plane-check") {
+            if (!parse_double(need("--fit-plane-check"), &fit_plane_expected)) {
+                std::fprintf(stderr, "confidence_sweep: --fit-plane-check needs a number\n");
+                return 2;
+            }
+            fit_plane = true;
+            fit_plane_check = true;
+        } else if (arg == "--fit-plane-tolerance") {
+            if (!parse_double(need("--fit-plane-tolerance"), &fit_plane_tolerance) || fit_plane_tolerance < 0.0) {
+                std::fprintf(stderr, "confidence_sweep: --fit-plane-tolerance needs a number of at least 0\n");
                 return 2;
             }
         } else if (arg == "--absolute") {
@@ -357,6 +381,37 @@ int main(int argc, char** argv) {
     if (use_synthetic && truth_kind == "plane" && truth_values[0] == 0.0 && truth_values[1] == 0.0 &&
         truth_values[2] == 1.0 && truth_values[3] == 0.0) {
         truth = openscanner::confidence::synthetic_truth();
+    }
+
+    // ---- the fitted plane ------------------------------------------------
+    // The truth's normal for a real capture: the wall is square to the
+    // scanner, so its normal in the cloud's frame is the fitted plane's, and
+    // the tape is the anchor for its offset. See the design note's §6.2.
+    if (fit_plane) {
+        const openscanner::confidence::PlaneFit fit = openscanner::confidence::fit_plane(cloud);
+        char buf[512];
+        std::snprintf(buf, sizeof(buf),
+                      "[fit] normal (%.6g, %.6g, %.6g), fitted offset %.6g m, fit residual: rms %.6g m, "
+                      "p95 %.6g m, over %zu points\n",
+                      fit.nx, fit.ny, fit.nz, fit.d, fit.rms, fit.p95, fit.points);
+        std::fputs(buf, stdout);
+        std::printf("[fit] the truth's plane: --truth plane %.6g %.6g %.6g <the taped distance>\n", fit.nx,
+                    fit.ny, fit.nz);
+        if (fit_plane_check) {
+            const double delta = fit.d - fit_plane_expected;
+            std::printf("[fit] the fitted offset %.6g m against the taped %.6g m: delta %+.6g m "
+                        "(tolerance %.6g m)\n",
+                        fit.d, fit_plane_expected, delta, fit_plane_tolerance);
+            if (std::fabs(delta) > fit_plane_tolerance) {
+                std::fprintf(stderr,
+                             "confidence_sweep: FAIL - the fitted offset is %+.6g m from the taped distance, "
+                             "beyond the %.6g m tolerance. The fit did not find the wall (or the scene is "
+                             "wrong); do not trust the sweep's numbers.\n",
+                             delta, fit_plane_tolerance);
+                return 4;
+            }
+            std::printf("[fit] OK - the fit agrees with the tape.\n");
+        }
     }
 
     // ---- the errors and the confidence ------------------------------------
