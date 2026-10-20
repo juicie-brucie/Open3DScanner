@@ -3,7 +3,7 @@ add_test(NAME device_message_listener_test COMMAND device_message_listener_test)
 set_tests_properties(device_message_listener_test PROPERTIES
     LABELS "hardware"
     SKIP_RETURN_CODE 2)
-target_link_libraries(device_message_listener_test PRIVATE openscanner_engine)
+target_link_libraries(device_message_listener_test PRIVATE openscanner_engine hw_precondition)
 
 if(APPLE)
     find_library(CORE_FOUNDATION_LIBRARY CoreFoundation REQUIRED)

@@ -32,6 +32,8 @@
 #include "openscanner/obscan_loader.h"
 #include "openscanner/worker_process.h"
 
+#include "hw_precondition.h"
+
 namespace {
 
 constexpr const char* kWorkerFlag = "--data-process-msg-listener-worker";
@@ -63,6 +65,7 @@ const char* StatusName(ObScanStatus status) {
         case OB_SCAN_ERROR_DEADLINE_EXCEEDED: return "OB_SCAN_ERROR_DEADLINE_EXCEEDED";
         case OB_SCAN_ERROR_LISTENER_NOT_FOUND: return "OB_SCAN_ERROR_LISTENER_NOT_FOUND";
         case OB_SCAN_ERROR_MULTI_CALLED: return "OB_SCAN_ERROR_MULTI_CALLED";
+        case OB_SCAN_ERROR_FATAL: return "OB_SCAN_ERROR_FATAL";
         default: return "OB_SCAN_ERROR_(see obscan_api.h)";
     }
 }
@@ -79,6 +82,17 @@ void Check(const char* label, ObScanStatus actual, ObScanStatus expected) {
 }
 
 int RunTests(const std::string& library_path) {
+    // Preconditions first: a run that cannot happen (no RPC daemon host, no
+    // device) is a skip, not a failure. The reason line is a contract with the
+    // Windows lane — see docs/recomp/windows-handover-order.md, "SKIP wording
+    // when a precondition is not met".
+    const hwtest::PreconditionReport preconditions = hwtest::ProbePreconditions("listener checks");
+    if (!preconditions.satisfied()) {
+        std::printf("[worker] SKIP: %s\n", preconditions.reason.c_str());
+        std::fflush(stdout);
+        return hwtest::kPreconditionSkipExitCode;
+    }
+
     std::printf("[worker] Loading OBScan SDK from: %s\n", library_path.c_str());
     openscanner::ObscanLibrary* libptr = nullptr;
     try {
@@ -167,6 +181,14 @@ int RunTests(const std::string& library_path) {
 } // namespace
 
 int main(int argc, char** argv) {
+    // Precondition probe mode: report the probe's verdict and exit with the
+    // code it implies. It never loads the SDK.
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--precondition-probe") {
+            return hwtest::RunPreconditionProbeMode("listener checks");
+        }
+    }
+
     // Worker mode.
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == kWorkerFlag) {
@@ -192,7 +214,10 @@ int main(int argc, char** argv) {
         size_t slash = lib_path.find_last_of('/');
         std::string moltenvk_path;
         if (slash != std::string::npos) moltenvk_path = lib_path.substr(0, slash + 1) + "libMoltenVK.dylib";
-        if (!moltenvk_path.empty()) {
+        // Insert MoltenVK only when it is really beside the library: dyld
+        // aborts the process when an inserted dylib cannot be loaded, and a
+        // library path that is not the vendor install has no MoltenVK there.
+        if (!moltenvk_path.empty() && access(moltenvk_path.c_str(), R_OK) == 0) {
             std::string insert = moltenvk_path + ":" + VULKAN_DISABLE_INTERPOSE_DYLIB;
             setenv("DYLD_INSERT_LIBRARIES", insert.c_str(), 1);
             std::printf("[launcher] DYLD_INSERT_LIBRARIES=%s\n", insert.c_str());
