@@ -22,14 +22,6 @@ records the verdict on the operator's candidate skills. **Provenance:** written 
 `e1c5e2b` (board through `#159`; open PRs #400 and #392; roster: 7 agents, 0 live model drift, 1 dispatch
 session over the context threshold)._
 
-**Post-rebase note (2026-10-20, the landing of revs 20–24).** `main` moved between rev 24's provenance
-(`2dd8a7e`) and this landing (`ff89839`). Three of rev 24's four *evidence-chain* PRs have merged —
-#366 (`#151` → `HW`), #375 (`#150` → `SPEC-READY`) and #387 (`#159` → `SPEC-READY`) — and #93's fix
-landed as PR #399, so order 2 is down to **PR #392** (still `HOLD`). Rev 24 also lists `#109` as open
-work in *Ready now* and in order 7; it was already `DONE` when rev 24 was written (PR #395), so read the
-board for that row. Nothing above is amended: the revision stands as written, so the reversal stays
-legible.
-
 ## Objective for the next round
 
 **Prove the live path once — a suffixed `start_stream` accepted and one
@@ -53,7 +45,8 @@ next row, and the binary already carries `--dump-replies`, so a rejection produc
 gate cannot cite.**
 
 The **stretch** runs only after the floor: live depth (`#132`'s corpus), then `#71`'s A/B on a still scene
-(`#153`'s `exposure n=`, `#76`'s coverage line, `#141`'s UI half, `#151`'s fused-rate half). One record
+(`#153`'s `exposure n=`, `#76`'s coverage line, `#141`'s UI half, `#151`'s fused-rate half, `#93`'s
+markerless stretch). One record
 per run. **Stop rule:** if the IR run fails at the first RPC, cancel the depth run — same path, same
 defect — but keep the A/B: it exercises a different binary (`scan_server` → the vendor SDK) and is
 unaffected by `raptor_client`'s RPC.
@@ -120,7 +113,8 @@ THE ROOM — the pivot's only gate
                                                         ├─► #153 (`exposure n=`)
                                                         ├─► #76 (coverage line)
                                                         ├─► #141 (UI-open half)
-                                                        └─► #151 (fused-rate half: FRAME_READY/s)
+                                                        ├─► #151 (fused-rate half: FRAME_READY/s)
+                                                        └─► #93 (markerless stretch in the HUD)
 
 DEVICE-FREE — beside the room, one row freed each
   #144 (existing capture)  ──► OQ-124-5 · #114's mode names · #99's ingest fields
@@ -170,7 +164,7 @@ record**, so it is the only thing that must precede the session.
 | `#149` — the reader half | builder | No device (the vendor's own `model.ply`); the write path's format is the operator's. |
 | `#154` — probe + presets | builder | Its inputs landed (`#152`, `#156`). |
 | `#103` · `#118` · `#116` | dispatch / builder | Small, live, and owned by no dependency. |
-| **The board close pass** | dispatch | `#93` → `DONE` (landed, PR #399); close or re-point `#134`, `#155`, `#138` (orphans 1–2). |
+| **The board close pass** | dispatch | `#93` is already `HW` (landed, PR #399; its HUD observation rides the A/B run) — no move needed; close or re-point `#134`, `#155`, `#138` (orphans 1–2). |
 | `#145` + `#150`'s captures | operator + hardware | **One** session, one checklist (the proposal in **Blocked**). Separate from the room batch. |
 | `#146` | operator + hardware | `#140`'s recorder; rides the same operator session if convenient. |
 
@@ -183,6 +177,7 @@ record**, so it is the only thing that must precede the session.
 | `#71` | The room **and a still scene**; `#158` removed the two-process confound, so one session suffices. |
 | `#76`, `#141`'s UI half | The **A/B** run with the UI open — and only if the record states the client count and the UI-open state beside every number (risk 2). |
 | `#153` | The A/B run's `exposure n=` windows — one push per window, the picture unchanged. |
+| `#93`'s observation | The A/B run with the UI open and a markerless stretch — the HUD reads `LOST, LOST, MARKERLESS` with no `markerless window k/3`. |
 | `#151` (device half) | The two live runs' **rate census**: replies/s from `raptor_client` is the raw-profile rate, `FRAME_READY`/s from `scan_server` is the fused rate. Its browser render half rides the A/B run's recording. |
 | `#126` | The device **and a known scene** (a flat wall at 300/400/500 mm; a checkerboard). The setup is the blocker. |
 | `#159` | `#126`, **and** its ground-truth frame settled first (orphan 3). |
@@ -210,14 +205,16 @@ merge with `#126`**: a known scene is a different physical setup with its own ac
 
 An OQ with no task row is unowned work — and so is a row whose trigger has fired with nobody watching.
 This sweep reads `PLAN.md`'s OQ list against the findings' own open lists and the board as it stands on
-`origin/main` `e1c5e2b`. It corrects four stale items from rev 24 and finds five new orphans; **one of
-them is the register itself** (orphan 6).
+`origin/main` `e1c5e2b`. It corrects four stale items from rev 24 and lists nine orphans — seven new, two carried
+from rev 24; **one of them is the register itself** (orphan 6).
 
 **Resolved since rev 24 — record, then delete:**
 
-- **`#93` landed** (PR #399, `e1c5e2b`) but the board still reads `BUILD`. The standing contradiction with
-  `#81` is closed by the merge, not by a board edit; the edit is owed. Before the merge, no
-  tracking-display claim should have been treated as evidence; after it, the claim is the code's own.
+- **`#93` landed** (PR #399, `e1c5e2b`) and the board has since moved it to `HW` (PR #403). The standing
+  contradiction with `#81` is closed by the merge; what remains is `#93`'s own owed observation — a
+  markerless stretch in the HUD — which the A/B run can supply (it is a `scan_server` session with the UI
+  open). Before the merge, no tracking-display claim should have been treated as evidence; after it, the
+  claim is the code's own.
 - **`#112` is `DONE`** — its HUD capture landed. Rev 24's orphan 1 is closed; do not re-point it.
 - **`#109` is `DONE`** — rev 24's hygiene order named a closed row. Drop it from the list.
 - **`#366`, `#375`, `#387` landed** — rev 24's risk 5 (a round premised on unmerged measurements) is
@@ -1108,13 +1105,13 @@ is set there. **Do not open Windows rows from this roadmap.**
     loader checks only that the path exists. Cheapest: hash-at-load, refuse on mismatch.
 12. **The plan itself can be the stale artifact — this revision is the evidence.** Rev 24 was written
     against `2dd8a7e`; `main` moved 18 commits in the hour, and four of its board claims were wrong by the
-    time anyone read it (`#93`, `#112`, `#109`, "four PRs at `NEEDS CHANGE`"). Its *objective* survived;
+    time anyone read it (`#112` and `#109` were `DONE`; `#93`'s work had landed; "four PRs at
+    `NEEDS CHANGE`" was one). Its *objective* survived;
     its *evidence* did not. Cheapest: land this revision before dispatch; keep row state out of this file
     where a pointer will do (applied here — **Critical path** and **Blocked** cite rows rather than
     restate them); treat the provenance line as a check the dispatcher can run in one command.
-13. **The loop's documents drift.** `#93` is landed and reads `BUILD`; the OQ register is a subset of the
-    live OQs; `ARCHITECTURE.md`'s role table names six agents and superseded models. Cheapest: one
-    dispatch pass (order 6 of the seeds).
+13. **The loop's documents drift.** The OQ register is a subset of the live OQs; `ARCHITECTURE.md`'s role
+    table names six agents and superseded models. Cheapest: one dispatch pass (order 6 of the seeds).
 14. **A new capability is a new wall hole.** `ARCHITECTURE.md` records that the shell denies are
     text-pattern mitigations and the physical `.recon-cache` separation has not landed. Any tool a role
     gains is a read surface. Cheapest: add no tool to `builder`, `verifier` or `recon-sweep`; keep browser
@@ -1209,7 +1206,7 @@ starts.
 5. **Capacity (builder, no device, parallel).** **`P11`** (`S1`), **`P10`** (the counters' accessor),
    `#149`'s reader, `#154`. Each frees one row and feeds the perf contract. **Wall:** `engine/**`,
    `tools/scan_server/**`.
-6. **Board and trust pass (dispatch).** `#93` → `DONE`; close or re-point `#134`, `#155`, `#138`; file
+6. **Board and trust pass (dispatch).** `#93` stays `HW` (its observation rides the A/B run); close or re-point `#134`, `#155`, `#138`; file
    `P9`/`P10`/`P11`/`P12` and the parked-OQ row; state the OQ-register rule (orphan 6); correct
    `ARCHITECTURE.md`'s role table. **Wall:** `PLAN.md`, `docs/recomp/ARCHITECTURE.md`.
 7. **Skills, by pointer (operator installs; dispatch records).** Two adopted (`error-handling`,
@@ -1238,8 +1235,9 @@ floor. Order 6 can land any time. **No build lands mid-session** (risk 4).
   (replay + one 30 s IR run) and a **stretch**, adds a stop rule (a failed floor cancels the depth run but
   not the A/B — a different binary path), turns the record factory into row **`P12`**, consolidates `#145`
   with `#150`'s three captures into one operator sitting, and records the verdict on the operator's sixteen
-  candidate skills. **Reversal reason:** new landings plus the prior session's own records — not a change
-  of target.
+  candidate skills. Rev 24's own post-rebase note (2026-10-20) recorded the same three merges and that
+  `#109` was already `DONE` when rev 24 was written; it is folded here rather than kept as a second
+  header. **Reversal reason:** new landings plus the prior session's own records — not a change of target.
 
 - **2026-10-20 rev 23 → rev 24 — the room round: the code prerequisite landed, and the record became the
   risk.** Rev 23 set the objective as "fix `#157` so the live half can run". Three things landed after it
