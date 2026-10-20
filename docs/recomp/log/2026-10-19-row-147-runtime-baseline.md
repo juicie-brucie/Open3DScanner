@@ -241,6 +241,14 @@ Value bin(uint32_t n) { Value v; v.kind = Value::Kind::Bin; v.bin.resize(n);
 | `std::this_thread::sleep_for(33 ms)` (the synthetic tick) | 33 ms | **36.85 / 37.07 / 36.90 ms** | **+3.9 ms (+11.7 %)** | 0.068 – 0.074 % of wall |
 | `CFRunLoopRunInMode(default, 0.1, false)` (**the live tick**, `main.cpp:1106`) | 100 ms | **103.19 / 103.75 / 103.75 ms** | **+3.2 – 3.8 ms (+3.2 – 3.8 %)** | 0.164 – 0.168 % of wall |
 
+The overshoot is a property of the platform's timer, not of one particular sleep length, and it is not constant: two
+further requests, measured the same way (one run each, zero work), give
+
+| request | realised p50 | overshoot | the rate that actually comes out |
+| --- | --- | --- | --- |
+| 41 ms (what a 24 Hz pace would ask for) | 44.62 ms | +3.6 ms | **22.4 Hz** |
+| 20 ms (what a 50 Hz pace would ask for) | 24.29 ms | +4.3 ms | **41.2 Hz** |
+
 This is the single most important number in the entry, because it sets two floors:
 
 * the **synthetic** tick cannot exceed **27.1 Hz** on this machine — the nominal 30 Hz is unreachable with *zero*
@@ -320,9 +328,11 @@ tick's CPU — **synthetic-path only**; the live path decimates the vendor's buf
    `sleep_for`/`CFRunLoopRunInMode`.
 2. **The kernel copy per client.** 27,697 B into every client's socket buffer, per frame, is inherent to
    broadcasting to N clients. It shrinks only with a smaller payload or a different transport.
-3. **The device's own rate.** The vendor's profile is 50 fps nominal
-   (`docs/recon/findings/streaming-replay-payloads.md`). A 10 Hz tick cannot track a 50 fps source no matter how fast
-   the tick is; that gap is #113's question and is not a performance bug in this code.
+3. **The device's own rate.** The vendor's profile *advertises* 50 fps nominal
+   (`docs/recon/findings/streaming-replay-payloads.md`), but the source rate actually seen in the #112 hardware log is
+   **≈24.0 Hz** (8,119 device frames over 338.6 s), and our publish is **8.7 Hz** because of our own pacing (row
+   #151's note on main). A ~9.7 Hz tick cannot track a 24 Hz source no matter how fast the tick is; that gap is
+   #113's question and is not a performance bug in this code.
 4. **The msgpack parse** of a 12.3 kB reply is inherent to the protocol — only its *byte-at-a-time* implementation
    is avoidable (§8, item 4).
 
@@ -497,3 +507,30 @@ and what changed:
 The reviewer's fourth point (that the PR looked like 169 files) was an artefact of a **stale local `main` branch**
 at `51e7960` in this worktree: the merged PR was 1 commit and 2 files (`gh pr view 361` → `commits: 1, files: 2`).
 No source file was changed by this row at any point.
+
+
+---
+
+## 14. Handoff to #151 (the publish-rate load test)
+
+Row **#151** ("What publish rate can the pipeline actually sustain?", `TODO` on main) asks for a **device-free load
+test**: run the synthetic server at 10 / 24 / 50 Hz and record the per-tick work, the broadcast cost at 1 and 8
+clients, and the browser's frame age and drop rate. This log is the baseline it starts from, and it also hands #151
+one constraint that changes how the test must be written:
+
+* **The synthetic server cannot actually reach 24 or 50 Hz on this platform.** The pace is
+  `milliseconds(int64_t(1000.0/30.0))` — the nominal is truncated to **whole milliseconds** — and the platform adds
+  **3.6 – 4.3 ms** of its own overshoot to every wait (measured with zero work, §5). Measured, at the requests
+  those rates imply: a **41 ms** request (24 Hz) realises **44.62 ms** → **22.4 Hz**; a **20 ms** request (50 Hz)
+  realises **24.29 ms** → **41.2 Hz**. Any "run at N Hz" number must subtract the overshoot from the budget, or it
+  will measure the timer, not the pipeline.
+* **At those rates the binding limit will not be our work.** The whole tick costs **195 µs** of CPU (no client) and
+  **514 µs** at 8 clients (§3) — i.e. 0.5 % of a 37 ms tick, 1.4 % of a 23.9 ms tick. The per-tick work and the
+  broadcast cost at 1 and 8 clients are already in §3 and §6; what #151 still has to measure is the **browser's**
+  side (frame age, drop rate), which is the one surface this row did not touch.
+* **The two knobs that would show up in #151's numbers** are the ones §8 names: the encoder (63 % of the tick's CPU
+  with no client) and the per-client `send` (57.7 % at 8 clients) — the latter scales linearly with the client count
+  and is synchronous inside the tick, so it is the first thing to show up when the frame rate rises.
+* **The pacing itself is a decision, not a measurement**: the platform's floor for the live tick's 100 ms run-loop
+  wait is 103.2 – 103.8 ms (**9.68 Hz**), and #151's own note reaches the same number independently. Raising the
+  publish rate means changing the cadence (and the pacing mechanism), which is #113's question.
