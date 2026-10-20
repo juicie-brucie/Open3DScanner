@@ -56,15 +56,15 @@ process — then compares every measurement with `docs/recomp/perf-budgets.json`
 
 ```
 metric                                 measured       budget         verdict
-platform.wait_ms.41                      41.080       47.000   PASS  #147 section 5 measured 44.62 ms for a 41 ms request (zero work in the l
-platform.wait_ms.20                      24.340       26.500   PASS  #147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a
-platform.wait_ms.16                      18.788       21.500   PASS  the same control at the 60 Hz pace (16 ms request); measured by this har
+platform.wait_ms.41                      42.225       47.000   PASS  #147 section 5 measured 44.62 ms for a 41 ms request (zero work in the l
+platform.wait_ms.20                      22.653       26.500   PASS  #147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a
+platform.wait_ms.16                      16.705       21.500   PASS  the same control at the 60 Hz pace (16 ms request); measured by this har
 encode.bytes.live                    240036.000   240036.000   PASS  #136's live V1 frame: 20,000 points (kLiveBroadcastPointBudget) = 240,03
-encode.us.live                          564.958     1200.000   PASS  the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode
-encode.us.2304                           64.167      300.000   PASS  #147 section 7: the encoder is 63% of the tick's CPU with no client, i.e
-bcast.us_per_client.8                    20.943       60.000   PASS  #147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (t
-bcast.us.8                              167.542      400.000   PASS  #147 section 6: the bcast segment was 0.29-0.31 ms per tick at 8 clients
-tick.post_ms                              0.100        0.400   PASS  #147 section 3 measured the synthetic tick's post segment at 0.12-0.20 m
+encode.us.live                          548.625      800.000   PASS  the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode
+encode.us.2304                           62.500      120.000   PASS  #147 section 7: the encoder is 63% of the tick's CPU with no client, i.e
+bcast.us_per_client.8                    23.542       35.000   PASS  #147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (t
+bcast.us.8                              188.333      280.000   PASS  #147 section 6: the bcast segment was 0.29-0.31 ms per tick at 8 clients
+tick.post_ms                              0.110        0.200   PASS  #147 section 3 measured the synthetic tick's post segment at 0.12-0.20 m
 tick.bcast_ms                             0.000        0.250   PASS  #147 section 3 measured the bcast segment at 0.10 ms p50 with one client
 server.live_bytes                    100352.000   131072.000   PASS  #147 section 3.2 measured the live allocation footprint flat at 86-87 KB
 ```
@@ -73,12 +73,12 @@ And the ingest budget, per consumed frame, at each source rate:
 
 ```
 rate      ceiling     target    ms/frame core % nominal core % at ceiling verdict
-24          24.00         M1        8.00           19.2             19.2   PASS
-24          24.00  lower-end       24.00           57.6             57.6   PASS
-50          41.08         M1        8.00           40.0             32.9   PASS
-50          41.08  lower-end       24.00          120.0             98.6 OVER (target)
-60          53.23         M1        8.00           48.0             42.6   PASS
-60          53.23  lower-end       24.00          144.0            127.7 OVER (target)
+24          23.68         M1        8.00           19.2             18.9   PASS
+24          23.68  lower-end       24.00           57.6             56.8   PASS
+50          44.15         M1        8.00           40.0             35.3   PASS
+50          44.15  lower-end       24.00          120.0            105.9 OVER (target)
+60          59.86         M1        8.00           48.0             47.9   PASS
+60          59.86  lower-end       24.00          144.0            143.7 OVER (target)
 ```
 
 ## Checks
@@ -88,6 +88,7 @@ rate      ceiling     target    ms/frame core % nominal core % at ceiling verdic
 | 1 | The harness runs device-free and bounded | **[PASS]** the full run takes ~13 s; the synthetic server is stopped with `SIGTERM` (then `kill`) and no process is left behind (checked with `pgrep` after each run) |
 | 2 | Every measured budget is met on current main | **[PASS]** the table above — 11 budgets, 11 `PASS`, harness exit `0`, over three consecutive runs |
 | 3 | The harness fails when a budget regresses | **[PASS]** the mechanism is the comparison in `scripts/perf-budget.py`; it was observed failing (`2 budget(s) REGRESSED`, exit 1) while the broadcast measurement was still contended, and the fix was to the *measurement* (a 4 MB receive buffer on the harness's client), not to the budget |
+| 3b | A 2x regression would actually trip a budget | **[PASS]** the CPU budgets are **~1.4 – 1.7x** the cost measured over six runs (the encoder 533 – 546 us against an 800 us budget; the broadcast 17.6 – 22.6 us per client against 35 us; the tick's post 0.07 – 0.12 ms against 0.20 ms), so a doubling exceeds the budget while the shared machine's noise does not. The verifier raised this on the first pass — the budgets were 3 – 5x the measured cost then, and a 2x regression would have slipped through — so they were tightened against six runs of measurements |
 | 4 | The reference machine keeps up at every source rate | **[PASS]** 19.2 % of a core at 24 Hz, 40.0 % at 50 Hz, 48.0 % at 60 Hz (the utilisation at the nominal rate; the harness also prints it at the platform's measured ceiling) |
 | 5 | The lower-end target's projection is reported, not gated | **[PASS]** the two `OVER (target)` rows: at 50 Hz the assumed target needs 120 % of a core, at 60 Hz 144 %. The harness exits **0** — that is a finding for the operator, not a regression of the code |
 | 6 | The budgets are derived from measurements, not impressions | **[PASS]** every row of `perf-budgets.json` carries a `derived_from` naming its source (#147 §3/§5/§6/§7, #112, #136, #153), and the contract's tables carry the same citations |

@@ -57,42 +57,42 @@
     {
       "metric": "encode.us.live",
       "stage": "encode",
-      "max": 1200.0,
+      "max": 800.0,
       "factor": true,
       "unit": "us/frame",
-      "derived_from": "the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode + encode; the encoder alone must stay under 1.2 ms"
+      "derived_from": "the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode + encode; the encoder alone is 533-546 us over six runs of this harness, so 800 us is ~1.5x the measured cost - a 2x regression trips it"
     },
     {
       "metric": "encode.us.2304",
       "stage": "encode",
-      "max": 300.0,
+      "max": 120.0,
       "factor": true,
       "unit": "us/frame",
-      "derived_from": "#147 section 7: the encoder is 63% of the tick's CPU with no client, i.e. ~123 us of the 195 us tick, for the 2,304-point synthetic frame"
+      "derived_from": "#147 section 7: the encoder is 63% of the tick's CPU with no client, i.e. ~123 us of the 195 us tick, for the 2,304-point synthetic frame; this harness measures 61-85 us over six runs, so 120 us is ~1.4x the measured cost - a 2x regression trips it"
     },
     {
       "metric": "bcast.us_per_client.8",
       "stage": "broadcast",
-      "max": 60.0,
+      "max": 35.0,
       "factor": true,
       "unit": "us/client/frame",
-      "derived_from": "#147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (the tick's own condition, where the client drains in the background); the harness measures the same fan-out with a 4 MB receive buffer on the client, so its number is the less contended one"
+      "derived_from": "#147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (the tick's own condition, where the client drains in the background); this harness measures 17.6-22.6 us over six runs with a 4 MB receive buffer on its client, so 35 us is ~1.5x the measured cost - a 2x regression trips it"
     },
     {
       "metric": "bcast.us.8",
       "stage": "broadcast",
-      "max": 400.0,
+      "max": 280.0,
       "factor": true,
       "unit": "us/frame",
-      "derived_from": "#147 section 6: the bcast segment was 0.29-0.31 ms per tick at 8 clients for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame"
+      "derived_from": "#147 section 6: the bcast segment was 0.29-0.31 ms per tick at 8 clients for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame, measured 141-181 us over six runs, so 280 us is ~1.5x the measured cost - a 2x regression trips it"
     },
     {
       "metric": "tick.post_ms",
       "stage": "ingest",
-      "max": 0.4,
+      "max": 0.2,
       "factor": true,
       "unit": "ms/frame",
-      "derived_from": "#147 section 3 measured the synthetic tick's post segment at 0.12-0.20 ms p50 (2,304 points, copy + rotate + encode)"
+      "derived_from": "#147 section 3 measured the synthetic tick's post segment at 0.12-0.20 ms p50 (2,304 points, copy + rotate + encode); this harness measures 0.07-0.12 ms, so 0.20 ms is ~1.7x the measured cost - a 2x regression trips it"
     },
     {
       "metric": "tick.bcast_ms",
@@ -100,7 +100,7 @@
       "max": 0.25,
       "factor": true,
       "unit": "ms/frame",
-      "derived_from": "#147 section 3 measured the bcast segment at 0.10 ms p50 with one client"
+      "derived_from": "#147 section 3 measured the bcast segment at 0.10 ms p50 with one client; the harness runs the synthetic server with NO client, so this line is the no-client case (the broadcast is skipped) - the with-client cost is the bcast.* budgets above"
     },
     {
       "metric": "server.live_bytes",
@@ -110,5 +110,6 @@
       "unit": "bytes",
       "derived_from": "#147 section 3.2 measured the live allocation footprint flat at 86-87 KB over 30 s (the tick allocates and frees every cycle); the harness reads the same malloc zone's ALLOCATED column from the running synthetic server"
     }
-  ]
+  ],
+  "budget_rule": "the CPU budgets are ~1.4-1.7x the cost measured over six runs of the harness, so a 2x regression trips them while the shared machine's noise does not; the platform's wait-floor budgets carry ~10% (they move with the machine's load) and the memory budget 1.3x"
 }
