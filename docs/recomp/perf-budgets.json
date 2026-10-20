@@ -1,0 +1,299 @@
+{
+  "contract": "docs/recomp/PERFORMANCE-CONTRACT.md",
+  "budget_version": 4,
+  "reference": {
+    "measured_machine": "Apple M1, 8 cores / 17 GB (macOS 27.0.1, arm64)",
+    "measured_source": "docs/recomp/log/2026-10-19-row-147-runtime-baseline.md",
+    "measured_commit": "f20fc46",
+    "lower_end_target": "a 4-core Intel machine, ~3x slower than the M1 on this workload",
+    "lower_end_status": "ASSUMED \u2014 the operator has not named the target machine; every budget below is labelled with the factor it would need re-basing",
+    "lower_end_factor": 3.0,
+    "factor_note": "the factor scales CPU-time budgets only; the data-volume budgets (bytes/frame, MB/s) are the wire volume and are machine-independent"
+  },
+  "dataset": {
+    "what": "the runs the CPU budgets are derived from: `python3 scripts/perf-budget.py --repeat 8`, recorded in tests/results/2026-10-19-perf-contract-budget-harness.raw.log, whose summary block holds their min/median/max",
+    "statistic": "the median of the 8 runs (the harness checks the median of its own runs, so the same statistic)",
+    "note": "the machine was shared during the recording (other worktrees were running), so this is the conservative basis. A budget is K x this median: a Kx regression trips it, and a Kx contention does not.",
+    "how_to_keep_it_true": "`python3 scripts/perf-budget.py --sync-dataset` copies the log's summary block into dataset.measured, recomputes each k, and fills each derivation's dataset token from the same place; `--check-dataset` verifies the file and the log agree and fails if they do not",
+    "measured": {
+      "encode.us.live": [
+        531.5,
+        538.625,
+        553.292
+      ],
+      "encode.us.2304": [
+        61.541,
+        62.145,
+        63.333
+      ],
+      "bcast.us_per_client.8": [
+        17.635,
+        21.729,
+        27.828
+      ],
+      "bcast.us.8": [
+        141.083,
+        173.834,
+        222.625
+      ],
+      "platform.wait_ms.41": [
+        41.907,
+        43.597,
+        45.888
+      ],
+      "platform.wait_ms.20": [
+        20.275,
+        21.504,
+        24.691
+      ],
+      "platform.wait_ms.16": [
+        16.066,
+        17.136,
+        19.826
+      ],
+      "tick.post_ms": [
+        0.09,
+        0.09,
+        0.09
+      ],
+      "tick.bcast_ms": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "server.live_bytes": [
+        100352.0,
+        100352.0,
+        100352.0
+      ]
+    }
+  },
+  "allowances": {
+    "ingest_us_per_frame": 1500,
+    "ingest_us_ours": 1500,
+    "ingest_us_vendor_calls": 0,
+    "ingest_note": "the ingest budget per CONSUMED frame, excluding the pacing wait: the live post segment's measured max (1.40 ms, #141's split) with margin. The pacing wait (102.99 ms mean) is the cadence, not the ingest (#113); the getter and the cloud release are 0.00 ms. The every-tick exposure re-assert (27.17 ms mean) is waste and is NOT in the budget - it is what the budget forbids (#153 removes it).",
+    "ingest_measured_today_us_per_frame": 27620
+  },
+  "rates": [
+    24,
+    50,
+    60
+  ],
+  "budgets": [
+    {
+      "metric": "platform.wait_ms.41",
+      "stage": "platform",
+      "max": 47.0,
+      "factor": false,
+      "k": 1.08,
+      "median_measured": 43.597,
+      "unit": "ms",
+      "derived_from": "#147 section 5 measured 44.62 ms for a 41 ms request (zero work in the loop); this is the platform's own timer, so it caps the rate at ~22 Hz whatever the code does. The harness measures 42.173-44.737 ms (median 42.918) - the spread is the machine's load, so this budget catches only a ~1.1x change"
+    },
+    {
+      "metric": "platform.wait_ms.20",
+      "stage": "platform",
+      "max": 26.5,
+      "factor": false,
+      "k": 1.23,
+      "median_measured": 21.504,
+      "unit": "ms",
+      "derived_from": "#147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a 50 Hz pace. The harness measures 20.436-24.193 ms (median 22.352)"
+    },
+    {
+      "metric": "platform.wait_ms.16",
+      "stage": "platform",
+      "max": 21.5,
+      "factor": false,
+      "k": 1.25,
+      "median_measured": 17.136,
+      "unit": "ms",
+      "derived_from": "the same control at the 60 Hz pace (16 ms request), measured by this harness and not in #147: 16.271-19.011 ms (median 16.916)"
+    },
+    {
+      "metric": "encode.bytes.live",
+      "stage": "encode",
+      "max": 240036,
+      "factor": false,
+      "k": 1.0,
+      "median_measured": 240036,
+      "unit": "bytes",
+      "derived_from": "#136's live V1 frame: 20,000 points (kLiveBroadcastPointBudget) = 240,036 B; a change means a different point budget or a format change"
+    },
+    {
+      "metric": "encode.us.live",
+      "stage": "encode",
+      "max": 820.0,
+      "factor": true,
+      "k": 1.52,
+      "median_measured": 538.625,
+      "unit": "us/frame",
+      "derived_from": "the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode + encode; the encoder alone measures 532.500-562.667 us (median 544.229), so 820 us is 1.51x the median - a 1.5x regression trips it"
+    },
+    {
+      "metric": "encode.us.2304",
+      "stage": "encode",
+      "max": 95.0,
+      "factor": true,
+      "k": 1.53,
+      "median_measured": 62.145,
+      "unit": "us/frame",
+      "derived_from": "#147 section 7: the encoder is 63% of the tick's CPU with no client, i.e. ~123 us of the 195 us tick, for the 2,304-point synthetic frame; the harness measures 61.334-64.541 us (median 62.146), so 95 us is 1.53x the median"
+    },
+    {
+      "metric": "bcast.us_per_client.8",
+      "stage": "broadcast",
+      "max": 50.0,
+      "factor": true,
+      "k": 2.3,
+      "median_measured": 21.729,
+      "unit": "us/client/frame",
+      "derived_from": "#147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (the tick's own condition, where the client drains in the background); the harness measures 19.292-33.281 us (median 25.200) with a 4 MB receive buffer on its client, so 50 us is 1.98x the median - the widest budget, because this measurement is the noisiest"
+    },
+    {
+      "metric": "bcast.us.8",
+      "stage": "broadcast",
+      "max": 400.0,
+      "factor": true,
+      "k": 2.3,
+      "median_measured": 173.834,
+      "unit": "us/frame",
+      "derived_from": "#147 section 6's 0.29-0.31 ms per tick at 8 clients for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame, which measures 154.333-266.250 us (median 201.604), so 400 us is 1.98x the median"
+    },
+    {
+      "metric": "tick.post_ms",
+      "stage": "ingest",
+      "max": 0.15,
+      "factor": true,
+      "k": null,
+      "median_measured": 0.09,
+      "unit": "ms/frame",
+      "derived_from": "#147 section 3 measured the synthetic tick's post segment at 0.12-0.20 ms p50 (2,304 points, copy + rotate + encode). The recorded dataset holds ONE sample for this metric (the server's window is one per run): 0.090-0.090 ms (median 0.090) - so this budget gates no specific regression size; the encoder's and the broadcast's budgets carry that gate"
+    },
+    {
+      "metric": "tick.bcast_ms",
+      "stage": "broadcast",
+      "max": 0.25,
+      "factor": true,
+      "k": null,
+      "median_measured": 0.0,
+      "unit": "ms/frame",
+      "derived_from": "#147 section 3 measured the bcast segment at 0.10 ms p50 with one client; the harness runs the synthetic server with NO client, so this line is the no-client case (the broadcast is skipped, 0.000-0.000 ms (median 0.000)) and the with-client cost is the bcast.* budgets above"
+    },
+    {
+      "metric": "server.live_bytes",
+      "stage": "memory",
+      "max": 131072,
+      "factor": false,
+      "k": 1.31,
+      "median_measured": 100352.0,
+      "unit": "bytes",
+      "derived_from": "#147 section 3.2 measured the live allocation footprint flat at 86-87 KB over 30 s (the tick allocates and frees every cycle); the harness reads the same malloc zone's ALLOCATED column from the running synthetic server (100352.000-100352.000 bytes (median 100352.000)), so 128 KB is 1.31x the measured cost"
+    }
+  ],
+  "presets": {
+    "high": {
+      "label": "High",
+      "knobs": {
+        "publish_hz": 24,
+        "points": 20000,
+        "colours": true,
+        "capture": true,
+        "browser_accumulation_cap_mb": 76,
+        "network": "the preview + the full-detail mesh at teardown"
+      },
+      "frame_bytes": 240036,
+      "budgets": {
+        "encode_us_per_frame": 820.0,
+        "broadcast_us_per_client": 50.0,
+        "tick_work_ms": 1.0,
+        "bandwidth_mb_s": 6.0,
+        "server_live_bytes": 131072,
+        "browser_accumulation_mb": 76,
+        "e2e_frame_age_ms": 5.0,
+        "user_visible_age_ms": 50.0
+      },
+      "derived_from": "the measured M1 numbers at 20,000 points and the source's 24.0 Hz (#151): the encoder 538.6 us (the dataset's median) against an 820 us budget, the broadcast 21.7 us/client against 50, the frame 240,036 B x 24 Hz = 5.76 MB/s against 6.0, the server's live footprint 100,352 B against 128 KB, and the browser's 75.9 MB accumulation (#136) capped at 76 MB. The latency budget is the publish interval (41.7 ms) plus the frame's age."
+    },
+    "balanced": {
+      "label": "Balanced",
+      "knobs": {
+        "publish_hz": 24,
+        "points": 12000,
+        "colours": true,
+        "capture": true,
+        "browser_accumulation_cap_mb": 40,
+        "network": "the preview"
+      },
+      "frame_bytes": 144036,
+      "budgets": {
+        "encode_us_per_frame": 490.0,
+        "broadcast_us_per_client": 23.0,
+        "tick_work_ms": 0.6,
+        "bandwidth_mb_s": 3.5,
+        "server_live_bytes": 131072,
+        "browser_accumulation_mb": 40,
+        "e2e_frame_age_ms": 4.5,
+        "user_visible_age_ms": 45.0
+      },
+      "derived_from": "the High preset's measured costs scaled by the point budget (12,000/20,000 = 0.6): the encode 538.6 x 0.6 = 323.2 us against a 490 us budget (1.5x), the broadcast 21.7 x 0.6 = 13.0 us against 23, the frame 144,036 B x 24 Hz = 3.46 MB/s against 3.5. The publish rate is unchanged, so the interval - and the latency budget - is High's."
+    },
+    "lite": {
+      "label": "Lite",
+      "knobs": {
+        "publish_hz": 12,
+        "points": 5000,
+        "colours": false,
+        "capture": true,
+        "browser_accumulation_cap_mb": 15,
+        "network": "the preview"
+      },
+      "frame_bytes": 60036,
+      "budgets": {
+        "encode_us_per_frame": 205.0,
+        "broadcast_us_per_client": 10.0,
+        "tick_work_ms": 0.25,
+        "bandwidth_mb_s": 0.75,
+        "server_live_bytes": 131072,
+        "browser_accumulation_mb": 15,
+        "e2e_frame_age_ms": 4.0,
+        "user_visible_age_ms": 90.0
+      },
+      "derived_from": "the High preset's measured costs scaled by the point budget (5,000/20,000 = 0.25) and the publish rate (12/24): the encode 538.6 x 0.25 = 134.7 us against a 205 us budget, the broadcast 21.7 x 0.25 = 5.4 us against 10, the frame 60,036 B x 12 Hz = 0.72 MB/s against 0.75. The colours axis is off, so the frame stays positions-only (it already is, #136)."
+    },
+    "capture-only": {
+      "label": "Capture-only",
+      "knobs": {
+        "publish_hz": 0,
+        "points": 0,
+        "colours": false,
+        "capture": true,
+        "browser_accumulation_cap_mb": 0,
+        "network": "nothing"
+      },
+      "frame_bytes": 0,
+      "budgets": {
+        "encode_us_per_frame": 0.0,
+        "broadcast_us_per_client": 0.0,
+        "tick_work_ms": 0.0,
+        "bandwidth_mb_s": 0.0,
+        "server_live_bytes": 131072,
+        "browser_accumulation_mb": 0,
+        "user_visible_age_ms": 0.0
+      },
+      "derived_from": "the floor tier: the ingest is unchanged and the capture is kept, but nothing is published, so there is no encode, no broadcast, no bandwidth and no frame age to budget. This is the ladder's bottom: it never steps below it (#148: the lowest tier is capture-only)."
+    }
+  },
+  "ingest": {
+    "budget_us_per_frame": 1500.0,
+    "measured_today_us_per_frame": 27620.0,
+    "derived_from": "the #141 live split (tests/results/2026-10-20-plan141-live-tick-split.md, the [perf] summary line of the 2026-10-20 run, 1,047 ticks: post 0.45 ms mean / 1.40 max, getter 0.00, release 0.00, exposure 27.17 ms mean / 597.64 max): the ingest per consumed frame, excluding the pacing wait, is 27.62 ms today, of which 27.17 ms is the every-tick exposure re-assert - a value that has not changed, so it is waste (#153). The budget is the post segment's measured max (1.40 ms) with margin: it is what the ingest costs once the re-assert is on change only.",
+    "note": "the pacing wait (102.99 ms mean) is the cadence, not the ingest (#113); the getter (0.00 ms) and the cloud release (0.00 ms) are free. The exposure re-assert is 98 % of today's ingest."
+  },
+  "synthetic": {
+    "what": "the configuration the device-free full-frame mode measures: the plain synthetic path (2,304 points, 30 Hz nominal, 27,684 B a frame)",
+    "e2e_frame_age_ms": 5.0,
+    "derived_from": "the frame age is the capture stamp to the consumer's receipt: the tick's own work (the synthetic post segment, 0.07-0.12 ms) plus the transfer. The 5 ms budget is the measured 0.194 ms p50 with a wide margin, because the transfer half is the kernel's and the machine's, not ours. The preset knobs (the point budget and the publish rate) need the server's --synthetic-load mode (#151, PR #366); until it lands, this is the configuration the mode measures and the report says so."
+  }
+}

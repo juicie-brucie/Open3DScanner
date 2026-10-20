@@ -32,6 +32,12 @@ if(NODE_EXECUTABLE)
              COMMAND ${NODE_EXECUTABLE} ${CMAKE_SOURCE_DIR}/ui/frame_age_test.js
                      $<TARGET_FILE:scan_server>)
 endif()
+# The measurement behind the performance contract (row #152): the encoder
+# and the broadcast, measured with the product's own code, device-free.
+# scripts/perf-budget.py drives it and checks the budgets.
+add_executable(perf_budget perf_budget.cpp)
+target_link_libraries(perf_budget PRIVATE openscanner_engine)
+
 
 # Hardware-free selftest for the runtime plane-removal command (row #158):
 # the command, the transition log and the WebSocket round trip, with a mock

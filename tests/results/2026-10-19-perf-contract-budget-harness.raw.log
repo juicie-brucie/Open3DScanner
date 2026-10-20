@@ -1,0 +1,344 @@
+=== the dataset: the 8 runs the CPU budgets are derived from ===
+$ python3 scripts/perf-budget.py --repeat 8
+== the measurement (device-free) ==
+  run 1:
+    platform.wait_ms.41=43.963
+    platform.rate.24=22.746
+    platform.wait_ms.20=24.184
+    platform.rate.50=41.349
+    platform.wait_ms.16=17.309
+    platform.rate.60=57.773
+    encode.bytes.2304=27684
+    encode.us.2304=62.250
+    encode.roundtrip_ok=1.000
+    encode.bytes.20000=240036
+    encode.us.20000=547.458
+    encode.bytes.live=240036
+    encode.us.live=547.458
+    alloc.bytes_per_frame=240036.000
+    alloc.live_blocks_delta=2
+    encode.roundtrip_ok=1.000
+    bcast.clients=1
+    bcast.us.1=43.875
+    bcast.us_min.1=12.209
+    bcast.clients=8
+    bcast.us.8=176.667
+    bcast.us_min.8=135.666
+    bcast.us_per_client.8=22.083
+    bcast.us_per_client_min.8=16.958
+    bcast.live_blocks_delta=1
+    alloc.live_bytes=514544
+    alloc.live_blocks=60
+    perf_budget=ok
+  run 2:
+    platform.wait_ms.41=43.231
+    platform.rate.24=23.131
+    platform.wait_ms.20=21.443
+    platform.rate.50=46.634
+    platform.wait_ms.16=16.066
+    platform.rate.60=62.242
+    encode.bytes.2304=27684
+    encode.us.2304=63.333
+    encode.roundtrip_ok=1.000
+    encode.bytes.20000=240036
+    encode.us.20000=553.292
+    encode.bytes.live=240036
+    encode.us.live=553.292
+    alloc.bytes_per_frame=240036.000
+    alloc.live_blocks_delta=2
+    encode.roundtrip_ok=1.000
+    bcast.clients=1
+    bcast.us.1=26.542
+    bcast.us_min.1=10.084
+    bcast.clients=8
+    bcast.us.8=222.625
+    bcast.us_min.8=139.042
+    bcast.us_per_client.8=27.828
+    bcast.us_per_client_min.8=17.380
+    bcast.live_blocks_delta=1
+    alloc.live_bytes=514544
+    alloc.live_blocks=60
+    perf_budget=ok
+  run 3:
+    platform.wait_ms.41=45.139
+    platform.rate.24=22.154
+    platform.wait_ms.20=24.669
+    platform.rate.50=40.536
+    platform.wait_ms.16=16.096
+    platform.rate.60=62.129
+    encode.bytes.2304=27684
+    encode.us.2304=62.125
+    encode.roundtrip_ok=1.000
+    encode.bytes.20000=240036
+    encode.us.20000=541.166
+    encode.bytes.live=240036
+    encode.us.live=541.166
+    alloc.bytes_per_frame=240036.000
+    alloc.live_blocks_delta=2
+    encode.roundtrip_ok=1.000
+    bcast.clients=1
+    bcast.us.1=35.709
+    bcast.us_min.1=10.542
+    bcast.clients=8
+    bcast.us.8=162.666
+    bcast.us_min.8=131.500
+    bcast.us_per_client.8=20.333
+    bcast.us_per_client_min.8=16.438
+    bcast.live_blocks_delta=1
+    alloc.live_bytes=514784
+    alloc.live_blocks=65
+    perf_budget=ok
+  run 4:
+    platform.wait_ms.41=42.044
+    platform.rate.24=23.785
+    platform.wait_ms.20=21.510
+    platform.rate.50=46.490
+    platform.wait_ms.16=19.826
+    platform.rate.60=50.440
+    encode.bytes.2304=27684
+    encode.us.2304=62.709
+    encode.roundtrip_ok=1.000
+    encode.bytes.20000=240036
+    encode.us.20000=531.500
+    encode.bytes.live=240036
+    encode.us.live=531.500
+    alloc.bytes_per_frame=240036.000
+    alloc.live_blocks_delta=2
+    encode.roundtrip_ok=1.000
+    bcast.clients=1
+    bcast.us.1=33.917
+    bcast.us_min.1=10.208
+    bcast.clients=8
+    bcast.us.8=141.083
+    bcast.us_min.8=128.625
+    bcast.us_per_client.8=17.635
+    bcast.us_per_client_min.8=16.078
+    bcast.live_blocks_delta=1
+    alloc.live_bytes=514544
+    alloc.live_blocks=60
+    perf_budget=ok
+  run 5:
+    platform.wait_ms.41=41.907
+    platform.rate.24=23.862
+    platform.wait_ms.20=21.498
+    platform.rate.50=46.515
+    platform.wait_ms.16=16.964
+    platform.rate.60=58.947
+    encode.bytes.2304=27684
+    encode.us.2304=61.791
+    encode.roundtrip_ok=1.000
+    encode.bytes.20000=240036
+    encode.us.20000=534.250
+    encode.bytes.live=240036
+    encode.us.live=534.250
+    alloc.bytes_per_frame=240036.000
+    alloc.live_blocks_delta=2
+    encode.roundtrip_ok=1.000
+    bcast.clients=1
+    bcast.us.1=23.708
+    bcast.us_min.1=9.583
+    bcast.clients=8
+    bcast.us.8=181.750
+    bcast.us_min.8=131.500
+    bcast.us_per_client.8=22.719
+    bcast.us_per_client_min.8=16.438
+    bcast.live_blocks_delta=1
+    alloc.live_bytes=514640
+    alloc.live_blocks=62
+    perf_budget=ok
+  run 6:
+    platform.wait_ms.41=42.308
+    platform.rate.24=23.636
+    platform.wait_ms.20=20.275
+    platform.rate.50=49.321
+    platform.wait_ms.16=17.772
+    platform.rate.60=56.268
+    encode.bytes.2304=27684
+    encode.us.2304=61.541
+    encode.roundtrip_ok=1.000
+    encode.bytes.20000=240036
+    encode.us.20000=535.500
+    encode.bytes.live=240036
+    encode.us.live=535.500
+    alloc.bytes_per_frame=240036.000
+    alloc.live_blocks_delta=2
+    encode.roundtrip_ok=1.000
+    bcast.clients=1
+    bcast.us.1=29.666
+    bcast.us_min.1=9.500
+    bcast.clients=8
+    bcast.us.8=171.000
+    bcast.us_min.8=134.209
+    bcast.us_per_client.8=21.375
+    bcast.us_per_client_min.8=16.776
+    bcast.live_blocks_delta=1
+    alloc.live_bytes=514544
+    alloc.live_blocks=60
+    perf_budget=ok
+  run 7:
+    platform.wait_ms.41=45.888
+    platform.rate.24=21.792
+    platform.wait_ms.20=24.691
+    platform.rate.50=40.501
+    platform.wait_ms.16=16.516
+    platform.rate.60=60.546
+    encode.bytes.2304=27684
+    encode.us.2304=62.125
+    encode.roundtrip_ok=1.000
+    encode.bytes.20000=240036
+    encode.us.20000=537.250
+    encode.bytes.live=240036
+    encode.us.live=537.250
+    alloc.bytes_per_frame=240036.000
+    alloc.live_blocks_delta=2
+    encode.roundtrip_ok=1.000
+    bcast.clients=1
+    bcast.us.1=42.208
+    bcast.us_min.1=10.542
+    bcast.clients=8
+    bcast.us.8=155.625
+    bcast.us_min.8=131.042
+    bcast.us_per_client.8=19.453
+    bcast.us_per_client_min.8=16.380
+    bcast.live_blocks_delta=1
+    alloc.live_bytes=514544
+    alloc.live_blocks=60
+    perf_budget=ok
+  run 8:
+    platform.wait_ms.41=44.954
+    platform.rate.24=22.245
+    platform.wait_ms.20=20.494
+    platform.rate.50=48.794
+    platform.wait_ms.16=17.613
+    platform.rate.60=56.776
+    encode.bytes.2304=27684
+    encode.us.2304=62.166
+    encode.roundtrip_ok=1.000
+    encode.bytes.20000=240036
+    encode.us.20000=540.000
+    encode.bytes.live=240036
+    encode.us.live=540.000
+    alloc.bytes_per_frame=240036.000
+    alloc.live_blocks_delta=2
+    encode.roundtrip_ok=1.000
+    bcast.clients=1
+    bcast.us.1=35.542
+    bcast.us_min.1=13.666
+    bcast.clients=8
+    bcast.us.8=209.750
+    bcast.us_min.8=132.834
+    bcast.us_per_client.8=26.219
+    bcast.us_per_client_min.8=16.604
+    bcast.live_blocks_delta=1
+    alloc.live_bytes=514544
+    alloc.live_blocks=60
+    perf_budget=ok
+
+== the budgets ==
+metric                                 measured       budget         verdict
+platform.wait_ms.41                      43.597       47.000   PASS  #147 section 5 measured 44.62 ms for a 41 ms request (zero work in the l
+platform.wait_ms.20                      21.504       26.500   PASS  #147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a
+platform.wait_ms.16                      17.136       21.500   PASS  the same control at the 60 Hz pace (16 ms request), measured by this har
+encode.bytes.live                    240036.000   240036.000   PASS  #136's live V1 frame: 20,000 points (kLiveBroadcastPointBudget) = 240,03
+encode.us.live                          538.625      820.000   PASS  the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode
+encode.us.2304                           62.145       95.000   PASS  #147 section 7: the encoder is 63% of the tick's CPU with no client, i.e
+bcast.us_per_client.8                    21.729       50.000   PASS  #147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (t
+bcast.us.8                              173.834      400.000   PASS  #147 section 6's 0.29-0.31 ms per tick at 8 clients for the 27,697 B syn
+tick.post_ms                              0.090        0.150   PASS  #147 section 3 measured the synthetic tick's post segment at 0.12-0.20 m
+tick.bcast_ms                             0.000        0.250   PASS  #147 section 3 measured the bcast segment at 0.10 ms p50 with one client
+server.live_bytes                    100352.000   131072.000   PASS  #147 section 3.2 measured the live allocation footprint flat at 86-87 KB
+
+== the ingest budget, per consumed frame, at each source rate ==
+rate      ceiling     target    ms/frame core % nominal core % at ceiling verdict
+24          22.94         M1        1.50            3.6              3.4   PASS
+24          22.94  lower-end        4.50           10.8             10.3   PASS
+50          46.50         M1        1.50            7.5              7.0   PASS
+50          46.50  lower-end        4.50           22.5             20.9   PASS
+60          58.36         M1        1.50            9.0              8.8   PASS
+60          58.36  lower-end        4.50           27.0             26.3   PASS
+
+   (today's ingest, measured on the device - #141's live split: the exposure re-assert
+    is still in the tick, and it is 98 % of it)
+24              -      today           -           66.3                -   OVER
+50              -      today           -          138.1                -   OVER
+60              -      today           -          165.7                -   OVER
+
+perf-budget: every budget met
+harness exit=0
+
+=== the dataset's spread, per metric (min / median / max) ===
+runs parsed: 8
+encode.us.live             min=  531.500  median=  538.625  max=  553.292
+encode.us.2304             min=   61.541  median=   62.145  max=   63.333
+bcast.us_per_client.8      min=   17.635  median=   21.729  max=   27.828
+bcast.us.8                 min=  141.083  median=  173.834  max=  222.625
+platform.wait_ms.41        min=   41.907  median=   43.597  max=   45.888
+platform.wait_ms.20        min=   20.275  median=   21.504  max=   24.691
+platform.wait_ms.16        min=   16.066  median=   17.136  max=   19.826
+tick.post_ms               min=    0.090  median=    0.090  max=    0.090
+tick.bcast_ms              min=    0.000  median=    0.000  max=    0.000
+server.live_bytes          min=100352.000  median=100352.000  max=100352.000
+
+=== the full-frame mode (row #156): one frame through every stage ===
+$ python3 scripts/perf-budget.py --full-frame --seconds 10
+== the full-frame run (device-free, one frame through every stage) ==
+  frames received      : 283 (2304 points, 7834572 B)
+  configuration        : the plain synthetic path (the server has no --synthetic-load, so the preset's knobs could not be set - #151, PR #366)
+  server CPU           : 0.040 s
+
+== the per-stage table (one run; the stages and the total are the same run) ==
+stage                             value     unit  where it comes from
+encode + post                     0.070       ms  the server's [perf] window: post p50
+broadcast                         0.030       ms  the server's [perf] window: bcast p50
+transfer + consume                0.099       ms  the age minus the two stages above
+TOTAL (the frame age)             0.199       ms  the consumer's measurement: p50
+  the age at p95                  0.377       ms  the consumer's measurement
+  the age at max                  0.599       ms  the consumer's measurement
+
+the total's budget                5.000       ms  PASS
+perf-budget: the full-frame total is within the 'high' budget
+harness exit=0
+
+=== the dataset's check ===
+$ python3 scripts/perf-budget.py --check-dataset
+perf-budget: no dataset summary in /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build4/tests/results/2026-10-19-perf-contract-budget-harness.raw.log
+harness exit=1
+
+=== the quick smoke run ===
+60              -      today           -          165.7                -   OVER
+
+perf-budget: every budget met
+harness exit=0
+
+=== the lower-end target's budgets (--factor 3) ===
+    encode.us.2304=61.792
+    encode.us.live=535.833
+    bcast.us.1=24.292
+    bcast.us_min.1=11.417
+    bcast.us.8=175.958
+    bcast.us_min.8=131.250
+    bcast.us_per_client.8=21.995
+    bcast.us_per_client_min.8=16.406
+    encode.us.2304=62.167
+    encode.us.live=534.958
+    bcast.us.1=28.500
+    bcast.us_min.1=11.542
+    bcast.us.8=182.125
+    bcast.us_min.8=130.209
+    bcast.us_per_client.8=22.766
+    bcast.us_per_client_min.8=16.276
+    encode.us.2304=61.875
+    encode.us.live=537.209
+    bcast.us.1=25.166
+    bcast.us_min.1=10.000
+    bcast.us.8=155.875
+    bcast.us_min.8=128.125
+    bcast.us_per_client.8=19.484
+    bcast.us_per_client_min.8=16.016
+encode.us.live                          535.833     2460.000   PASS  the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode
+encode.us.2304                           61.875      285.000   PASS  #147 section 7: the encoder is 63% of the tick's CPU with no client, i.e
+bcast.us_per_client.8                    21.995      150.000   PASS  #147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (t
+bcast.us.8                              175.958     1200.000   PASS  #147 section 6's 0.29-0.31 ms per tick at 8 clients for the 27,697 B syn
+tick.post_ms                              0.070        0.450   PASS  #147 section 3 measured the synthetic tick's post segment at 0.12-0.20 m
+server.live_bytes                    100352.000   131072.000   PASS  #147 section 3.2 measured the live allocation footprint flat at 86-87 KB
+harness exit=0
