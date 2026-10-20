@@ -9,122 +9,212 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-19 (rev 20 — adds the **agent-structure proposal (E1–E10)** for the
-dispatcher's input: the duplicated Secrets block measured at 28 lines × 6 copies with half already
-diverged, the unwalled `reconcile` command, `W2`'s enumeration-based builder wall, and the
-foreground-blocking watcher rule. Only **E5** is urgent; the rest is a parked harness refactor behind
-the pivot. rev 19 re-ranked around `#105`; rev 18 retired the README staging block; rev 17 was **the
-pivot**; rev 16's objective landed; rev 15 closed the walls audit; rev 14/13/12/11/10 are superseded —
-see **Superseded plans**)._
+_Last planned: 2026-10-19 (rev 21 — **the capture-and-instrument round**. The operator's scope input
+is adopted: performance-sensitive code gets named telemetry, and every hardware run produces a
+byte-exact capture bundle even where no decoder exists yet. The pivot's frame path becomes that
+capability's first consumer: `#127` → `#132`. rev 20's objective (`#105`, literally "get frames out")
+is superseded by the board's own evidence — `#122` landed the envelope unwrap and `#131` named the
+11-element result array, so the question is no longer *whether* bytes arrive but *how to read and
+record them*. rev 19/18/17/16/15/14 and earlier are superseded — see **Superseded plans**)._
 
 ## Objective for the next round
 
-**Get frames out of our own client — `#105` — because it gates `#98`'s acceptance and therefore the
-whole pivot.**
+**Turn one hardware session into a decode-grade corpus — byte-exact capture of every reply plus a
+named latency trace — and settle the live frame's band rule from it (`#127` → `#132`).**
 
-Phase A closed (`#96` → `G-A` cleared) and Phase B's code landed (`#98`, `tools/raptor_client`). Its
-first live session was **mechanically clean and empirically empty**: connect, `start_stream` accepted
-with no error, a full five seconds, a clean stop — and **zero frames**, with `ob_rpc_get_frame` never
-returning data. That is the pivot's first real result, and it is a *negative* one: the client speaks
-the protocol without speaking it correctly.
+The board moved under rev 20's objective, and its evidence says so. `#122` landed the envelope
+unwrap; `#131` named the full 11-element `get_frame` result array and proved the daemon's serializer
+is a **pass-through** (#131's negative result). So `#105`'s "zero frames" is no longer a request-shape
+mystery: the bytes arrive, and our client reads the wrong layer. What remains is an **evidence**
+problem — the band rule and the pixel scale — and `#132` is the row that exists to settle them.
 
-**The decisive evidence is already in hand.** The vendor path streams **245,235 points** through the
-same daemon (the operator's live screenshot), so the daemon *does* serve frames to a client that asks
-properly. `#105` is our request shape or our sequencing — not the daemon, not the device, and not the
-protocol spec.
+**The operator's scope input, adopted (`2026-10-19`).** Two asks, recorded so the priority is
+checkable:
 
-**That reframes the two in-flight efforts, which are not alternatives.** Per-call status logging must
-land **first**: without accepted-vs-rejected visibility nothing else can be validated, because the
-symptom *is* a call that succeeds and does nothing. The capture work then deserves a different *first
-step* than re-derivation — see below.
+1. **Telemetry in the code that has to be fast.** Adopted, with one amendment: name the *surfaces*
+   and the *schema*; do not build a framework before its consumers exist. There are three live
+   surfaces — `scan_server`'s tick, `raptor_client`'s frame path, and the HUD's freshness readout —
+   and one future one (Phase C's math, not written). `#111` instrumented four tick segments;
+   `#134`/`#139` then showed the instrument covers ~2 % of the tick and the dominant cost — the
+   pacing wait — was never timed (`#139` is in flight, PR #349). That is the debt this round pays,
+   and the lesson is a **rule**: *every number a record quotes names the instrument that produced
+   it.* The HUD's `dataFps` and the server's `[perf]` tick are different clocks and were compared
+   for two rounds (#134).
+2. **Capture as much as the hardware session can, even with no decoder.** Adopted as the logging
+   principle. Recon has hit the corpus limit three times in a row: `#124` (n = 11), `#128` (~93 % of
+   the depth stream missing, IR n = 1), and `#138` (8,643 IMU records already captured, nothing
+   reads them). The bytes are the scarce resource, not the decode. So the client records **full
+   replies** — not heads, not just `get_frame` — and the analysis runs offline against the bundle.
+
+**Why this is the pivot's next step, not an adjacent detour.** `#132` is already on the frame path's
+critical path; the recorder is what makes it repeatable and what retires the next decode without
+another run. `#136` (the pipeline's data-flow map) names what *should* be captured, and it needs no
+device. `#113`'s performance target is now measurable only after the instrument is fixed. And `#97`
+is still the gate on `#100` that no amount of capture answers.
+
+**What this round is explicitly not.** It is not a performance-tuning round: no change to cadence,
+decimation, or the broadcast. It is not a decoder round: no pixel-scale or band-rule conclusion may
+be declared from a capture that lacks provenance. And it is not a general telemetry subsystem: one
+header, one manifest format, three consumers, then stop.
 
 ## Critical path
 
 ```
-PHASE A ✅ DONE (#96 — G-A cleared)
-PHASE B: code ✅ (#98)   acceptance ✗ on #105  ──►  PHASE C (#99)  ──►  PHASE D (#100)
-              │                                          ▲                 ▲
-        #105 ZERO FRAMES ← the blocker         #95 G-C ───┘      #97 G-B ──┘
+#122 code ✅ / live acceptance open ─► #127 (live reply shape; HW) ─► #132 (gap-free capture + band rule)
+                                                      │
+                     ┌────────────────────────────────┼───────────────────────────────┐
+                     ▼                                ▼                               ▼
+            #124 acceptance ─► #126 ─► #99     #105 / #98 acceptance              #138 (IMU)
+              (known scene)    (Phase C)        (array parsed, recorded)          #114 (profiles)
 
-#105's route, in order:  1 logging (the prerequisite, not a parallel track)
-                         2 VERBATIM REPLAY of the vendor's request bytes (falsification, not re-derivation)
-                         3 retire "5 s was too short" from the captures, not from another run
-                         4 only then interpret — and #101 is what settles the values
+#131 ✅ producer named ───────────────────────────────┘
+#112 ✅ baseline ─► #113 ◄─ #139 (pacing wait) + #134's two segments + #136 (data-flow map)
+#97 ─► #100
+#95's run-dependent residuals ─► #99 (correctness)
 ```
 
-**The gates are unchanged; one of them is now on the critical path.** G-A is cleared. G-B (`#97`) and
-G-C (`#95`) still gate D and a-correct-C respectively — but **`#101` (`OQ-F2`, the vendor properties'
-semantics) has moved from parked to on-path**, because `#105`'s leading hypothesis is the
-laser/exposure property sequence and `#101` is the row that exists to settle those values.
+**Edges, stated so they can be checked.** `#127` → `#132` → (`#124` acceptance, `#105/#98`) → `#99`.
+`#131` → `#132` (it carries OQ-131-1…4). `#112` → `#113`, with `#139`/`#134`/`#136` supplying the
+measurement the target needs. `#95` → `#99` for correctness, not for start. `#97` → `#100`. `#138`
+and `#114` are parallel: both decode captures already on disk and sharpen `#99`'s inputs.
 
 Ranked by what it frees, not by board order:
 
-1. **`#105` — per-call status logging, then verbatim replay.** It gates `#98`'s acceptance, and `#98`
-   gates C and D. Nothing else on the board has that reach. The logging is the precondition for
-   believing any subsequent result; the replay is the cheapest *decisive* test available.
-2. **`#101` (`OQ-F2`).** Promoted. It settles the property values that `#105`'s leading hypothesis
-   turns on, and it is capture-driven — no hardware needed.
-3. **`#97` (`G-B`).** Still the single biggest unknown and still cheap: a decision that can reshape C2.
-   It has not become less important by being third — it has become *later*.
-4. **`#89`'s fix.** Its 5 s bound never fired, so the observation **failed** — recorded honestly as
-   such. It needs a fix, not a rerun.
-5. **The one hardware session.** Six `HW` rows (`#65`, `#66`, `#71`, `#76`, `#77`, `#91`) owe reruns on
-   already-merged work. One room clears all six; `#98`'s acceptance does **not** sit behind that room —
-   it sits behind `#105`.
-6. **`#99` → `#100`.** Unblocked by `#105` and `#97` respectively, in that order.
+1. **`#127` → `#132` — the live reply, then the band rule.** `#127`'s diagnostic is already built
+   (`--dump-replies`, PR #327) and one short run names the live array. `#132` then settles the
+   assembly rule and the pixel scale. Together they free `#124`'s acceptance, `#98`'s acceptance, and
+   `#99`'s decode. Nothing else has that reach.
+2. **The recorder (P1).** A `--capture DIR` mode in `raptor_client` that saves every reply
+   byte-exact, with method, msgid, port, timestamp and a manifest. It makes `#132` repeatable and
+   makes the *next* undecoded surface — IMU, small segments, property replies, op-25 — answerable
+   from bytes already on disk. It also fixes the live path's array handling, which is `#127`'s code
+   half.
+3. **`#136` — the pipeline's data-flow map.** It says what is captured, what is dropped, and where,
+   from scanner to project folder. Without it, "capture everything" has no inventory and `#113` has
+   no place to look. No device required.
+4. **`#139` + `#134`'s two segments (P2) — finish the tick instrument.** The pacing wait dominates
+   the tick and was never timed; two vendor calls sit outside the four segments. Until this lands,
+   `#113` would be tuned against an instrument that sees 2 % of the cost. **P3** then puts the
+   user-facing number — frame age, not either fps — on the HUD.
+5. **`#117` — the replay's pacing and reply deadline.** Code landed; the live acceptance is owed.
+   It makes every replay run bounded and diagnostic, which is what the hardware room needs.
+6. **`#138` and the offline orphans (P4–P7).** IMU, pull semantics, the 208-B segments, the op-31
+   structures, and the calibration residuals are all decodes of captures already held. Cheap, and
+   they add fields to `#99`'s inputs without touching the room.
+7. **`#97` (`G-B`).** Still cheap, still the single biggest unknown, still the gate on `#100`. It is
+   later only because it is a decision, not evidence.
+
 ## Ready now
 
 | Item | Role | What it needs |
 | --- | --- | --- |
-| `#105` — the blocker | builder, then recon | **Per-call status logging first**, then **verbatim replay** of the vendor's captured request bytes. Gates `#98`'s acceptance, and `#98` gates C and D. |
-| `#101` — `OQ-F2` | recon + operator | The vendor properties' semantics, from three single-action captures. **Promoted onto `#105`'s path.** |
-| `#97` — `G-B` | operator | The macOS privileged-access decision, with reasoning. Cheap; gates `#100`. |
-| `#89`'s fix | builder | Its 5 s bound never fired — the observation **failed**, so this is a fix rather than a rerun. |
-| the one hardware session | hardware | `#65`, `#66`, `#71`, `#76`, `#77`, `#91` — six reruns on merged work, one room, no new code. |
-| `#102`, `#103` | recon / dispatch | The flash-write audit (gates `#100`); the README's Status/Known-issues pass. |
-| `#93` | builder | A live UI debounce bug in `ui/app.js`. |
+| `#127` — the live reply shape | hardware | The diagnostic is built (`--dump-replies`). One short run (`--replay … --dump-replies`) names the live array; `#131` says it will be the 11-element array, so `#122`'s old "`bin(N)`" acceptance should be closed against this evidence rather than re-run. |
+| **P1** — `raptor_client` reads the 11-element array + `--capture DIR` | builder | No device. Parse element 4, treat "all buffers empty" as no-data, count data-vs-empty, save every reply with method/msgid/port/timestamp, write a manifest. Selftest against the recorded array form. Wall: `tools/raptor_client/**`. |
+| `#132` — gap-free capture + band rule | hardware, then recon | The room, and P1 for full-byte capture. The analysis checklist is already written in the row. |
+| `#136` — the pipeline data-flow map | recon | No device: code paths + line numbers, volume at each stage, every drop named. Wall: `docs/recon/**` or `docs/recomp/log`. |
+| `#139` + **P2** — finish the tick instrument | builder | No device. Time the pacing call, add the exposure re-assert and cloud release as segments, report total vs nominal and the untimed residual. Wall: `tools/scan_server/**`. |
+| **P3** — the HUD's freshness readout | builder | No device. Carry the server tick's timestamp + sequence in the frame/status message, render the age p50/p95 and a rolling line; keep `dataFps`/`render` labelled as client clocks. Wall: `tools/scan_server/**` + `ui/**`. |
+| `#117` — replay pacing/timeout | hardware | Code landed; the live replay acceptance is owed. |
+| `#138` — IMU decode | recon | Existing `session4` capture. No device. Wall: `docs/recon/**`. |
+| **P4/P5** — pull semantics; the 208-B segments; op-31 structures | recon | Existing capture. No device. Wall: `docs/recon/**`. |
+| `#137` — the exposure slider's drift | builder (read) | Which path writes the slider; whether it is ours or the vendor's. No device. |
+| `#97` — `G-B` | operator | The macOS privileged-access decision, with reasoning. Gates `#100`. |
 
 ## Blocked, and on what
 
 | Row | Blocked on |
 | --- | --- |
-| `#98`'s **acceptance** | **`#105`** — zero frames. It previously read "blocked on G-A"; G-A is cleared, so the blocker moved. |
-| `#99` | `#98`'s acceptance, and **G-C** (`#95`) for correctness rather than for start. |
-| `#100` | `#98` **and** **G-B** (`#97`) — the privileged-access decision. |
-| the six `HW` reruns | The hardware room, and nothing else. |
-| G4, G5 | **The pivot subsumes them** — Phase C replaces fusion. No longer a separate wait. |
+| `#132` | The hardware room and **P1** for full-byte capture. Its analysis half is blocked on that bundle, not on a decoder. |
+| `#126` | The device **and a known scene** (flat wall at 300/400/500 mm; checkerboard). The setup is the blocker, not the code (`#125` landed the renderer). |
+| `#99` | `#98`'s acceptance (which needs `#127`/`#132`) and `#132`/`#126` for a correct decode. |
+| `#100` | `#98` **and** `#97`. |
+| `#113` | **P2/`#139`** (the tick's dominant cost is untimed), `#136` (where the gap is), and `#114` (the device's real mode rate). The old blocker `#112` is done. |
+| `#115` | The Windows host **with the scanner attached** (it was absent on 2026-10-19); the M1/M2 halves are ready. |
+| `#124` | `#132`'s evidence; the container is named, the band rule is not. |
+| the owed `HW` reruns (`#71`, `#76`) | The hardware room only. They stay queued below the pivot: they are the open items that can still *fail*. |
+| G4, G5 | Subsumed by the pivot — Phase C replaces fusion. |
 | the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
 
 ## Orphaned open questions
 
-An OQ with no task row is unowned work. The previous sweep tracked a stale subset; this one
-reads every findings file's open list.
+An OQ with no task row is unowned work. This sweep reads every findings file's open list and the
+board's current statuses; the previous table carried answers as if they were still open.
 
-**Dead — closed, keep off the list:**
+**Dead — closed, keep off the list:** OQ-1 (`#50`), OQ-5 (`#47`), OQ-4 (`#52`), OQ-S12 (`#60`),
+OQ-S13/S14 (`#58`), OQ-7b (`#62`), OQ-7d (`#68`), OQ-S3 (`#67`), OQ-S5 (`#25`), OQ-S6 (answered from
+the existing records), OQ-S8/S9 (`#44`), OQ-S10 (`#94`; `#86` is still on the board and should be
+closed as subsumed). OQ-S4 stays deferred by decision.
 
-- **OQ-1** — resolved by `#50`; **OQ-5** by `#47`. Both are answered in their findings.
-- **OQ-4** — closed by `#52`.
-- **OQ-S12** — answered by `#60`: the pose trigger is a real export and is declared, so the
-  "declare vs document" question never had to be taken.
-- **OQ-S13**, **OQ-S14** — closed by `#58`.
-- **OQ-S4** — deferred to the marker pass by decision; not yet live.
+**Live, unowned — each gets an owner or an explicit trigger.**
 
-**Live, unowned — each gets an owner or an explicit trigger.** A "park" without a trigger is
-unowned work with a nicer name, so every row names both the condition that revives it *and* the
-cheapest thing that retires it.
-
-| OQ | Trigger — when it becomes live | Cheapest retirement |
+| OQ / residual | Trigger — when it becomes live | Cheapest retirement |
 | --- | --- | --- |
-| **OQ-S6** | **answered 2026-10-18 from the existing records**: the tail fits the watchdog budget with room to spare (the stall test's teardown ≈ 11 s against 600 s; the 15.6M-vertex case ≈ 19 s) | **retired — no run owed.** `A3` designs against the answer |
-| **OQ-7b** | **answerable as it stands** — `smoke_test` never registers the device-message listener and prints the device count | `#62`: a run of an existing tool. **No build change, no skip-listener flag** |
-| **OQ-S2** | a consumer wants the cloud *without* the color getter (a pause-time snapshot) | recon batch with the next scan-family row |
-| **OQ-S3** | a torn or partial cloud is observed, or a second reader is added | recon: read both lock sites statically |
-| **OQ-S7** | a consumer needs *absolute* world orientation (a world-axis grid, or `G3`'s pose graph) | one `get_global_pose` at a known device pose |
-| **OQ-S9** | a torn or frozen cloud is observed at the update cadence | double-call loop during an active scan |
-| **OQ-S10** | a consumer needs *intrinsics* (`G3`'s tracking, or a calibration workflow) | analyzer pass on the session DB row, or a runtime hexdump |
-| **OQ-S11** | a consumer wants the marker disc as a viewer overlay | entry-register capture + a small-`n` hexdump |
-| **OQ-7c** | a second sensor line is supported | static string/symbol read |
-| **OQ-7d** | only its parent question, `#52`, which is closed | **verify against `#52` and close it** |
+| **OQ-131-1/2/4** — where the band cut is, row alignment, what `e2` is | now — they gate the frame decode | **`#132`** (already carries all four) |
+| **OQ-131-3** — `e3 = 255`: unknown vs custom format | now, with the band rule | `#132`'s step 4; if still open, one line in the findings, no separate row |
+| **Pull semantics** — fresh vs latest-re-sent; the empty-reply share; ~85 Hz poll against a 50 fps profile (frame-codec §8.7, `#114` §8.5, protocol-spec §6.3) | now — it decides whether a capture is a stream or a sample | **P4** (recon), from `#132`'s bundle |
+| **The 208-B segments** on 10010/10013 (~147k each; protocol-spec §6.2) | now | **P5** (recon), from the existing capture |
+| **The op-31 structures** 4024/4026/4027/4034 (`#114` §8.6) | when a mode/profile decode needs names | **P5**, same capture |
+| **Mode name → mode-table row; format ids 0/5/9/24; the table's first field `2`** (`#114` §8.1–8.4) | when the mode/profile target is fixed | **P6** (operator capture: one session switching the three modes) |
+| **The property capture list** (pause/resume, mode switch, slider, power-on; `#101` §5 / §6) | now — `#101` is `DONE` but its capture session is unowned | **P6**, the same session |
+| **IMU layout** (protocol-spec §6.6) | now — the bytes already exist | **`#138`** (in flight) |
+| **op-25 returned length + OQ-S15a/b/c/d/f** (calibration-store OPEN QUESTIONS) | before Phase C claims calibration correctness | **P7** (one hardware validation run, recorded with P1) |
+| **PU id space** 2002/2003 (protocol-spec §6.7) | with the property capture | **P6** |
+| **OQ-89a–d** (the destroy spin's exact frame, the interposer discriminator, the session subsystems, `SuperPoint::shutdown`) | only if the wrapper must distinguish "busy" from "broken" | parked; the sample named in `context-destroy-hang.md` §6.2 |
+| **OQ-S2 / S7 / S11 / OQ-7c** | their triggers are unchanged | rows `#83`, `#84`, `#87`, `#88` |
+| **`#123`'s remaining acceptance** | the tool and the multi-segment fix landed (`#128`); the "≈162k per port" expectation was the wrong number | dispatcher: close `#123` against `#128`'s measured corpus, do not re-run it |
+
+---
+
+## Scope input — telemetry and capture (rev 21)
+
+The operator's two asks are adopted here as a **principle and a list**, not a subsystem:
+instrument the surfaces that have to be fast; record every byte the hardware session sees; decode
+offline.
+
+### Telemetry — name the surface, name the schema, stop
+
+| Surface | What exists | What is owed | Row |
+| --- | --- | --- | --- |
+| `scan_server` live tick | `#111`'s four segments, p50/p95/max, 5 s windows | the **pacing wait** (#139); the exposure re-assert and cloud release as segments (#134); a total-vs-nominal and untimed-residual line | **P2**, `#139` |
+| WebSocket broadcast | one timed segment | per-client send time, queue depth, drops and timeouts (the 100 ms send timeout is currently invisible) | **P2** |
+| `raptor_client` frame path | per-call status logs (#263), counters | per-call latency, data-vs-empty share, bytes/s, time-to-first-frame; **full-reply capture** | **P1** |
+| `ui/` | `dataFps`, `render` fps (different clocks; both labelled) | frame age: device capture time → server tick → render, with a p50/p95 and a rolling log; this is the number `#113` should hold itself to, not either fps | **P3** |
+| Phase C math | not written | define the acceptance now: each stage timed against `SPEC-TARGETS.md`, with the same schema | `#99`'s row, when it starts |
+
+**The schema rule.** Every perf record states: clock (`steady_clock`), unit (µs), segment name,
+window, and the instrument that emitted it. A record that says "fps" without saying *which* instrument
+is not evidence (`#134`). The existing header stays where it is until P1 gives it a second consumer;
+then it moves to one shared location — **do not** copy it.
+
+### Capture — the bundle is the artifact
+
+| Surface | Already on disk | Decoder exists? | Row |
+| --- | --- | --- | --- |
+| `get_frame` replies, 10010/10013 | `session4` — but a sample (`#128`) | partial (`#125` band renderer) | **P1 + #132** |
+| IMU, 10011 | 8,643 records in `session4` | no | **`#138`** |
+| Property GET/SET, discovery, vendor commands | `session4` + the capture set | partial (`#101`) | **P6** |
+| Flash reads (op-25) | startup window | partial (`#95`) | **P7** |
+| The 208-B segments; op-31 structures | yes | no | **P5** |
+| The project-folder output | the vendor app's own sessions | no map | **`#136`** |
+| The tick's latency trace | run logs from `#112` | instrumented, incomplete | **P2/`#139`** |
+
+**The bundle convention (proposed).** Every hardware run that captures writes, outside the repo:
+
+```
+<capture-root>/<date>-<slug>/
+  manifest.json      # run, branch, commit, binary sha256, start/end, every file's sha256+size
+  replies/           # one file per port, length-prefixed records: ts, port, method, msgid, bytes
+  perf.csv           # the tick windows, if the run measured them
+  stdout.log         # the run's own log (also committed beside the record)
+```
+
+The **record** in `tests/results/` cites the manifest's path and hash chain; the bundle itself is
+never committed (the same rule as `#123`'s extractor and `.recon-cache/`). The record template gains
+an **Artifacts** section so a run with no bundle says so explicitly.
+
+**Not proposed.** A general telemetry framework; always-on raw capture in a hot loop (opt-in, bounded
+by seconds/bytes); committing captures; a sampling profiler before a CPU-bound loop exists; decoding
+anything before its bytes have provenance.
 
 ## Orphaned work — the corpus's `G6`, corrected
 
@@ -141,6 +231,8 @@ goal rather than adding a row:
 
 ## Goals carried forward from the research corpus (captured once)
 
+_States re-read against the board on 2026-10-19; the board owns any later move._
+
 `docs/research/**` is **frozen** — a historical artifact: no in-place maintenance, no adoption
 into findings. Its vendor-fact claims are partly superseded by later recon, so any goal picked
 up re-derives the facts it needs through recon like any other target. Captured so they are
@@ -148,9 +240,9 @@ tracked and not lost.
 
 | # | Goal | Needs first | State |
 | --- | --- | --- | --- |
-| **G1** | Live plane removal for **resource management** (cut data per frame during capture), not a post-scan cosmetic cut | — | **adoption `#59` `DONE`**; **build row open** — bind the toggles, reimplement the decision |
-| **G2** | Coverage heatmap: replace the one-scalar "insufficient data" verdict with a spatial under-covered set | nothing — `#40` landed | ready to row |
-| **G3** | Owned tracking (marker detection + bundle adjustment) with per-pose rejection reasons | `G2`'s feedback layer | blocked |
+| **G1** | Live plane removal for **resource management** (cut data per frame during capture), not a post-scan cosmetic cut | — | **landed** — bind `#71` (HW), reimplement the decision `#77` (`DONE`) |
+| **G2** | Coverage heatmap: replace the one-scalar "insufficient data" verdict with a spatial under-covered set | nothing — `#40` landed | **landed** — `#76` (`HW`, the observation is owed) |
+| **G3** | Owned tracking (marker detection + bundle adjustment) with per-pose rejection reasons | `G2`'s feedback layer | **landed** — `#91` (`DONE`) |
 | **G4** | Own denoising + fusion pipeline, Open3D as the MIT anchor | a fusion feature being planned | parked |
 | **G5** | Fusion-accuracy evaluation harness | `G4` | parked with `G4` |
 | **G6** | Fix our own SDK usage: *drain the listener* + align voxel sizes | — | **closed, both halves** — the drain half was corrected out, and `#64` found the voxel claim does not survive (our values are the operator's own, at the minimum of the app's ranges) |
@@ -185,8 +277,8 @@ the dispatcher files the rows.
 | --- | --- | --- | --- |
 | **A1** | Serve `ui/` from the capture process — one origin, no external static server | **`#61`** | **`DONE`** |
 | **A2** | The `.app` bundle + a WKWebView window (`MACOSX_BUNDLE`, `Info.plist`, icon) | **`#63`** | **`DONE`** — gate answered (see **The `A2` decision**) |
-| **A3** | Lifecycle: spawn and supervise the worker, surface a crash, and make **quit = graceful `pause`/`stop`/`destroy`** | **`#65`** | **block cleared** — `#72`/`#73` landed; needs the launch rerun |
-| **A4** | Settings and failure paths — missing-SDK dialog, port, session length | **`#66`** | **`HW`** — its live check rides the `#65` launch rerun |
+| **A3** | Lifecycle: spawn and supervise the worker, surface a crash, and make **quit = graceful `pause`/`stop`/`destroy`** | **`#65`** | **`DONE`** — the post-#73/#74/#106 rerun passed |
+| **A4** | Settings and failure paths — missing-SDK dialog, port, session length | **`#66`** | **`DONE`** — steps 5–6 passed in the same launch run |
 
 **Running the app found the rest, and they landed.** `#72` / `#73` / `#74` were not design gaps:
 they were what a real bundle discovers when it resolves its own paths and answers the OS. All three
@@ -863,71 +955,107 @@ is set there. **Do not open Windows rows from this roadmap.**
 
 ## Risks
 
-1. **The seam between binding and building is unproven.** Every G-goal above the seam is
-   unexercised: the project has bound an ABI and won a live view, but has never run its own
-   reconstruction math on live data. `G1`'s adoption row is where that gets tested cheaply,
-   before a build row is committed — and it is also the row that keeps failing to get filed.
-2. **The user's dylib may not be the slice we specced — new, and created by the `A2` decision.**
-   Every ABI claim in the header was recovered from **one pinned slice** (the sha256 recorded in
-   the [`device-message-listener`](../recon/findings/device-message-listener.md) findings).
-   Requiring the user's own install means a newer CrealityScan supplies a *different* dylib and a
-   **silently reassigned ABI** — the exact failure this whole recomp exists to prevent. The
-   loader today checks only that the path exists. Cheapest retirement: verify the hash at load
-   and refuse on mismatch — `A2`'s third consequence.
-3. **Evidence provenance (`#21`) — closed 2026-10-18, one residual.** Added records now need a
-   verifier verdict (agent-tier) and a non-`.md` companion raw artifact in the same PR. The
-   residual is a *plausible-but-false* record surviving a verdict; the only thing that retires
-   it is a spot re-run against the artifact, so treat a record as evidence of a run, not proof.
-4. **A second evidence corpus outside the gate.** `logs/**` is tracked and is the evidence
-   base for the corpus's §1, but it is neither `tests/results/**` nor `docs/recon/**`, so the
-   `run-records` check and the tier rules do not reach it. Cheapest retirement: an operator
-   decision on whether it stays.
-5. **One serialized hardware resource.** `#53`'s rejection-path test and `#62` queue behind one
-   manual session. Batch per session, cheapest-first.
-6. **Recon step budget.** `recon` is capped at `steps: 40`, one board row per session — so
-   `G1`'s adoption, if it is filed, is a session of its own and must not carry adjacent context.
+1. **The instrument can lie about what it measures (the #134 lesson).** Two names — the HUD's
+   `dataFps` and the server's `[perf]` tick — were compared as if they were one number for two
+   rounds. The next instrument must state its clock, unit, segment and window. Cheapest retirement:
+   the schema line in P1/P2, and the record rule that a quoted number names its instrument.
+2. **The capture corpus is a sample, not a stream.** `#128` measured ~93 % of the depth stream missing
+   and **n = 1** on IR; `#124`'s conclusions hold at n = 11. Any band rule or pixel scale derived
+   from it inherits that scale. Cheapest retirement: `#132`'s gap-free run, with its provenance
+   fields (seq numbers, dropped segments, poll rate) in the manifest.
+3. **`[inferred]` claims the decode leans on.** The 11-element array's element names are REA-derived
+   (`#131`); the band cut, row alignment, `e2`, `e3`, the pixel scale and the pull semantics are open
+   (`frame-codec.md` §8, `#114` §8). Code that branches on any of them during Phase C is leaning on
+   an inference. Cheapest retirement: `#132` for the wire, `#126` for a known scene.
+4. **Capture bundles sit outside the gate.** `tests/results/**` records are script-tier and the
+   bundles are too large to commit, so a record can cite an artifact the verifier cannot read. The
+   manifest's sha256 chain plus the committed `stdout.log` is the cheapest tether; the residual — a
+   plausible-but-wrong manifest — is retired only by a spot re-run, same as risk 3 in rev 15.
+5. **One serialized hardware resource.** `#127`, `#132`, `#117`'s acceptance, `#126`'s known scene,
+   and the owed reruns (`#71`, `#76`) all queue behind one manual session. Batch cheapest-first, in
+   one room, and do not put a build change in the middle of a run.
+6. **Capture scope creep.** "Record everything" is bounded by wall-clock and bytes: opt-in, a time
+   cap, and a size cap in the recorder. An always-on full-reply dump in the hot path would become the
+   performance problem it is meant to measure.
 7. **Verification debt.** Claims tagged `[inferred]` that code depends on: the parked
-   `OQ-S7/S9/S10/S11` residuals, `OQ-S2`/`S3`, and the tips/control rows `#9` left `[inferred]`.
-8. **The dispatcher's own context — mitigation applied, and now measurable.** One long-lived
-   session on a 1M window, compacting roughly every **10–15 h**, which puts its verbatim memory
-   horizon at about half a day. The failure mode is judgment drift on a summary, not a crash, and
-   this repo has paid for it once (rev 7 → rev 8). Board compaction (`H1`) is landed; session
-   compaction (`H4`) carries the measurement, the config decision, and the cycle-3 test.
+   `OQ-S7/S9/S11` residuals, `OQ-S2`, and the tips/control rows `#9` left `[inferred]`. Each keeps
+   its trigger; none is on the pivot's path.
+8. **The user's dylib may not be the slice we specced.** Every ABI claim was recovered from one
+   pinned slice. The loader checks only that the path exists. Cheapest retirement: verify the hash at
+   load and refuse on mismatch (`A2`'s third consequence).
+9. **The exposure drift could contaminate a ground-truth run.** `#137` records the slider falling
+   from 900 to 1 in the vendor app's session. If the drift is ours, a `#126` capture at exposure 1 is
+   a different measurement. Cheapest retirement: `#137`'s read of the write path **before** `#126`.
+10. **The dispatcher's own context.** One long-lived session on a 1M window, compacting roughly every
+    10–15 h. Mitigations landed (`H1`, `H4`); the failure mode is judgment drift on a summary, not a
+    crash. Keep the board the single queue and the roadmap a pointer to it.
 
 ## Next round, as work-order seeds
 
-For the dispatcher to expand — not dispatches in themselves.
+For the dispatcher to expand — not dispatches in themselves. Ordered so each item's input exists when
+it starts.
 
-1. **`#96` — Phase A, the protocol spec** → recon: the RPC method set, the vendor-command framing
-   (magic `0x47`/'MG', the 8-byte header, GET/SET_PROPERTY, the v1.1 list ops, memory-read opcode
-   25), the property map, and the flash-read transport — from the captures. **G-A**, and the pivot's
-   only hard prerequisite. **Wall:** `docs/recon/**`; the captures are evidence, the findings are
-   what ships.
-2. **`#98` — Phase B, the C1 client** → builder (after G-A): a msgpack-RPC + GVCP client reproducing
-   a scan — open streams, pull IR, drive the laser and exposure loops, stop. At the end, OBScan and
-   libOrbbecSDK are gone. **Wall:** `tools/`; no header change.
-3. **`#95` — G-C, the calibration payloads** → recon: the laser-plane struct, the thermal entries,
-   and the checksum (not CRC-32 or XOR — the device's lookup table is the lead). Gates a *correct*
-   `#99`. **Wall:** `docs/recon/**`.
-4. **`#97` — G-B, the macOS privileged-access decision** → operator: own helper vs system extension
-   vs a thin daemon, with reasoning. **The single biggest unknown**, and cheap as a decision. Gates
-   `#100`.
-5. **`#99` — Phase C, own the math** → builder (after `#98`): laser-line extraction → triangulation →
-   fusion → tracking, each A/B-tested against the vendor's output while it still exists.
-6. **`#100` — Phase D, replace the daemon** → builder (after `#98` **and** `#97`): UVC + HID + the
-   vendor channel, behind `#97`'s chosen shape.
-7. **`#101` / `#102`** → operator + recon: three short single-action captures (pause/resume, mode
-   switch, slider) to close G-D; a read-only capture audit to confirm no flash *writes* are required.
+1. **Board corrections first (dispatcher, `docs/recomp/**`).** When PR #349 lands: `#112` → `DONE`;
+   `#113` → `TODO` with its real blockers (P2/`#139`, `#136`, `#114`); adopt `#137`/`#138`/`#139`;
+   close `#86` (subsumed by `#94`) and `#123` (delivered by `#128`, with the measured corpus, not the
+   old ≈162 k expectation). File P1–P7 below as rows. **Wall:** `PLAN.md` only — the roadmap does not
+   apply them.
+2. **P1 — `raptor_client` reads the 11-element array and records every reply** → builder. Parse the
+   array form (`e4` payload, "all buffers empty" = no-data), keep the bare-bin path, count
+   data-vs-empty per port, add `--capture DIR` with the manifest, and a selftest over the recorded
+   array (including the empty form). **Wall:** `tools/raptor_client/**`; no header change. This is
+   `#127`'s code half and `#132`'s tool.
+3. **P2 — finish the tick instrument** → builder. `#139`'s pacing-wait measurement, `#134`'s two
+   missing segments (exposure re-assert, cloud release), a total-vs-nominal line, and broadcast
+   per-client counters. No behaviour change. **Wall:** `tools/scan_server/**`.
+4. **P3 — the HUD's freshness readout** → builder. The server carries its tick timestamp and
+   sequence; the HUD renders the end-to-end age (p50/p95) and keeps the two fps numbers labelled as
+   client clocks. This is the target `#113` should be measured against. **Wall:**
+   `tools/scan_server/**` + `ui/**`.
+5. **`#127` — the live reply dump** → hardware. `--replay … --dump-replies` (or `--live` with the
+   same flag): record the live array's shape and contents. Also `#117`'s live replay acceptance.
+   **Wall:** `tests/results/**`; a record with the raw log and the bundle manifest.
+6. **`#132` — the gap-free capture and the band rule** → hardware, then recon. ≥ 100 consecutive
+   replies on 10010/10013, full replies and provenance, analysed in the row's stated order (e1
+   monotonic, 0xFF phase, total mod 1920, height 1200, e3/e2, planes, one known column). **Wall:**
+   the record + bundle; the analysis lands in `docs/recon/**`.
+7. **The offline recon batch** → recon, no device: `#136` (pipeline data-flow map), `#138` (IMU
+   layout), P4 (pull semantics), P5 (the 208-B segments and op-31 structures). One row per session
+   per the step budget; each names its source capture and its residual. **Wall:** `docs/recon/**`.
+8. **The operator's capture session (P6) and `#97`** → operator. One capture that switches the three
+   scan modes, one pause/resume, one exposure-slider move, and a power-on window — it closes `#101`'s
+   owed list and `#114`'s mode mapping. `#97` is the privileged-access decision and still gates
+   `#100`. **Wall:** the capture set; the record in `tests/results/**`.
+9. **P7 — the calibration validation run** → hardware + recon, after P1: op-25's returned length, the
+   checksum, the plane struct's field map and the session-dir schema (`#95`'s residuals). It gates a
+   correct `#99`, not its start. **Wall:** the record; `docs/recon/**` for the decode.
 
-Also live and small: `#90` (the guard), `#92`, `#93` (a real UI debounce bug). And the **owed
-reruns** — one hardware session covering `#65`, `#66`, `#71`, `#73`, `#76`, `#77`, `#89` — which stay
-queued because they are the only open items that can still *fail*.
+Also live and small: `#137` (the exposure write-path read), `#93` (a UI debounce bug), and the owed
+`HW` reruns (`#71`, `#76`) — below the pivot, because they are evidence on merged work and can still
+fail.
 
-**Ordering note.** A→B→C→D is dependency, not preference. `#97` is deliberately placed early despite
-gating D, because a late answer reshapes C2; `#95` runs parallel to A/B because it gates C's
-correctness, not its start.
+**Ordering note.** P1/P2 are built before the room so the run produces a bundle and a trace; `#127`
+is the cheapest decisive run and should go first in the room; `#132` follows in the same session if
+the capture is ready. The recon batch runs in parallel throughout — it needs no device. `#97` is
+placed with the operator because it is a decision, not a measurement.
 
 ## Superseded plans
+
+- **2026-10-19 rev 20 → rev 21 — capture and instrument, and the frame path becomes their first
+  consumer.** Rev 20 aimed at `#105` as "get frames out"; the board then answered two links of it
+  (`#122`'s envelope unwrap, `#131`'s named 11-element array), so the remaining question is the
+  band rule and the pixel scale — an **evidence** problem. The operator's scope input (telemetry on
+  performance-sensitive code; capture every hardware artifact even before its decoder exists) is
+  adopted with one amendment: name the surfaces and the schema, do not build a framework ahead of
+  its consumers. `#132` is promoted as the round's first run, with a live recorder (P1) so the next
+  decode needs no new capture. Reversal reason: the board's own evidence plus an operator priority
+  input, not a change of target.
+
+- **2026-10-19 rev 19 → rev 20 — the agent-structure proposal (E1–E10), parked behind the pivot.**
+  Rev 20 recorded the dispatcher's four answers and the measured drift in the six agent files, and
+  sequenced only E5 now. It did not re-rank the product work; its objective stayed rev 19's `#105`.
+  Superseded because the product evidence moved (see rev 21), not because the harness proposal was
+  wrong — E1–E4/E7–E10 still park.
 
 - **2026-10-19 rev 18 → rev 19 — the pivot's first live run re-ranks the board.** Phase B's code
   landed (`#98`) and its first session pulled **zero frames**, so `#105` now gates `#98`'s acceptance
