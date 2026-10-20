@@ -200,8 +200,13 @@
     // headroom so the cloud isn't touching the viewport edges.
     viewDistance = (radius / Math.tan(fovRad() / 2)) * 1.6;
   }
-  const latencySamples = [];
-  const kLatencyWindow = 30;
+  // Row #142: the end-to-end frame age, replacing the old "latency" mean
+  // (which was the same idea done worse: no server-clock offset, no render
+  // delay). See ui/frame_age.js for the arithmetic and the clock rules.
+  const frameAge = new FrameAge.Tracker(FrameAge.DEFAULT_WINDOW_MS);
+  let pendingAge = null; // { ageMs, receiptPerfMs } for the frame about to render
+  const kAgeLineWidth = 150;
+  const kAgeLineHeight = 22;
 
   let connectionState = "connecting";
   let lastError = "";
@@ -319,9 +324,13 @@
       underPositions = new Float32Array(under);
       renderer.uploadOverlay(underPositions);
 
-      const latency = Date.now() - captureTimestampMs;
-      latencySamples.push(latency);
-      if (latencySamples.length > kLatencyWindow) latencySamples.shift();
+      // Row #142: age at receipt = server clock now - the frame's t_capture;
+      // the render delay is added when draw() actually renders it. t_capture
+      // is the server tick's read time (row #136 map), so this is tick->render.
+      const ageAtReceipt = frameAge.ageAtReceipt(captureTimestampMs, Date.now());
+      if (ageAtReceipt !== null) {
+        pendingAge = { ageMs: ageAtReceipt, receiptPerfMs: performance.now() };
+      }
     };
   }
   initRenderer().then((ok) => {
@@ -368,6 +377,13 @@
       status.effectiveTracking = effectiveTracking(status.tracking);
     }
     latestStatus = status;
+
+    // Row #142: the server's wall clock, on the same epoch as the frames'
+    // t_capture/t_server. Every status re-estimates the offset, so a clock
+    // step does not leave a stale correction in place.
+    if (Number.isFinite(status.server_now_ms)) {
+      frameAge.noteServerClock(status.server_now_ms, Date.now());
+    }
 
     // FOV is a real two-position switch on the actual scanner hardware
     // (see obscan_api.h's ObScanFov) — map it to a wider/narrower camera
@@ -455,6 +471,11 @@
     const view = translation(-viewCenter[0], -viewCenter[1], -viewCenter[2] - viewDistance);
     const matrix = multiply(proj, view);
     renderer.draw(matrix, brightness, pointCount, underCount);
+    // Row #142: the frame just went to the GPU — that is its render time.
+    if (pendingAge !== null) {
+      frameAge.noteRendered(pendingAge.ageMs, pendingAge.receiptPerfMs, performance.now());
+      pendingAge = null;
+    }
     framePending = false;
     renderFrames++;
 
@@ -488,24 +509,35 @@
     return pct.toFixed(0) + "% covered, " + underCount + " under-covered pts";
   }
 
-  function avgLatency() {
-    if (latencySamples.length === 0) return null;
-    return latencySamples.reduce((a, b) => a + b, 0) / latencySamples.length;
+  // Row #142: the rolling-line ceiling. Scale to the worst recent age so the
+  // shape is readable, but never below 50 ms (a flat line at 0 would hide the
+  // interesting range) and never above 5 s (so one outlier does not flatten
+  // everything else).
+  function ageCeilingMs(stats) {
+    const worst = stats && stats.n ? stats.p95 * 1.5 : 0;
+    return Math.min(5000, Math.max(50, Math.ceil(worst)));
   }
 
   function updateHud() {
-    const avg = avgLatency();
-    const latencyText = avg === null ? "--" : avg.toFixed(1) + " ms";
-    const latencyClass = avg !== null && avg > 80 ? "warn" : "ok";
     const scanState = latestStatus ? latestStatus.state : "--";
     const scanMode = latestStatus ? latestStatus.mode : "--";
+    const ageStats = frameAge.stats();
+    const ageText = FrameAge.describe(ageStats);
+    const ageClass = ageStats.n && ageStats.p95 > 250 ? "warn" : "ok";
+    const agePoints = FrameAge.sparkPoints(
+      frameAge.series(), performance.now(), FrameAge.DEFAULT_WINDOW_MS,
+      kAgeLineWidth, kAgeLineHeight, ageCeilingMs(ageStats));
     hud.innerHTML =
       '<span class="label">backend</span>  <span class="value">' + (renderer ? renderer.name : "--") + "</span>\n" +
       '<span class="label">status</span>  <span class="value">' + connectionState + "</span>\n" +
       '<span class="label">scan</span>    <span class="value">' + scanState + " (" + scanMode + ")</span>\n" +
-      '<span class="label">latency</span>  <span class="' + latencyClass + '">' + latencyText + "</span>\n" +
-      '<span class="label">data</span>     <span class="value">' + dataFps.toFixed(1) + " fps</span>\n" +
-      '<span class="label">render</span>   <span class="value">' + renderFps.toFixed(1) + " fps</span>\n" +
+      '<span class="label">frame age</span> <span class="' + ageClass + '">' + ageText + "</span>\n" +
+      '<span class="label">          </span> <span class="label">tick&rarr;render, server clock</span>\n' +
+      '<span class="label">          </span> <svg width="' + kAgeLineWidth + '" height="' + kAgeLineHeight + '" ' +
+      'viewBox="0 0 ' + kAgeLineWidth + " " + kAgeLineHeight + '" preserveAspectRatio="none">' +
+      '<polyline points="' + agePoints + '" fill="none" stroke="#6fa8dc" stroke-width="1.2"/></svg>\n' +
+      '<span class="label">data</span>     <span class="value">' + dataFps.toFixed(1) + " fps</span> <span class=\"label\">client</span>\n" +
+      '<span class="label">render</span>   <span class="value">' + renderFps.toFixed(1) + " fps</span> <span class=\"label\">client</span>\n" +
       '<span class="label">points</span>   <span class="value">' + pointCount + "</span>\n" +
       '<span class="label">coverage</span> <span class="value">' + coverageText() + "</span>\n" +
       '<span class="label">tracking</span> <span class="value">' + trackingText() + "</span>\n" +
