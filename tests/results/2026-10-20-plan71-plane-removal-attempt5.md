@@ -39,13 +39,15 @@ with code 0`).
   full_detail_chunks=2`; enabled `cloud_frames=161 full_detail_chunks=2`
 - `obscan_scan_plane_remove(true) -> OB_SCAN_SUCCESS (0)` confirmed fired
   in the enabled run's log (not present in baseline's, as expected)
-- Raw logs: `2026-10-20-plan71-plane-removal-attempt5-baseline.log`,
-  `2026-10-20-plan71-plane-removal-attempt5-enabled.log` (same directory)
-- Recordings (outside the repo, per convention):
+- Raw logs:
+  - `2026-10-20-plan71-plane-removal-attempt5-baseline.log` — sha256 `d429607a3e40f496b2874b27e82384d779a8429abc015aa135c14fc3a7882581`
+  - `2026-10-20-plan71-plane-removal-attempt5-enabled.log` — sha256 `0b99ce22c68f2cfdedcbd50ea8b5cc8f3a501c036bf3312c3cf1fcd6943cd069`
+- Recordings (outside the repo, per convention; external, not in-repo archive
+  artifacts):
   - `~/captures/plan71-a5-baseline.rec` — 15,004,828 bytes — sha256
-    `d1fbdeb80a2aca3ed56bd601ad83605103d9465b116040f3203c108c0943d985`
+    d1fbdeb80a2aca3ed56bd601ad83605103d9465b116040f3203c108c0943d985 (external)
   - `~/captures/plan71-a5-enabled.rec` — 9,976,704 bytes — sha256
-    `5d8f383e8bbbf33b0cb24c716d1aa26ad29f16bb97af63a21666c632cfd298c3`
+    5d8f383e8bbbf33b0cb24c716d1aa26ad29f16bb97af63a21666c632cfd298c3 (external)
 
 ## The per-tick point-count series (the metric #71 actually calls for)
 

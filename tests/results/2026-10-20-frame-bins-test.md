@@ -32,6 +32,8 @@ python3 -I tools/frame_bins/test_frame_bins.py
 ```
 (also confirmed via `ctest --test-dir build -R frame_bins_test`)
 
+- Raw log: 2026-10-20-frame-bins-test.raw.log (same directory)
+
 ## Result
 
 - Exit code: `0` (both the direct run and via ctest)
