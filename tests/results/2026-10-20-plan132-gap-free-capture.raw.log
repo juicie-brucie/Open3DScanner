@@ -1,0 +1,10 @@
+[live] start_stream failed: rpclib: server could not find function 'ob_rpc_start_stream' with argument count 5.
+[capture] recording every reply into /Users/brucemackay/captures/plan132-ir (bounds: 30 s, 500000000 B)
+[live] connected 127.0.0.1:10013 (pull_ms=0, per-call logging=on)
+[capture] 1 record(s), 140 byte(s) written
+[capture] manifest: /Users/brucemackay/captures/plan132-ir/manifest.json
+[live] start_stream failed: rpclib: server could not find function 'ob_rpc_start_stream' with argument count 5.
+[capture] recording every reply into /Users/brucemackay/captures/plan132-depth (bounds: 30 s, 500000000 B)
+[live] connected 127.0.0.1:10010 (pull_ms=0, per-call logging=on)
+[capture] 1 record(s), 140 byte(s) written
+[capture] manifest: /Users/brucemackay/captures/plan132-depth/manifest.json
