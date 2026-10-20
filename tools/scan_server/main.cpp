@@ -5,6 +5,10 @@
 //       Synthetic, animated sphere — exists so the UI's render/latency
 //       pipeline can be built and measured without a physical scanner.
 //
+//   scan_server --synthetic-load <port> <hz> <points>
+//       Device-free load harness (row #151): the synthetic server at a chosen
+//       publish rate and frame size. Not the default path.
+//
 //   Per-tick latency instrumentation (row #111; measurement only) is on by
 //   default and prints a `[perf] window` line every 5 s plus a summary at
 //   teardown. Set OPENSCANNER_TICK_PERF=0 to disable it.
@@ -91,6 +95,23 @@
 namespace {
 
 namespace perf = openscanner::perf;  // row #111 tick instrumentation
+
+// Row #151 addendum: a cheap content hash for the cloud-change rate. The first
+// 256 points plus the count are enough to tell "new content" from "same
+// content, delivered again" without hashing 240 KB every tick.
+uint64_t CloudHash(const void* data, size_t element_size, uint32_t count) {
+    uint64_t h = 1469598103934665603ULL;  // FNV-1a offset basis
+    const uint32_t n = count < 256 ? count : 256;
+    const auto* bytes = reinterpret_cast<const uint8_t*>(data);
+    const size_t limit = static_cast<size_t>(n) * element_size;
+    for (size_t b = 0; b < limit; ++b) {
+        h ^= bytes[b];
+        h *= 1099511628211ULL;
+    }
+    h ^= count;
+    h *= 1099511628211ULL;
+    return h;
+}
 
 // Quit-path instrumentation (row #79): append-only trace shared with the
 // app. write(2) on a pre-opened fd so the signal handler can log safely.
@@ -475,7 +496,7 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
     ++g_recorded_frame_count;
 }
 
-void RunSyntheticServer(uint16_t port) {
+void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0, bool use_deadline = false) {
     openscanner::WsBroadcastServer server;
     ConfigureStatic(server);
     ControlState control;
@@ -500,7 +521,14 @@ void RunSyntheticServer(uint16_t port) {
     std::printf("Streaming synthetic point-cloud frames on ws://0.0.0.0:%u\n", port);
     std::printf("Open ui/index.html in a browser to view it.\n");
 
-    std::vector<Vec3> base_points = MakeSpherePoints(kPointGridSize);
+    // Row #151: a device-free load harness may pick the rate and the frame size;
+    // the defaults (30 Hz, the original 48x48 sphere) are unchanged.
+    if (points == 0) points = static_cast<uint32_t>(kPointGridSize * kPointGridSize);
+    const int grid = static_cast<int>(std::ceil(std::sqrt(static_cast<double>(points))));
+    std::vector<Vec3> base_points = MakeSpherePoints(grid);
+    if (base_points.size() > points) base_points.resize(points);
+    const double interval_ms = 1000.0 / hz;
+    std::printf("[synthetic] rate=%.1f Hz points=%zu\n", hz, base_points.size());
     uint32_t frame_id = 0;
     double angle = 0.0;
     double last_status_broadcast_ms = 0.0;
@@ -508,6 +536,9 @@ void RunSyntheticServer(uint16_t port) {
     // baseline runnable without a device reports it too. Pose/getter are N/A.
     perf::TickPerf tick_perf;
     if (!tick_perf.enabled()) std::printf("[perf] per-tick timing disabled by OPENSCANNER_TICK_PERF=0\n");
+    perf::CloudChangeTracker cloud_tracker;
+    int64_t last_cloud_flush_us = perf::TickPerf::SteadyNowUs();
+    int64_t next_deadline_us = perf::TickPerf::SteadyNowUs() + static_cast<int64_t>(interval_ms * 1000.0);
 
     while (true) {
         auto tick_start = std::chrono::steady_clock::now();
@@ -543,6 +574,7 @@ void RunSyntheticServer(uint16_t port) {
                 RotateY(&frame_points, angle);
                 angle += 0.02;
                 frame_points_count = static_cast<uint32_t>(frame_points.size());
+                cloud_tracker.Observe(CloudHash(frame_points.data(), sizeof(Vec3), frame_points_count));
                 buf = BuildFrame(frame_id++, now_ms, reinterpret_cast<const float*>(frame_points.data()),
                                  frame_points_count);
             }
@@ -557,12 +589,25 @@ void RunSyntheticServer(uint16_t port) {
         }
 
         int64_t s_wait_us = 0;
-        auto elapsed = std::chrono::steady_clock::now() - tick_start;
-        auto sleep_for = std::chrono::milliseconds(static_cast<int64_t>(kFrameIntervalMs)) -
-                          std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
-        if (sleep_for > std::chrono::milliseconds(0)) {
+        if (use_deadline) {
+            // Row #151 addendum: an absolute deadline, so the wait does not add
+            // the loop's own work to every period.
+            next_deadline_us += static_cast<int64_t>(interval_ms * 1000.0);
             perf::SegTimer t(&s_wait_us);
-            std::this_thread::sleep_for(sleep_for);
+            std::this_thread::sleep_until(
+                std::chrono::steady_clock::time_point(std::chrono::microseconds(next_deadline_us)));
+        } else {
+            auto elapsed = std::chrono::steady_clock::now() - tick_start;
+            auto sleep_for = std::chrono::milliseconds(static_cast<int64_t>(interval_ms)) -
+                              std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+            if (sleep_for > std::chrono::milliseconds(0)) {
+                perf::SegTimer t(&s_wait_us);
+                std::this_thread::sleep_for(sleep_for);
+            }
+        }
+        if (perf::TickPerf::SteadyNowUs() - last_cloud_flush_us >= 5000000) {
+            cloud_tracker.PrintAndReset("window", 5.0);
+            last_cloud_flush_us = perf::TickPerf::SteadyNowUs();
         }
         {
             perf::TickPerf::Sample sample;
@@ -572,7 +617,7 @@ void RunSyntheticServer(uint16_t port) {
             sample.points = frame_points_count;
             sample.bytes = frame_bytes;
             sample.clients = static_cast<uint32_t>(server.ConnectedClientCount());
-            sample.nominal_wait_us = static_cast<int64_t>(kFrameIntervalMs * 1000.0);
+            sample.nominal_wait_us = static_cast<int64_t>(interval_ms * 1000.0);
             tick_perf.EndTick(sample);
         }
     }
@@ -1043,6 +1088,8 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     // Row #111: measurement only — the cadence and call order below are unchanged.
     perf::TickPerf tick_perf;
     if (!tick_perf.enabled()) std::printf("[perf] per-tick timing disabled by OPENSCANNER_TICK_PERF=0\n");
+    perf::CloudChangeTracker cloud_tracker;
+    int64_t last_cloud_flush_us = perf::TickPerf::SteadyNowUs();
     uint32_t max_points_seen = 0;
     // The point count of the last published cloud (row #158): the plane
     // transition line carries it, so a run's point-count series can be
@@ -1212,6 +1259,11 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                 status = lib.obscan_scan_get_model_point_color_clouds(scan, &cloud, &bbox, &published_count);
             }
             if (status == OB_SCAN_SUCCESS) {
+                if (cloud.num_points > 0 && cloud.points != nullptr) {
+                    // Row #151 addendum: is the content new, or the same cloud
+                    // delivered again? Count only real content changes.
+                    cloud_tracker.Observe(CloudHash(cloud.points, sizeof(ObScanPoint), cloud.num_points));
+                }
                 max_points_seen = std::max(max_points_seen, cloud.num_points);
                 last_cloud_points = cloud.num_points;  // row #158: the transition line's point count
                 if (cloud.num_points > 0 && cloud.points != nullptr) {
@@ -1347,10 +1399,15 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             sample.nominal_wait_us = static_cast<int64_t>(kLiveTickIntervalMs) * 1000;
             tick_perf.EndTick(sample);
         }
+        if (perf::TickPerf::SteadyNowUs() - last_cloud_flush_us >= 5000000) {
+            cloud_tracker.PrintAndReset("window", 5.0);
+            last_cloud_flush_us = perf::TickPerf::SteadyNowUs();
+        }
     }
 
     // Row #111: print before the teardown, which can hang (#89).
     tick_perf.Summary();
+    cloud_tracker.PrintAndReset("final", 5.0);
 
     if (!hardware_paused) {
         status = lib.obscan_scan_pause(scan);
@@ -1844,6 +1901,16 @@ int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
         std::unique_ptr<openscanner::CaptureSource> src(new ReplayCaptureSource(argc, argv));
         return src->run();
+    }
+
+    if (argc >= 2 && std::string(argv[1]) == "--synthetic-load") {
+        // Row #151: device-free load harness (not the product default path).
+        uint16_t port = argc > 2 ? static_cast<uint16_t>(std::atoi(argv[2])) : 8787;
+        double hz = argc > 3 ? std::atof(argv[3]) : 10.0;
+        uint32_t points = argc > 4 ? static_cast<uint32_t>(std::atoi(argv[4])) : 20000;
+        const bool use_deadline = argc > 5 && std::string(argv[5]) == "deadline";
+        RunSyntheticServer(port, hz, points, use_deadline);
+        return 0;
     }
 
     if (argc >= 2 && std::string(argv[1]) == "--synthetic") {

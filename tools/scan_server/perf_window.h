@@ -329,4 +329,89 @@ private:
     bool enabled_ = true;
 };
 
+// Row #151 addendum: does the cloud *content* change, or only its delivery?
+// Hash the payload every tick and report the change rate and the run lengths
+// (how many consecutive ticks carry the same hash). A delivery rate of 24 Hz
+// with a much lower content-change rate means the source is slower than the
+// listener; equal rates mean every delivered frame is new.
+class CloudChangeTracker {
+public:
+    void Observe(uint64_t hash) {
+        ++ticks_;
+        if (!have_) {
+            have_ = true;
+            last_hash_ = hash;
+            return;
+        }
+        if (hash == last_hash_) {
+            ++current_run_;
+            return;
+        }
+        ++changes_;
+        Push(runs_, run_n_, current_run_ + 1);  // ticks in the run that just ended
+        current_run_ = 0;
+        last_hash_ = hash;
+    }
+
+    struct PercentilesOf {
+        int64_t p50 = 0;
+        int64_t p95 = 0;
+        int64_t max = 0;
+    };
+    struct Snapshot {
+        int64_t ticks = 0;
+        int64_t changes = 0;
+        double change_rate = 0.0;  // changes per second over the window
+        PercentilesOf run;         // ticks per content run
+    };
+
+    Snapshot TakeSnapshot(double window_s) const {
+        Snapshot snap;
+        snap.ticks = ticks_;
+        snap.changes = changes_;
+        snap.change_rate = window_s > 0 ? static_cast<double>(changes_) / window_s : 0.0;
+        snap.run.p50 = Percentile(runs_, run_n_, 50);
+        snap.run.p95 = Percentile(runs_, run_n_, 95);
+        snap.run.max = Percentile(runs_, run_n_, 100);
+        return snap;
+    }
+
+    void PrintAndReset(const char* tag, double window_s) {
+        const Snapshot snap = TakeSnapshot(window_s);
+        std::printf("[perf] cloud %s %.1fs clock=steady_clock ticks=%lld changes=%lld change_rate=%.1f/s"
+                    " run_ticks p50=%lld p95=%lld max=%lld\n",
+                    tag, window_s, static_cast<long long>(snap.ticks), static_cast<long long>(snap.changes),
+                    snap.change_rate, static_cast<long long>(snap.run.p50),
+                    static_cast<long long>(snap.run.p95), static_cast<long long>(snap.run.max));
+        std::fflush(stdout);
+        ticks_ = changes_ = run_n_ = 0;
+        current_run_ = 0;
+        have_ = false;
+    }
+
+private:
+    static constexpr int kCapacity = 512;
+    static void Push(int64_t* buffer, int& count, int64_t value) {
+        if (count < kCapacity) buffer[count++] = value;
+    }
+    static int64_t Percentile(const int64_t* values, int count, int percent) {
+        if (count <= 0) return 0;
+        int64_t scratch[kCapacity];
+        std::copy(values, values + count, scratch);
+        std::sort(scratch, scratch + count);
+        int index = (percent * count + 99) / 100 - 1;
+        if (index < 0) index = 0;
+        if (index >= count) index = count - 1;
+        return scratch[index];
+    }
+
+    int64_t ticks_ = 0;
+    int64_t changes_ = 0;
+    int64_t current_run_ = 0;
+    uint64_t last_hash_ = 0;
+    bool have_ = false;
+    int64_t runs_[kCapacity] = {};
+    int run_n_ = 0;
+};
+
 }  // namespace openscanner::perf

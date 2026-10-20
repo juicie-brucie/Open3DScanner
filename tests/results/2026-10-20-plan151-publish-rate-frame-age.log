@@ -1,0 +1,50 @@
+# raw: #151 P3 - the frame age and the drop rate at the load harness
+# command: node ui/frame_age_test.js build/tools/scan_server/scan_server --synthetic-load <hz> 20000 6.5
+# (ctest 'ui_frame_age_load_test' runs the 50 Hz cell; the 24 Hz cell is the source's rate)
+# build: RelWithDebInfo, no device, 1 client, 2026-10-20
+# --- requested=24Hz (--synthetic-load 19501 24 20000 6.5) ---
+[frame-age] age at receipt = (local wall + offset) - t_capture              PASS
+[frame-age] no server clock yet -> age is null, not a garbage number        PASS
+[frame-age] frame age = age at receipt + local render delay                 PASS
+[frame-age] a render delay cannot be negative                               PASS
+[frame-age] the clock offset is re-estimated on every status message        PASS
+[frame-age] percentiles are nearest-rank, like the server's perf_window.h   PASS
+[frame-age] the rolling window drops samples older than 60 s                PASS
+[frame-age] the sparkline: oldest left, newest right, 0 ms at the floor     PASS
+[frame-age] synthetic: a status clock + a frame give a real age             PASS
+[frame-age] synthetic HUD line: p50 0.1 / p95 0.1 ms
+[frame-age] load: the harness published frames and they all arrived         PASS
+[frame-age] load: the frame age is real and plausible                       PASS
+[frame-age] load: hz=24 points=20000 window=6.5s frames=127 published=127 missing=0 drop_rate=0.00%
+[frame-age] load: handled 127 frames in 5.50s = 22.90/s (the frames before the first status message carry no clock and are not counted)
+[frame-age] load HUD line: p50 0.8 / p95 2.1 ms (min -0.2 / max 3.2 ms; the browser's render delay is stubbed at 1 ms)
+[frame-age] server: [worker] Serving UI from: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build2/build/tools/scan_server/../../../ui
+[frame-age] server: Streaming synthetic point-cloud frames on ws://0.0.0.0:63631
+[frame-age] server: Open ui/index.html in a browser to view it.
+[frame-age] server: [synthetic] rate=24.0 Hz points=20000
+[frame-age] server: [perf] cloud window 5.0s clock=steady_clock ticks=115 changes=114 change_rate=22.8/s run_ticks p50=1 p95=1 max=1
+[frame-age] server: [perf] window 5.0s clock=steady_clock n=115 rate=22.9/s points=20000.0 bytes=240055.9 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.59 p95=1.09 max=1.73 ms | bcast p50=0.07 p95=0.21 max=0.48 ms | wait p50=42.35 p95=46.01 max=46.03 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=0.68 p95=4.34 max=4.36 ms | residual p50=0.00 p95=0.01 max=0.04 ms | tick p50=43.17 p95=46.66 max=46.94 ms | nominal=41.67 ms | clients=1.0 | exposure n=0 | bcast_per_client=68.59 us (derived mean; per-client send stats need engine/**)
+[frame-age] ok (0 failure(s))
+# --- requested=50Hz (--synthetic-load 19502 50 20000 6.5) ---
+[frame-age] age at receipt = (local wall + offset) - t_capture              PASS
+[frame-age] no server clock yet -> age is null, not a garbage number        PASS
+[frame-age] frame age = age at receipt + local render delay                 PASS
+[frame-age] a render delay cannot be negative                               PASS
+[frame-age] the clock offset is re-estimated on every status message        PASS
+[frame-age] percentiles are nearest-rank, like the server's perf_window.h   PASS
+[frame-age] the rolling window drops samples older than 60 s                PASS
+[frame-age] the sparkline: oldest left, newest right, 0 ms at the floor     PASS
+[frame-age] synthetic: a status clock + a frame give a real age             PASS
+[frame-age] synthetic HUD line: p50 0.0 / p95 0.0 ms
+[frame-age] load: the harness published frames and they all arrived         PASS
+[frame-age] load: the frame age is real and plausible                       PASS
+[frame-age] load: hz=50 points=20000 window=6.5s frames=239 published=239 missing=0 drop_rate=0.00%
+[frame-age] load: handled 239 frames in 5.51s = 43.19/s (the frames before the first status message carry no clock and are not counted)
+[frame-age] load HUD line: p50 1.4 / p95 2.5 ms (min -0.5 / max 8.3 ms; the browser's render delay is stubbed at 1 ms)
+[frame-age] server: [worker] Serving UI from: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build2/build/tools/scan_server/../../../ui
+[frame-age] server: Streaming synthetic point-cloud frames on ws://0.0.0.0:63649
+[frame-age] server: Open ui/index.html in a browser to view it.
+[frame-age] server: [synthetic] rate=50.0 Hz points=20000
+[frame-age] server: [perf] cloud window 5.0s clock=steady_clock ticks=217 changes=216 change_rate=43.2/s run_ticks p50=1 p95=1 max=1
+[frame-age] server: [perf] window 5.0s clock=steady_clock n=217 rate=43.2/s points=20000.0 bytes=240046.6 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.60 p95=1.07 max=3.33 ms | bcast p50=0.07 p95=0.27 max=1.22 ms | wait p50=22.56 p95=25.01 max=25.15 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=2.56 p95=5.01 max=5.15 ms | residual p50=0.00 p95=0.01 max=1.00 ms | tick p50=23.55 p95=25.67 max=26.11 ms | nominal=20.00 ms | clients=1.0 | exposure n=0 | bcast_per_client=68.63 us (derived mean; per-client send stats need engine/**)
+[frame-age] ok (0 failure(s))
