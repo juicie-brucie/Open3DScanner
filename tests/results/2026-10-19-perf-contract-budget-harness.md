@@ -48,8 +48,8 @@ product's own encoder and broadcast, in process).
 
 ## The correction that reorganised the contract: the live tick's split
 
-**#141's live split** (the `[perf] summary` line of the 2026-10-20 hardware run, 1,047 ticks; PR
-#376's record, `tests/results/2026-10-20-plan141-live-tick-split.md`) is the *hardware* half of the
+**#141's live split** (the `[perf] summary` line of the 2026-10-20 hardware run, 1,047 ticks; the
+record `tests/results/2026-10-20-plan141-live-tick-split.md`) is the *hardware* half of the
 profile, and it changes the contract:
 
 | segment | mean | max |

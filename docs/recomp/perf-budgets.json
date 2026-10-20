@@ -288,7 +288,7 @@
   "ingest": {
     "budget_us_per_frame": 1500.0,
     "measured_today_us_per_frame": 27620.0,
-    "derived_from": "the #141 live split (the [perf] summary line of the 2026-10-20 run, 1,047 ticks: post 0.45 ms mean / 1.40 max, getter 0.00, release 0.00, exposure 27.17 ms mean / 597.64 max): the ingest per consumed frame, excluding the pacing wait, is 27.62 ms today, of which 27.17 ms is the every-tick exposure re-assert - a value that has not changed, so it is waste (#153). The budget is the post segment's measured max (1.40 ms) with margin: it is what the ingest costs once the re-assert is on change only.",
+    "derived_from": "the #141 live split (tests/results/2026-10-20-plan141-live-tick-split.md, the [perf] summary line of the 2026-10-20 run, 1,047 ticks: post 0.45 ms mean / 1.40 max, getter 0.00, release 0.00, exposure 27.17 ms mean / 597.64 max): the ingest per consumed frame, excluding the pacing wait, is 27.62 ms today, of which 27.17 ms is the every-tick exposure re-assert - a value that has not changed, so it is waste (#153). The budget is the post segment's measured max (1.40 ms) with margin: it is what the ingest costs once the re-assert is on change only.",
     "note": "the pacing wait (102.99 ms mean) is the cadence, not the ingest (#113); the getter (0.00 ms) and the cloud release (0.00 ms) are free. The exposure re-assert is 98 % of today's ingest."
   },
   "synthetic": {

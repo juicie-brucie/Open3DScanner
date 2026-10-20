@@ -28,7 +28,7 @@ Apple M1, 8 cores / 17 GB, macOS 27.0.1, `sample` / `xctrace` / `vmmap` / `ps`.
 
 ### 1.2 The measured side — the live tick, on the device
 
-**#141's live split** (the `[perf] summary` line of the 2026-10-20 run, 1,047 ticks; PR #376's record,
+**#141's live split** (the `[perf] summary` line of the 2026-10-20 run, 1,047 ticks; the record
 `tests/results/2026-10-20-plan141-live-tick-split.md`). This is the *hardware* half of the profile, and
 it is the half that changed the contract:
 
