@@ -201,7 +201,11 @@ python3 scripts/perf-budget.py --factor 3      # check the budgets as if this ma
   ~13 s.
 * **It fails on a regression.** Each budget in `docs/recomp/perf-budgets.json` is compared with the
   measurement; the exit code is **1** if a measured budget is exceeded, **0** if every one is met,
-  and **2** if the harness could not run. The lower-end rows are a **projection**, not a gate: they
+  and **2** if the harness could not run.
+* **It is not a `ctest` entry, on purpose.** A performance budget on a shared CI machine fails for
+  reasons that are not regressions (the loader, the neighbours), and a red build for that would train
+  everyone to ignore it. It is run **on demand**, on a quiet machine, and its result is recorded —
+  which is what the record in `tests/results/` is. The lower-end rows are a **projection**, not a gate: they
   are reported as `OVER (target)` when the assumed target cannot sustain the rate, and the run still
   exits 0 — that is a finding for the operator, not a regression of the code.
 * **It is deterministic in shape, not in digits.** The machine is shared (load 2.0 – 7.2 during
