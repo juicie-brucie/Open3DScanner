@@ -119,6 +119,7 @@ public:
         int64_t wait_us = 0;
         int64_t exposure_us = 0;   // obscan_scan_config_combined_exposure_and_laser_current
         int64_t release_us = 0;    // obscan_scan_model_clouds_release
+        uint32_t exposure_applies = 0;  // how many times the exposure config was pushed this tick
         uint32_t points = 0;
         uint64_t bytes = 0;
         uint32_t clients = 0;      // connected at broadcast time (0 = no send)
@@ -147,6 +148,8 @@ public:
         Push(points_, points_n_, static_cast<int64_t>(sample.points));
         Push(bytes_, bytes_n_, static_cast<int64_t>(sample.bytes));
         Push(clients_, clients_n_, static_cast<int64_t>(sample.clients));
+        exposure_applies_ += sample.exposure_applies;
+        cumulative_exposure_applies_ += sample.exposure_applies;
         ++ticks_;
         cumulative_points_ += sample.points;
         cumulative_bytes_ += sample.bytes;
@@ -170,6 +173,7 @@ public:
         Percentiles tick;
         double mean_clients = 0.0;
         int64_t nominal_wait_us = 0;
+        uint32_t exposure_applies = 0;  // pushes in the window (row #153)
     };
 
     // Compute the current window without printing or resetting (used by the
@@ -188,6 +192,7 @@ public:
         snap.tick = PercentilesOf(periods_, period_n_);
         snap.mean_clients = clients_n_ > 0 ? static_cast<double>(Sum(clients_, clients_n_)) / clients_n_ : 0.0;
         snap.nominal_wait_us = last_nominal_wait_us_;
+        snap.exposure_applies = exposure_applies_;
         return snap;
     }
 
@@ -210,6 +215,7 @@ public:
                     static_cast<double>(max_overshoot_us_) / 1000.0,
                     " (wait - nominal; positive = the pacing call ran long)");
         std::printf(" residual_mean=%.2fms", static_cast<double>(cumulative_residual_us_) / ticks_ / 1000.0);
+        std::printf(" exposure_applies_total=%lld", static_cast<long long>(cumulative_exposure_applies_));
         std::printf("\n");
         std::fflush(stdout);
     }
@@ -239,15 +245,22 @@ private:
         std::printf(" | tick p50=%.2f p95=%.2f max=%.2f ms | nominal=%.2f ms | clients=%.1f",
                     snap.tick.p50 / 1000.0, snap.tick.p95 / 1000.0, snap.tick.max / 1000.0,
                     snap.nominal_wait_us / 1000.0, snap.mean_clients);
+        // Row #153: how many times the exposure config was pushed in this
+        // window — the skip is visible here (1 per window instead of one per
+        // tick).
+        std::printf(" | exposure n=%u", snap.exposure_applies);
         std::printf(" | bcast_per_client=%.2f us (derived mean; per-client send stats need engine/**)\n",
                     snap.mean_clients > 0 ? (snap.segment[kBroadcast].p50 / snap.mean_clients) : 0.0);
         std::fflush(stdout);
 
-        for (int s = 0; s < kSegmentCount; ++s) counts_[s] = 0;
+        for (int s = 0; s < kSegmentCount; ++s) {
+            counts_[s] = 0;
+        }
         period_n_ = points_n_ = bytes_n_ = 0;
         overshoot_n_ = 0;
         residual_n_ = 0;
         clients_n_ = 0;
+        exposure_applies_ = 0;
     }
 
     static Percentiles PercentilesOf(const int64_t* values, int count) {
@@ -300,6 +313,8 @@ private:
     int residual_n_ = 0;
     int64_t clients_[kCapacity] = {};
     int clients_n_ = 0;
+    uint32_t exposure_applies_ = 0;
+    long long cumulative_exposure_applies_ = 0;
     int64_t pending_work_us_ = 0;
     int64_t last_nominal_wait_us_ = 0;
 

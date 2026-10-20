@@ -1,0 +1,113 @@
+# Row #153 — the exposure/laser config on change only: the hardware-free evidence and the log analysis
+# Date: 2026-10-20
+# Every command below ran in this worktree. The vendor SDK was never loaded.
+
+=== 1. the hardware-free tests (ctest -LE hardware) ===
+
+Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build5/build
+      Start  1: tracking_status_test
+ 1/10 Test  #1: tracking_status_test .............   Passed    0.00 sec
+      Start  2: perf_window_test
+ 2/10 Test  #2: perf_window_test .................   Passed    0.00 sec
+      Start  3: exposure_apply_test
+ 3/10 Test  #3: exposure_apply_test ..............   Passed    0.00 sec
+      Start  4: bounded_watchdog_test
+ 4/10 Test  #4: bounded_watchdog_test ............   Passed    0.00 sec
+      Start  5: frame_bins_test
+ 5/10 Test  #5: frame_bins_test ..................   Passed    0.20 sec
+      Start  6: frame_decode_test
+ 6/10 Test  #6: frame_decode_test ................   Passed    0.22 sec
+      Start  7: raptor_client_selftest
+ 7/10 Test  #7: raptor_client_selftest ...........   Passed    0.00 sec
+      Start  8: raptor_client_reply_timeout
+ 8/10 Test  #8: raptor_client_reply_timeout ......   Passed    0.31 sec
+      Start  9: raptor_client_reply_dump
+ 9/10 Test  #9: raptor_client_reply_dump .........   Passed    0.06 sec
+      Start 10: raptor_client_capture
+10/10 Test #10: raptor_client_capture ............   Passed    0.03 sec
+
+100% tests passed out of 10
+
+Total Test time (real) =   0.84 sec
+exit: 0
+
+=== 2. the two tests that cover this row, directly ===
+$ build/tools/scan_server/exposure_apply_test
+[exposure_apply_test] PASS: the config is pushed on change only; auto mode never pushes; a resume invalidates what was pushed; a refused push is retried
+exit: 0
+
+$ build/tools/scan_server/perf_window_test
+[perf_window_test] PASS: 4 work segments unchanged; wait/exposure/release separate; overshoot = wait - nominal; residual = period - sum; the exposure pushes are counted
+exit: 0
+
+=== 3. the log analysis: who applies this config, and how often ===
+
+# (a) the CrealityScan app's own session
+#   logs/creality_scan_comparison_20261016/native_logs/scan_log_20261016-024738.txt
+config calls: 112   distinct values: 74   span: 151.0 s
+calls per second: 0.74
+gap min/median/max (s): 0.000 / 0.000 / 59.000
+calls with a gap > 0.5 s: 22 of 111
+laser-current write events: 102   (the SDK logs each write twice; the pairs are collapsed)
+write events more than 1 s after their call (not caused by it): 10
+   value    0 -> 0.796000 A   (+18 s)
+   value    0 -> 0.784000 A   (+21 s)
+   value  500 -> 0.724000 A   (+3 s)
+   value  500 -> 0.712000 A   (+3 s)
+   value  240 -> 0.346000 A   (+2 s)
+   value  640 -> 1.036000 A   (+2 s)
+   value  650 -> 1.060000 A   (+2 s)
+   value  930 -> 1.414000 A   (+2 s)
+   value  940 -> 1.372000 A   (+2 s)
+   value  950 -> 1.342000 A   (+2 s)
+the value -> laser current the SDK applied (the first write after each call):
+   value    0 -> 0.796000 A   (+18000 ms)
+   value    0 -> 0.784000 A   (+21000 ms)
+   value  500 -> 0.724000 A   (+3000 ms)
+   value  500 -> 0.712000 A   (+3000 ms)
+   value  490 -> 0.682000 A   (+1000 ms)
+   value  450 -> 0.598000 A   (+0 ms)
+   value  440 -> 0.544000 A   (+1000 ms)
+   value  420 -> 0.490000 A   (+1000 ms)
+   value  360 -> 0.472000 A   (+1000 ms)
+   value  320 -> 0.460000 A   (+0 ms)
+   value  280 -> 0.430000 A   (+0 ms)
+   value  270 -> 0.418000 A   (+1000 ms)
+   value  260 -> 0.364000 A   (+1000 ms)
+   value  240 -> 0.346000 A   (+2000 ms)
+   ... (102 pairs in total)
+
+# (b) our own exposure sweep (one call per step, ~3 s apart)
+#   logs/exposure_sweep_new_setup_20261016/native_scan_log.txt
+config calls: 11   distinct values: 10   span: 28.0 s
+calls per second: 0.39
+gap min/median/max (s): 1.000 / 3.000 / 3.000
+calls with a gap > 0.5 s: 10 of 10
+laser-current write events: 11   (the SDK logs each write twice; the pairs are collapsed)
+write events more than 1 s after their call (not caused by it): 0
+the value -> laser current the SDK applied (the first write after each call):
+   value  900 -> 1.354000 A   (+0 ms)
+   value  100 -> 0.238000 A   (+0 ms)
+   value  200 -> 0.376000 A   (+0 ms)
+   value  300 -> 0.514000 A   (+0 ms)
+   value  400 -> 0.658000 A   (+0 ms)
+   value  500 -> 0.796000 A   (+0 ms)
+   value  600 -> 0.934000 A   (+0 ms)
+   value  700 -> 1.078000 A   (+0 ms)
+   value  800 -> 1.216000 A   (+0 ms)
+   value  900 -> 1.354000 A   (+0 ms)
+   value 1000 -> 1.504000 A   (+0 ms)
+   ... (11 pairs in total)
+
+=== 4. the IR exposure time is never written with a value of its own ===
+
+$ grep -rh 'set ir exposure time' logs/ | sed -E 's/.*set ir exposure time = ([0-9.-]+)\./\1/' | sort | uniq -c | sort -rn
+     371  0
+#   (every write in the whole logs/ tree is 0 = auto — the device's own AE owns that
+#    domain; our per-tick re-assert only re-wrote the same 0)
+
+=== 5. the perf-window line the live run will print (the skip is visible) ===
+
+[perf] window 5.0s clock=steady_clock n=50 rate=10.0/s points=... | exposure p50=0.00 p95=0.00 max=0.12 ms | exposure n=1
+
+# (the shape of the line; the numbers are the live run's to produce)

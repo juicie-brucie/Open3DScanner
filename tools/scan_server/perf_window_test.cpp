@@ -93,6 +93,28 @@ void CheckShortWaitIsNegativeOvershoot() {
     Check(snap.overshoot.p50 == -10000, "a short wait is a negative overshoot");
 }
 
+// Row #153: the window counts how many times the exposure config was pushed,
+// so the skip is visible in the [perf] line.
+void CheckExposureApplyCount() {
+    perf::TickPerf tp;
+    int64_t now_us = 0;
+    for (int i = 0; i < 10; ++i) {
+        tp.BeginTickAt(now_us);
+        perf::TickPerf::Sample sample;
+        if (i == 0) {
+            sample.exposure_us = 900;  // the one push in this window
+            sample.exposure_applies = 1;
+        }
+        sample.nominal_wait_us = 100000;
+        tp.EndTick(sample);
+        now_us += 140000;
+    }
+    const perf::TickPerf::Snapshot snap = tp.TakeSnapshot();
+    Check(snap.exposure_applies == 1, "the window counts the exposure pushes");
+    Check(snap.segment[perf::kExposure].max == 900, "the exposure segment still measures the push");
+    Check(snap.segment[perf::kExposure].p50 == 0, "the ticks that skipped it measure zero");
+}
+
 }  // namespace
 
 int main() {
@@ -100,11 +122,12 @@ int main() {
     CheckStableIndicesAndNames();
     CheckFieldsAndResidual();
     CheckShortWaitIsNegativeOvershoot();
+    CheckExposureApplyCount();
     if (g_failures != 0) {
         std::fprintf(stderr, "[perf_window_test] %d check(s) failed\n", g_failures);
         return 1;
     }
     std::printf("[perf_window_test] PASS: 4 work segments unchanged; wait/exposure/release separate; "
-                "overshoot = wait - nominal; residual = period - sum\n");
+                "overshoot = wait - nominal; residual = period - sum; the exposure pushes are counted\n");
     return 0;
 }
