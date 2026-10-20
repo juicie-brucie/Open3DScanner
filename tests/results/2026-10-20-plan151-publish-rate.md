@@ -225,20 +225,23 @@ itself — so the realized rate tracks the request: **99.7 % of 60 Hz and 99.6 %
 of 50 Hz**. Its p50 overshoot is *negative* because the deadline is advanced
 **after** the work: the work is charged inside the wait, so the p50 wait reads
 0.80 ms short of the nominal (the tick's 0.71 ms of work — post 0.65 + bcast
-0.06 — plus the wake-jitter difference). Wake latency is therefore **not** the binding limit at these
-rates.
+0.06 — plus the wake-jitter difference). Wake latency is therefore **not** the
+binding limit at these rates.
 
 **The mechanism, stated correctly.** The `sleep_for` path waits a *relative*
 interval, and two things follow from that: the target is the nominal
 **truncated to whole milliseconds** (`milliseconds(int(interval_ms))` — 16 ms
 at 60 Hz, 0.67 ms short of 16.67), and the tick's elapsed time is subtracted
 from it only in whole milliseconds. Its period is therefore
-`floor(interval) + frac(work) + wake latency`: the recorded 50 Hz cell reads
-20 + 0.65 + 1.83 ≈ 22.49 ms tick p50, and the 60 Hz cell 16 + 0.66 + 1.04 ≈
-17.7 ms (tick p50 17.78). It is the **wake latency** and the **truncation**,
-not the work, that cost it the rate — the work contributes only its
-sub-millisecond remainder. The deadline cell's latencies telescope away: each
-wake's overshoot is paid back by the next period, so the period is the deadline
+`floor(interval) + frac(work) + wake latency`, where `work` is the tick's
+elapsed time at the moment the wait is computed (the 50 Hz cell's is 0.64 ms:
+post 0.59 + bcast 0.05, plus the 0.01 the residual carries): the recorded
+50 Hz cell reads 20 + 0.64 + 1.83 ≈ 22.47 ms against a tick p50 of 22.49, and
+the 60 Hz cell 16 + 0.66 + 1.04 ≈ 17.70 ms against a tick p50 of 17.78. It is
+the **wake latency** and the **truncation**, not the work, that cost it the
+rate — the work contributes only its sub-millisecond remainder. The deadline
+cell's latencies telescope away: each wake's overshoot is paid back by the next
+period, so the period is the deadline
 advance (20.000 ms at 50 Hz; at 60 Hz the advance is 16,666 µs against a true
 16,666.7 µs — 0.67 µs a tick, 0.04 Hz) — and the tick's own p50 sits just under
 the nominal (19.84 ms of elapsed for a 20.000 ms period at 50 Hz, the 0.71 ms
