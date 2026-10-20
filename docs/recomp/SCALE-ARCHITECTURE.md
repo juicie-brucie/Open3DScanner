@@ -601,7 +601,8 @@ Under load the pipeline sheds **quality**, never the ingest and never the pose. 
 renderer is behind — `ui/app.js:293` — is the consumer side and is *not* the ladder.)
 
 1. **Reduce the point budget.** The encode and the bytes fall proportionally (37.5 ns/point); it is the same code with
-   a smaller number; the *frame rate is untouched*.
+   a smaller number; the *frame rate is untouched*. (The ladder's unit is the **preset**, not a continuous knob — the
+   stepping and the detection are in the next-but-one subsection.)
 2. **Drop the colour axis** (when it exists): the bytes per point fall.
 3. **Drop the full-detail mesh stream** at teardown: the page's memory falls from 75.9 MB to the preview.
 4. **Reduce the publish rate** (C2): the cost per second falls and the *latency* rises. This is the lever that trades
@@ -621,6 +622,91 @@ renderer is behind — `ui/app.js:293` — is the consumer side and is *not* the
   consumer resolution, and the price is the copy in the table above. The ladder must not silently reduce what a
   *logic* consumer needs: a consumer's requirement is a **capability request**, and the server answers it within the
   tier's memory bound or says it cannot.
+
+#### The probe: where it runs, and what it must never do
+
+Row **#154** owns the probe and the presets; this is the architecture they plug into, and it settles three things the
+row's text does not.
+
+**Where it runs.**
+
+* **At process start, before the device session opens** — the worker's *default* preset is the probe's
+  classification. The cost is 1–2 s of startup latency before the first frame, paid once.
+* **On demand, out of band** — the operator (or the app) can re-probe when the host changed (a different machine, a
+  docked display, a busy neighbour). Never *during* a session: the probe would compete for the CPU and the memory the
+  pipeline needs, and it would measure *the pipeline* rather than the host. A re-probe is therefore a
+  **pause → probe → resume**, or a probe of an idle host.
+* **It is a host measurement, not a device one.** It must be runnable on a machine with **no scanner attached** — that
+  is what lets the app answer *"can this machine run Creality Scan here?"* before anything is plugged in — so it
+  must not open the device.
+
+**What it must never do**, with the reason this note's own data supplies:
+
+1. **Block a scan.** It is bounded (1–2 s), it runs before the session or out of band, and it is interruptible.
+2. **Allocate unboundedly.** A bandwidth sweep that allocates a large buffer can exhaust the machine it is sizing —
+   the failure mode of a probe is to break the machine it measured. Its working set is the **pipeline's own**: one
+   20,000-point frame (240 kB) plus a bounded loopback buffer.
+3. **Touch the vendor SDK.** Not the device context — the SDK's context/session lifecycle is the known crash/hang
+   path #89's bounded watchdog exists for, and a *measurement* must not leave the device in a state it cannot recover
+   from — and not the loader, so the probe runs with no scanner attached. The probe is **pure host code**: the same
+   synthetic path the tick uses, which is device-free by construction.
+4. **Measure a busy host.** The numbers must describe the *machine*, not the machine already running the pipeline.
+5. **Be a gate.** #154 says it: the probe informs, and the operator may choose above their tier.
+
+**What it measures.** The host (model, cores, RAM, GPU — from the OS, not the SDK) plus a 1–2 s sweep of **the
+pipeline's own four workloads** — the encode throughput, the memory bandwidth, the loopback send throughput and the
+fan-out writes (#154's list) — **at the pipeline's own size**: a 20,000-point frame (240 kB) encoded and sent over a
+loopback socket. A sweep of a different size does not predict the pipeline's behaviour. The method is [#147]'s: the
+synthetic server, the loopback mock, the profiler, `vmmap`.
+
+#### The preset: chosen at startup, adjustable at runtime, and how a change propagates
+
+**The separation that makes it work.**
+
+* The **preset** is the *intent*: {publish rate, points, colours, capture on/off, accumulation cap}. A small immutable
+  struct, chosen at startup (the probe's classification, or the operator's override) and swappable at runtime.
+* The **tier descriptor** is the *fact*: what this frame actually is (points, bytes, flags, source count, interval). It
+  is *derived* from the preset and the frame, and it is what rides with the data.
+
+**The ingest's only tier-aware code is its parameters.** The projection reads the preset's `points` (the budget and
+the stride) and the tick's period comes from the preset's `rate` (via C2). There is no `if (low_end)` anywhere: a
+lower tier is *the same code with a smaller number*, so it is cheaper **because** the per-point work runs fewer times
+— which is precisely why §4.1's zero-waste work is what makes the tiers affordable.
+
+**A preset change takes effect at the next frame boundary.** The tick reads the preset **once per tick**, published as
+an immutable struct behind an atomic pointer (or as per-field atomics, in the existing `ControlState` style,
+`main.cpp:419-426`), so a frame is always produced under **one** preset and a change is never observed half-applied.
+That is the same pattern the tick already uses for the exposure and the pause state (`main.cpp:1148`).
+
+**How a change propagates:**
+
+| the change | the ingest | the network | the consumers |
+| --- | --- | --- | --- |
+| `points` | the next tick's projection | the next frame is smaller | the next frame's descriptor; the status message names the new tier |
+| `rate` | the next tick's deadline (C2) | the next frame's interval | the status message (the cadence they are fed at) |
+| `colours` | the next tick's flags | the next frame | the next frame's flags — a protocol change, and moot until #136b |
+| `capture` | the recorder (S4 / #149) | — | the status message (whether the scan is being kept) |
+| `accumulation cap` | — | — | the status message → the page's own policy |
+
+**The latency of a change: the data changes from the next frame; the clients learn the new tier within one status
+interval** (~1 s at the live path's cadence, `main.cpp:1333`).
+
+**The command path** is the one the runtime adjustments already use: the flat JSON control channel
+(`HandleControlMessage`, `main.cpp:433`), which today carries `set_exposure` and `set_fov`. The UI's override is one
+more command on it, and the preset's *effect* rides back out on the status channel.
+
+**The ladder steps between presets, on measured misses.** The ladder is not a continuous knob: it is the **sequence of
+presets** (High → Balanced → Lite → Capture-only), and a *miss* is a **measured** event — a stage exceeded its budget
+([#152]'s per-stage budgets). The detection point already exists: the tick reports its segments, its overshoot and its
+residual ([#141]'s instrument), so a miss is measurable today. On a miss the server steps **down** one preset and
+records the step; it does **not** step back up on its own (that would oscillate — the recovery rule is #152's to
+decide), and the step is *visible* in the status message, so the UI can say why the quality changed.
+
+**Who may step it.** The operator's choice sets the *starting* preset and, by default, the floor; the ladder's
+automatic step is the degradation path. Whether the ladder may step *below* a manual choice is a product decision
+(§7): the probe is not a gate, so a manual "High" should not be silently overridden — but a machine that cannot keep up
+must also not be allowed to overrun its budget.
+
 
 #### The low-tier floor, and what is cuttable and what is load-bearing
 
@@ -752,6 +838,14 @@ seam.)
 * **Who may demand the full cloud, and what the server says when it cannot**: a consumer's requirement is a
   capability request (§4.2), and the negotiation — the request, the server's answer, the memory it reserves — is not
   designed here.
+* **Whether the ladder may step below a manual preset.** The probe is not a gate, so an operator's "High" should not be
+  silently overridden — but a machine that cannot keep up must not overrun its budget either. The floor, the
+  hysteresis and the recovery rule are product decisions (#152's to enforce, the operator's to set).
+* **The probe's result's lifetime**: if it is cached, for how long, and what invalidates it. The note's position is
+  the conservative one — a probe before the session, and a re-probe out of band — because a stale classification on a
+  changed host is the failure mode a cache invites.
+* **How the UI presents the presets and the override** (#154's deliverable (c)): the note fixes the *data* the UI
+  needs (the classification, the presets, the active tier, and the reason for the last step) and not its shape.
 * **Each consumer's data volume and identity model** — whether marker ID keys on the vendor's 0.1 voxel grid
   ([#136] stage 0) or on the raw cloud, and what resolution an ellipse transform is defined at, are product
   decisions with the operator; §4.1's table states what each one *needs*, not what it will get.
