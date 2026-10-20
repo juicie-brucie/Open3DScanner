@@ -5,6 +5,10 @@
 //       Synthetic, animated sphere — exists so the UI's render/latency
 //       pipeline can be built and measured without a physical scanner.
 //
+//   scan_server --synthetic-load <port> <hz> <points>
+//       Device-free load harness (row #151): the synthetic server at a chosen
+//       publish rate and frame size. Not the default path.
+//
 //   Per-tick latency instrumentation (row #111; measurement only) is on by
 //   default and prints a `[perf] window` line every 5 s plus a summary at
 //   teardown. Set OPENSCANNER_TICK_PERF=0 to disable it.
@@ -475,7 +479,7 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
     ++g_recorded_frame_count;
 }
 
-void RunSyntheticServer(uint16_t port) {
+void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0) {
     openscanner::WsBroadcastServer server;
     ConfigureStatic(server);
     ControlState control;
@@ -500,7 +504,14 @@ void RunSyntheticServer(uint16_t port) {
     std::printf("Streaming synthetic point-cloud frames on ws://0.0.0.0:%u\n", port);
     std::printf("Open ui/index.html in a browser to view it.\n");
 
-    std::vector<Vec3> base_points = MakeSpherePoints(kPointGridSize);
+    // Row #151: a device-free load harness may pick the rate and the frame size;
+    // the defaults (30 Hz, the original 48x48 sphere) are unchanged.
+    if (points == 0) points = static_cast<uint32_t>(kPointGridSize * kPointGridSize);
+    const int grid = static_cast<int>(std::ceil(std::sqrt(static_cast<double>(points))));
+    std::vector<Vec3> base_points = MakeSpherePoints(grid);
+    if (base_points.size() > points) base_points.resize(points);
+    const double interval_ms = 1000.0 / hz;
+    std::printf("[synthetic] rate=%.1f Hz points=%zu\n", hz, base_points.size());
     uint32_t frame_id = 0;
     double angle = 0.0;
     double last_status_broadcast_ms = 0.0;
@@ -558,7 +569,7 @@ void RunSyntheticServer(uint16_t port) {
 
         int64_t s_wait_us = 0;
         auto elapsed = std::chrono::steady_clock::now() - tick_start;
-        auto sleep_for = std::chrono::milliseconds(static_cast<int64_t>(kFrameIntervalMs)) -
+        auto sleep_for = std::chrono::milliseconds(static_cast<int64_t>(interval_ms)) -
                           std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
         if (sleep_for > std::chrono::milliseconds(0)) {
             perf::SegTimer t(&s_wait_us);
@@ -572,7 +583,7 @@ void RunSyntheticServer(uint16_t port) {
             sample.points = frame_points_count;
             sample.bytes = frame_bytes;
             sample.clients = static_cast<uint32_t>(server.ConnectedClientCount());
-            sample.nominal_wait_us = static_cast<int64_t>(kFrameIntervalMs * 1000.0);
+            sample.nominal_wait_us = static_cast<int64_t>(interval_ms * 1000.0);
             tick_perf.EndTick(sample);
         }
     }
@@ -1844,6 +1855,15 @@ int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
         std::unique_ptr<openscanner::CaptureSource> src(new ReplayCaptureSource(argc, argv));
         return src->run();
+    }
+
+    if (argc >= 2 && std::string(argv[1]) == "--synthetic-load") {
+        // Row #151: device-free load harness (not the product default path).
+        uint16_t port = argc > 2 ? static_cast<uint16_t>(std::atoi(argv[2])) : 8787;
+        double hz = argc > 3 ? std::atof(argv[3]) : 10.0;
+        uint32_t points = argc > 4 ? static_cast<uint32_t>(std::atoi(argv[4])) : 20000;
+        RunSyntheticServer(port, hz, points);
+        return 0;
     }
 
     if (argc >= 2 && std::string(argv[1]) == "--synthetic") {
