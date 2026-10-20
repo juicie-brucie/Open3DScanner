@@ -79,12 +79,21 @@ three** interfaces — 23 entries (RGB, port 10012), 54 (IR, 10013), 89 (depth,
 - The response is `[1, msgid, nil, bin(N)]` — a msgpack **bin**, not a str:
   observed heads `9b 00 cf 00` = `bin8(52,992)` and many smaller bins; the
   capture's typical frame response on 10010→63385 is ~10 KB (a dark session).
-- The payload is **not raw pixels**: a 1920×1200 8-bit frame would be 2.3 MB;
-  the observed bins are ~10–53 KB → the frame stream is encoded/compressed.
-  The codec is **not settled by these captures** (open, §6).
+- **Correction (row #144) — the "~10–53 KB" bin sizes and the port volumes
+  are capture artifacts, not the reply's size.** The capture's BPF filter was
+  `… and less 16000`, so every TCP segment ≥ 16 KB was dropped at capture
+  time; what the pcap shows is the *survivors*, not the message. The real
+  `get_frame` reply is **≈ 2.29 MB** (35 × 64 KiB units), and the ~146k/147k
+  208-byte segments on 10010/10013 are the surviving heads of those units —
+  a **segmentation artifact of the capture**, not a second sub-stream. See
+  `small-segments-row144.md` §1.
+- The payload is **not raw pixels**: a 1920×1200 8-bit frame would be 2.3 MB
+  and the reply is ≈ 2.29 MB, so the *sizes* are consistent with an 8-bit
+  raster — but the codec is **not settled by these captures** (open, §6; the
+  encoding is row #123/#124's subject, `frame-codec.md`).
 - Port volumes over the 86 s window: 10010→63385 = 167,749 segments /
-  72.7 MB; 10013→63400 = 162,127 / 71.4 MB. Segment sizes are mostly ~10.5 KB
-  plus many small (208 B) segments (~146k/147k each — role unsettled, §6).
+  72.7 MB; 10013→63400 = 162,127 / 71.4 MB — **these are what the filter
+  kept**, not what crossed the wire (see the correction above).
 - Whether each response is a *new* frame or the latest frame re-sent on a
   fast poll is not settled (needs payload comparison). `[inferred]`
 
@@ -126,9 +135,14 @@ struct RespHeader { u16 magic; u16 sizeInHalfWords; u16 opcode; u16 requestId; u
 ```
 
 `[inferred]` — observed exactly: request `474d 0200 0300 0000` + payload;
-response `5242 5300 0300 0000 0000` + payload (the size field counts
-half-words including the header; the response `requestId` matches the
-request's).
+response `5242 5300 0300 0000 0000` + payload (the response `requestId`
+matches the request's).
+
+**Correction (row #144)**: the GM/RB header fields are **little-endian**, and
+the `size` field counts the **payload's** half-words, not the whole frame
+(a 12-byte request = 8-byte header + 4-byte payload carries `size = 2`).
+`stream-profiles-row114.md` §3's "the GM/RB header fields are big-endian" is
+wrong; see `small-segments-row144.md` §2.0.
 
 The second msgpack parameter of `send_data` is the **expected response buffer
 size** — observed values 64 / 512 / 1024 and they match the response string
@@ -228,10 +242,17 @@ single-action captures (the plan's OQ-F2). `[inferred]`
    extractor output. The result element's *shape* is also open here — see
    §1.3's correction.
 2. **The small (208-B) segments** on the frame ports (146k on 10010, 147k on
-   10013, ~30 MB each) — role unsettled (a second sub-stream? a preview? a
-   segmentation artifact?).
+   10013, ~30 MB each) — **CLOSED by row #144**: they are a **capture
+   segmentation artifact**, the surviving heads of the `get_frame` reply's
+   64 KiB units (the capture's `less 16000` filter dropped everything larger);
+   35 per reply, reply ≈ 2.29 MB. Not a sub-stream, not a preview, not a
+   metadata channel. See `small-segments-row144.md` §1.
 3. **Pull semantics** — whether each `get_frame` response is a fresh frame or
    the latest re-sent (the ~85/s call rate vs the stated 50 fps source).
+   **CLOSED by row #144**: the daemon serves **≈ 48.8 frames/s** (≈ 50 fps)
+   and **~42 % of the ~86 Hz polls come back empty**. See
+   `small-segments-row144.md` §1.5. (Row #143 still owns the "fresh vs
+   latest re-sent" half, which this capture cannot show.)
 4. **The DISCOVERY_ACK** (the bootstrap carrying the RPC port) — needs the
    launch window.
 5. **The property-id → semantic binding** (plan OQ-F2) — needs short

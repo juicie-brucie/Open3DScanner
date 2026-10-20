@@ -107,6 +107,16 @@ request  "GM" | u8 class | u16 opcode(BE) | u16 seq(BE) | u8 0 | u32 id(BE)
 response "RB" | u8 type  | u16 opcode(BE) | u16 seq(BE) | u16 status | payload
 ```
 
+> **Correction (row #144) — the GM/RB header fields are LITTLE-endian, and
+> `size` counts the payload's half-words, not the whole frame.** The opcode
+> reads `1d 00` = 29 only as LE (`0x1d00` = 7,424 as BE) and the size reads
+> `53 00` = 83 only as LE (the payload is 166 bytes = 83 half-words). The
+> structure id and the structure payload are little-endian as well. The
+> *structure id* field above is also mis-drawn: the id is a plain u32-LE at
+> payload offset 0, not a u32-BE. The frame re-read from the raw bytes, and
+> the re-derivation of §3's table from them, are in
+> `small-segments-row144.md` §2.0 and §2.2.
+
 The 4035 read (session4):
 
 | step | t | op | seq | id | offset | length |
@@ -153,6 +163,16 @@ that looks like "modes". `[inferred]`
 Other structures read the same way in the same capture (ids only — not decoded
 here): 4024 (`0x0fb8`), 4026 (`0x0fba`), 4027 (`0x0fbb`), 4034 (`0x0fc2`).
 4034 is read at t=25.046, 4035 at t=25.154, 4026/4024 again at t=25.366.
+
+> **Row #144 decoded them.** **4034 (`0x0fc2`) is the device's *named*
+> scan-mode table** — seven records of {16-byte GUID, NUL-terminated name,
+> u32 code}: "Laser Lines Scan", "Fastor Lasser Lines Scan", "Chip Scale
+> Speckle Scan", "Sensor Crop Speckle Scan", "Sensor Binned Speckle Scan",
+> "Binned Fast Speckle Scan", "Factory Calibration". 4024 is a
+> resolution/ROI table (480×300, 1280×800, 960×600, 1920×1200); 4026 is
+> 28 bytes of scalars; 4027 is 760 bytes of numeric records. Layouts and
+> bytes: `small-segments-row144.md` §2.1–§2.5. §3's mode table above is
+> confirmed byte-exactly (§2.2 there).
 
 ## 4. The profile actually used: `start_stream` / `stop_stream`
 
@@ -290,6 +310,13 @@ device answers. `[inferred]`
    re-sent is still open (`protocol-spec.md` §6 item 3).
 6. **The other structures** read by the op-29/30/31 triple (4024, 4026,
    4027, 4034) are undecoded; one of them may hold the mode *names*.
+   **CLOSED by row #144**: structure **4034 holds the mode names** (seven
+   named scan modes — see §3's addendum and `small-segments-row144.md`
+   §2.1). What is *not* closed is the **join** from a mode name to a
+   profile row: 4035 gives the *selected* mode's ten rows, and nothing in
+   this capture links the two, because the session ran one mode. The
+   remaining half of OQ1 is the mode-switch capture of row #145 (P6) —
+   read **4034 then 4035** at each switch.
 
 ## 9. Method / provenance
 
