@@ -297,6 +297,10 @@ thread), not the source, not the consumer, and not the cadence.
 allocations, the two syscalls per client, the every-tick vendor re-assert — and says which of them a lower-end target
 cannot afford. The pipeline is not CPU-bound; it is **not yet zero-waste**.
 
+**Adaptivity is the same property seen from the hardware side** (§4.2): the tier is a *preset* that rides with the
+data, the ladder sheds quality rather than frames, the bounds are chosen rather than inherited, and the zero-waste
+work is what makes the low tier reachable at all.
+
 ---
 
 ## 4. The seams worth cutting first, ranked
@@ -519,11 +523,126 @@ The budget is enforced in two layers, and the first is the one that makes the pr
 * **The times** — per stage, against #152's reference profile and its safety factor. Every threshold is a
   **measurement**, because every number in this note is one ([#147]'s method is the harness: the synthetic server, the
   loopback mock, the profiler, `vmmap`). #156's end-to-end number is the complement: the gate's per-stage numbers are
-  the parts, its total is the whole.
+  the parts, its total is the whole. And the budgets are **per tier** (§4.2): the times are stated for a tier, while
+  the **invariants hold at every tier**.
 
 **So performance is a first-class property of this path in a specific, checkable sense:** the ingest's cost is a
 constraint the design must satisfy (the waste list), the constraint is exact and assertable (the invariants), and the
 gate is row #152's. Nothing in the design is allowed to regress into the waste list without a measurement saying so.
+
+### Adaptivity: a tier carried with the data, bounds by construction, and a ladder that sheds quality
+
+The operator's thesis: *"We also want to be flexible for lower spec hardware. That is one of the benefits of going
+faster — we are 'lighter' at lighter loads for less CPU performance or memory size/bandwidth. This is part of why this
+project should exist."* So **adaptivity is part of the architecture, not a later optimisation** — and it is adaptivity
+*of the shape*, not of the speed: the pipeline must be able to run lighter, and the zero-waste work is what buys the
+headroom for it.
+
+The board already owns the *source* of the tier — row **#154** (a startup probe and a preset mapping, with the axes
+"publish rate, point count (decimation), colours/normals, capture on/off and the browser accumulation cap"). **This
+section is the architecture that makes those presets expressible**; it does not duplicate that row.
+
+#### The tier is data, and it rides with the data
+
+Today the tier is **two compile-time constants**: `kLiveBroadcastPointBudget = 20000` (`main.cpp:1204`) and
+`kLiveTickIntervalMs = 100` (`main.cpp:663`). The operator's point is that they must be *knobs* — and that the knob
+must travel with the data, so that the network and the consumers adapt **without the ingest path special-casing
+hardware**.
+
+* **The tier descriptor** is a small struct the frame object (C1) carries: the delivered **points** and **bytes**, the
+  **flags** (`has_colour`, `has_normals`, `is_decimated`), the **source** point count (so a consumer knows it is
+  looking at 1.5 % of the cloud), and the **frame interval** (the rate — a consumer cannot budget a latency without
+  knowing the cadence it is being fed at).
+* **Two of its axes are already on the wire**: the frame's `count` and the envelope's `payload_len`
+  (`frame_protocol.h:28-36`). The missing pieces — the source count and the cadence — ride in the **status message**
+  (the flat JSON at `main.cpp:468-495`, already the control/status channel and already per-connection), because the
+  tier changes on a *preset* change, not per frame. **No protocol change is needed for the tier as it stands.**
+* **The colour axis is a protocol change and is moot until #136b decides it.** The V1 `cloud_snapshot` has no colour
+  field (`frame_protocol.h:38`), and the scan is configured `post_texture = OB_SCAN_NO_TEXTURE` (`main.cpp:953`), so
+  the vendor produces no colour to carry. "Colours" is a tier axis in the *design* and a constant in the *product*
+  today.
+* **The rate axis needs C2** — the period is not a knob until the pacing primitive is a deadline-based wait.
+* **The ingest never special-cases hardware.** The tier selects a **projection** of the cloud, not a different
+  ingest: the projection step (the stride, the build, the encode) is *the same code with a smaller number*. That is
+  what "the 20k decimation is a knob, not a constant" means in practice — no branch, no second path — and the cost
+  falls with the number, because every term in the waste list (§4.1) is per-point.
+
+**What adaptivity costs, stated plainly: a copy.** The vendor's cloud is borrowed and released at the end of the tick
+(`main.cpp:1297`), so a consumer that needs more than the preview needs the ingest to *copy* its resolution into the
+slot. Two numbers over one source — the **UI projection** (today 20,000 points, 240 kB) and the **consumer
+projection** (whatever the logic needs) — and the second costs what the first does not:
+
+| consumer projection | the copy per frame | at 24 Hz |
+| --- | --- | --- |
+| 20,000 points (the UI's today) | 240 kB | 5.8 MB/s |
+| 200,000 points | 2.4 MB | 58 MB/s |
+| the full cloud (1.37 M points) | 16.4 MB | 394 MB/s |
+
+So the tier's two axes are not free, and the ladder below has to say which one it is shedding.
+
+#### Bounded memory and bandwidth by construction
+
+* **The server's per-frame working set** is currently a consequence of the constant: 480,196 B/tick (W2) and
+  27,697 B per client per frame. With the tier as a parameter, both become *chosen* numbers rather than inherited
+  ones.
+* **The page is the low-end failure mode.** The live path holds **one** 20,000-point cloud (240 kB, replaced, not
+  accumulated — `ui/app.js:300`), but the teardown's full-detail stream accumulates `msg.total * 3` floats —
+  **75.9 MB** at 6,323,235 vertices (`ui/app.js:254`, [#136] stage 7) — and **that number grows with the scan**. The
+  page's memory is a function of the *scan*, not of the tier: the one place where the bound is currently *absent*.
+* **The bound**: the tier carries an **accumulation cap** for the page (#154's preset axis), and the full-detail mesh
+  stream (76.1 MB, [#136] stage 6) becomes a *tier item* — at the low tier it is not sent, and the page keeps the
+  20,000-point preview the teardown already produces (`main.cpp:1363`). The page's memory then becomes a function of
+  the tier: the preview plus the cap.
+* **The network's per-client bytes** are the tier's `bytes`, by construction.
+
+#### The degradation ladder: shed quality, not frames
+
+Under load the pipeline sheds **quality**, never the ingest and never the pose. (The UI's own frame-drop when its
+renderer is behind — `ui/app.js:293` — is the consumer side and is *not* the ladder.)
+
+1. **Reduce the point budget.** The encode and the bytes fall proportionally (37.5 ns/point); it is the same code with
+   a smaller number; the *frame rate is untouched*.
+2. **Drop the colour axis** (when it exists): the bytes per point fall.
+3. **Drop the full-detail mesh stream** at teardown: the page's memory falls from 75.9 MB to the preview.
+4. **Reduce the publish rate** (C2): the cost per second falls and the *latency* rises. This is the lever that trades
+   the thing the pipeline exists for, so it is **last**.
+5. **Fewer clients** — a product decision, and the last of all.
+
+**What can degrade, and what cannot:**
+
+* *Can*: the network projection (points, colours), the publish rate, the mesh stream, the client count, and the
+  **consumer projection** — but only when the consumer asks for less.
+* *Cannot*: the **ingest** (0.00 ms; everything depends on it and there is nothing to degrade), the **pose stream**
+  (160 B/tick; it is what tracking consumes), the **pacing** (the tick's period is the schedule, not a quality knob),
+  and the **logic consumers' data** — see below.
+* **The logic consumers may need full resolution even when the UI cannot receive it.** The ladder applies to the
+  **network projection**, not to C1's slot: the slot carries the cloud, the broadcast carries a *projection* of it. A
+  consumer that needs the full cloud is not degraded by the UI's point budget; it subscribes to the slot at the
+  consumer resolution, and the price is the copy in the table above. The ladder must not silently reduce what a
+  *logic* consumer needs: a consumer's requirement is a **capability request**, and the server answers it within the
+  tier's memory bound or says it cannot.
+
+#### The low-tier floor, and what is cuttable and what is load-bearing
+
+**The floor, as a design input rather than an outcome.** On the weakest target the pipeline must still:
+
+* **fetch at the source's rate** — the floor is not "fewer frames", it is *the same frames with less per frame*;
+* **publish the pose** (160 B/tick) and **keep the frame's age** within the logic's latency budget;
+* **hold one tier's worth of memory** — the server's working set and the page's preview plus its cap;
+* **keep the scan** if the product is to keep it (S4).
+
+**Cuttable at the low tier:** the full-detail mesh stream (76.1 MB), the colour axis, the point budget, the publish
+rate (last), the client count, and the consumer projection (on request).
+
+**Load-bearing at every tier:** the ingest, the projection, the encode, the pose stream, C1's slot, C2's pacing
+mechanism, the persistence — **and the waste removals (W1–W7)**. On a target 2× slower with 2× the memory traffic,
+today's wastes would consume the frame budget outright: W1 alone is 1.5–2.1 ms of a 41.7 ms frame before any
+adaptivity at all. **The zero-waste work is what makes the low tier reachable** — which is why it is the first step
+and not a later optimisation.
+
+**The lowest tier is "capture-only"** (a preset in #154's list): the ingest at the source's rate, the full cloud to
+disk, and **nothing on the network**. It is the clearest statement of the architecture — the ingest is unchanged, the
+tier's network axis is zero, and the product still gets its scan.
 
 ### Why this order
 
@@ -620,6 +739,19 @@ seam.)
 * **W5's price** (the every-tick exposure re-assert): **not yet measured**. #141's `exposure` segment times it on the
   next hardware run; #153 owns the fix. The note names the waste and its call count (1 per tick) and leaves the time
   to the instrument that will measure it.
+* **The tier's values and the probe that picks them** (#154): §4.2 specifies the tier's *shape* and where it rides;
+  the numbers, the probe thresholds and the "a user may choose above their tier" rule are that row's and the
+  operator's.
+* **The colour axis** (#136b): whether the product carries colour at all. Until that is decided the tier's colour axis
+  is a constant, not a knob, and the V1 frame carries none.
+* **The page's accumulation cap**, and what the page does past it: the 75.9 MB accumulation is the one unbounded
+  thing in the product today; the cap and the policy beyond it are the UI's and the operator's.
+* **The low-tier floor's latency number.** "Very low latency" and "near real-time" are not yet a number: the
+  acceptable **age of a frame at a logic consumer** is the input that #113 and the consumers' own rows need, and it is
+  what makes the publish rate the *last* lever in the ladder rather than the first.
+* **Who may demand the full cloud, and what the server says when it cannot**: a consumer's requirement is a
+  capability request (§4.2), and the negotiation — the request, the server's answer, the memory it reserves — is not
+  designed here.
 * **Each consumer's data volume and identity model** — whether marker ID keys on the vendor's 0.1 voxel grid
   ([#136] stage 0) or on the raw cloud, and what resolution an ellipse transform is defined at, are product
   decisions with the operator; §4.1's table states what each one *needs*, not what it will get.
