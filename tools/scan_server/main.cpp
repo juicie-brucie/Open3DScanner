@@ -484,6 +484,12 @@ std::string BuildStatusJson(const char* mode, const ControlState& state, bool fo
     json += state.fov_wide.load() ? "wide" : "normal";
     json += "\",\"fovControllable\":";
     json += fov_controllable ? "true" : "false";
+    // Row #142: the server's own wall clock on the same epoch as the frames'
+    // t_capture/t_server (both from NowMs()), so the page can estimate the
+    // server clock's offset from its own and compute a frame's age without
+    // assuming the two machines' clocks agree. See ui/frame_age.js.
+    json += ",\"server_now_ms\":";
+    json += std::to_string(static_cast<long long>(NowMs()));
     json += openscanner::tracking::TrackingStatusJsonTail(g_last_tracking_status.load());
     uint64_t tracking_counts[openscanner::tracking::kTrackingStatusCount];
     for (int32_t i = 0; i < openscanner::tracking::kTrackingStatusCount; ++i) {

@@ -108,9 +108,11 @@
     document.body.appendChild(el);
   }
   loadScript("frame_protocol.js", () => {
-    loadScript("render/webgl2_renderer.js", () => {
-      loadScript("render/webgpu_renderer.js", () => {
-        loadScript("app.js");
+    loadScript("frame_age.js", () => {
+      loadScript("render/webgl2_renderer.js", () => {
+        loadScript("render/webgpu_renderer.js", () => {
+          loadScript("app.js");
+        });
       });
     });
   });

@@ -21,6 +21,17 @@ add_executable(bounded_watchdog_test bounded_watchdog_test.cpp)
 target_link_libraries(bounded_watchdog_test PRIVATE openscanner_engine)
 add_test(NAME bounded_watchdog_test COMMAND bounded_watchdog_test)
 
+# Hardware-free smoke test for the HUD's frame-age arithmetic (row #142): it
+# pins the arithmetic and, when the built server is available, takes a real age
+# off the synthetic server. The UI is plain JS with no build step, so node is
+# the only requirement (skip the test when it is absent).
+find_program(NODE_EXECUTABLE node)
+if(NODE_EXECUTABLE)
+    add_test(NAME ui_frame_age_test
+             COMMAND ${NODE_EXECUTABLE} ${CMAKE_SOURCE_DIR}/ui/frame_age_test.js
+                     $<TARGET_FILE:scan_server>)
+endif()
+
 if(APPLE)
     find_library(CORE_FOUNDATION_LIBRARY CoreFoundation REQUIRED)
     target_link_libraries(scan_server PRIVATE ${CORE_FOUNDATION_LIBRARY})
