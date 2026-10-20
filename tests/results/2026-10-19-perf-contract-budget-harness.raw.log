@@ -269,6 +269,9 @@ bcast.us.8                 min=  154.333  median=  201.604  max=  266.250
 platform.wait_ms.41        min=   42.173  median=   42.918  max=   44.737
 platform.wait_ms.20        min=   20.436  median=   22.352  max=   24.193
 platform.wait_ms.16        min=   16.271  median=   16.916  max=   19.011
+tick.post_ms               min=    0.070  median=    0.070  max=    0.070
+tick.bcast_ms              min=    0.000  median=    0.000  max=    0.000
+server.live_bytes          min=100352.000  median=100352.000  max=100352.000
 
 === the other runs of the harness ===
 $ python3 scripts/perf-budget.py --quick
