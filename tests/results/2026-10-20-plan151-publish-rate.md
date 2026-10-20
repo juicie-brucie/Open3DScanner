@@ -219,11 +219,14 @@ primitive is the fix** — scoped to *that* wait. The live loop paces with
 `CFRunLoopRunInMode`, not `sleep_until`, so this says the primitive is
 **necessary**, not that changing it in the live loop is sufficient (see "What
 this does not settle"; #148's C2 seam proposes the same primitive for the live
-path). In the deadline path the period is the deadline advance itself, so the
-realized rate tracks the request: **99.7 % of 60 Hz and 99.6 % of 50 Hz**, with
-a *negative* p50 overshoot (the deadline is advanced before the work is
-charged, so the p50 wait reads 0.80 ms short of the nominal). Wake latency is
-therefore **not** the binding limit at these rates.
+path). In the deadline path the period is the deadline advance plus the
+*difference* of two consecutive wake latencies — in the long run the advance
+itself — so the realized rate tracks the request: **99.7 % of 60 Hz and 99.6 %
+of 50 Hz**. Its p50 overshoot is *negative* because the deadline is advanced
+**after** the work: the work is charged inside the wait, so the p50 wait reads
+0.80 ms short of the nominal (the tick's 0.71 ms of work — post 0.65 + bcast
+0.06 — plus the wake-jitter difference). Wake latency is therefore **not** the binding limit at these
+rates.
 
 **The mechanism, stated correctly.** The `sleep_for` path waits a *relative*
 interval, and two things follow from that: the target is the nominal
@@ -237,8 +240,10 @@ not the work, that cost it the rate — the work contributes only its
 sub-millisecond remainder. The deadline cell's latencies telescope away: each
 wake's overshoot is paid back by the next period, so the period is the deadline
 advance (20.000 ms at 50 Hz; at 60 Hz the advance is 16,666 µs against a true
-16,666.7 µs — 0.67 µs a tick, 0.04 Hz). That is why it lands at 87–92 % →
-99.6–99.7 %.
+16,666.7 µs — 0.67 µs a tick, 0.04 Hz) — and the tick's own p50 sits just under
+the nominal (19.84 ms of elapsed for a 20.000 ms period at 50 Hz, the 0.71 ms
+of work charged inside the wait, so the wait reads 19.20) while the realized
+rate is 99.6 % of the request. That is why it lands at 87–92 % → 99.6–99.7 %.
 
 *Correction note:* an earlier draft's "deadline" rows (periods 19.4 / 24.3 ms,
 positive overshoot) were produced by a **harness-argument error** — the mode word
