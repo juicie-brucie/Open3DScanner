@@ -249,7 +249,7 @@ single-action captures (the plan's OQ-F2). `[inferred]`
    metadata channel. See `small-segments-row144.md` §1.
 3. **Pull semantics** — whether each `get_frame` response is a fresh frame or
    the latest re-sent (the ~85/s call rate vs the stated 50 fps source).
-   **CLOSED by row #144**: the daemon serves **≈ 49.8 frames/s** (≈ 50 fps)
+   **CLOSED by row #144**: the daemon serves **≈49.8 frames/s** (≈ 50 fps)
    and **~41 % of the ~84 Hz polls come back empty**. See
    `small-segments-row144.md` §1.5. (Row #143 still owns the "fresh vs
    latest re-sent" half, which this capture cannot show.)
