@@ -1,0 +1,99 @@
+$ ./build/tools/scan_server/plane_toggle_test
+
+-- the startup env seed (unchanged behaviour) --
+[worker] plane_removal: obscan_scan_plane_remove(true) -> OB_SCAN_SUCCESS (0) accepted [auto 0->1 startup]
+[worker] plane_removal: obscan_scan_turntable_plane_remove(true) -> OB_SCAN_SUCCESS (0) accepted [turntable 0->1 startup]
+[worker] plane_removal: obscan_scan_config_manaul_remove_plane(a,b,c,d) -> OB_SCAN_SUCCESS (0) accepted [manual 0->1 plane=0,0,1,-0.33 startup]
+ok   the three env-seeded toggles are applied
+ok   the mock vendor saw three calls
+ok   the auto toggle is enabled
+ok   the turntable toggle is enabled
+ok   the manual toggle is enabled
+ok   the manual plane is the one the env named
+ok   each transition is logged
+ok   the auto transition line names the call, the verdict and the old -> new state
+ok   the turntable transition line
+ok   the manual transition line carries the plane
+
+-- the runtime command: apply and revert --
+[worker] plane_removal: obscan_scan_plane_remove(false) -> OB_SCAN_SUCCESS (0) accepted [auto 1->0 tick=42 points=1234]
+[worker] plane_removal: obscan_scan_config_manaul_remove_plane(off) -> OB_SCAN_SUCCESS (0) accepted [manual 1->0 tick=42 points=1234]
+ok   the command reverts the auto and the manual toggles
+ok   the auto toggle is turned off
+ok   the manual toggle is turned off
+ok   each transition is logged
+ok   the transition line carries the tick and the point count, so a point-count series can be aligned
+ok   the revert is logged with the call that made it
+ok   the desired state follows the command
+
+-- a new manual plane --
+[worker] plane_removal: obscan_scan_config_manaul_remove_plane(a,b,c,d) -> OB_SCAN_SUCCESS (0) accepted [manual 0->1 plane=0,0,1,-0.5 tick=42 points=1234]
+ok   the manual plane change is one call
+ok   the call carries the new plane
+ok   the transition line carries the plane
+
+-- a rejected vendor call --
+[worker] plane_removal: obscan_scan_plane_remove(true) -> OB_SCAN_ERROR_PARAM (-1) rejected [auto 0->1 tick=7 points=99]
+ok   the rejected toggle is still attempted once
+ok   the rejection is logged
+ok   the applied state keeps the vendor's last verdict
+ok   the desired state keeps the operator's request
+ok   the rejected call is not retried every tick
+ok   no second log line for the same request
+[worker] plane_removal: obscan_scan_plane_remove(true) -> OB_SCAN_SUCCESS (0) accepted [auto 0->1 tick=7 points=99]
+ok   a new command retries the toggle
+ok   the accepted toggle becomes the applied state
+
+-- malformed and unrelated commands --
+[worker] plane_removal: 'manual' must be "a,b,c,d" or "" - the command is rejected
+ok   a malformed manual plane makes no vendor call
+ok   the malformed command is reported
+ok   the malformed command changes nothing
+ok   another command is left alone
+[worker] plane_removal: the command carries no auto/turntable/manual field - nothing to do
+ok   a command with no plane field makes no vendor call
+ok   the empty command is reported
+
+-- the command over a real WebSocket --
+ok   the WebSocket server starts
+ok   the client connects
+ok   the command is sent
+ok   the status message comes back
+ok   the status carries the auto toggle
+ok   the status carries the turntable toggle
+ok   the status carries the manual toggle
+ok   the command reached the handler over the wire
+
+42 checks, 0 failure(s)
+exit=0
+
+$ ctest -LE hardware --output-on-failure
+Test project /Users/brucemackay/DevReposiMac/Open3DScanner-wt-build7/build
+      Start  1: tracking_status_test
+ 1/10 Test  #1: tracking_status_test .............   Passed    0.00 sec
+      Start  2: perf_window_test
+ 2/10 Test  #2: perf_window_test .................   Passed    0.00 sec
+      Start  3: bounded_watchdog_test
+ 3/10 Test  #3: bounded_watchdog_test ............   Passed    0.01 sec
+      Start  4: plane_toggle_test
+ 4/10 Test  #4: plane_toggle_test ................   Passed    0.01 sec
+      Start  5: frame_bins_test
+ 5/10 Test  #5: frame_bins_test ..................   Passed    0.33 sec
+      Start  6: frame_decode_test
+ 6/10 Test  #6: frame_decode_test ................   Passed    0.49 sec
+      Start  7: raptor_client_selftest
+ 7/10 Test  #7: raptor_client_selftest ...........   Passed    0.00 sec
+      Start  8: raptor_client_reply_timeout
+ 8/10 Test  #8: raptor_client_reply_timeout ......   Passed    0.31 sec
+      Start  9: raptor_client_reply_dump
+ 9/10 Test  #9: raptor_client_reply_dump .........   Passed    0.05 sec
+      Start 10: raptor_client_capture
+10/10 Test #10: raptor_client_capture ............   Passed    0.02 sec
+
+100% tests passed out of 10
+
+Total Test time (real) =   1.24 sec
+
+$ ./build/tools/scan_server/scan_server --synthetic 18899   # then a WebSocket client sends the command
+handshake: HTTP/1.1 101 Switching Protocols
+status: {"type":"status","mode":"synthetic","state":"scanning","autoExposure":true,"exposure":900,"exposureMin":1,"exposureMax":1000,"fov":"normal","fovControllable":true,"planeRemoval":{"auto":true,"turntable":false,"manual":true},"tracking":-1,"trackingName":"UNKNOWN","trackingCounts":{"SUCCESS":0,"LOST":0,"AMBIGUOUS_PLANE":0,"FAILURE_INSUFF_VALID_POINTS":0,"FAILURE_TEXTURELESS":0,"FAILURE_MARKERLESS":0,"FAILURE_MOVING_TOO_FAST":0}}
