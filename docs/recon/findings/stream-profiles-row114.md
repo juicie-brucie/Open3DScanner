@@ -166,7 +166,7 @@ here): 4024 (`0x0fb8`), 4026 (`0x0fba`), 4027 (`0x0fbb`), 4034 (`0x0fc2`).
 
 > **Row #144 decoded them.** **4034 (`0x0fc2`) is the device's *named*
 > scan-mode table** — seven records of {16-byte GUID, NUL-terminated name,
-> u32 code}: "Laser Lines Scan", "Fastor Lasser Lines Scan", "Chip Scale
+> u32 code}: "Laser Lines Scan", "Fastor Laser Lines Scan", "Chip Scale
 > Speckle Scan", "Sensor Crop Speckle Scan", "Sensor Binned Speckle Scan",
 > "Binned Fast Speckle Scan", "Factory Calibration". 4024 is a
 > resolution/ROI table (480×300, 1280×800, 960×600, 1920×1200); 4026 is

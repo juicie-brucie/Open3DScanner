@@ -293,7 +293,7 @@ does not carry the mode names.
    the `get_frame` reply, 35 per reply, reply ≈ 2.29 MB. Not a sub-stream,
    not a preview, not a metadata channel.
 2. **Pull semantics (protocol-spec §6 item 3) are answered** from the same
-   data: ~50 fps served, ~86 Hz polled, ~42 % of polls empty.
+   data: ≈49.8 fps served, ~84 Hz polled, ~41 % of polls empty.
 3. **The mode names are found** (structure 4034) — `#114` §8 OQ6 is closed;
    `#114` §8 OQ1 (the *mapping*) is narrowed but not closed (§4.1).
 4. **Corrections to other documents** (applied in this PR):
