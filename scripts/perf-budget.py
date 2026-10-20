@@ -26,12 +26,14 @@ could not run (no build, no binary).
 """
 
 import argparse
+import base64
 import json
 import os
 import re
 import shutil
 import signal
 import socket
+import struct
 import subprocess
 import sys
 import time
@@ -193,6 +195,201 @@ def live_footprint(pid):
     return None
 
 
+# ---------------------------------------------------------------------------
+# The full-frame mode (row #156)
+#
+# One frame through the whole pipeline: the synthetic scan_server encodes and
+# broadcasts it, and a consumer probe receives it and measures the age - the
+# time from the frame's capture stamp to the moment the consumer has it. The
+# per-stage split comes from the server's own `[perf] window` line, so the
+# total and the stages are the same run.
+# ---------------------------------------------------------------------------
+
+V1_MAGIC = 0x4F534346  # 'OSCF'
+V1_HEADER = struct.Struct("<IHHIddI")  # magic, version, type, seq, t_capture, t_server, payload_len
+
+
+def ws_connect(port):
+    """A WebSocket client that decodes the V1 frames; (socket, leftover bytes)."""
+    sock = socket.create_connection(("127.0.0.1", port), timeout=5.0)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 * 1024 * 1024)
+    key = base64.b64encode(os.urandom(16)).decode()
+    sock.sendall(("GET / HTTP/1.1\r\n"
+                  "Host: 127.0.0.1:%d\r\n"
+                  "Upgrade: websocket\r\n"
+                  "Connection: Upgrade\r\n"
+                  "Sec-WebSocket-Key: %s\r\n"
+                  "Sec-WebSocket-Version: 13\r\n\r\n" % (port, key)).encode())
+    buf = b""
+    while b"\r\n\r\n" not in buf:
+        chunk = sock.recv(4096)
+        if not chunk:
+            raise RuntimeError("the server closed during the handshake")
+        buf += chunk
+    return sock, buf.split(b"\r\n\r\n", 1)[1]
+
+
+def read_ws_frame(sock, buf):
+    """(opcode, payload, buf) for the next frame; (None, None, buf) if incomplete."""
+    if len(buf) < 2:
+        return None, None, buf
+    opcode = buf[0] & 0x0F
+    length = buf[1] & 0x7F
+    offset = 2
+    if length == 126:
+        if len(buf) < 4:
+            return None, None, buf
+        length = int.from_bytes(buf[2:4], "big")
+        offset = 4
+    elif length == 127:
+        if len(buf) < 10:
+            return None, None, buf
+        length = int.from_bytes(buf[2:10], "big")
+        offset = 10
+    if len(buf) < offset + length:
+        return None, None, buf
+    return opcode, buf[offset:offset + length], buf[offset + length:]
+
+
+def cpu_seconds(pid):
+    """The process's cumulative CPU time in seconds (macOS `ps`)."""
+    try:
+        out = subprocess.run(["ps", "-o", "time=", "-p", str(pid)], capture_output=True, text=True, timeout=10).stdout
+    except Exception:
+        return None
+    text = out.strip()
+    if not text:
+        return None
+    parts = text.split(":")
+    try:
+        if len(parts) == 3:
+            return int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+        if len(parts) == 2:
+            return int(parts[0]) * 60 + float(parts[1])
+        return float(parts[0])
+    except ValueError:
+        return None
+
+
+def run_full_frame(binary, seconds, hz=0, points=0):
+    """One frame through the whole pipeline; the per-stage table and the total.
+
+    `hz` and `points` are the preset's knobs. They need the server's
+    --synthetic-load mode (#151's, PR #366); with a server that does not take
+    them the plain synthetic path runs and the configuration it measured is
+    reported, so the mode is never silently wrong.
+    """
+    port = free_port()
+    # The preset's knobs need the server's --synthetic-load mode (#151, PR
+    # #366). A server that does not take them is the plain synthetic path,
+    # and the report says which configuration was measured.
+    commands = []
+    if hz > 0 and points > 0:
+        commands.append([binary, "--synthetic-load", str(port), str(hz), str(points)])
+    commands.append([binary, str(port)])
+    proc = None
+    sock = None
+    buf = b""
+    used = None
+    for cmd in commands:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                text=True, cwd=ROOT)
+        time.sleep(1.0)  # the server's accept loop
+        if proc.poll() is not None:
+            continue  # it rejected the command; try the next one
+        try:
+            sock, buf = ws_connect(port)
+            used = cmd
+            break
+        except OSError:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+            proc = None
+    if proc is None or sock is None:
+        if proc is not None:
+            proc.kill()
+        raise RuntimeError("the synthetic server could not start")
+    lines = []
+    ages = []
+    frames = 0
+    bytes_seen = 0
+    points = 0
+    cpu0 = None
+    try:
+        cpu0 = cpu_seconds(proc.pid)
+        sock.settimeout(1.0)
+        deadline = time.time() + seconds
+        while time.time() < deadline:
+            try:
+                chunk = sock.recv(262144)
+            except socket.timeout:
+                chunk = b""
+            except OSError:
+                break
+            if not chunk:
+                break
+            buf += chunk
+            while True:
+                opcode, payload, buf = read_ws_frame(sock, buf)
+                if opcode is None:
+                    break
+                if opcode != 0x2 or payload is None or len(payload) < V1_HEADER.size:
+                    continue
+                magic, version, mtype, seq, t_capture, t_server, payload_len = V1_HEADER.unpack(payload[:V1_HEADER.size])
+                if magic != V1_MAGIC:
+                    continue
+                now_ms = time.time() * 1000.0
+                ages.append(now_ms - t_capture)
+                frames += 1
+                bytes_seen += len(payload)
+                if len(payload) >= V1_HEADER.size + 4:
+                    points = int.from_bytes(payload[V1_HEADER.size:V1_HEADER.size + 4], "little")
+    finally:
+        if sock is not None:
+            try:
+                sock.close()
+            except OSError:
+                pass
+        cpu1 = cpu_seconds(proc.pid)
+        proc.send_signal(signal.SIGTERM)
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=10)
+        out = read_available(proc.stdout)
+        if out:
+            lines.extend(out.splitlines())
+    return {
+        "frames": frames,
+        "bytes": bytes_seen,
+        "points": points,
+        "ages": ages,
+        "server_lines": lines,
+        "command": used,
+        "cpu_s": (cpu1 - cpu0) if (cpu0 is not None and cpu1 is not None) else None,
+        "live_bytes": live_footprint(proc.pid) if proc.poll() is None else None,
+    }
+
+
+def median(values):
+    if not values:
+        return 0.0
+    s = sorted(values)
+    return s[len(s) // 2]
+
+
+def percentile(values, p):
+    if not values:
+        return 0.0
+    s = sorted(values)
+    idx = min(len(s) - 1, int(round((p / 100.0) * (len(s) - 1))))
+    return s[idx]
+
+
 def median_of_runs(runs):
     """The per-metric median across the runs (the statistic the budgets are checked against).
 
@@ -304,6 +501,84 @@ def check_dataset(contract, path):
     return 0
 
 
+def full_frame_mode(contract, build_dir, preset_name, seconds):
+    """The full-frame mode: one frame through every stage, timed end to end.
+
+    The per-stage split comes from the server's own instrument and the total
+    from the consumer's measurement of the frame's age, so the stages and the
+    total are the same run. The total is checked against the preset's
+    end-to-end budget: that is the regression threshold (row #156).
+    """
+    ok, perf_bin, server_bin = ensure_binaries(build_dir, False)
+    if not ok:
+        return 2
+    presets = contract.get("presets", {})
+    preset = presets.get(preset_name)
+    if not preset:
+        print("perf-budget: unknown preset '%s' (known: %s)" % (preset_name, ", ".join(sorted(presets))))
+        return 2
+
+    print("== the full-frame run (device-free, one frame through every stage) ==")
+    knobs = preset.get("knobs", {})
+    result = run_full_frame(server_bin, seconds, int(knobs.get("publish_hz", 0) or 0),
+                             int(knobs.get("points", 0) or 0))
+    lines = result["server_lines"]
+    windows = [l for l in lines if "[perf] window" in l]
+    last = windows[-1] if windows else ""
+
+    def seg(name):
+        m = re.search(r"%s p50=([0-9.]+)" % re.escape(name), last)
+        return float(m.group(1)) if m else 0.0
+
+    post_ms = seg("post")
+    bcast_ms = seg("bcast")
+    ages = result["ages"]
+    age_p50 = median(ages)
+    age_p95 = percentile(ages, 95)
+    age_max = max(ages) if ages else 0.0
+    # The consumer's own time: the age minus the server's own stages.
+    transfer_ms = max(0.0, age_p50 - post_ms - bcast_ms)
+
+    print("  frames received      : %d (%d points, %d B)" % (result["frames"], result["points"], result["bytes"]))
+    cmd = result.get("command") or []
+    if "--synthetic-load" in cmd:
+        config = "the preset's knobs (%d points at %d Hz)" % (knobs.get("points", 0), knobs.get("publish_hz", 0))
+    else:
+        config = ("the plain synthetic path (the server has no --synthetic-load, so the preset's knobs could "
+                  "not be set - #151, PR #366)")
+    print("  configuration        : %s" % config)
+    print("  server CPU           : %s" % ("%.3f s" % result["cpu_s"] if result["cpu_s"] is not None else "n/a"))
+    print()
+    print("== the per-stage table (one run; the stages and the total are the same run) ==")
+    print("%-28s %10s %8s  %s" % ("stage", "value", "unit", "where it comes from"))
+    print("%-28s %10.3f %8s  %s" % ("encode + post", post_ms, "ms", "the server's [perf] window: post p50"))
+    print("%-28s %10.3f %8s  %s" % ("broadcast", bcast_ms, "ms", "the server's [perf] window: bcast p50"))
+    print("%-28s %10.3f %8s  %s" % ("transfer + consume", transfer_ms, "ms", "the age minus the two stages above"))
+    print("%-28s %10.3f %8s  %s" % ("TOTAL (the frame age)", age_p50, "ms", "the consumer's measurement: p50"))
+    print("%-28s %10.3f %8s  %s" % ("  the age at p95", age_p95, "ms", "the consumer's measurement"))
+    print("%-28s %10.3f %8s  %s" % ("  the age at max", age_max, "ms", "the consumer's measurement"))
+
+    # The regression threshold on the total: the preset's frame-age budget.
+    budget = preset.get("budgets", {}).get("e2e_frame_age_ms")
+    if budget is None:
+        budget = contract.get("synthetic", {}).get("e2e_frame_age_ms")
+    failures = 0
+    print()
+    if budget is None:
+        print("perf-budget: the preset '%s' has no end-to-end budget" % preset_name)
+    else:
+        okrow = age_p50 <= float(budget)
+        if not okrow:
+            failures += 1
+        print("%-28s %10.3f %8s  %s" % ("the total's budget", float(budget), "ms",
+                                          "PASS" if okrow else "FAIL (the total regressed)"))
+    if failures:
+        print("perf-budget: the full-frame total REGRESSED")
+        return 1
+    print("perf-budget: the full-frame total is within the '%s' budget" % preset_name)
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -320,6 +595,10 @@ def main():
                     help="copy the recorded dataset from the record's raw log into the budget file")
     ap.add_argument("--check-dataset", action="store_true",
                     help="check that the budget file's dataset is the record's raw log's")
+    ap.add_argument("--full-frame", action="store_true",
+                    help="the full-frame mode (row #156): one frame through every stage, timed end to end")
+    ap.add_argument("--preset", default="high",
+                    help="the preset whose budgets the full-frame mode asserts (high|balanced|lite|capture-only)")
     args = ap.parse_args()
 
     if not os.path.exists(BUDGETS):
@@ -332,6 +611,9 @@ def main():
         if args.sync_dataset:
             return sync_dataset(contract, RECORD_LOG)
         return check_dataset(contract, RECORD_LOG)
+
+    if args.full_frame:
+        return full_frame_mode(contract, args.build_dir, args.preset, args.seconds)
 
     ok, perf_bin, server_bin = ensure_binaries(args.build_dir, args.quick)
     if not ok:
@@ -434,6 +716,13 @@ def main():
             else:
                 verdict = "FAIL" if judged else "n/a"
             ingest_rows.append((rate, effective, label, per_frame / 1000.0, at_nominal, at_ceiling, verdict))
+    # Today's ingest, measured on the device (#141's live split): the same
+    # utilisation, with the exposure re-assert still in the tick.
+    today_rows = []
+    today = allow.get("ingest_measured_today_us_per_frame")
+    if today:
+        for rate in rates:
+            today_rows.append((rate, today * float(rate) / 1000.0 / 10.0))
 
     print()
     print("== the budgets ==")
@@ -452,6 +741,12 @@ def main():
     for rate, effective, label, per_frame_ms, at_nominal, at_ceiling, verdict in ingest_rows:
         print("%-6s %10.2f %10s %11.2f %14.1f %16.1f %6s" %
               (rate, effective, label, per_frame_ms, at_nominal, at_ceiling, verdict))
+    if today_rows:
+        print()
+        print("   (today's ingest, measured on the device - #141's live split: the exposure re-assert")
+        print("    is still in the tick, and it is 98 % of it)")
+        for rate, util in today_rows:
+            print("%-6s %10s %10s %11s %14.1f %16s %6s" % (rate, "-", "today", "-", util, "-", "OVER"))
 
     print()
     if failures:
