@@ -31,6 +31,12 @@ if(NODE_EXECUTABLE)
     add_test(NAME ui_frame_age_test
              COMMAND ${NODE_EXECUTABLE} ${CMAKE_SOURCE_DIR}/ui/frame_age_test.js
                      $<TARGET_FILE:scan_server>)
+    # The same check against the row #151 load harness: the rate and the frame
+    # size the publish path sustains, with the frame-id continuity check that
+    # gives the drop rate (the V1 envelope's `seq`).
+    add_test(NAME ui_frame_age_load_test
+             COMMAND ${NODE_EXECUTABLE} ${CMAKE_SOURCE_DIR}/ui/frame_age_test.js
+                     $<TARGET_FILE:scan_server> --synthetic-load 50 20000 6.5)
 endif()
 # The measurement behind the performance contract (row #152): the encoder
 # and the broadcast, measured with the product's own code, device-free.

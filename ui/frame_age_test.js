@@ -1,16 +1,22 @@
 #!/usr/bin/env node
-// ui/frame_age_test.js — row #142's device-free coverage.
+// ui/frame_age_test.js — row #142's device-free coverage, plus row #151's
+// load-harness leg (the frame age and the drop rate at a chosen rate).
 //
-// Two parts:
+// Three parts:
 //   1. the arithmetic, pinned with known numbers (offset, age at receipt,
 //      render delay, percentiles, rolling-window trim, sparkline);
 //   2. an end-to-end check against the SYNTHETIC server: connect, take its
 //      status message's `server_now_ms`, take a cloud frame's `t_capture`,
 //      and compute the age exactly as ui/app.js does — asserting a real,
-//      plausible age (the synthetic path produces frames without a device).
+//      plausible age (the synthetic path produces frames without a device);
+//   3. the same check against the row #151 LOAD harness, which publishes at a
+//      chosen rate and frame size: a distribution over many frames instead of
+//      one, plus the frame-id continuity check (the V1 envelope's `seq`), so a
+//      frame the server published and the client never received is counted
+//      rather than assumed away.
 //
-// Usage: node ui/frame_age_test.js [path-to-scan_server]
-// Exit 0 = all checks pass (part 2 SKIPs if no binary/port is available).
+// Usage: node ui/frame_age_test.js [path-to-scan_server] [--synthetic-load <hz> <points>]
+// Exit 0 = all checks pass (parts 2/3 SKIP if no binary/port is available).
 
 "use strict";
 
@@ -224,6 +230,166 @@ function freePort(net) {
   });
 }
 
+// --- 3. the load harness (row #151) ----------------------------------------
+//
+// `--synthetic-load <port> <hz> <points>` publishes at a chosen rate with a
+// chosen frame size, so the age and the drop rate are measured at the rate the
+// publish path actually sustains rather than at the synthetic default.
+//
+// Two things this leg adds over part 2:
+//   * a distribution — the age of every frame in the window, so p50/p95 mean
+//     what the HUD's rolling line means;
+//   * frame-id continuity — the V1 envelope carries a per-frame `seq`, so a
+//     gap in it is a frame the server published and this client never got.
+//     The rate (not the fps) is what the drop count rests on.
+//
+// The browser's own render delay is NOT measured here: it is stubbed at 1 ms,
+// exactly as in part 2. The number below is the tick -> receipt leg.
+
+async function loadCheck(binaryPath, hz, points, seconds) {
+  const net = require("net");
+  const port = await freePort(net);
+  if (port === null) {
+    console.log("[frame-age] load end-to-end                               SKIP (no free port)");
+    return;
+  }
+  const child = spawn(binaryPath,
+    ["--synthetic-load", String(port), String(hz), String(points)],
+    { stdio: ["ignore", "pipe", "pipe"] });
+  let reaped = false;
+  const reap = () => {
+    if (!reaped) {
+      reaped = true;
+      try { child.kill("SIGTERM"); } catch (e) { /* already gone */ }
+    }
+  };
+  process.on("exit", reap);
+  // The server prints its own [perf] lines; keep them (they are the raw
+  // evidence for the run) and drain the pipes so the child never blocks.
+  let serverOut = "";
+  child.stdout.on("data", (d) => { serverOut += d.toString(); });
+  child.stderr.on("data", (d) => { serverOut += d.toString(); });
+
+  try {
+    let up = false;
+    for (let i = 0; i < 100 && !up; i++) {
+      up = await new Promise((resolve) => {
+        const s = net.connect(port, "127.0.0.1", () => { s.destroy(); resolve(true); });
+        s.on("error", () => resolve(false));
+      });
+      if (!up) await sleep(50);
+    }
+    if (!up) throw new Error("load server did not start listening");
+
+    if (typeof WebSocket !== "function") {
+      console.log("[frame-age] load end-to-end                               SKIP (no global WebSocket)");
+      return;
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const ws = new WebSocket("ws://127.0.0.1:" + port);
+      const tracker = new FrameAge.Tracker();
+      let sawStatus = false;
+      let firstSeq = null;
+      let lastSeq = null;
+      let missing = 0;   // frames the server published and the client did not get
+      let frames = 0;
+      let firstAt = 0;
+      let lastAt = 0;
+      const startedAt = Date.now();
+      const timer = setTimeout(() => {
+        try { ws.close(); } catch (e) { /* noop */ }
+        // Snapshot here: a frame that arrives after the window must not move
+        // the numbers the report prints.
+        resolve({ frames, missing, firstSeq, lastSeq, firstAt, lastAt, startedAt,
+          stats: tracker.stats() });
+      }, seconds * 1000);
+      ws.onerror = () => { clearTimeout(timer); reject(new Error("websocket error")); };
+      ws.binaryType = "arraybuffer";
+      ws.onmessage = (ev) => {
+        if (typeof ev.data === "string") {
+          let msg = null;
+          try { msg = JSON.parse(ev.data); } catch (e) { msg = null; }
+          if (msg && msg.type === "status") {
+            assert.ok(Number.isFinite(msg.server_now_ms),
+              "status must carry server_now_ms (row #142)");
+            tracker.noteServerClock(msg.server_now_ms, Date.now());
+            sawStatus = true;
+          }
+          return;
+        }
+        if (!sawStatus || !(ev.data instanceof ArrayBuffer)) return;
+        const buf = ev.data;
+        if (buf.byteLength < 36) return;
+        const view = new DataView(buf);
+        if (view.getUint32(0, true) !== 0x4f534346) return; // not a V1 frame
+        if (view.getUint16(6, true) !== 3) return; // not a cloud snapshot
+        const seq = view.getUint32(8, true);
+        const tCapture = view.getFloat64(12, true);
+        const now = Date.now();
+        const ageAtReceipt = tracker.ageAtReceipt(tCapture, now);
+        const frameAge = tracker.noteRendered(ageAtReceipt, 0, 1);
+        if (frameAge === null) return;
+        frames++;
+        if (firstSeq === null) { firstSeq = seq; firstAt = now; }
+        else if (seq > lastSeq + 1) missing += seq - lastSeq - 1;
+        lastSeq = seq;
+        lastAt = now;
+      };
+    });
+
+    const stats = result.stats;
+    // The frames the server published between the first and the last one this
+    // client saw: lastSeq - firstSeq + 1. What the client did not get is the
+    // difference — the drop rate the P3 item asks for.
+    const published = (result.lastSeq === null || result.firstSeq === null)
+      ? 0 : (result.lastSeq - result.firstSeq + 1);
+    const dropRate = published ? (result.missing / published) : 0;
+    const span = (result.lastAt - result.firstAt) / 1000;
+    const handledFps = span > 0 ? (result.frames - 1) / span : 0;
+
+    check("load: the harness published frames and they all arrived", () => {
+      assert.ok(result.frames > 0, "no cloud frame arrived");
+      assert.strictEqual(result.missing, 0,
+        result.missing + " frame(s) missing from a contiguous seq run of " + published);
+      // The client must still be receiving at the end of the window: a stall
+      // (the server drops a client whose send times out) shows up here.
+      assert.ok(result.lastAt >= result.startedAt + seconds * 1000 - 1500,
+        "the client stopped receiving before the window ended");
+    });
+    check("load: the frame age is real and plausible", () => {
+      assert.ok(stats.n > 0, "no age sample");
+      // The server emits `server_now_ms` as an integer millisecond while the
+      // frame's `t_capture` is a float64 one, so the HUD's own arithmetic can
+      // read a millisecond or so below the truth — the browser has the same
+      // artifact. A median below that floor, or an age of seconds, is a
+      // defect rather than an artifact.
+      assert.ok(stats.min > -5, "age below the clock-granularity floor: " + stats.min);
+      assert.ok(stats.p50 > -1, "the median age is below the floor: " + stats.p50);
+      assert.ok(stats.p50 < 100,
+        "the median age should be well under 100 ms, got " + stats.p50.toFixed(1));
+      assert.ok(stats.max < 1000,
+        "loopback load age should be < 1000 ms, got " + stats.max.toFixed(1));
+    });
+    console.log("[frame-age] load: hz=" + hz + " points=" + points +
+      " window=" + seconds.toFixed(1) + "s frames=" + result.frames +
+      " published=" + published + " missing=" + result.missing +
+      " drop_rate=" + (dropRate * 100).toFixed(2) + "%");
+    console.log("[frame-age] load: handled " + result.frames + " frames in " +
+      span.toFixed(2) + "s = " + handledFps.toFixed(2) + "/s (the frames before the" +
+      " first status message carry no clock and are not counted)");
+    console.log("[frame-age] load HUD line: " + FrameAge.describe(stats) +
+      " (min " + stats.min.toFixed(1) + " / max " + stats.max.toFixed(1) +
+      " ms; the browser's render delay is stubbed at 1 ms)");
+    for (const line of serverOut.split("\n")) {
+      if (line.trim()) console.log("[frame-age] server: " + line);
+    }
+  } finally {
+    reap();
+    await sleep(100);
+  }
+}
+
 (async () => {
   if (failures) {
     console.log("[frame-age] FAILED (" + failures + " check(s))");
@@ -239,6 +405,22 @@ function freePort(net) {
       // A missing/unstartable binary is a SKIP, not a failure: the arithmetic
       // above is the acceptance; the end-to-end leg needs the built server.
       console.log("[frame-age] synthetic end-to-end                          SKIP (" + e.message + ")");
+    }
+    // `--synthetic-load <hz> <points>` runs the same check against the row
+    // #151 load harness. Absent, the leg is skipped.
+    if (process.argv[3] === "--synthetic-load") {
+      const hz = Number(process.argv[4]);
+      const points = Number(process.argv[5]);
+      const seconds = Number(process.argv[6] || 6.5);
+      if (!Number.isFinite(hz) || !Number.isFinite(points)) {
+        console.log("[frame-age] load end-to-end                               SKIP (bad --synthetic-load arguments)");
+      } else {
+        try {
+          await loadCheck(binary, hz, points, seconds);
+        } catch (e) {
+          console.log("[frame-age] load end-to-end                               SKIP (" + e.message + ")");
+        }
+      }
     }
   }
   console.log("[frame-age] " + (failures ? "FAILED" : "ok") + " (" + failures + " failure(s))");
