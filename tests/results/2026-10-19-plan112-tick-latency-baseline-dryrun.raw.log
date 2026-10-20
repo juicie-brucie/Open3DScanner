@@ -1,0 +1,11 @@
+[worker] Serving UI from: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/scan_server/../../../ui
+Streaming synthetic point-cloud frames on ws://0.0.0.0:8787
+Open ui/index.html in a browser to view it.
+[perf] window 5.0s n=137 rate=27.4/s points=2304.0 bytes=27697.4 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.11 p95=0.26 max=7.21 ms | bcast p50=0.00 p95=0.00 max=0.05 ms | tick p50=37.40 p95=38.29 max=41.62 ms
+[perf] window 5.0s n=137 rate=27.3/s points=2304.0 bytes=27697.5 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.12 p95=0.23 max=0.30 ms | bcast p50=0.00 p95=0.00 max=0.00 ms | tick p50=37.74 p95=38.26 max=38.28 ms
+[perf] window 5.0s n=137 rate=27.3/s points=2304.0 bytes=27697.5 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.15 p95=0.24 max=0.29 ms | bcast p50=0.00 p95=0.00 max=0.01 ms | tick p50=37.70 p95=38.27 max=38.34 ms
+[perf] window 5.0s n=138 rate=27.5/s points=2304.0 bytes=27697.4 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.15 p95=0.23 max=0.73 ms | bcast p50=0.00 p95=0.00 max=0.00 ms | tick p50=36.61 p95=38.26 max=38.43 ms
+[perf] window 5.0s n=138 rate=27.5/s points=2304.0 bytes=27697.4 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.10 p95=0.20 max=0.93 ms | bcast p50=0.00 p95=0.00 max=0.01 ms | tick p50=36.56 p95=38.20 max=56.33 ms
+[perf] window 5.0s n=135 rate=26.9/s points=2304.0 bytes=27697.7 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.10 p95=0.23 max=1.42 ms | bcast p50=0.00 p95=0.00 max=0.01 ms | tick p50=38.09 p95=38.27 max=72.66 ms
+[perf] window 5.0s n=137 rate=27.4/s points=2304.0 bytes=27697.5 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.11 p95=0.20 max=0.93 ms | bcast p50=0.00 p95=0.00 max=0.04 ms | tick p50=36.88 p95=38.22 max=39.73 ms
+[perf] window 5.0s n=137 rate=27.3/s points=2304.0 bytes=27697.5 | pose p50=0.00 p95=0.00 max=0.00 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.16 p95=0.26 max=0.65 ms | bcast p50=0.00 p95=0.00 max=0.01 ms | tick p50=37.08 p95=38.31 max=39.89 ms
