@@ -191,7 +191,9 @@ typical, 1.18 ms mean), because it is the one measured on the path that ships; t
 
 **The answer is yes: the code is fast enough to be the start of that pipeline, and it is not close.** At the source's
 own rate the ingest uses **1.8 %** of the frame typically (**2.8 %** as the run's mean) and leaves **~40 ms** per
-frame for logic; at 60 Hz it still leaves **~15 ms**. And the reason is structural rather than lucky: **the cloud is
+frame for logic; at 60 Hz it still leaves **~15 ms**. (That is the *floor* answer. The operator's standard is higher
+— *"as fast as possible"*, for a lower-end target — and §4.1 prices the gap between what the ingest costs today and
+what the zero-waste version costs.) And the reason is structural rather than lucky: **the cloud is
 already in hand at zero measured cost** (the getter is 0.00 ms), and the tick's measurable work is the cost of
 *publishing a preview* — 0.75 ms of encoding for 20,000 points — not of ingesting.
 
@@ -289,6 +291,11 @@ pace change. So "10× capacity" mostly does **not** need faster code. It needs t
 and the **data volume** move independently of the **cadence** — and, under every reading, the first thing that binds
 is the **synchronous broadcast** (57.7 % of the tick's CPU at 8 clients, with a 100 ms stall inside the tick
 thread), not the source, not the consumer, and not the cadence.
+
+**But "not the binding limit" is not the same as "as fast as possible", and the operator's standard is the second.**
+§4.1 names and prices the wastes that are *inside* today's cheap ingest — the per-byte encoder, the per-tick
+allocations, the two syscalls per client, the every-tick vendor re-assert — and says which of them a lower-end target
+cannot afford. The pipeline is not CPU-bound; it is **not yet zero-waste**.
 
 ---
 
@@ -449,6 +456,75 @@ act *on* the tick, and it does so through a bounded slot rather than by running 
 * The stop path is unaffected: the tick tests `g_stop_requested` at the top of every tick (`main.cpp:1101`), so the
   wait is already the worst-case stop latency.
 
+### The performance budget: what each stage costs, what it must cost, and the gate
+
+**The standard is not "fast enough at 24 Hz".** The operator's words: *"I want this not to be fast enough — I want this
+part of the core architecture to be as fast as possible. Our ability to extend the features of Creality Scan and get it
+running on lower-end hardware relies on this pipeline."* So performance here is not an observation, it is a
+**constraint on the design**, expressed as a **budget per stage** and enforced by a **gate**. Row #152 builds that
+contract and its harness; **this note is the architecture the contract enforces** — the waste list below is the set of
+things the budget must forbid.
+
+**The lower-end target — an assumption, to be replaced by a named machine.** The reference profile is the M1 16 GB:
+the vendor's stated macOS minimum and the machine every number in this note was measured on ([#147 §2.1]; [SPEC]'s test
+hosts). **The operator will name the lower-end target; until then this note assumes a machine at half the M1's
+single-core throughput and half its memory bandwidth — a factor of 2 on every per-frame time and on every
+byte-moving term.** Every figure below is given at the reference host and at that factor, so the reader can see which
+costs the factor hurts and which it does not.
+
+#### Today's wastes, named and priced
+
+| # | the waste | where | what it costs today | the zero-waste form (exact) | cut? |
+| --- | --- | --- | --- | --- | --- |
+| **W1** | **per-byte writes** — the encoder pushes 4 bytes per float: 240,000 `push_back`s per frame | `frame_protocol.h:39-73` (the `put_f32` lambda at `:55-58`) | **0.75 ms** of the ingest at 20,000 points (the live fit above), **1.07 ms** at the synthetic 53.4 ns/point | **one sized write of 240,036 B** — an exact byte count, no instruction-count term | **yes** |
+| **W2** | **per-tick allocations** — the preview's `xyz`, the encode buffer, the pose buffer, one WS header per client | `main.cpp:1250`, `:1264`, `:1172`; `ws_broadcast_server.cpp:241` | **4 allocations and 480,196 B per tick** (4.2 MB/s at 8.7 Hz, **11.5 MB/s at 24 Hz**) | **0 allocations per tick** — reusable buffers | **yes** |
+| **W3** | **the two-vector copy** — the synthetic path copies the sphere and rotates the copy | `main.cpp:603-604` | ~4 % of the tick's CPU in the synthetic path; the live path has no such copy (it decimates the vendor's buffer in place) | a rotate **in place**, into the reusable buffer of W2 | **yes** (synthetic path only) |
+| **W4** | **two syscalls per client per send** — the header, then the payload | `ws_broadcast_server.cpp:255-256` | 2 per client per tick; the *bytes* dominate the measured 37 µs per client ([#147 §6]) | **1 write per client per frame** — the header in front of the payload | **yes** |
+| **W5** | **a per-tick vendor re-assert** — the exposure is re-sent every tick with an unchanged value (`control.auto_exposure = false`, `main.cpp:1038`) | `main.cpp:1151` | **1 vendor call per tick** — and **not yet timed by a measurement**: #141's `exposure` segment times it on the next hardware run, and #153 owns the fix | **1 call per change** | **yes** (row #153) |
+| **W6** | **a syscall per tick whose answer cannot change** — the orphan guard compares `getppid()` to the parent captured at startup | `main.cpp:1092-1099` | ~1 µs — **0.001 %** of the live tick's ~103 ms period here; a syscall nonetheless | **0** — check it on a timer, not every tick | **yes** |
+| **W7** | **copies of the cloud** | — | **0 today** (the tick decimates the vendor's buffer in place) — but **16.4 MB per frame** (394 MB/s at 24 Hz) the moment a consumer takes the full cloud | a **shared view**, not a copy | **the seam (C1) is what avoids it** |
+
+**And what cannot be cut, with the reason:**
+
+* **The pacing wait.** C2 makes the rate *requestable*; it does not make the wait cheaper. It is the schedule, not
+  waste — 99.4 % of the tick ([#147 §9]).
+* **The getter.** 0.00 ms, and the vendor's own fusion on the SDK's threads is what sets the 24.0 Hz source ([#151]).
+  It is the data's arrival, not our work.
+* **The bytes on the wire.** 27,697 B per client per frame is inherent to broadcasting a 20,000-point cloud to N
+  clients. The only levers are the decimation choice (#136c — a *product* decision) and the client count.
+* **The one preview build per frame.** If the preview exists, it must be built once. Zero-waste means *build once,
+  reuse the buffer* — not *do not build it*.
+* **The single-threaded ingest.** fetch → decimate → encode is one sequential dependency; splitting it would add
+  synchronisation cost, not remove it. The parallelism belongs to the **consumers** (C1), not to the ingest.
+
+#### What the lower-end target does to each waste
+
+| | at the M1 | at the target (×2) | what the factor does |
+| --- | --- | --- | --- |
+| **W1** the per-byte encode | 0.75 – 1.07 ms/frame | **1.5 – 2.1 ms/frame** | a per-byte write is an **instruction-count** term, so it degrades with the core's speed; the zero-waste form is a **bandwidth** term, so it degrades with the memory system instead. **The gap widens on a slower machine** — which is exactly why the waste is what the lower-end target cannot afford |
+| **W2** the per-tick allocations | 480 kB/frame, 11.5 MB/s at 24 Hz | **23 MB/s** | the memory-traffic term a low-end memory system feels first |
+| **W4** the send | 37 µs per client per tick | **74 µs** | the syscall overhead doubles with it |
+| **W5** the exposure re-assert | 1 vendor call per frame | 1 call per frame | a vendor call is not free on a slower machine, and the value does not change |
+| **the ingest as a whole** | 0.75 – 1.2 ms of a 41.7 ms frame (1.8 – 2.8 %) | **1.5 – 2.4 ms (3.6 – 5.8 %)** | the *budget* survives the factor; the *waste* inside it does not shrink |
+
+#### The gate: "as fast as possible" as a line that cannot drift
+
+The budget is enforced in two layers, and the first is the one that makes the property real:
+
+* **The invariants** — machine-independent, exact, and assertable on *every* build:
+  **0 allocations per tick** (W2), **0 per-byte writes** (W1), **1 write per client per frame** (W4), **0 vendor
+  re-asserts per tick** (W5), **0 copies of the cloud** (W7), and **no syscall per tick except the wait** (W6).
+  These are not "performance targets" — they are facts about the code, and a regression in any of them is a defect, not
+  a slowdown.
+* **The times** — per stage, against #152's reference profile and its safety factor. Every threshold is a
+  **measurement**, because every number in this note is one ([#147]'s method is the harness: the synthetic server, the
+  loopback mock, the profiler, `vmmap`). #156's end-to-end number is the complement: the gate's per-stage numbers are
+  the parts, its total is the whole.
+
+**So performance is a first-class property of this path in a specific, checkable sense:** the ingest's cost is a
+constraint the design must satisfy (the waste list), the constraint is exact and assertable (the invariants), and the
+gate is row #152's. Nothing in the design is allowed to regress into the waste list without a measurement saying so.
+
 ### Why this order
 
 S1 is first because it is the largest measured share of the tick's CPU, it changes **no observable behaviour**, and it
@@ -476,6 +552,11 @@ at 24–60 Hz; step 2 makes the *rate* requestable; step 3 gives the *data* to t
 *network* off the tick; steps 5–6 are the data plane, and S4's format decision has to precede S5's copy budget
 because it decides what S5 is allowed to carry. C1 comes before S3 because C1 is **additive** (a new slot beside
 the existing broadcast) while S3 changes the existing clients' semantics — the cheaper change first.
+
+**The order is also the waste order** (§4.1): step 0 removes **W1** (the per-byte writes, the largest term), step 1
+removes **W4** (the second syscall per client), step 3 removes **W2**, **W6** and **W7** (the per-tick allocations,
+the invariant syscall, the copy budget) by giving the path a reusable frame object and a shared view, and **W5** (the
+every-tick exposure re-assert) is row **#153**'s, off this list but on the same sheet.
 
 **The smallest first step that is independently valuable: step 0, the encoder.** It is a pure function, it changes no
 bytes on the wire, it needs no device, and it is verifiable by an equivalence test — and it is what turns the tick's
@@ -533,6 +614,12 @@ seam.)
 * **The per-stage budgets** (#152) and the end-to-end frame benchmark (#156), and the full stage map with costs
   (#155) — this note is the *structure* argument those rows instantiate; the numbers in §3 are the inputs, not the
   budgets. The four consumers' own compute budgets are new stages and belong to #152.
+* **The lower-end machine.** §4.1 assumes half the M1's single-core throughput and half its memory bandwidth; the
+  operator names the real target, and the factor moves with it. The *invariants* (§4.1) do not move with it — they
+  are exact.
+* **W5's price** (the every-tick exposure re-assert): **not yet measured**. #141's `exposure` segment times it on the
+  next hardware run; #153 owns the fix. The note names the waste and its call count (1 per tick) and leaves the time
+  to the instrument that will measure it.
 * **Each consumer's data volume and identity model** — whether marker ID keys on the vendor's 0.1 voxel grid
   ([#136] stage 0) or on the raw cloud, and what resolution an ellipse transform is defined at, are product
   decisions with the operator; §4.1's table states what each one *needs*, not what it will get.
