@@ -525,7 +525,8 @@ one constraint that changes how the test must be written:
   realises **24.29 ms** → **41.2 Hz**. Any "run at N Hz" number must subtract the overshoot from the budget, or it
   will measure the timer, not the pipeline.
 * **At those rates the binding limit will not be our work.** The whole tick costs **195 µs** of CPU (no client) and
-  **514 µs** at 8 clients (§3) — i.e. 0.5 % of a 37 ms tick, 1.4 % of a 23.9 ms tick. The per-tick work and the
+  **514 µs** at 8 clients (§3) — i.e. 0.5 % of a 37.0 ms tick, 1.1 % of the 44.6 ms a 24 Hz request realises, 2.1 % of
+  the 24.3 ms a 50 Hz request realises. The per-tick work and the
   broadcast cost at 1 and 8 clients are already in §3 and §6; what #151 still has to measure is the **browser's**
   side (frame age, drop rate), which is the one surface this row did not touch.
 * **The two knobs that would show up in #151's numbers** are the ones §8 names: the encoder (63 % of the tick's CPU
