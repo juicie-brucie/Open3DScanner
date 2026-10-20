@@ -9,124 +9,351 @@ Owner: the `openscanner/planner` agent. The dispatcher consumes it and applies t
 moves it proposes. Statuses, claims and evidence live on the board — this file points at
 them and never restates them.
 
-_Last planned: 2026-10-19 (rev 19 — **the pivot's first live run changed the picture**: Phase B's
-code landed but its first session pulled **zero frames**, so `#105` now gates `#98`'s acceptance and
-everything downstream. This revision re-ranks around it, reframes the capture work from
-*re-derivation* to *verbatim replay*, sweeps the night's moves (#73/#95/#104 `DONE`, #89 a failed
-observation, #105 filed), and records the session-model lesson under `H2`. rev 18 retired the README
-staging block; rev 17 was **the pivot**; rev 16's objective landed; rev 15 closed the walls audit;
-rev 14/13/12/11/10 are superseded — see **Superseded plans**)._
+_Last planned: 2026-10-20 (rev 24 — **the room round**. Rev 23 aimed at `#157` so the pivot's live half
+could run. The board moved underneath it: `#157` and `#158` landed and `#132` moved to `HW` (its tooling
+landed as `#140`) — the moves are recorded by PR #397 — so the critical path no longer has a **code**
+prerequisite; it has a **room** prerequisite. The same session produced the second fact, and it is the one
+this revision turns on: PR #392, which carries the 2026-10-20 hardware records, fails `verify-pr` on
+`archives` and `record-provenance` — the run immediately before this one produced records the gate cannot
+cite. So the objective becomes: spend the next room session **once**, in a fixed order, and come out with
+a record that survives the gate. Rev 23 and this revision land together, so read the revision number, not
+a merge commit; rev 22 and earlier are superseded — see **Superseded plans**. **Provenance:** written
+against `origin/main` `2dd8a7e` (board through `#159`; PRs #392, #387, #375 and #366 open)._
+
+**Post-rebase note (2026-10-20, the landing of revs 20–24).** `main` moved between rev 24's provenance
+(`2dd8a7e`) and this landing (`ff89839`). Three of rev 24's four *evidence-chain* PRs have merged —
+#366 (`#151` → `HW`), #375 (`#150` → `SPEC-READY`) and #387 (`#159` → `SPEC-READY`) — and #93's fix
+landed as PR #399, so order 2 is down to **PR #392** (still `HOLD`). Rev 24 also lists `#109` as open
+work in *Ready now* and in order 7; it was already `DONE` when rev 24 was written (PR #395), so read the
+board for that row. Nothing above is amended: the revision stands as written, so the reversal stays
+legible.
 
 ## Objective for the next round
 
-**Get frames out of our own client — `#105` — because it gates `#98`'s acceptance and therefore the
-whole pivot.**
+**Spend the next room session once and make its output citable: replay first, then one live run per
+interface, then `#71`'s A/B — on one frozen binary — one record per run, and a raw-log hash that
+resolves.**
 
-Phase A closed (`#96` → `G-A` cleared) and Phase B's code landed (`#98`, `tools/raptor_client`). Its
-first live session was **mechanically clean and empirically empty**: connect, `start_stream` accepted
-with no error, a full five seconds, a clean stop — and **zero frames**, with `ob_rpc_get_frame` never
-returning data. That is the pivot's first real result, and it is a *negative* one: the client speaks
-the protocol without speaking it correctly.
+The round's acceptance is a sentence a record can settle: it has **two acceptable outcomes**, and one
+condition that applies to both.
 
-**The decisive evidence is already in hand.** The vendor path streams **245,235 points** through the
-same daemon (the operator's live screenshot), so the daemon *does* serve frames to a client that asks
-properly. `#105` is our request shape or our sequencing — not the daemon, not the device, and not the
-protocol spec.
+- **Replay:** all 36 captured replies parse as the 11-element result, with a data-vs-empty tally
+  (`#127`'s owed observation, `#105`'s replay acceptance, `#140`'s counter).
+- **Live, per interface** (two runs per `#157`'s note that the binary opens one interface per run):
+  `start_stream` is accepted on the **suffixed** method, and every `get_frame` reply is the daemon's
+  result — `band(N)` or `empty` — never an error and never zero replies.
+- **Each record's raw log hash resolves** and the cited binary sha is the binary that ran.
 
-**That reframes the two in-flight efforts, which are not alternatives.** Per-call status logging must
-land **first**: without accepted-vs-rejected visibility nothing else can be validated, because the
-symptom *is* a call that succeeds and does nothing. The capture work then deserves a different *first
-step* than re-derivation — see below.
+A consistent `band(N)` is the pivot's first live frame and hands the next question to `#132`'s analysis
+checklist. A consistent `empty` is `#127`'s answer and hands it to `#143`. A named rejection names the
+next row — the binary carries `--dump-replies` and `--capture`, so a second failure produces its own
+evidence. **The only failure is a session that produces neither a result nor a named rejection**, or one
+whose record the gate cannot cite.
+
+**Why this leads: the code prerequisite is gone, so the bottleneck moved to the room and to the record.**
+Rev 23's first order was `#157`; it has landed (row #157, PR #393) with only the daemon check owed, and
+`#158` landed too (row #158, PR #382), which removes the two-process confound that cost `#71` four
+attempts. What remains on the pivot's path — `#105`'s live half, `#98`'s acceptance, `#132`, `#127`,
+`#143`, `#71`, `#76`, `#141`'s UI half, `#153` — waits on **one manual session**, not on code. The only
+device-free work that changes what that session yields is (a) the evidence chain and (b) `#144`'s recon,
+which feeds `#143` and `#99` rather than the session's own rows.
+
+**Why the order inside the session is fixed.** The replay half needs no live path and takes minutes; if
+the room closes early, the pivot's cheapest answer is already banked. The two live runs come next because
+they answer `#157`'s daemon check and `#132`'s capture at once. `#71`'s A/B comes **last** because it is
+the one member that can be starved without losing the pivot's answer, and because it needs a still scene
+(the toggle from `#158` applies mid-session, so one scan is compared against itself). The UI-open
+observations (`#76`, `#141`'s UI half, `#112`'s HUD fields) ride the live runs **only if each record
+states the client count and the UI-open state beside its numbers** — rev 23's instrument rule, unchanged.
+
+**Why the evidence chain must land first.** PR #392 fails `archives` (a cited sha256 that does not match
+the log beside it, and one that resolves to no file) and `record-provenance` (two records citing no raw
+evidence) — and that PR is the carrier for `#71`'s fifth attempt and the `frame_bins` test record. If the
+batch's records are written the same way, a sixth attempt produces evidence the gate rejects, and the
+room's scarcest resource is spent twice. PRs #387 (`#159`'s design + offline harness), #375 (`#150`) and
+#366 (`#151`) are the other three at `NEEDS CHANGE`; all four are record-level or one-bug fixes, none is
+a design question, and none of them touches the binary the room will run.
+
+**What this round is explicitly not.** Not `#159`'s acceptance: its offline half is PR #387 and its
+hardware half needs `#126`'s known scene, which is a setup session of its own. Not `#126`, `#145`, `#146`
+or `#150` — each needs a different physical setup (risk 4). Not the pivot's destination (`#99`/`#100`).
+Not the target-rate decision or the seams that follow it (`#113`, `C1`/`S2`/`S3`) — the operator owes that
+answer and no run in this batch can settle it. Not a build landing mid-batch (risk 4).
+
+## The two artifacts, and the third layer
+
+A distinction the row list keeps assuming, stated once so the dispatcher can place a row on the right
+side of the wall. It is also the answer to "what is the difference between the OBScan API and the
+vendor dylib".
+
+- **The OBScan API is the contract.** The `obscan_*` C exports, the `ObScan*` POD structs, enums,
+  status codes and opaque handles declared in
+  [`obscan_api.h`](../../engine/include/openscanner/obscan_api.h). It has no behaviour of its own. It
+  is recovered by recon, reviewed by a human, and it is the only thing `engine/src` may be written
+  against. It is **ours**, so a wrong claim in it is a *spec bug* — rows `#5`, `#6`, `#12`, `#13`,
+  `#14`, `#15` are all that shape: a header claim the binary contradicted, fixed in the header.
+- **The vendor dylib is the implementation.** The shipped binary the contract was recovered from and
+  that our loader binds at runtime (the `liborbbec_scan…` dylib and the `libOrbbecSDK…` it depends
+  on). It is **evidence**, read only by recon, and never copied into the repository or the app
+  bundle. Its internal C++ symbols are not part of the contract; the header states the calling
+  convention, not the vendor's structure.
+- **Neither one is the daemon.** `#96`'s protocol spec describes a *third* layer: the RPC the dylib
+  speaks to Creality's service. The pivot's whole point is that this layer — not the dylib, and not
+  the header — is what a replacement must speak (`#98` → `#99` → `#100`).
+
+Why it matters to sequencing: every row is one of **spec** (`docs/recon/**`, the header), **bind**
+(`engine/**`, calling the dylib through the header), **own** (`tools/**`, no vendor linkage), or
+**protocol** (the daemon, `tools/raptor_client`). They have different walls, different acceptance and
+different definitions of done, and a round that mixes them inside one session mixes evidence with
+code.
 
 ## Critical path
 
 ```
-PHASE A ✅ DONE (#96 — G-A cleared)
-PHASE B: code ✅ (#98)   acceptance ✗ on #105  ──►  PHASE C (#99)  ──►  PHASE D (#100)
-              │                                          ▲                 ▲
-        #105 ZERO FRAMES ← the blocker         #95 G-C ───┘      #97 G-B ──┘
+PIVOT — no code prerequisite left; the room and the record are the gates.
+  #157 ✅ (PR #393) ──► live IR run ──┬─► #157's daemon check
+                                      ├─► #105 (live frames) ──► #98 acceptance ──► #99 ──► #100  [#97 ✅]
+                                      └─► #127 (array contents, live half)
+  #157 ✅ ──► live depth run ──► #132 (gap-free capture) ──► #143 / #124's clauses / #159's capture
+  #158 ✅ (PR #382) ──► #71 (single-session A/B, last in the batch)
+  replay run (no code) ──► #127 + #105's replay acceptance + #140's tally
+  #144 (recon; no device) ──► OQ-124-5, #114's names, #99's ingest fields
+  #146 (HW + operator) ──► #99's calibration correctness
+  #126 (HW + a known scene) ──► #159 (its harness is PR #387) ──► accuracy vs retention
 
-#105's route, in order:  1 logging (the prerequisite, not a parallel track)
-                         2 VERBATIM REPLAY of the vendor's request bytes (falsification, not re-derivation)
-                         3 retire "5 s was too short" from the captures, not from another run
-                         4 only then interpret — and #101 is what settles the values
+LIVE PATH — supporting this round, not leading it
+  #153's live confirm ─┐
+  #151 (PR #366) ──────┼─► #113's target ─► #154   [#152 ✅, #156 ✅, #142 ✅]
+  #141's UI half ──────┤
+  #112's HUD fields ───┘
+  P11 (S1 encoder) ─► #152's budgets
 ```
 
-**The gates are unchanged; one of them is now on the critical path.** G-A is cleared. G-B (`#97`) and
-G-C (`#95`) still gate D and a-correct-C respectively — but **`#101` (`OQ-F2`, the vendor properties'
-semantics) has moved from parked to on-path**, because `#105`'s leading hypothesis is the
-laser/exposure property sequence and `#101` is the row that exists to settle those values.
+**Edges, stated so they can be checked.** `#157` → the two live runs; the IR run also answers `#157`'s
+daemon check, `#105`'s live half and `#127`'s live half; the depth run is what `#132` needs (one
+interface per run — `#157`'s own note). `#132` → (`#143`, `#124`'s remaining clauses, `#159`'s
+capture). `#158` → `#71`. `#144` → OQ-124-5 / `#114`'s mode names / `#99`'s ingest. `#146` → `#99` for
+calibration correctness, not for start. `#126` → `#159`; `#97` → `#100`. On the live path, four inputs
+feed `#113` before it can state a target it can fail: `#153`'s live confirm, `#151`'s landed record,
+`#141`'s UI-open half, `#112`'s HUD fields (`#142` is landed). The **replay run has no prerequisite at
+all** — no live code path, no fix.
 
-Ranked by what it frees, not by board order:
+**The batch, in fixed order** (one record per run, one bundle, each naming its binary's sha):
 
-1. **`#105` — per-call status logging, then verbatim replay.** It gates `#98`'s acceptance, and `#98`
-   gates C and D. Nothing else on the board has that reach. The logging is the precondition for
-   believing any subsequent result; the replay is the cheapest *decisive* test available.
-2. **`#101` (`OQ-F2`).** Promoted. It settles the property values that `#105`'s leading hypothesis
-   turns on, and it is capture-driven — no hardware needed.
-3. **`#97` (`G-B`).** Still the single biggest unknown and still cheap: a decision that can reshape C2.
-   It has not become less important by being third — it has become *later*.
-4. **`#89`'s fix.** Its 5 s bound never fired, so the observation **failed** — recorded honestly as
-   such. It needs a fix, not a rerun.
-5. **The one hardware session.** Six `HW` rows (`#65`, `#66`, `#71`, `#76`, `#77`, `#91`) owe reruns on
-   already-merged work. One room clears all six; `#98`'s acceptance does **not** sit behind that room —
-   it sits behind `#105`.
-6. **`#99` → `#100`.** Unblocked by `#105` and `#97` respectively, in that order.
+1. **Replay** — `--replay docs/recon/findings/streaming-replay-payloads.hex 127.0.0.1 --dump-replies
+   --capture DIR`: `#127`'s array contents, `#105`'s replay acceptance, `#140`'s tally.
+2. **Live, IR** — `--live 127.0.0.1 10013 <secs>` with `--capture DIR-IR --frames 200`: `#157`'s daemon
+   check, `#105`'s live half, `#127`'s live half. UI closed (isolates the vendor path).
+3. **Live, depth** — the same on 10010: `#132`'s consecutive-reply corpus for that interface.
+4. **`#71`'s A/B** — a still scene, `set_plane_removal` toggled mid-session (`#158`), one scan compared
+   against itself. UI open for `#76`'s heatmap line and `#141`'s UI half; `#153`'s `exposure n=` segment
+   is read from the same windows.
+
+Order matters for a reason a partial session can be judged by: replay first banks the pivot's cheapest
+answer; the live runs next answer `#157` and `#132` together; `#71` is last because it can be starved
+without losing the pivot's answer. **No build lands between runs** (risk 4).
+
+Ranked by what frees, not by board order:
+
+1. **The room batch** — frees `#127`, `#105` (both halves), `#157`'s daemon check, `#98`'s acceptance,
+   `#132`, `#71`, and hands `#143`/`#159`/`#99` their inputs. Nothing else is close: the pivot's whole
+   remaining chain is one session long.
+2. **The evidence chain — PRs #392, #387, #375, #366** — frees no row directly, but it is what makes order
+   1 citable. #392 is the one that matters most: it carries `#71`'s fifth attempt and `#123`'s test
+   record, and it currently fails the gate on `archives` and `record-provenance`.
+3. **`#144`** — the op-31 structures and the 208-B segments, from a capture already on disk. Frees
+   `#114`'s names, OQ-124-5's cheapest answer, and `#99`'s ingest fields. Device-free, so it runs
+   *during* the room without competing for it.
+4. **`#159`'s harness (PR #387)** — the design and harness are written and verified except for one
+   blocking numeric bug and two required items. Needed before `#126`'s known-scene session so that run
+   produces a curve rather than raw data.
+5. **`#151` (PR #366)** — record-level defects only; it is an input to `#113`, not a premise.
+6. **`#150` (PR #375)** — closes `#138`'s residuals; device-free re-derivation.
+7. **The hygiene set — `#93`, `#103`, `#109`, `#118`, `#116`** — each frees exactly one thing, but `#93`
+   and `#103` free *trust*: a UI claim that contradicts a `DONE` row, and a README that still describes
+   the binding era. Plus `P10` (the broadcast counters' accessor) and `P11` (`S1`).
+
 ## Ready now
 
 | Item | Role | What it needs |
 | --- | --- | --- |
-| `#105` — the blocker | builder, then recon | **Per-call status logging first**, then **verbatim replay** of the vendor's captured request bytes. Gates `#98`'s acceptance, and `#98` gates C and D. |
-| `#101` — `OQ-F2` | recon + operator | The vendor properties' semantics, from three single-action captures. **Promoted onto `#105`'s path.** |
-| `#97` — `G-B` | operator | The macOS privileged-access decision, with reasoning. Cheap; gates `#100`. |
-| `#89`'s fix | builder | Its 5 s bound never fired — the observation **failed**, so this is a fix rather than a rerun. |
-| the one hardware session | hardware | `#65`, `#66`, `#71`, `#76`, `#77`, `#91` — six reruns on merged work, one room, no new code. |
-| `#102`, `#103` | recon / dispatch | The flash-write audit (gates `#100`); the README's Status/Known-issues pass. |
-| `#93` | builder | A live UI debounce bug in `ui/app.js`. |
+| **The batch** — replay + live IR + live depth + `#71` | hardware + operator | The room and the current binary. `#157` and `#158` are landed; no code change, no fix to wait for. Runs and order in **Critical path**. Each run gets its own record and names its sha. |
+| **The evidence chain** — PRs #392, #387, #375, #366 | dispatch routes; builder / recon / hw-record owner execute | Three are record-level edits; #387 has one blocking numeric bug (its retained-fraction flag). All four are fixes to work already done, and none changes the binary the room will run. **First order after this plan lands.** |
+| `#144` — op-31 structures + the 208-B segments | recon | Existing capture. No device. Also the cheapest answer to OQ-124-5. Wall: `docs/recon/**`. |
+| **P9** — the flash-write falsifier | recon | Static read, no device. See **Orphaned open questions**. Wall: `docs/recon/**`. |
+| `#149` — persist the full cloud (reader half) | builder | The reader needs no device (the vendor's own `model.ply`); the format choice is the operator's. Wall: `tools/scan_server/**` + `engine/**`. |
+| `#154` — capability probe + presets | builder | Its inputs landed: `#152`'s budgets and `#156`'s benchmark are `DONE`. Unblocked this revision. Wall: `tools/scan_server/**`, `ui/**`, `scripts/**`. |
+| **P11** — `S1`, the encoder's `memcpy` | builder | No device; the work order is written in `SCALE-ARCHITECTURE.md` §5 (equivalence test, identical bytes). Wall: `engine/include/openscanner/frame_protocol.h`. |
+| **P10** — the broadcast's per-client counters | builder | No device. The accessor behind `WsBroadcastServer`'s pimpl; retires `#141`'s proxy. Wall: `engine/**` + `tools/`. |
+| `#93` — the UI's double-debounce | builder | No device. `ui/**` only. Corrects a claim a `DONE` row (`#81`) currently makes. |
+| `#103` — the README pass | dispatch | Trigger **fired** (`#96` is `DONE`). Rewrites Status/Known issues for the post-pivot project. Wall: `README.md`. |
+| `#109` — session lifecycle; `#118` — the guard hook's read-blocking; `#116` — `raptor_client` on Windows | builder | Nothing. Small, live, unowned by any dependency. `#109` now has a live symptom (19 sessions drift — see **Risks** 6). |
+| **Record evidence lines** (proposed row) | builder | No device. Generate the raw-log citation line + its sha in `hw-postflight.sh` so a record cannot carry a hand-typed hash; today only the crash-report line is generated. See **Risks** 1. |
+| `#145` / `#146` — the operator's capture session and the calibration validation | operator + hardware | Scheduling. `#146` has `#140`'s recorder. Separate session from the batch (different setup). |
 
 ## Blocked, and on what
 
 | Row | Blocked on |
 | --- | --- |
-| `#98`'s **acceptance** | **`#105`** — zero frames. It previously read "blocked on G-A"; G-A is cleared, so the blocker moved. |
-| `#99` | `#98`'s acceptance, and **G-C** (`#95`) for correctness rather than for start. |
-| `#100` | `#98` **and** **G-B** (`#97`) — the privileged-access decision. |
-| the six `HW` reruns | The hardware room, and nothing else. |
-| G4, G5 | **The pivot subsumes them** — Phase C replaces fusion. No longer a separate wait. |
+| `#105` (live), `#127` (live half), `#98`'s acceptance | **The room**, on the binary that carries `#157` (landed). No code prerequisite remains. `#105`'s replay half rides the replay run. |
+| `#132` | The room: two runs, one interface each (`#157`'s note). Its analysis checklist is already in the row. |
+| `#127` (replay half) | Nothing but the room. Its owed observation is a **replay** run, not the live run the 2026-10-20 batch attempted. |
+| `#71` | The room **and a still scene** — `#158` removed the two-process confound, so one session now suffices. |
+| `#76`, `#141`'s UI half, `#112`'s HUD fields | The room, with the UI open. They ride run 4 only if the record states the client count and UI-open state beside every number (risk 2). |
+| `#126` | The device **and a known scene** (flat wall at 300/400/500 mm; checkerboard). The setup is the blocker; `#125` landed the renderer. |
+| `#159` | `#126`'s scene **and** PR #387's harness. It is now a row; the design/harness half is in verification. |
+| `#143` | `#132`'s bundle. |
+| `#124`'s remaining clauses | `#132`'s evidence: the container is named, the band rule is not, and the height is not on the wire. |
+| `#99` | `#98`'s acceptance (→ the room), `#132`/`#126` for a correct decode, and `#146` for calibration correctness. |
+| `#100` | `#98` **and** `#97` (decided; the helper is `#100`'s build). |
+| `#113` | Four inputs, all named: `#153`'s live confirmation, `#151`'s landed record, `#141`'s UI-open half, `#112`'s HUD fields. **Plus an operator decision** on the target rate (below). |
+| `#115` | The Windows host **with the scanner attached**; the M1/M2 halves are ready. |
+| `#150` | A controlled-rotation capture (axis order), a known-temperature soak, and a fast-rotation capture (gyro). Three captures, three setups — and PR #375 is still short of a verdict. |
+| `#149` (write path) | The archive **format and location** decision — operator. The reader half is not blocked. |
+| PR #392 | Its own record repair: `archives` (a cited hash that does not match the log, one that resolves to no file) and `record-provenance` (two records citing no raw evidence). |
+| G4, G5 | Subsumed by the pivot — Phase C replaces fusion. |
 | the Windows lane | Nothing. Handed off by operator rule — see **Windows fork**. |
+
+**The one user decision this round names: the publish target rate.** `#113` still says "60 fps" and the
+evidence says the current wait primitive realises ~86 % of a 60 Hz request (`#151`'s addendum) and that
+the device's **fused** cloud is 24 Hz while 50 fps is the raw profile (`SCALE-ARCHITECTURE.md` §3, §2 L4).
+The choice is the operator's, and it changes which row follows: hold **24 Hz** (reachable with the
+current primitive, and the source's own rate) or pursue **50–60 Hz** (then the row is the wait primitive
+or the producer/consumer seam `C1`/`S3`, not a `sleep_until` patch). `#113` should not be dispatched
+until this is answered.
 
 ## Orphaned open questions
 
-An OQ with no task row is unowned work. The previous sweep tracked a stale subset; this one
-reads every findings file's open list.
+An OQ with no task row is unowned work — and so is a row whose trigger has fired with nobody
+watching. This sweep reads `PLAN.md`'s OQ list against the findings' own open lists and the board's
+current statuses (`origin/main` `2dd8a7e`). The list still carries the same drift in both directions:
+several entries are answered and still listed open, and several proposed items still have no row.
 
-**Dead — closed, keep off the list:**
+**Stale entries — answered, retire them (board edits, not work).** Unchanged from rev 23, and still
+unapplied:
 
-- **OQ-1** — resolved by `#50`; **OQ-5** by `#47`. Both are answered in their findings.
-- **OQ-4** — closed by `#52`.
-- **OQ-S12** — answered by `#60`: the pose trigger is a real export and is declared, so the
-  "declare vs document" question never had to be taken.
-- **OQ-S13**, **OQ-S14** — closed by `#58`.
-- **OQ-S4** — deferred to the marker pass by decision; not yet live.
+- **OQ-1** → **`#50`** (the per-call-site `data` values and the literal payload). The list still says
+  "still unverified"; it is answered. Close it with the row citation.
+- **OQ-4** → **`#52`** (the invoking thread and re-entrancy: unsynchronised, re-entrant). `#68` left a
+  one-observation trace with no row; retire the OQ as answered, and if anyone wants the trace, file it as
+  a new trigger-gated item — do not leave it looking open.
+- **OQ-5** → **`#47`**, `DONE`.
+- **OQ-P1…P4** → **`#26`/`#27`/`#28`/`#29`**, all `DONE`. The list still renders them as pointers, so a
+  reader cannot tell open from answered.
+- **OQ-124-1** — resolved by `#124`; **OQ-124-3** — settled in `frame-codec.md` §10.3–10.4 and named on
+  `#131`. Both are answers now, not pointers.
 
-**Live, unowned — each gets an owner or an explicit trigger.** A "park" without a trigger is
-unowned work with a nicer name, so every row names both the condition that revives it *and* the
-cheapest thing that retires it.
+**Re-bind, don't duplicate:**
 
-| OQ | Trigger — when it becomes live | Cheapest retirement |
-| --- | --- | --- |
-| **OQ-S6** | **answered 2026-10-18 from the existing records**: the tail fits the watchdog budget with room to spare (the stall test's teardown ≈ 11 s against 600 s; the 15.6M-vertex case ≈ 19 s) | **retired — no run owed.** `A3` designs against the answer |
-| **OQ-7b** | **answerable as it stands** — `smoke_test` never registers the device-message listener and prints the device count | `#62`: a run of an existing tool. **No build change, no skip-listener flag** |
-| **OQ-S2** | a consumer wants the cloud *without* the color getter (a pause-time snapshot) | recon batch with the next scan-family row |
-| **OQ-S3** | a torn or partial cloud is observed, or a second reader is added | recon: read both lock sites statically |
-| **OQ-S7** | a consumer needs *absolute* world orientation (a world-axis grid, or `G3`'s pose graph) | one `get_global_pose` at a known device pose |
-| **OQ-S9** | a torn or frozen cloud is observed at the update cadence | double-call loop during an active scan |
-| **OQ-S10** | a consumer needs *intrinsics* (`G3`'s tracking, or a calibration workflow) | analyzer pass on the session DB row, or a runtime hexdump |
-| **OQ-S11** | a consumer wants the marker disc as a viewer overlay | entry-register capture + a small-`n` hexdump |
-| **OQ-7c** | a second sensor line is supported | static string/symbol read |
-| **OQ-7d** | only its parent question, `#52`, which is closed | **verify against `#52` and close it** |
+- **OQ-124-5** (is format id 9 `OB_FORMAT_Y8`?) — point it at **`#144`** first (the op-31 / stream-profile
+  structures may name the format ids), with **`#126`** as the fallback.
+- **OQ-124-2**, **OQ-124-4**, **OQ-131-1…4** stay owned by **`#132`** — now `HW`, so rev 23's move is
+  applied. Its remaining clauses are the depth-run evidence.
 
-## Orphaned work — the corpus's `G6`, corrected
+**New orphans this sweep found:**
+
+1. **`#112`'s HUD fields have no owner.** The row is `HW` with its timing half accepted and its
+   acceptance explicitly *not* met on the HUD `data`/`render` fps, which are client-side and have no
+   server endpoint. The row says the operator will record it; nobody owns producing or reading that
+   recording. Cheapest: **one line in run 4's record** (UI open) naming `data`/`render` fps from the HUD,
+   or a browser-driven read against the synthetic server with no device. Either retires the row.
+2. **`#134` is `SPEC-READY` with "no cause found".** The audit is complete and says the claimed
+   improvement was an instrument mismatch. That is a *result*, not a pending task; it needs a close
+   decision, and the residual it named (~9.6 ms/tick outside all four timed segments) belongs to `#141`,
+   which is `HW`. Unowned: either close `#134` or file the residual.
+3. **`#155` is `SPEC-READY` with the map written.** Same shape: `STAGES.md` exists and every cell cites
+   its source; the row needs an acceptance line or a close, not more work.
+4. **P9 — the flash-write falsifier, still no row.** `#102` closes with "no persistent write observed" and
+   names the falsifier (the documented write path and its unknown wire opcode); `#100` will claim "no
+   required writes" on that basis. Recon, static. Wall: `docs/recon/**`.
+5. **P10 — the broadcast's per-client counters have no home.** `#141`'s own note records the wall gap:
+   send time, queue depth, drops and the 100 ms timeout live behind `WsBroadcastServer`'s pimpl in
+   `engine/**`, so the row shipped a derived proxy instead. Builder; `engine/**` + `tools/`. Retires the
+   proxy and feeds `#152`'s waste inventory.
+6. **P11 — `S1`, the encoder's `memcpy`.** `SCALE-ARCHITECTURE.md` §5 writes it as a complete work order
+   (identical bytes, device-free equivalence test, no wire change) and calls it the smallest independently
+   valuable step. No row owns it.
+7. **The record's evidence line is hand-typed, and that is now a paid-for defect.** PR #392 fails
+   `archives` on a cited hash that does not match the log beside it and one that resolves to no file.
+   `hw-postflight.sh` generates exactly one such line (the crash report); the raw-log line is typed. No
+   row owns closing that gap. Builder; `scripts/hw-postflight.sh` + `tests/results/_TEMPLATE.md`.
+8. **OQ-89a–d and OQ-S4 are parked in this file, not on the board.** Rev 23 recorded the decision here;
+   a parked decision with no row disappears the next time the board is read alone. Propose **one** row
+   that adopts both, states the trigger and the cheapest retirement, and sits beside `#83`–`#88`.
+
+**A standing contradiction, unchanged.** `#81` is `DONE` and says the HUD renders the vendor's two-frame
+window; **`#93`** says the same client code re-applies a debounce the SDK already applied (`#82` settled
+the mechanism). Until `#93` lands, no tracking-display claim should be treated as evidence. One-file
+`ui/**` fix; the cheapest trust repair on the board.
+
+**Fired triggers nobody moved:** `#103` (its gate, `#96`, is `DONE` — dispatch it) and `#113` (re-point it
+at the four inputs in **Blocked**, and do not dispatch it before the target-rate decision).
+
+**Still parked, deliberately.** `OQ-89a–d` (only if the wrapper must distinguish "busy" from "broken",
+sample in `context-destroy-hang.md` §6.2) and `OQ-S4` (deferred to the owned tracker's spec) — now
+proposed as one adopting row (orphan 8); and `OQ-S2`/`S7`/`S9`/`S11`/`OQ-7c` (rows `#83`, `#84`, `#85`,
+`#87`, `#88` — trigger-gated, unchanged).
+
+---
+
+## Scope input — telemetry and capture (rev 21, absorbed into rows)
+
+The operator's two asks are adopted here as a **principle and a list**, not a subsystem:
+instrument the surfaces that have to be fast; record every byte the hardware session sees; decode
+offline.
+
+**Status (rev 22).** The proposals below are now rows, and the labels in the tables are stale:
+**P1 → `#140` (landed)** · **P2 → `#141` (instrument landed, device distribution owed)** ·
+**P3 → `#142`** · **P4 → `#143`** · **P5 → `#144`** · **P6 → `#145`** · **P7 → `#146`**.
+Do not re-file them. The capture convention survived as `#140`'s `--capture DIR` + `manifest.json`,
+which is why the bundle section below is a description of what landed rather than a proposal.
+
+### Telemetry — name the surface, name the schema, stop
+
+| Surface | What exists | What is owed | Row |
+| --- | --- | --- | --- |
+| `scan_server` live tick | `#111`'s four segments, p50/p95/max, 5 s windows | the **pacing wait** (#139); the exposure re-assert and cloud release as segments (#134); a total-vs-nominal and untimed-residual line | **P2**, `#139` |
+| WebSocket broadcast | one timed segment | per-client send time, queue depth, drops and timeouts (the 100 ms send timeout is currently invisible) | **P2** |
+| `raptor_client` frame path | per-call status logs (#263), counters | per-call latency, data-vs-empty share, bytes/s, time-to-first-frame; **full-reply capture** | **P1** |
+| `ui/` | `dataFps`, `render` fps (different clocks; both labelled) | frame age: device capture time → server tick → render, with a p50/p95 and a rolling log; this is the number `#113` should hold itself to, not either fps | **P3** |
+| Phase C math | not written | define the acceptance now: each stage timed against `SPEC-TARGETS.md`, with the same schema | `#99`'s row, when it starts |
+
+**The schema rule.** Every perf record states: clock (`steady_clock`), unit (µs), segment name,
+window, and the instrument that emitted it. A record that says "fps" without saying *which* instrument
+is not evidence (`#134`). The existing header stays where it is until P1 gives it a second consumer;
+then it moves to one shared location — **do not** copy it.
+
+### Capture — the bundle is the artifact
+
+| Surface | Already on disk | Decoder exists? | Row |
+| --- | --- | --- | --- |
+| `get_frame` replies, 10010/10013 | `session4` — but a sample (`#128`) | partial (`#125` band renderer) | **P1 + #132** |
+| IMU, 10011 | 8,643 records in `session4` | no | **`#138`** |
+| Property GET/SET, discovery, vendor commands | `session4` + the capture set | partial (`#101`) | **P6** |
+| Flash reads (op-25) | startup window | partial (`#95`) | **P7** |
+| The 208-B segments; op-31 structures | yes | no | **P5** |
+| The project-folder output | the vendor app's own sessions | no map | **`#136`** |
+| The tick's latency trace | run logs from `#112` | instrumented, incomplete | **P2/`#139`** |
+
+**The bundle convention (proposed).** Every hardware run that captures writes, outside the repo:
+
+```
+<capture-root>/<date>-<slug>/
+  manifest.json      # run, branch, commit, binary sha256, start/end, every file's sha256+size
+  replies/           # one file per port, length-prefixed records: ts, port, method, msgid, bytes
+  perf.csv           # the tick windows, if the run measured them
+  stdout.log         # the run's own log (also committed beside the record)
+```
+
+The **record** in `tests/results/` cites the manifest's path and hash chain; the bundle itself is
+never committed (the same rule as `#123`'s extractor and `.recon-cache/`). The record template gains
+an **Artifacts** section so a run with no bundle says so explicitly.
+
+**Not proposed.** A general telemetry framework; always-on raw capture in a hot loop (opt-in, bounded
+by seconds/bytes); committing captures; a sampling profiler before a CPU-bound loop exists; decoding
+anything before its bytes have provenance.
+
+## Orphaned work — the corpus's `G6`, **closed**
 
 The sweep found one corpus claim that recon has since **refuted in part**, and it changes a
 goal rather than adding a row:
@@ -135,11 +362,14 @@ goal rather than adding a row:
   correct §1.5's causal story ("we never drain → the queues fill"): the queues overflow in
   the vendor app too, and the story is in tension with the same corpus's §1.1. So this is not
   a defect to fix on the corpus's reasoning — **do not row it on that basis**.
-- **`G6`'s voxel-size half stands as a claim, unverified.** `tools/scan_server` still sets
-  the values the corpus compares against the app's, so the comparison is still live — but it
-  is a corpus claim, so it needs adoption (recon) before any build row.
+- **`G6`'s voxel-size half is answered — `#64`, `DONE`: the alignment claim does not survive.**
+  (The app's values are per-mode *and per-session*; our tools pass the operator's laser values, at
+  the minimum of the app's range.) This section previously said the half "stands, unverified"; that
+  was true when it was written and is not now. Nothing to row.
 
 ## Goals carried forward from the research corpus (captured once)
+
+_States re-read against the board on 2026-10-19; the board owns any later move._
 
 `docs/research/**` is **frozen** — a historical artifact: no in-place maintenance, no adoption
 into findings. Its vendor-fact claims are partly superseded by later recon, so any goal picked
@@ -148,9 +378,9 @@ tracked and not lost.
 
 | # | Goal | Needs first | State |
 | --- | --- | --- | --- |
-| **G1** | Live plane removal for **resource management** (cut data per frame during capture), not a post-scan cosmetic cut | — | **adoption `#59` `DONE`**; **build row open** — bind the toggles, reimplement the decision |
-| **G2** | Coverage heatmap: replace the one-scalar "insufficient data" verdict with a spatial under-covered set | nothing — `#40` landed | ready to row |
-| **G3** | Owned tracking (marker detection + bundle adjustment) with per-pose rejection reasons | `G2`'s feedback layer | blocked |
+| **G1** | Live plane removal for **resource management** (cut data per frame during capture), not a post-scan cosmetic cut | — | **landed** — bind `#71` (HW), reimplement the decision `#77` (`DONE`) |
+| **G2** | Coverage heatmap: replace the one-scalar "insufficient data" verdict with a spatial under-covered set | nothing — `#40` landed | **landed** — `#76` (`HW`, the observation is owed) |
+| **G3** | Owned tracking (marker detection + bundle adjustment) with per-pose rejection reasons | `G2`'s feedback layer | **landed** — `#91` (`DONE`) |
 | **G4** | Own denoising + fusion pipeline, Open3D as the MIT anchor | a fusion feature being planned | parked |
 | **G5** | Fusion-accuracy evaluation harness | `G4` | parked with `G4` |
 | **G6** | Fix our own SDK usage: *drain the listener* + align voxel sizes | — | **closed, both halves** — the drain half was corrected out, and `#64` found the voxel claim does not survive (our values are the operator's own, at the minimum of the app's ranges) |
@@ -185,8 +415,8 @@ the dispatcher files the rows.
 | --- | --- | --- | --- |
 | **A1** | Serve `ui/` from the capture process — one origin, no external static server | **`#61`** | **`DONE`** |
 | **A2** | The `.app` bundle + a WKWebView window (`MACOSX_BUNDLE`, `Info.plist`, icon) | **`#63`** | **`DONE`** — gate answered (see **The `A2` decision**) |
-| **A3** | Lifecycle: spawn and supervise the worker, surface a crash, and make **quit = graceful `pause`/`stop`/`destroy`** | **`#65`** | **block cleared** — `#72`/`#73` landed; needs the launch rerun |
-| **A4** | Settings and failure paths — missing-SDK dialog, port, session length | **`#66`** | **`HW`** — its live check rides the `#65` launch rerun |
+| **A3** | Lifecycle: spawn and supervise the worker, surface a crash, and make **quit = graceful `pause`/`stop`/`destroy`** | **`#65`** | **`DONE`** — the post-#73/#74/#106 rerun passed |
+| **A4** | Settings and failure paths — missing-SDK dialog, port, session length | **`#66`** | **`DONE`** — steps 5–6 passed in the same launch run |
 
 **Running the app found the rest, and they landed.** `#72` / `#73` / `#74` were not design gaps:
 they were what a real bundle discovers when it resolves its own paths and answers the OS. All three
@@ -368,6 +598,105 @@ repo does not carry (agent definitions are global by design — `ARCHITECTURE.md
 live"). So it is **not a PR**: whoever owns the harness applies it. **Order matters — edit the
 instruction file, then compact**, because a compaction re-baselines the session against the current
 instructions.
+
+## Agent structure — agreed refactor (E1–E10)
+
+Raised from the watcher thread: the dispatcher lost turns to a **foreground blocking call**, which is
+a *usage* rule rather than a tooling gap. That opened the larger question — whether the agent
+structure itself carries duplicated rules and hand-rolled checks that the platform, or a maintained
+tool, already does better.
+
+**The dispatcher answered all four open points on 2026-10-19 and the decisions are recorded below —
+this is no longer a proposal awaiting input.** Only `E5` moves now; the rest parks behind `#105`, and
+the board sweep waits for `#294` to adjudicate so it is **one revision, not two**.
+
+### What is measurably wrong
+
+| | measurement |
+| --- | --- |
+| six agent files | **973 lines total** |
+| the **Secrets** section | **28 lines × 6 copies** — **three byte-identical, three already diverged** |
+| `dispatch.md` | 339 lines, the largest by 2× |
+| `commands/reconcile.md` | still **no `agent:` line** — runs as whatever agent the session has, with full `rea` access (W7, open since the audit) |
+| `builder` permissions | 7 denies, **no `edit * deny`** — unlisted paths writable by omission |
+| `watch-sessions.sh` | its PR half duplicates `gh pr checks`; its session half blocks if run in the foreground |
+
+The Secrets drift is the `aicers/agent-instructions` finding reproduced locally: hand-duplicated
+blocks diverge, and the copies that diverge are the ones nobody re-reads.
+
+### The edits
+
+| # | file | change | urgency |
+| --- | --- | --- | --- |
+| **E1** | `AGENTS.md` *(new)* | the repo-wide rules currently duplicated: clean-room principle, walls in prose, Secrets, pre-run step, *point at rows*, the blocking-call rule | parked |
+| **E2** | `opencode.json` | `"instructions": ["AGENTS.md"]` — **same commit as E1** | parked |
+| **E3** | all six agent files | delete the duplicated Secrets + pre-run blocks; keep role, permissions, procedure | parked |
+| **E4** | `commands/reconcile.md` | **give it an agent** — read-only on the repo, no device, no vendor artifacts; `reconcile` stays as the command that launches it. **Closes W7** (decided: the role is not retired) | parked |
+| **E5** | `dispatch.md` | **`wait`, not `/api/event`, for completion; backgrounded or timeout-bounded, never foreground; the PR half backgrounded too.** Read as covering **product** code as well — *any blocking read gets a deadline* — which is what `#117` already carries, so rule and row agree rather than duplicate | **now** |
+| **E6** | `builder.md` permissions | restore `edit * deny` plus the audit's allow list | **operator's call** |
+| **E7** | `scripts/check-agents.py` | verify `AGENTS.md` exists; drift-check that no agent re-introduces a shared block; every command carries `agent:` | parked, after E3 |
+| **E8** | `scripts/verify-pr.py` | **`shellcheck`** (`scripts/*.sh`, `.claude/hooks/*.sh`) + **`actionlint`** (`.github/workflows/**`) + **`lychee` offline/internal only** (network checks are a flake source). **`markdownlint` declined** — the whitespace gate already owns trailing whitespace, and a second home for one class is the drift this project exists to remove. Each adopted tool **replaces** a hand-rolled check in the same PR; the tier gate, record provenance, archive hashes and plan syntax stay | parked |
+| **E9** | `scripts/watch-sessions.sh` | drop the PR half (`gh`, backgrounded, already maintained) | parked |
+| **E10** | `.opencode/plugins/` *(optional)* | `ctx.event.subscribe` + `ctx.session.synthetic` — wake the dispatcher server-side, no tool call | optional |
+
+### What this must not change
+
+- **Permissions stay in frontmatter.** `AGENTS.md` is prose and cannot enforce a wall. E3 removes
+  *narrative* duplication only — W1/W2/W4/W5 stay exactly where they are.
+- **No new agents.** Six is the set; adding agents to fix orchestration is the move the workflow
+  audit's §5.4 warns against.
+- **The board/roadmap split.** E1 must not become a third place where row state is written.
+
+### `AGENTS.md` — decided
+
+**One file, natively read** (dispatcher, 2026-10-19). The shared text is short and unparameterised, so
+drift-detected copies would buy a *detector* for a problem the single file **removes**. Each agent file
+stays thin — its role and its walls — and points at `AGENTS.md` for the shared blocks. The dispatcher
+owns its maintenance.
+
+### Sequencing, and the one split that matters
+
+```
+E1 + E2 (one commit) ─► E3 (thin) ─► E7 (guard)
+E5 — independent, now
+E4, E6, E8, E9, E10 — independent, park behind the pivot
+```
+
+**Confirmed: only `E5` moves now.** It costs the dispatcher turns; everything else buys drift
+prevention, not capability, while `#105` blocks the whole pivot. `E4` stays in the parked group even
+though it is now *decided* — it is a config edit in the operator's reach, not a round item.
+
+### The four answers, recorded
+
+| | question | answer |
+| --- | --- | --- |
+| **I1** | `AGENTS.md`, or drift-checked copies? | **single file**; the dispatcher owns its maintenance |
+| **I2** | which external linters? | **`shellcheck` + `actionlint` + `lychee` offline-only**; **`markdownlint` declined**; each adopted tool replaces a hand-rolled check in the same PR |
+| **I3** | sequencing | **only `E5` now**; `E1`–`E4`/`E7`–`E9` park behind `#105`; `E5` also covers product code, agreeing with `#117` |
+| **D1** | `analyze`/`reconcile`: agent or retire? | **agent** — the spec/impl/test classification must not move into the hardware record template, or the classifier becomes the party under test. W7 closes |
+
+### The sweep is deferred, by agreement
+
+Wait for **#294** to adjudicate, then fold `#111`–`#117` (the tick-latency thread, the stream-profile
+question, portability) **and** the corrected ledger into **one** pass, not two. Expected once `#294`
+lands: **`DONE`** `#65`/`#66`/`#77`/`#91` · **`HW`** `#71`/`#76`/`#98`/`#105`/`#112` ·
+**`BLOCKED`** `#113` · **`BUILD`** `#117`.
+
+**One caution carried forward:** `#112`'s `BLOCKED` is **stale** — its blockers (`#111` landed, the
+hardware room synced) are gone, which is why `#294` moves it to `HW`. Do not carry `BLOCKED` forward
+if `#294` has landed when the sweep runs.
+
+### Reach — who can actually apply each
+
+| edit | who |
+| --- | --- |
+| E1, E2, E7, E8, E9 | **dispatch** — repo files; `AGENTS.md` poses the same reach question `README.md` had, which is now resolved |
+| E3, E4, E5, E6, E10 | **operator** — `~/.config/opencode/**` is outside every agent's edit allow |
+
+**One process note.** E5 exists because a rule was stated where the caller did not read it at the
+moment it mattered — the same failure `H3` records. The fix is the same: **put the rule where the
+action happens**, which for a blocking call is the *Dispatching* section of `dispatch.md`, not a
+hygiene appendix.
 
 ## The pivot — posture, parity, and what parks
 
@@ -764,71 +1093,216 @@ is set there. **Do not open Windows rows from this roadmap.**
 
 ## Risks
 
-1. **The seam between binding and building is unproven.** Every G-goal above the seam is
-   unexercised: the project has bound an ABI and won a live view, but has never run its own
-   reconstruction math on live data. `G1`'s adoption row is where that gets tested cheaply,
-   before a build row is committed — and it is also the row that keeps failing to get filed.
-2. **The user's dylib may not be the slice we specced — new, and created by the `A2` decision.**
-   Every ABI claim in the header was recovered from **one pinned slice** (the sha256 recorded in
-   the [`device-message-listener`](../recon/findings/device-message-listener.md) findings).
-   Requiring the user's own install means a newer CrealityScan supplies a *different* dylib and a
-   **silently reassigned ABI** — the exact failure this whole recomp exists to prevent. The
-   loader today checks only that the path exists. Cheapest retirement: verify the hash at load
-   and refuse on mismatch — `A2`'s third consequence.
-3. **Evidence provenance (`#21`) — closed 2026-10-18, one residual.** Added records now need a
-   verifier verdict (agent-tier) and a non-`.md` companion raw artifact in the same PR. The
-   residual is a *plausible-but-false* record surviving a verdict; the only thing that retires
-   it is a spot re-run against the artifact, so treat a record as evidence of a run, not proof.
-4. **A second evidence corpus outside the gate.** `logs/**` is tracked and is the evidence
-   base for the corpus's §1, but it is neither `tests/results/**` nor `docs/recon/**`, so the
-   `run-records` check and the tier rules do not reach it. Cheapest retirement: an operator
-   decision on whether it stays.
-5. **One serialized hardware resource.** `#53`'s rejection-path test and `#62` queue behind one
-   manual session. Batch per session, cheapest-first.
-6. **Recon step budget.** `recon` is capped at `steps: 40`, one board row per session — so
-   `G1`'s adoption, if it is filed, is a session of its own and must not carry adjacent context.
-7. **Verification debt.** Claims tagged `[inferred]` that code depends on: the parked
-   `OQ-S7/S9/S10/S11` residuals, `OQ-S2`/`S3`, and the tips/control rows `#9` left `[inferred]`.
-8. **The dispatcher's own context — mitigation applied, and now measurable.** One long-lived
-   session on a 1M window, compacting roughly every **10–15 h**, which puts its verbatim memory
-   horizon at about half a day. The failure mode is judgment drift on a summary, not a crash, and
-   this repo has paid for it once (rev 7 → rev 8). Board compaction (`H1`) is landed; session
-   compaction (`H4`) carries the measurement, the config decision, and the cycle-3 test.
+1. **The record is now the failing artifact, not the code (this round's top risk).** PR #392 fails
+   `verify-pr` on `archives` — a cited `sha256` that does not match the log beside it, and one that
+   resolves to no file — and on `record-provenance` (two records citing no raw evidence). That PR carries
+   `#71`'s fifth attempt and the `frame_bins` test record. Cost: a sixth attempt produces a record the
+   gate rejects, and the room's scarcest resource is spent twice; the inverse failure (`#21`: a
+   script-tier record that auto-merges) is the same class, one bad hash away. Cheapest retirement:
+   generate the raw-log citation line in `hw-postflight.sh` the way the crash-report line already is
+   (orphan 7), repair #392 before the room, and make "paste the generated block, never type a hash" a
+   rule in the hw record template.
+2. **The instrument can lie about what it measures (the `#134` lesson, still structural).** The live and
+   synthetic numbers are different instruments on different paths, and `#134` found the last claimed
+   improvement was a name mismatch. Cheapest retirement: the schema rule — every record states client
+   count and UI-open state beside every duration — and `#140`'s manifest (binary sha) on every bundle.
+3. **One interface per run, and a batch written as if there were one run.** `#157`'s own note says the
+   post-fix binary opens **one** interface per run, so `#132` needs two live runs and each port has its
+   own capture directory. Cost: a session that expects both ports in one run comes back with half a
+   corpus and a record that reads as failure. Cheapest retirement: the batch is **three runs plus the
+   A/B**, fixed in the plan; every record names its port and frame count.
+4. **One serialized hardware resource, and a batch that must not be interrupted.** `#105`/`#132`/`#98`/
+   `#127`/`#71`/`#76`/`#141`/`#153` all queue behind one manual session; `#126`/`#145`/`#146`/`#150`/`#115`
+   each need a *different* physical setup. Cost: a run voided by a mid-batch build, or a batch that
+   silently mixes two setups. Cheapest: freeze builds at the batch's start, keep the known-scene session
+   separate, and let each run name its binary's sha.
+5. **A round premised on unmerged measurements.** `#151`'s table lives in PR #366, `#159`'s harness in
+   PR #387, `#150`'s re-derivation in PR #375, and the 2026-10-20 hardware records in PR #392 — all four
+   at `NEEDS CHANGE` or failing. Cost: the plan cites numbers the verifier cannot read. Cheapest: land
+   them first (order 2); none requires a design change and none touches the room's binary.
+6. **Session and worktree drift is measurable, not hypothetical.** `check-agents.py --sessions` reports
+   **19 sessions drifting** from their agent's model, and a session captures its model at creation, so a
+   drifted session's output is not the output the role's file specifies. Combined with worktrees that
+   fall behind (this one was 122 commits behind `main` when the revision started), a role can plan or
+   build against a board that no longer exists. Cheapest: `--fix`, then sync each room before its next
+   order; `#109` makes that routine.
+7. **The rate target is a decision, not a build.** `#113` says 60 fps; `#151`'s addendum says the current
+   primitive realises ~86 % of that, and `SCALE-ARCHITECTURE.md` says the fused source is 24 Hz.
+   Cost: a round spent on a wait primitive that cannot meet its own acceptance. Cheapest retirement: the
+   operator answers the target rate; only then is the row the wait primitive or `C1`/`S3`.
+8. **`[inferred]` claims the code leans on, still live.** (a) `#153`'s on-change exposure rests on one
+   record's reading that the setter is not required per tick — the HW confirmation is owed in the batch.
+   (b) `#159`'s ground truth is not expressed in a frame: `model.ply` is written after the rotate pose
+   while the recorded frames are the un-rotated cloud (PR #387's verifier names it), so a wrong normal
+   changes which points look good. (c) `frame-codec.md`'s band cut and pixel scale. Cheapest: the batch's
+   `exposure n=` windows for (a), a stated authoritative input for (b) before `#126` runs, and `#132` for
+   (c).
+9. **The capture corpus is a sample, not a stream.** `#128` measured it and `#124`'s conclusions hold at
+   n = 11. Any band rule or pixel scale derived from it inherits that scale. Cheapest retirement: `#132`'s
+   gap-free runs with provenance in the manifest.
+10. **Capture bundles sit outside the gate.** A record can cite an artifact the verifier cannot read;
+    `#140`'s manifest + sha256 chain is the tether, and PR #392 shows the tether failing in practice.
+    Cheapest: order 2's repair, plus the generated-hash line (risk 1).
+11. **Capture scope creep.** Keep `#140`'s capture opt-in and bounded; an always-on full-reply dump in the
+    hot path becomes the problem it measures.
+12. **The user's dylib may not be the slice we specced.** Every ABI claim came from one pinned slice and
+    the loader checks only that the path exists. Cheapest: verify the hash at load and refuse on mismatch.
+13. **The plan itself can be the stale artifact.** `main` carried **rev 19** while rev 21/23 sat unmerged
+    on the planner branch, so the dispatcher was running an objective four revisions old — and the board
+    had already absorbed rows (#140–#159) whose rationale lived only in the unmerged plan. A plan that is
+    right but unlanded is indistinguishable from a wrong one. Cheapest: land this revision before the
+    next dispatch, and treat the plan's provenance line (`origin/main` sha + board head) as a check the
+    dispatcher can run in one command.
+14. **The loop's own documents drift.** The OQ list still carries answered questions (OQ-1/OQ-4/OQ-5/
+    OQ-P1–P4/OQ-124-1/OQ-124-3), `#134`/`#155` sit at `SPEC-READY` with their work done, and `#93`
+    contradicts `#81`. Cheapest: one dispatch board pass (order 1) and the `#93` one-file fix.
+15. **A new capability is a new wall hole — and the current walls are mitigations.** `ARCHITECTURE.md`
+    states the shell denies are text-pattern mitigations and the physical `.recon-cache` separation has
+    not landed, so the only genuinely enforced control is still absent. Any tool added to a role is a
+    read surface: a browser can open `file://`; a screenshot tool can capture anything on screen. Cost: a
+    clean-room claim that cannot be defended. Cheapest: add no capability to `builder`, `verifier` or
+    `recon-sweep`; keep browser/computer surfaces in the operator's hands, pointed at loopback; and do
+    not let a skill supply what the role's permission table withholds. See **Capability review** below.
+16. **The dispatcher's own context.** One long-lived session on a 1M window; the failure mode is judgment
+    drift on a summary. Keep the board the single queue and the roadmap a pointer at it.
+
+**Retired this revision:** risk 1 of rev 23 (one known defect is not the whole defect) — `#157` landed
+and the batch's acceptance now names both outcomes as results; the two-process-confounded `#71` risk —
+`#158` landed; and rev 22's premise that pacing was the live limiter (superseded by `#141`'s live split
+and `#153`, with `#151`'s own addendum as the deciding evidence).
+
+## Capability review — skills, and the wall
+
+The operator asked which of the available skills would help this swarm. There is **no `skills/` directory in
+this repository** (checked: none at the root, under `.opencode/`, or in the agent config), so this reviews
+the catalog the harness exposes against this loop's roles, not a repo artifact. The verdict is shaped by one
+rule: **a skill is instructions plus tools, and a role's permission table is the wall.** A skill can hand an
+agent a surface its table withholds.
+
+| Skill | Verdict for this loop | Why |
+| --- | --- | --- |
+| `reverse-engineer-anything` (REA) | **Already embodied — do not adopt as a skill** | The swarm's REA is the `rea_*` MCP, with `recon` the only launcher and `recon-sweep` read-only (`ARCHITECTURE.md`, **The walls**). A generic "decompile and reconstruct" skill is *weaker* than the agent files' rules, and a second statement of the same rules is the drift the E1/H2 work exists to prevent. Recon-side only, never builder. |
+| `built-in-browser` / `chrome-browser` | **Useful, operator-side only** | It closes a real gap: `#112`'s HUD `data`/`render` fps have no server endpoint, and `#76`/`#141`'s UI halves need the page driven. Device-free against the synthetic server. But a browser is an unwalled read surface (`file://` reaches `.recon-cache`; page source and screenshots capture anything) and it carries persistent sign-ins. Never grant it to `builder`, `verifier` or `recon-sweep`; never let a browser observation stand as a verdict — it is a record's input. |
+| `computer-use` | **Not for an agent — the operator's hands** | The vendor app is a sanctioned oracle for `#126`/`#159`'s sequential run, but desktop control is a screenshot surface on the same machine as the vendor binary and it automates irreversible UI. Fine for a human-attended Claude Code session on the scanner box; not a swarm capability. |
+| `docs` / `docx` / `pptx` / `pdf` / `xlsx` / `google-workspace` | **Decline for anything the gate reads** | The repo's evidence is markdown records, raw logs, and the CSV/SVG `#152` and `#159` already produce. `verify-pr.py` cannot check a binary document, so a `.docx` or `.xlsx` under `tests/results/**` would be evidence outside the gate — the failure PR #392 already demonstrates in a cheaper form. Out-of-repo operator reports only. |
+| `opencode` | **Useful, dispatch/operator side** | It documents agents, permissions, models, MCP servers and sessions — the machinery behind `#104`/`#109` and the agent-structure refactor. Read-only in effect: nothing it says widens a wall. |
+| `skill-creator` | **Defer — only if it replaces, never adds** | The loop already carries its rules in six agent files, and measured duplication is a known problem (the Secrets block: 28 lines × 6 copies). A skill such as "write a hardware record" is worth building only as the *single* home the agent files then point at. That is an E-refactor decision, not this round's. |
+| `deep-research` | **Low value now** | The open questions are answerable from captures on disk (`#144`, P9) or from the device (`#132`), not from the literature. If it is used at all — Phase C library choices — its output is a recon-side finding, and vendor documentation is not a substitute for the binary. |
+| `report` | **Narrow fit** | Only for OpenCode's own defects (session vanish, model drift). Machinery hygiene, not recomp work. |
+| `learn` / `morning` / `import-memory` | **No fit** | None maps to a role in this loop. |
+
+**The rule to carry forward.** No capability is added to `builder`, `verifier` or `recon-sweep` — those are
+the roles the clean-room claim rests on, and `ARCHITECTURE.md` already records that the shell denies are
+mitigations while the physical `.recon-cache` separation has not landed (risk 15). Browser and desktop
+surfaces stay with the operator, pointed at loopback or the vendor app, and their output enters the loop as
+a record's input, never as a verdict.
 
 ## Next round, as work-order seeds
 
-For the dispatcher to expand — not dispatches in themselves.
+For the dispatcher to expand — not dispatches in themselves. Ordered so each item's input exists when
+it starts.
 
-1. **`#96` — Phase A, the protocol spec** → recon: the RPC method set, the vendor-command framing
-   (magic `0x47`/'MG', the 8-byte header, GET/SET_PROPERTY, the v1.1 list ops, memory-read opcode
-   25), the property map, and the flash-read transport — from the captures. **G-A**, and the pivot's
-   only hard prerequisite. **Wall:** `docs/recon/**`; the captures are evidence, the findings are
-   what ships.
-2. **`#98` — Phase B, the C1 client** → builder (after G-A): a msgpack-RPC + GVCP client reproducing
-   a scan — open streams, pull IR, drive the laser and exposure loops, stop. At the end, OBScan and
-   libOrbbecSDK are gone. **Wall:** `tools/`; no header change.
-3. **`#95` — G-C, the calibration payloads** → recon: the laser-plane struct, the thermal entries,
-   and the checksum (not CRC-32 or XOR — the device's lookup table is the lead). Gates a *correct*
-   `#99`. **Wall:** `docs/recon/**`.
-4. **`#97` — G-B, the macOS privileged-access decision** → operator: own helper vs system extension
-   vs a thin daemon, with reasoning. **The single biggest unknown**, and cheap as a decision. Gates
-   `#100`.
-5. **`#99` — Phase C, own the math** → builder (after `#98`): laser-line extraction → triangulation →
-   fusion → tracking, each A/B-tested against the vendor's output while it still exists.
-6. **`#100` — Phase D, replace the daemon** → builder (after `#98` **and** `#97`): UVC + HID + the
-   vendor channel, behind `#97`'s chosen shape.
-7. **`#101` / `#102`** → operator + recon: three short single-action captures (pause/resume, mode
-   switch, slider) to close G-D; a read-only capture audit to confirm no flash *writes* are required.
+1. **Board corrections (dispatcher, `PLAN.md` only).** Retire the answered OQs (OQ-1 → `#50`; OQ-4 →
+   `#52`; OQ-5 → `#47`; OQ-P1…P4 → `#26`–`#29`; OQ-124-1 → `#124`; OQ-124-3 → `#131`); re-point
+   OQ-124-5 at `#144`; close or re-point `#134`, `#155`, `#112`; file **P9**, **P10**, **P11**, the
+   **record-evidence** row and the **parked-OQ** row (`OQ-89a–d` + `OQ-S4`) at the next free numbers;
+   re-point `#113` at the four inputs in **Blocked**. Note that `#132`/`#158`/`#157`/`#142` moves are
+   already applied (PR #397). **Wall:** `PLAN.md` — the roadmap does not apply its own moves.
+2. **The evidence chain (parallel; before the room).** #392 (the two provenance defects and
+   the archive hash), #387 (`#159`'s blocking `--absolute` retained-fraction bug + the ignored
+   `--sweep-min-fraction` + the ground-truth frame statement), #375 (`#150`'s residuals), #366 (`#151`'s
+   record defects). **Acceptance:** each lands green with no design change; none touches the room's
+   binary. This order is what makes order 4 citable.
+3. **Record evidence lines (builder; before the room).** Extend `hw-postflight.sh` to emit the raw-log
+   citation line with a computed `sha256` (as it already does for the crash report) and make
+   `tests/results/_TEMPLATE.md` require the generated block rather than a typed hash. **Acceptance:** a
+   deliberately wrong hand-typed hash is the only way to reproduce PR #392's `archives` failure.
+   **Wall:** `scripts/**`, `tests/results/_TEMPLATE.md`.
+4. **The room batch (hardware + operator), four runs, fixed order.** Replay → live IR → live depth →
+   `#71`'s A/B, as specified in **Critical path**. **Deliverable:** one record per run, one bundle, each
+   naming its binary's sha and its port; the UI-open state and client count stated beside every number.
+   **Wall:** `tests/results/**`. **No build lands between runs.**
+5. **Offline recon, during the room (recon, no device).** `#144` (op-31 structures + the 208-B segments,
+   and OQ-124-5's format-id answer if the structures carry it); then **P9** (the flash-write falsifier).
+   One row per session. **Wall:** `docs/recon/**`.
+6. **Capacity, parallel and optional (builder, device-free).** **P11** (`S1`, the encoder — the work order
+   is written in `SCALE-ARCHITECTURE.md` §5), **P10** (the broadcast counters' accessor), `#149`'s reader
+   half, `#154` (now unblocked: `#152` and `#156` are `DONE`). None is on the round's critical path; each
+   feeds `#99` or the perf contract. **Wall:** `engine/**`, `tools/scan_server/**`.
+7. **Trust and hygiene (builder + dispatch).** `#93` (the UI double-debounce — the only row contradicting a
+   `DONE` row), `#103` (the README, trigger fired), `#109` (with a live symptom: 19 drifting sessions),
+   `#118`, `#116`. Plus the `ARCHITECTURE.md` model-column correction. **Wall:** `ui/**`, `README.md`,
+   `scripts/**`, `tools/raptor_client/**`, `docs/recomp/ARCHITECTURE.md` (dispatch).
+8. **Operator items — scheduled, not worked.** `#145` and `#146`; `#126`'s known-scene setup (which
+   unblocks `#159`); `#149`'s archive-format choice; and **the target rate** (24 Hz vs 50–60 Hz), which
+   gates `#113`.
 
-Also live and small: `#90` (the guard), `#92`, `#93` (a real UI debounce bug). And the **owed
-reruns** — one hardware session covering `#65`, `#66`, `#71`, `#73`, `#76`, `#77`, `#89` — which stay
-queued because they are the only open items that can still *fail*.
+**Explicitly not this round** (so the dispatcher can refuse them without re-deriving why): `#159`'s
+acceptance and `#126` (a different physical setup), `#145`/`#146`/`#150` (same, and scheduling), `#99`/
+`#100` (the pivot's destination, not its next step), `#113` and the seams behind it (`C1`/`S2`/`S3` — they
+need the operator's target rate), `#149`'s write path (the format decision), and `#71`/`#76` outside the
+batch.
 
-**Ordering note.** A→B→C→D is dependency, not preference. `#97` is deliberately placed early despite
-gating D, because a late answer reshapes C2; `#95` runs parallel to A/B because it gates C's
-correctness, not its start.
+**Ordering note.** Order 1 first, because the dispatcher's queue and the roadmap have been out of step for
+two revisions. Orders 2 and 3 must precede order 4, or the room's output inherits PR #392's defect.
+Order 5 runs throughout — it needs no device and does not compete for the room. Orders 6 and 7 fill
+capacity and can land while the room is unavailable. **No build lands mid-batch** (risk 4).
 
 ## Superseded plans
+
+- **2026-10-20 rev 23 → rev 24 — the room round: the code prerequisite landed, and the record became the
+  risk.** Rev 23 set the objective as "fix `#157` so the live half can run". Three things landed after it
+  was written: `#157` (PR #393), `#158` (PR #382), and the board moves through `#159` (PR #397). So the
+  round's first order completed itself, and the binding constraints moved: (a) the **room** is now the
+  only thing between the pivot and `#105`/`#98`/`#132`/`#127`, and (b) the **record** — PR #392 fails
+  `archives` and `record-provenance`, so the 2026-10-20 hardware evidence cannot be cited. Rev 24 moves
+  the objective from "fix the defect" to "spend the session once and make it citable", fixes the batch at
+  **four runs in a fixed order** (because `#157`'s note says the binary opens one interface per run), and
+  puts the evidence chain ahead of the room. **Reversal reason:** the plan's premise (a code blocker)
+  ceased to exist; the risk that replaced it is measured, not anticipated.
+
+- **2026-10-20 rev 22 → rev 23 — the live-path round: one defect outranks a whole optimisation.** Rev 22
+  made deadline-paced publishing the objective, on `#151`'s device-free finding that the run-loop
+  overshoot is a fixed rate tax. Three things landed after it was written and re-ranked the work: (a)
+  `#141`'s **live** split (record in PR #376) put the per-tick exposure re-assert above every other
+  non-wait cost — a live cost the synthetic harness could not see; (b) `#153` landed **after** that
+  measurement and removes it; (c) `#151`'s own addendum records that a deadline wait removes drift but not
+  the platform's wake latency, so the pacing change is necessary but not sufficient. In the same session
+  the live client failed at its first RPC — `#157`, a method-name defect — which gates five rows and the
+  pivot's next link. Rev 23 therefore moves the objective from "make the rate a designed number" to "make
+  the next room session decisive": fix `#157`, split the batch into a replay half that needs no fix and a
+  live half that does, and confirm the live cost model (`#153`/`#141`) on one binary. **Reversal reason:**
+  the live measurement contradicted the instrument the prior objective rested on, and the pivot's blocker
+  turned out to be a one-file code defect rather than a scheduling problem. The pacing work is not
+  dropped — `#151` lands as `#113`'s method, and the 50–60 Hz question becomes the operator's target-rate
+  decision, with the structural seams (`C1`/`S3`) named as the path if the answer is "higher".
+
+- **2026-10-20 rev 21 → rev 22 — the pacing round, and a provenance correction.** Rev 21 aimed at a
+  decode-grade capture corpus (`#127` → `#132`). Its own proposals were then filed as rows `#140`–`#146`
+  and `#140` landed, so the capture half is *tooling complete and room-bound* — the round would have
+  idled on the operator's calendar. In the same day the board measured the live path instead
+  (`#147`'s runtime baseline, `#151`'s rate harness) and the answer re-ranked the work: the publish
+  rate is a **pacing artifact**, not a throughput limit, and one device-free change frees five rows.
+  Rev 22 takes that as its objective, keeps the pivot batch as a precedence-first order rather than a
+  round objective, sweeps an OQ list that had drifted in both directions, and records the
+  API/dylib/daemon distinction the row list kept assuming. **Reversal reason:** new measurements plus
+  the observation that the prior objective's remaining step is operator-scheduled, not code.
+
+- **2026-10-19 rev 20 → rev 21 — capture and instrument, and the frame path becomes their first
+  consumer.** Rev 20 aimed at `#105` as "get frames out"; the board then answered two links of it
+  (`#122`'s envelope unwrap, `#131`'s named 11-element array), so the remaining question is the
+  band rule and the pixel scale — an **evidence** problem. The operator's scope input (telemetry on
+  performance-sensitive code; capture every hardware artifact even before its decoder exists) is
+  adopted with one amendment: name the surfaces and the schema, do not build a framework ahead of
+  its consumers. `#132` is promoted as the round's first run, with a live recorder (P1) so the next
+  decode needs no new capture. Reversal reason: the board's own evidence plus an operator priority
+  input, not a change of target.
+
+- **2026-10-19 rev 19 → rev 20 — the agent-structure proposal (E1–E10), parked behind the pivot.**
+  Rev 20 recorded the dispatcher's four answers and the measured drift in the six agent files, and
+  sequenced only E5 now. It did not re-rank the product work; its objective stayed rev 19's `#105`.
+  Superseded because the product evidence moved (see rev 21), not because the harness proposal was
+  wrong — E1–E4/E7–E10 still park.
 
 - **2026-10-19 rev 18 → rev 19 — the pivot's first live run re-ranks the board.** Phase B's code
   landed (`#98`) and its first session pulled **zero frames**, so `#105` now gates `#98`'s acceptance
