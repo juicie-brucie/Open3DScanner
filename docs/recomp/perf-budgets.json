@@ -1,14 +1,29 @@
 {
   "contract": "docs/recomp/PERFORMANCE-CONTRACT.md",
-  "budget_version": 1,
+  "budget_version": 3,
   "reference": {
     "measured_machine": "Apple M1, 8 cores / 17 GB (macOS 27.0.1, arm64)",
     "measured_source": "docs/recomp/log/2026-10-19-row-147-runtime-baseline.md",
     "measured_commit": "f20fc46",
     "lower_end_target": "a 4-core Intel machine, ~3x slower than the M1 on this workload",
-    "lower_end_status": "ASSUMED \u2014 the operator has not named the target machine; every budget below is labelled with the factor it would need re-basing",
+    "lower_end_status": "ASSUMED — the operator has not named the target machine; every budget below is labelled with the factor it would need re-basing",
     "lower_end_factor": 3.0,
     "factor_note": "the factor scales CPU-time budgets only; the data-volume budgets (bytes/frame, MB/s) are the wire volume and are machine-independent"
+  },
+  "dataset": {
+    "what": "the runs the CPU budgets are derived from: `python3 scripts/perf-budget.py --repeat 8`, recorded in tests/results/2026-10-19-perf-contract-budget-harness.raw.log",
+    "statistic": "the median of the 8 runs (the harness checks the median of its own runs, so the same statistic)",
+    "note": "the machine was shared during the recording (other worktrees were running), so this is the conservative basis. A budget is K x this median: a Kx regression trips it, and a Kx contention does not. The per-metric min/median/max of the recorded dataset is in the contract's §2 tables.",
+    "measured": {
+      "encode.us.live": [535.8, 545.7, 562.7],
+      "encode.us.2304": [61.5, 62.2, 64.5],
+      "bcast.us_per_client.8": [23.5, 26.7, 33.3],
+      "bcast.us.8": [188.4, 213.2, 266.2],
+      "platform.wait_ms.41": [42.2, 42.9, 44.7],
+      "platform.wait_ms.20": [20.4, 22.4, 24.2],
+      "platform.wait_ms.16": [16.3, 16.9, 19.0],
+      "tick.post_ms": [0.07, 0.07, 0.07]
+    }
   },
   "allowances": {
     "ingest_us_per_frame": 8000,
@@ -16,100 +31,117 @@
     "ingest_us_vendor_calls": 6000,
     "ingest_note": "per CONSUMED frame: our post-processing + encode (the live post segment, measured 1.18-1.68 ms in #112) plus the two untimed vendor calls' allowance (~5.6-6.4 ms, from #134's 9.6 ms residual less the platform's wait overshoot, #147 section 9)"
   },
-  "rates": [
-    24,
-    50,
-    60
-  ],
+  "rates": [24, 50, 60],
   "budgets": [
     {
       "metric": "platform.wait_ms.41",
       "stage": "platform",
       "max": 47.0,
       "factor": false,
+      "k": 1.1,
+      "median_measured": 42.9,
       "unit": "ms",
-      "derived_from": "#147 section 5 measured 44.62 ms for a 41 ms request (zero work in the loop); this is the platform's own timer, so it caps the rate at ~22 Hz whatever the code does"
+      "derived_from": "#147 section 5 measured 44.62 ms for a 41 ms request (zero work in the loop); this is the platform's own timer, so it caps the rate at ~22 Hz whatever the code does. The harness measures 42.2-44.7 ms (median 42.9) over the 8 recorded runs - the spread is the machine's load, so this budget only catches a ~1.1x change"
     },
     {
       "metric": "platform.wait_ms.20",
       "stage": "platform",
       "max": 26.5,
       "factor": false,
+      "k": 1.18,
+      "median_measured": 22.4,
       "unit": "ms",
-      "derived_from": "#147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a 50 Hz pace"
+      "derived_from": "#147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a 50 Hz pace. The harness measures 20.4-24.2 ms (median 22.4) over the 8 recorded runs"
     },
     {
       "metric": "platform.wait_ms.16",
       "stage": "platform",
       "max": 21.5,
       "factor": false,
+      "k": 1.27,
+      "median_measured": 16.9,
       "unit": "ms",
-      "derived_from": "the same control at the 60 Hz pace (16 ms request); measured by this harness, not in #147"
+      "derived_from": "the same control at the 60 Hz pace (16 ms request), measured by this harness and not in #147: 16.3-19.0 ms (median 16.9) over the 8 recorded runs"
     },
     {
       "metric": "encode.bytes.live",
       "stage": "encode",
       "max": 240036,
       "factor": false,
+      "k": 1.0,
+      "median_measured": 240036,
       "unit": "bytes",
       "derived_from": "#136's live V1 frame: 20,000 points (kLiveBroadcastPointBudget) = 240,036 B; a change means a different point budget or a format change"
     },
     {
       "metric": "encode.us.live",
       "stage": "encode",
-      "max": 800.0,
+      "max": 820.0,
       "factor": true,
+      "k": 1.5,
+      "median_measured": 545.7,
       "unit": "us/frame",
-      "derived_from": "the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode + encode; the encoder alone is 533-546 us over six runs of this harness, so 800 us is ~1.5x the measured cost - a 2x regression trips it"
+      "derived_from": "the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode + encode; the encoder alone is 535.8-562.7 us over the 8 recorded runs (median 545.7), so 820 us is 1.5x the median - a 1.5x regression trips it"
     },
     {
       "metric": "encode.us.2304",
       "stage": "encode",
-      "max": 120.0,
+      "max": 95.0,
       "factor": true,
+      "k": 1.53,
+      "median_measured": 62.2,
       "unit": "us/frame",
-      "derived_from": "#147 section 7: the encoder is 63% of the tick's CPU with no client, i.e. ~123 us of the 195 us tick, for the 2,304-point synthetic frame; this harness measures 61-85 us over six runs, so 120 us is ~1.4x the measured cost - a 2x regression trips it"
+      "derived_from": "#147 section 7: the encoder is 63% of the tick's CPU with no client, i.e. ~123 us of the 195 us tick, for the 2,304-point synthetic frame; this harness measures 61.5-64.5 us over the 8 recorded runs (median 62.2), so 95 us is 1.53x the median"
     },
     {
       "metric": "bcast.us_per_client.8",
       "stage": "broadcast",
-      "max": 35.0,
+      "max": 50.0,
       "factor": true,
+      "k": 1.87,
+      "median_measured": 26.7,
       "unit": "us/client/frame",
-      "derived_from": "#147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (the tick's own condition, where the client drains in the background); this harness measures 17.6-22.6 us over six runs with a 4 MB receive buffer on its client, so 35 us is ~1.5x the measured cost - a 2x regression trips it"
+      "derived_from": "#147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (the tick's own condition, where the client drains in the background); this harness measures 23.5-33.3 us over the 8 recorded runs (median 26.7) with a 4 MB receive buffer on its client, so 50 us is 1.87x the median - the widest budget, because this measurement is the noisiest"
     },
     {
       "metric": "bcast.us.8",
       "stage": "broadcast",
-      "max": 280.0,
+      "max": 400.0,
       "factor": true,
+      "k": 1.88,
+      "median_measured": 213.2,
       "unit": "us/frame",
-      "derived_from": "#147 section 6: the bcast segment was 0.29-0.31 ms per tick at 8 clients for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame, measured 141-181 us over six runs, so 280 us is ~1.5x the measured cost - a 2x regression trips it"
+      "derived_from": "#147 section 6's 0.29-0.31 ms per tick at 8 clients for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame, measured 188.4-266.2 us over the 8 recorded runs (median 213.2), so 400 us is 1.88x the median"
     },
     {
       "metric": "tick.post_ms",
       "stage": "ingest",
-      "max": 0.2,
+      "max": 0.15,
       "factor": true,
+      "k": 1.5,
+      "median_measured": 0.1,
       "unit": "ms/frame",
-      "derived_from": "#147 section 3 measured the synthetic tick's post segment at 0.12-0.20 ms p50 (2,304 points, copy + rotate + encode); this harness measures 0.07-0.12 ms, so 0.20 ms is ~1.7x the measured cost - a 2x regression trips it"
+      "derived_from": "#147 section 3 measured the synthetic tick's post segment at 0.12-0.20 ms p50 (2,304 points, copy + rotate + encode); the harness measures 0.07-0.11 ms (median 0.10) over its runs, so 0.15 ms is 1.5x the median - a 1.5x regression trips it, and the 0.11 ms worst case does not"
     },
     {
       "metric": "tick.bcast_ms",
       "stage": "broadcast",
       "max": 0.25,
       "factor": true,
+      "k": 2.5,
+      "median_measured": 0.0,
       "unit": "ms/frame",
-      "derived_from": "#147 section 3 measured the bcast segment at 0.10 ms p50 with one client; the harness runs the synthetic server with NO client, so this line is the no-client case (the broadcast is skipped) - the with-client cost is the bcast.* budgets above"
+      "derived_from": "#147 section 3 measured the bcast segment at 0.10 ms p50 with one client; the harness runs the synthetic server with NO client, so this line is the no-client case (the broadcast is skipped) and the with-client cost is the bcast.* budgets above"
     },
     {
       "metric": "server.live_bytes",
       "stage": "memory",
       "max": 131072,
       "factor": false,
+      "k": 1.31,
+      "median_measured": 100352,
       "unit": "bytes",
-      "derived_from": "#147 section 3.2 measured the live allocation footprint flat at 86-87 KB over 30 s (the tick allocates and frees every cycle); the harness reads the same malloc zone's ALLOCATED column from the running synthetic server"
+      "derived_from": "#147 section 3.2 measured the live allocation footprint flat at 86-87 KB over 30 s (the tick allocates and frees every cycle); the harness reads the same malloc zone's ALLOCATED column from the running synthetic server (100,352 B), so 128 KB is 1.31x the measured cost"
     }
-  ],
-  "budget_rule": "the CPU budgets are ~1.4-1.7x the cost measured over six runs of the harness, so a 2x regression trips them while the shared machine's noise does not; the platform's wait-floor budgets carry ~10% (they move with the machine's load) and the memory budget 1.3x"
+  ]
 }

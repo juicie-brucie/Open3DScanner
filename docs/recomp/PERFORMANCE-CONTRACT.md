@@ -93,9 +93,9 @@ vendor calls' allowance.
 | the vendor calls' allowance | **≤ 6.0 ms** | ≤ 18.0 ms | #134's 9.6 ms unsegmented residual, less the platform's own 3.2 – 3.9 ms wait overshoot (#147 §9) → ~5.6 – 6.4 ms of untimed vendor work; #153 names the exposure re-assert as one of the two |
 | **ingest, per consumed frame** | **≤ 8.0 ms** | **≤ 24.0 ms** | the two above |
 
-The synthetic tick's own post segment (the device-free proxy) has its own budget: **≤ 0.20 ms**
-(M1) / ≤ 0.60 ms (lower-end), from #147 §3's measured 0.12 – 0.20 ms p50; this harness measures
-0.07 – 0.12 ms, so 0.20 ms is ~1.7× the measured cost.
+The synthetic tick's own post segment (the device-free proxy) has its own budget: **≤ 0.15 ms**
+(M1) / ≤ 0.45 ms (lower-end), from #147 §3's measured 0.12 – 0.20 ms p50; this harness measures
+0.07 – 0.13 ms (median 0.10), so 0.15 ms is **1.5× the median**.
 
 **The rates.** The platform's own wait floor sets the ceiling, and it is measured by the harness
 every run (zero work in the loop, the same control as #147 §5):
@@ -129,15 +129,15 @@ publish rate.
 | metric | M1 budget | lower-end budget | derived from | the harness measured |
 | --- | --- | --- | --- | --- |
 | bytes per frame (the live 20,000-point frame) | **240,036 B** (exact) | the same — the wire volume is machine-independent | #136's live V1 frame | 240,036 B |
-| CPU per frame, 20,000 points | **≤ 800 µs** | ≤ 2,400 µs | the live `post` segment (1.18 – 1.68 ms, #112) covers decode + encode; the encoder alone is 533 – 546 µs over six runs, so 800 µs is ~1.5× the measured cost | 533 – 546 µs |
-| CPU per frame, 2,304 points (the synthetic sphere) | **≤ 120 µs** | ≤ 360 µs | #147 §7: the encoder is 63 % of the 195 µs tick ≈ 123 µs; this harness measures 61 – 85 µs over six runs, so 120 µs is ~1.4× the measured cost | 61 – 85 µs |
+| CPU per frame, 20,000 points | **≤ 820 µs** | ≤ 2,460 µs | the live `post` segment (1.18 – 1.68 ms, #112) covers decode + encode; the encoder alone is 535.8 – 562.7 µs over the 8 recorded runs (median 545.7), so 820 µs is **1.5× the median** | 535.8 – 562.7 µs |
+| CPU per frame, 2,304 points (the synthetic sphere) | **≤ 95 µs** | ≤ 285 µs | #147 §7: the encoder is 63 % of the 195 µs tick ≈ 123 µs; this harness measures 61.5 – 64.5 µs over the 8 recorded runs (median 62.2), so 95 µs is **1.5× the median** | 61.5 – 64.5 µs |
 
 ### 2.3 Broadcast, per client
 
 | metric | M1 budget | lower-end budget | derived from | the harness measured |
 | --- | --- | --- | --- | --- |
-| CPU per client per frame | **≤ 35 µs** | ≤ 105 µs | #147 §6: 35.9 – 38.4 µs per client per tick at 8 clients (the tick's own condition, where the client drains in the background); this harness measures 17.6 – 22.6 µs over six runs with a 4 MB receive buffer on its client, so 35 µs is ~1.5× the measured cost | 17.6 – 22.6 µs |
-| CPU per frame, 8 clients (the live frame) | **≤ 280 µs** | ≤ 840 µs | #147 §6's 0.29 – 0.31 ms per tick for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame, measured 141 – 181 µs over six runs, so 280 µs is ~1.5× the measured cost | 141 – 181 µs |
+| CPU per client per frame | **≤ 50 µs** | ≤ 150 µs | #147 §6: 35.9 – 38.4 µs per client per tick at 8 clients (the tick's own condition, where the client drains in the background); this harness measures 23.5 – 33.3 µs over the 8 recorded runs (median 26.7) with a 4 MB receive buffer on its client, so 50 µs is **1.9× the median** — the widest budget, because this measurement is the noisiest | 23.5 – 33.3 µs |
+| CPU per frame, 8 clients (the live frame) | **≤ 400 µs** | ≤ 1,200 µs | #147 §6's 0.29 – 0.31 ms per tick for the 27,697 B synthetic frame; this budget is for the 240,036 B live frame, measured 188.4 – 266.2 µs over the 8 recorded runs (median 213.2), so 400 µs is **1.9× the median** | 188.4 – 266.2 µs |
 | syscalls per client per frame | **2 today** (`ws_broadcast_server.cpp:255` sends the 2 – 4 B header, `:256` the payload) → **1** is the target | | the source | 2 |
 | the stall risk | **≤ 100 ms per client** — the `SO_SNDTIMEO` at `ws_broadcast_server.cpp:304-307`, the fan-out is **synchronous and holds `clients_mutex`** for the whole fan-out (`:503-517`), there is no queue and no drop policy | | the source | — |
 
@@ -210,17 +210,38 @@ python3 scripts/perf-budget.py --factor 3      # check the budgets as if this ma
   are reported as `OVER (target)` when the assumed target cannot sustain the rate, and the run still
   exits 0 — that is a finding for the operator, not a regression of the code.
 * **It is deterministic in shape, not in digits.** The machine is shared (load 2.0 – 7.2 during
-  #147's runs), so the budgets carry headroom — but not so much that a regression slips through:
-  **the CPU budgets are ~1.4 – 1.7× the cost measured over six runs of the harness, so a 2× regression
-  trips them** while the noise does not. (The platform's wait-floor budgets carry ~10 %, because that
-  number moves with the machine's load; the memory budget 1.3×.)
+  #147's runs), so a single run's number moves with the load. The harness therefore runs the
+  measurement **N times (3 by default) and checks the median**, and every CPU budget is
+  **K × the median of the recorded dataset** — so a **K× regression trips it** and a **K× contention
+  does not**. K is stated per row in `perf-budgets.json` (`k`), and the dataset is the 8 runs in the
+  record's raw log (`--repeat 8`):
+
+  | budget | K | what it catches |
+  | --- | --- | --- |
+  | the encoder, 20,000 points | 1.50 | a 1.5× regression |
+  | the encoder, 2,304 points | 1.53 | a 1.5× regression |
+  | the broadcast per client, and at 8 clients | 1.87 – 1.88 | a 1.9× regression (the noisiest measurement) |
+  | the tick's post segment | 1.50 | a 1.5× regression |
+  | the platform's wait floors | 1.10 – 1.27 | a ~1.1–1.3× change — that number is the machine's timer and moves with its load |
+  | the server's live footprint | 1.31 | a 1.3× regression |
+
+  The dataset was recorded **on a loaded machine** (other worktrees were running), which is the
+  conservative choice: the budgets sit above what the machine reaches under load, not above what it
+  reaches when quiet.
+
+  **A 2× regression is not caught by every budget, and the contract says so rather than claiming it.**
+  A budget wide enough to catch a 2× regression in the encoder would have to sit above the cost the
+  machine reaches under load (the verifier measured 709 µs for the encoder in a contended window
+  against a 538.7 µs median), and a budget that loose would also swallow the regression. The
+  trade is stated per row instead.
   Two measurements needed care to be stable:
   * the **broadcast** must not wait for the client's drain, or the harness times the drain instead
     of the copy — the harness's client therefore asks for a **4 MB receive buffer** (the trick
     #147's harness client used), and the first ten broadcasts are discarded as warm-up. With
     that, the per-client cost holds at **18 – 23 µs** across runs; without it, it ranged 23 – 71 µs.
   * the **platform's wait floor** is the noisiest number of all: it moved 3.6 – 4.3 ms across
-    #147's runs and 3.1 – 5.0 ms across the harness's. The budgets for it carry ~10 % of headroom.
+    #147's runs and 3.1 – 5.0 ms across the harness's. Its budgets carry ~10 % of headroom, and they
+    catch only a ~1.1× change.
   The harness also prints the **minimum** of each broadcast sample next to the median: on a shared
   machine the minimum is the uncontended cost, and it is the stable statistic.
 

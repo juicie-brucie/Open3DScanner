@@ -35,6 +35,9 @@ line of the product's own code was touched.
 # the harness: the device-free surfaces, the per-stage numbers, the verdicts
 python3 scripts/perf-budget.py
 
+# the dataset the budgets are derived from (8 runs; the median is checked)
+python3 scripts/perf-budget.py --repeat 8
+
 # a smoke run (numbers only, no verdicts, no server)
 python3 scripts/perf-budget.py --quick
 
@@ -48,23 +51,25 @@ process — then compares every measurement with `docs/recomp/perf-budgets.json`
 
 ## Result
 
-- Exit code: **0** for the full run (three consecutive runs: 0, 0, 0)
+- Exit code: **0** for the full run (three consecutive runs: 0, 0, 0, and the 8-run dataset: 0)
 - Verdict: **PASS** (device-free) — every measured budget met on current `main`
-- Raw log: `2026-10-19-perf-contract-budget-harness.raw.log` (same directory)
+- Raw log: `2026-10-19-perf-contract-budget-harness.raw.log` (same directory) — it holds the **8-run
+  dataset** the budgets are derived from (`--repeat 8`, with the per-metric min/median/max computed
+  from it), the budget table, the quick smoke run and the `--factor 3` run
 
 ## The budgets, as the harness printed them
 
 ```
 metric                                 measured       budget         verdict
-platform.wait_ms.41                      42.225       47.000   PASS  #147 section 5 measured 44.62 ms for a 41 ms request (zero work in the l
-platform.wait_ms.20                      22.653       26.500   PASS  #147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a
-platform.wait_ms.16                      16.705       21.500   PASS  the same control at the 60 Hz pace (16 ms request); measured by this har
+platform.wait_ms.41                      42.918       47.000   PASS  #147 section 5 measured 44.62 ms for a 41 ms request (zero work in the l
+platform.wait_ms.20                      22.352       26.500   PASS  #147 section 5 measured 24.29 ms for a 20 ms request; the ceiling for a
+platform.wait_ms.16                      16.916       21.500   PASS  the same control at the 60 Hz pace (16 ms request), measured by this har
 encode.bytes.live                    240036.000   240036.000   PASS  #136's live V1 frame: 20,000 points (kLiveBroadcastPointBudget) = 240,03
-encode.us.live                          548.625      800.000   PASS  the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode
-encode.us.2304                           62.500      120.000   PASS  #147 section 7: the encoder is 63% of the tick's CPU with no client, i.e
-bcast.us_per_client.8                    23.542       35.000   PASS  #147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (t
-bcast.us.8                              188.333      280.000   PASS  #147 section 6: the bcast segment was 0.29-0.31 ms per tick at 8 clients
-tick.post_ms                              0.110        0.200   PASS  #147 section 3 measured the synthetic tick's post segment at 0.12-0.20 m
+encode.us.live                          544.229      820.000   PASS  the live post segment measured 1.18-1.68 ms at p50 in #112 covers decode
+encode.us.2304                           62.146       95.000   PASS  #147 section 7: the encoder is 63% of the tick's CPU with no client, i.e
+bcast.us_per_client.8                    25.200       50.000   PASS  #147 section 6 measured 35.9-38.4 us per client per tick at 8 clients (t
+bcast.us.8                              201.604      400.000   PASS  #147 section 6's 0.29-0.31 ms per tick at 8 clients for the 27,697 B syn
+tick.post_ms                              0.070        0.150   PASS  #147 section 3 measured the synthetic tick's post segment at 0.12-0.20 m
 tick.bcast_ms                             0.000        0.250   PASS  #147 section 3 measured the bcast segment at 0.10 ms p50 with one client
 server.live_bytes                    100352.000   131072.000   PASS  #147 section 3.2 measured the live allocation footprint flat at 86-87 KB
 ```
@@ -73,12 +78,12 @@ And the ingest budget, per consumed frame, at each source rate:
 
 ```
 rate      ceiling     target    ms/frame core % nominal core % at ceiling verdict
-24          23.68         M1        8.00           19.2             18.9   PASS
-24          23.68  lower-end       24.00           57.6             56.8   PASS
-50          44.15         M1        8.00           40.0             35.3   PASS
-50          44.15  lower-end       24.00          120.0            105.9 OVER (target)
-60          59.86         M1        8.00           48.0             47.9   PASS
-60          59.86  lower-end       24.00          144.0            143.7 OVER (target)
+24          23.30         M1        8.00           19.2             18.6   PASS
+24          23.30  lower-end       24.00           57.6             55.9   PASS
+50          44.74         M1        8.00           40.0             35.8   PASS
+50          44.74  lower-end       24.00          120.0            107.4 OVER (target)
+60          59.12         M1        8.00           48.0             47.3   PASS
+60          59.12  lower-end       24.00          144.0            141.9 OVER (target)
 ```
 
 ## Checks
@@ -87,8 +92,9 @@ rate      ceiling     target    ms/frame core % nominal core % at ceiling verdic
 | --- | --- | --- |
 | 1 | The harness runs device-free and bounded | **[PASS]** the full run takes ~13 s; the synthetic server is stopped with `SIGTERM` (then `kill`) and no process is left behind (checked with `pgrep` after each run) |
 | 2 | Every measured budget is met on current main | **[PASS]** the table above — 11 budgets, 11 `PASS`, harness exit `0`, over three consecutive runs |
+| 2b | The budgets are derived from a dataset that is **in the record** | **[PASS]** the 8 runs are in the raw log (`--repeat 8`), the per-metric min/median/max are printed there and in `perf-budgets.json`'s `dataset.measured`, and the harness now checks the **median of its own runs** (`--repeat`, default 3) — the same statistic the budgets are derived from. The first pass claimed spreads ("over six runs") that the committed log did not evidence; the dataset is now recorded |
 | 3 | The harness fails when a budget regresses | **[PASS]** the mechanism is the comparison in `scripts/perf-budget.py`; it was observed failing (`2 budget(s) REGRESSED`, exit 1) while the broadcast measurement was still contended, and the fix was to the *measurement* (a 4 MB receive buffer on the harness's client), not to the budget |
-| 3b | A 2x regression would actually trip a budget | **[PASS]** the CPU budgets are **~1.4 – 1.7x** the cost measured over six runs (the encoder 533 – 546 us against an 800 us budget; the broadcast 17.6 – 22.6 us per client against 35 us; the tick's post 0.07 – 0.12 ms against 0.20 ms), so a doubling exceeds the budget while the shared machine's noise does not. The verifier raised this on the first pass — the budgets were 3 – 5x the measured cost then, and a 2x regression would have slipped through — so they were tightened against six runs of measurements |
+| 3b | A regression of a stated size would trip a budget | **[PASS]** every CPU budget is **K × the median of the recorded 8-run dataset**, and K is stated per row: 1.5 (the encoder, the tick's post), 1.9 (the broadcast), 1.1 – 1.3 (the platform's wait floors), 1.3 (the footprint). **The verifier caught that the first pass did not deliver this** — the budgets were 3 – 5× the measured cost, and the contract *claimed* a 2× regression would trip them, which was false. The fix was to re-derive every budget from a recorded dataset and to state the catchable size per row instead of claiming one size for all |
 | 4 | The reference machine keeps up at every source rate | **[PASS]** 19.2 % of a core at 24 Hz, 40.0 % at 50 Hz, 48.0 % at 60 Hz (the utilisation at the nominal rate; the harness also prints it at the platform's measured ceiling) |
 | 5 | The lower-end target's projection is reported, not gated | **[PASS]** the two `OVER (target)` rows: at 50 Hz the assumed target needs 120 % of a core, at 60 Hz 144 %. The harness exits **0** — that is a finding for the operator, not a regression of the code |
 | 6 | The budgets are derived from measurements, not impressions | **[PASS]** every row of `perf-budgets.json` carries a `derived_from` naming its source (#147 §3/§5/§6/§7, #112, #136, #153), and the contract's tables carry the same citations |

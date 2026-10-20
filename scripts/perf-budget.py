@@ -193,6 +193,27 @@ def live_footprint(pid):
     return None
 
 
+def median_of_runs(runs):
+    """The per-metric median across the runs (the statistic the budgets are checked against).
+
+    The machine is shared, so a single run's number moves with the load; the
+    median of several runs is the stable one, and it is what the budget
+    compares against. The per-run values are printed too, so the spread is
+    on the record.
+    """
+    out = {}
+    keys = set()
+    for r in runs:
+        keys |= set(r.keys())
+    for key in sorted(keys):
+        values = sorted(r[key] for r in runs if key in r)
+        if not values:
+            continue
+        out[key] = values[len(values) // 2] if len(values) % 2 else \
+            (values[len(values) // 2 - 1] + values[len(values) // 2]) / 2.0
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -201,6 +222,8 @@ def main():
     ap.add_argument("--factor", type=float, default=1.0,
                     help="scale the CPU budgets by this factor (the lower-end target's; default 1.0)")
     ap.add_argument("--quick", action="store_true", help="a short run (for a smoke check)")
+    ap.add_argument("--repeat", type=int, default=3,
+                    help="how many times to run the measurement; the median is checked (default 3)")
     ap.add_argument("--seconds", type=float, default=12.0,
                     help="how long the synthetic server runs (default 12)")
     args = ap.parse_args()
@@ -217,17 +240,22 @@ def main():
 
     print("== the measurement (device-free) ==")
     measured = {}
-    bench = subprocess.run([perf_bin] + (["--quick"] if args.quick else []),
-                           capture_output=True, text=True, cwd=ROOT)
-    if bench.returncode != 0:
-        print(bench.stdout)
-        print(bench.stderr)
-        print("perf-budget: the measurement binary failed")
-        return 2
-    measured.update(parse_kv(bench.stdout))
-    for line in bench.stdout.splitlines():
-        if line.strip():
-            print("  " + line.strip())
+    runs = []
+    for attempt in range(max(1, args.repeat)):
+        bench = subprocess.run([perf_bin] + (["--quick"] if args.quick else []),
+                               capture_output=True, text=True, cwd=ROOT)
+        if bench.returncode != 0:
+            print(bench.stdout)
+            print(bench.stderr)
+            print("perf-budget: the measurement binary failed")
+            return 2
+        run = parse_kv(bench.stdout)
+        runs.append(run)
+        print("  run %d:" % (attempt + 1))
+        for line in bench.stdout.splitlines():
+            if line.strip():
+                print("    " + line.strip())
+    measured.update(median_of_runs(runs))
 
     server_out = {}
     lines = []
