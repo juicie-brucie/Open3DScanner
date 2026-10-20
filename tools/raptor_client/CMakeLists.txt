@@ -23,3 +23,9 @@ add_test(NAME raptor_client_capture COMMAND raptor_client --selftest-capture)
 # unwrap, against a loopback mock that refuses a bare method name the
 # way the daemon does.
 add_test(NAME raptor_client_live_suffix COMMAND raptor_client --selftest-live)
+
+# Hardware-free smoke test for the live path's bounded wait (row #161): a
+# loopback peer that accepts the connection and never answers must produce a
+# named timeout and the timeout exit code, not a hang — the depth
+# interface's observed stall.
+add_test(NAME raptor_client_live_timeout COMMAND raptor_client --selftest-live-timeout)
