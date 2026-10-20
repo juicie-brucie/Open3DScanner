@@ -625,8 +625,17 @@ void RunSyntheticServer(uint16_t port) {
             perf::SegTimer t(&s_wait_us);
             std::this_thread::sleep_for(sleep_for);
         }
-        tick_perf.EndTick(0, 0, s_post_us, s_bcast_us, s_wait_us, frame_points_count, frame_bytes,
-                          static_cast<int64_t>(kFrameIntervalMs * 1000.0));
+        {
+            perf::TickPerf::Sample sample;
+            sample.post_us = s_post_us;
+            sample.broadcast_us = s_bcast_us;
+            sample.wait_us = s_wait_us;
+            sample.points = frame_points_count;
+            sample.bytes = frame_bytes;
+            sample.clients = static_cast<uint32_t>(server.ConnectedClientCount());
+            sample.nominal_wait_us = static_cast<int64_t>(kFrameIntervalMs * 1000.0);
+            tick_perf.EndTick(sample);
+        }
     }
 }
 
@@ -1077,8 +1086,10 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     for (int tick = 0; tick < total_ticks; ++tick) {
         tick_perf.BeginTick();
         int64_t s_pose_us = 0, s_getter_us = 0, s_post_us = 0, s_bcast_us = 0, s_wait_us = 0;
+        int64_t s_exposure_us = 0, s_release_us = 0;
         uint32_t frame_points = 0;
         uint64_t frame_bytes = 0;
+        uint32_t frame_clients = 0;
 #if !defined(_WIN32)
         if (getppid() != original_parent) {
             QuitTrace("orphan guard: parent changed -> stop requested");
@@ -1135,6 +1146,8 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             // value by re-asserting every tick; in auto mode, skip the call
             // and let that decay happen.
             if (!control.auto_exposure.load()) {
+                // #141: this vendor call used to be outside every segment.
+                perf::SegTimer exposure_timer(&s_exposure_us);
                 lib.obscan_scan_config_combined_exposure_and_laser_current(scan, control.exposure_value.load());
             }
 
@@ -1256,6 +1269,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     }
                     frame_points = broadcast_count;
                     frame_bytes += buf.size();
+                    frame_clients = static_cast<uint32_t>(server.ConnectedClientCount());
             RecordFrame(buf);
                     ++g_cloud_frames_broadcast;
                 } else {
@@ -1277,7 +1291,11 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                 // Release is a no-op in the vendor (native `ret`); call it
                 // for API symmetry per the header. Buffers are borrowed, so
                 // copy out before the next publish.
-                lib.obscan_scan_model_clouds_release(scan);
+                {
+                    // #141: the cloud release, also previously untimed.
+                    perf::SegTimer release_timer(&s_release_us);
+                    lib.obscan_scan_model_clouds_release(scan);
+                }
             }
         }
 
@@ -1295,8 +1313,21 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                         hardware_paused ? 1 : 0);
             std::fflush(stdout);
         }
-        tick_perf.EndTick(s_pose_us, s_getter_us, s_post_us, s_bcast_us, s_wait_us, frame_points, frame_bytes,
-                          static_cast<int64_t>(kLiveTickIntervalMs) * 1000);
+        {
+            perf::TickPerf::Sample sample;
+            sample.pose_us = s_pose_us;
+            sample.getter_us = s_getter_us;
+            sample.post_us = s_post_us;
+            sample.broadcast_us = s_bcast_us;
+            sample.wait_us = s_wait_us;
+            sample.exposure_us = s_exposure_us;
+            sample.release_us = s_release_us;
+            sample.points = frame_points;
+            sample.bytes = frame_bytes;
+            sample.clients = frame_clients;
+            sample.nominal_wait_us = static_cast<int64_t>(kLiveTickIntervalMs) * 1000;
+            tick_perf.EndTick(sample);
+        }
     }
 
     // Row #111: print before the teardown, which can hang (#89).
