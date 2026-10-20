@@ -1004,3 +1004,19 @@ Row #67 (OQ-S3): both lock sites read statically — the model-cloud family
 (0x7038e4/0x703930/0x703828/0x703894, all +0x2e0) vs the C-facing reader
 (0x702f4c, +0x320), plus the 13 update_model_cloud callers' lock state. Light
 reads; no analyzer.
+
+## 20. The live tick's timing structure and the two instruments (row #134)
+
+- `kLiveTickIntervalMs = 100` plus `CFRunLoopRunInMode(..., 0.1)` — unchanged since `4149299` (2026-10-16) — gives a **~100 ms floor**.
+  Measured work is **~1.23 ms/tick** (post 1.18, bcast 0.05), so a live tick p50 of 111–120 ms is **11–20 ms above the floor**: the
+  tick is sleep-bound, not work-bound. Even a perfect tick path could only reach ~102 ms (a ≤9 % ceiling).
+- **~9.6 ms/tick lies outside all four timed segments.** The paused floor is 102.10 ms and the active steady tick ~113 ms, but the four
+  `[perf]` segments account for only ~1.23 ms of that ~11 ms delta. The untimed per-tick calls are
+  `obscan_scan_config_combined_exposure_and_laser_current` (re-asserted every tick; `tools/scan_server/main.cpp:1027` sets
+  `control.auto_exposure = false`, `:1130`) and `obscan_scan_model_clouds_release` (`:1272`), plus `BuildStatusJson` / the 50-tick
+  `printf` and `RecordFrame` (a no-op without `--record`).
+- **Two instruments, not one.** The HUD's `dataFps` (`ui/app.js:464`) is **client-side** and drops frames when the renderer is behind
+  (`ui/app.js:293`) — a lower bound on the server rate; the server's `[perf] window` (`tools/scan_server/perf_window.h`) is the tick
+  instrument. Numbers from the two are not comparable, and `PLAN` row 111's "125–500 ms per tick" is `1000 / HUD fps`, not a server
+  measurement. The cross-machine comparison (#115) therefore compares the server tick from `[perf]` and the HUD fps as **separate
+  fields** — which the handover order's result fields 2 and 3/4 already do.
