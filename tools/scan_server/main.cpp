@@ -35,6 +35,17 @@
 //   scan_server --replay <file> [port]
 //       Replays a recorded session (V1 frames) without a device.
 //
+//   scan_server --read-model <path>
+//       Reads the vendor's model.ply — the full fused model cloud the SDK
+//       writes at stop — and reports the vertex count, bbox, and whether the
+//       file carries normals, intensity and colour. No device (row #149).
+//
+//   scan_server --read-project [<session-root>]
+//       Resolves the newest <root>/<session>/result/model.ply (default root:
+//       the SDK session output dir) and reports it like --read-model. This is
+//       the project folder made readable; the archive's own format and
+//       location remain the operator's decision (row #149).
+//
 //   scan_server --live [port] [path-to-liborbbec_scan.dylib-or-dll]
 //       Drives a real OBScan session against a physically-connected
 //       scanner (same context/session/scan lifecycle as
@@ -90,6 +101,7 @@
 #include "tracking_status.h"  // the vendor's per-frame verdict, by pinned name (row #91)
 #include "bounded_watchdog.h"  // the per-call bound that survives a stuck caller (row #89)
 #include "device_probe.h"      // the bounded device-enumeration wait (row #167)
+#include "model_ply.h"         // the vendor's model.ply, read back (row #149)
 #include "perf_window.h"       // per-tick latency instrumentation (row #111)
 #include "exposure_apply.h"    // when the exposure/laser config is pushed (row #153)
 #include "fast_encode.h"       // the allocation-free cloud-snapshot encoder (row #164)
@@ -1034,7 +1046,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     }
 
     ObScanSessionConfig session_config = {};
-    session_config.output_dir = "/tmp/openscanner_live_server_session";
+    session_config.output_dir = openscanner::scan_server::kSessionOutputDir;
     session_config.name = "openscanner_scan_server_live";
     session_config.is_import_mesh_file = false;
 
@@ -1965,6 +1977,58 @@ private:
     char** argv_;
 };
 
+// --- Row #149: the vendor's model.ply, read back ---------------------------
+// The reader and the project resolver live in model_ply.h (device-free, and
+// tested by model_ply_test). These are the two CLI surfaces: a direct file,
+// and the SDK's session output folder.
+int ReportModelFile(const std::string& path) {
+    openscanner::scan_server::ModelPlySummary summary;
+    std::string detail;
+    const openscanner::scan_server::ModelPlyError error =
+        openscanner::scan_server::ReadModelPly(path, &summary, &detail);
+    if (error != openscanner::scan_server::ModelPlyError::kOk) {
+        std::fprintf(stderr, "[model] error: %s: %s (%s)\n",
+                     openscanner::scan_server::ModelPlyErrorName(error), path.c_str(), detail.c_str());
+        return 2;
+    }
+    std::printf("[model] path: %s\n", path.c_str());
+    std::printf("[model] format: %s\n", summary.format.c_str());
+    std::printf("[model] vertices: %llu\n", static_cast<unsigned long long>(summary.vertex_count));
+    std::printf("[model] faces: %llu\n", static_cast<unsigned long long>(summary.face_count));
+    if (summary.bbox_valid) {
+        std::printf("[model] bbox min: (%.3f, %.3f, %.3f) max: (%.3f, %.3f, %.3f) size: (%.3f, %.3f, %.3f)\n",
+                    summary.bbox_min[0], summary.bbox_min[1], summary.bbox_min[2], summary.bbox_max[0],
+                    summary.bbox_max[1], summary.bbox_max[2], summary.bbox_size(0), summary.bbox_size(1),
+                    summary.bbox_size(2));
+    }
+    std::printf("[model] normals: %s\n", summary.has_normals ? "present" : "absent");
+    if (summary.has_intensity && summary.mean_intensity_valid) {
+        std::printf("[model] intensity: present (mean %.3f)\n", summary.mean_intensity);
+    } else {
+        std::printf("[model] intensity: %s\n", summary.has_intensity ? "present" : "absent");
+    }
+    std::printf("[model] colour: %s\n", summary.has_colour ? "present" : "absent");
+    std::fflush(stdout);
+    return 0;
+}
+
+int ReportSessionModel(const std::string& root) {
+    const openscanner::scan_server::SessionModel resolved =
+        openscanner::scan_server::ResolveSessionModel(root);
+    if (resolved.error != openscanner::scan_server::ModelPlyError::kOk) {
+        std::fprintf(stderr, "[model] error: %s: %s (%s)\n",
+                     openscanner::scan_server::ModelPlyErrorName(resolved.error), root.c_str(),
+                     resolved.detail.c_str());
+        return 2;
+    }
+    std::printf("[model] session: %s\n", resolved.session_dir.c_str());
+    // The out-of-core cache is vendor-internal (row #149 leaves it to the
+    // operator); report that it is there, do not read it.
+    std::printf("[model] out-of-core cache: %s\n",
+                resolved.obmc_path.empty() ? "absent" : resolved.obmc_path.c_str());
+    return ReportModelFile(resolved.model_path);
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -1981,6 +2045,19 @@ int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--replay") {
         std::unique_ptr<openscanner::CaptureSource> src(new ReplayCaptureSource(argc, argv));
         return src->run();
+    }
+
+    if (argc >= 2 && std::string(argv[1]) == "--read-model") {
+        if (argc < 3) {
+            std::fprintf(stderr, "Usage: scan_server --read-model <path-to-model.ply>\n");
+            return 1;
+        }
+        return ReportModelFile(argv[2]);
+    }
+
+    if (argc >= 2 && std::string(argv[1]) == "--read-project") {
+        const std::string root = argc >= 3 ? argv[2] : openscanner::scan_server::kSessionOutputDir;
+        return ReportSessionModel(root);
     }
 
     if (argc >= 2 && std::string(argv[1]) == "--synthetic-load") {
