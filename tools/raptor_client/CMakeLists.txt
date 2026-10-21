@@ -1,5 +1,9 @@
 add_executable(raptor_client main.cpp capture.cpp telemetry.cpp)
-target_include_directories(raptor_client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# Row #179: the daemon-switch header (engine/include) is header-only.
+target_include_directories(raptor_client PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/engine/include
+)
 
 # Hardware-free smoke test for the replay's pacing and its bounded reply
 # read (row #117): the framing selftest, the absolute-timestamp -> delta

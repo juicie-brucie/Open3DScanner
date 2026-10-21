@@ -28,9 +28,12 @@
 #include <vector>
 
 #include "../raptor_client/capture.h"
+#include "openscanner/daemon_switch.h"
+#include "raw_capture.h"
 #include "bundle_source.h"
 #include "discovery.h"
 #include "frame_source.h"
+#include "live_source.h"
 #include "msgpack.h"
 #include "properties.h"
 #include "shim_server.h"
@@ -248,6 +251,21 @@ bool WriteSyntheticBundle(const std::string& dir, int frames, const std::string&
     return true;
 }
 
+// Starts the shim on the vendor port, or on the switch's port when the vendor
+// daemon holds it. Null with the reason when neither binds.
+std::unique_ptr<shim::ShimServer> StartShim(shim::ShimConfig config, bool* switched, uint16_t* port,
+                                            std::string* err) {
+    *port = config.ir_port;
+    std::unique_ptr<shim::ShimServer> server(new shim::ShimServer(config));
+    if (server->Start(err)) return server;
+    config.ir_port = openscanner::kShimIrPort;
+    *port = config.ir_port;
+    *switched = true;
+    server.reset(new shim::ShimServer(config));
+    if (server->Start(err)) return server;
+    return nullptr;
+}
+
 void TestClientAgainstShim(const std::string& client_path) {
     std::printf("raptor_client --live against the shim\n");
     if (client_path.empty()) {
@@ -278,25 +296,32 @@ void TestClientAgainstShim(const std::string& client_path) {
 
     shim::ShimConfig config;
     config.serve_depth = false;
+    config.ir_port = 10013;  // the port the synthetic bundle was captured on
     config.ir_source = &source;
     std::vector<std::string> log;
     config.log = [&log](const std::string& line) { log.push_back(line); };
-    shim::ShimServer server(config);
-    if (!server.Start(&err)) {
-        std::printf("  SKIP (the shim could not bind the IR port: %s)\n", err.c_str());
+
+    bool switched = false;
+    uint16_t port = 0;
+    std::unique_ptr<shim::ShimServer> server = StartShim(config, &switched, &port, &err);
+    if (!server) {
+        // The vendor daemon may hold 10013; the switch's own port is the
+        // answer, and the client's --daemon shim dials it.
+        std::printf("  SKIP (the shim could not bind an IR port: %s)\n", err.c_str());
         capture::RemoveTree(bundle);
         return;
     }
-    server.StartThread();
+    server->StartThread();
+    const std::string daemon_flag = switched ? " --daemon shim" : "";
 
     const std::string out_path = bundle + "/frame.raw";
     const std::string log_path = bundle + "/client.log";
-    const std::string command = "'" + client_path + "' --live 127.0.0.1 10013 2 '" + out_path +
-                                "' --dump-replies > '" + log_path + "' 2>&1";
+    const std::string command = "'" + client_path + "' --live 127.0.0.1 " + std::to_string(port) + " 2 '" +
+                                out_path + "'" + daemon_flag + " --dump-replies > '" + log_path + "' 2>&1";
     const int rc = std::system(command.c_str());
     const int exit_code = WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
     // The client's own stats, before the deliberate unknown request below.
-    const shim::ShimStats client_stats = server.stats();
+    const shim::ShimStats client_stats = server->stats();
 
     // The runs above prove the client's path; these two requests prove the
     // surface the client never calls, while the server is still listening.
@@ -307,7 +332,7 @@ void TestClientAgainstShim(const std::string& client_path) {
     enum_request.str("ob_get_device_enumeration_info");
     enum_request.array(0);
     shim::Bytes enum_reply;
-    const bool enum_reached = SendRawRequest(config.ir_port, enum_request.out, &enum_reply);
+    const bool enum_reached = SendRawRequest(port, enum_request.out, &enum_reply);
 
     // The one method the client never sends: a bare name must be refused the
     // way the daemon refuses it.
@@ -318,13 +343,13 @@ void TestClientAgainstShim(const std::string& client_path) {
     request.str("ob_rpc_get_frame");
     request.array(0);
     shim::Bytes reply;
-    const bool raw_reached = SendRawRequest(config.ir_port, request.out, &reply);
+    const bool raw_reached = SendRawRequest(port, request.out, &reply);
 
-    server.Stop();
-    server.Join();
+    server->Stop();
+    server->Join();
 
     const std::string client_log = ReadFile(log_path);
-    const shim::ShimStats stats = server.stats();
+    const shim::ShimStats stats = server->stats();
     Check("the client run exits 0", exit_code == 0);
     Check("the client pulled frames", client_stats.get_frame >= 3 && client_stats.frames >= 3);
     Check("the client started and stopped the stream",
@@ -344,17 +369,18 @@ void TestClientAgainstShim(const std::string& client_path) {
           saved.size() == 7680 && !saved.empty() && (uint8_t)saved[0] == 0 &&
               (uint8_t)saved[saved.size() - 1] == 0);
 
-    // The enumeration: the port map the app bootstraps from.
     Check("the enumeration request is answered", enum_reached);
     shim::Value enum_value;
     const bool enum_parsed = !enum_reply.empty() &&
                              shim::ParseValue(enum_reply.data(), enum_reply.size(), &enum_value) == enum_reply.size();
-    Check("the enumeration reply is an envelope with an array of four", enum_parsed &&
-              enum_value.is_array(4) && enum_value.array[3].is_array(4));
+    Check("the enumeration reply is an envelope with an array of four",
+          enum_parsed && enum_value.is_array(4) && enum_value.array[3].is_array(4));
     if (enum_parsed && enum_value.is_array(4) && enum_value.array[3].is_array(4)) {
         bool shaped = true;
         bool ports_ok = true;
-        const uint64_t expected[4] = {10010, 10011, 10012, 10013};
+        // The IR and depth entries carry the ports this shim is configured
+        // with; IMU and RGB are the device's fixed ports it does not serve.
+        const uint64_t expected[4] = {(uint64_t)openscanner::kShimDepthPort, 10011, 10012, (uint64_t)port};
         for (size_t i = 0; i < 4; ++i) {
             const shim::Value& entry = enum_value.array[3].array[i];
             if (!entry.is_array(8)) shaped = false;
@@ -363,7 +389,7 @@ void TestClientAgainstShim(const std::string& client_path) {
             }
         }
         Check("every enumeration entry carries the eight fields", shaped);
-        Check("the entries carry the port map 10010/10011/10012/10013", ports_ok);
+        Check("the entries carry the configured port map", ports_ok);
     }
 
     Check("a raw request reaches the shim", raw_reached);
@@ -376,7 +402,7 @@ void TestClientAgainstShim(const std::string& client_path) {
                   envelope.array[2].str == "could not find function 'ob_rpc_get_frame' with argument count 0");
         Check("the refusal's result is nil", envelope.array[3].kind == shim::Value::Kind::kNil);
     }
-    Check("the shim counted the unknown method", server.stats().unknown == 1);
+    Check("the shim counted the unknown method", stats.unknown == 1);
 
     capture::RemoveTree(bundle);
 }
@@ -398,39 +424,307 @@ void TestEmptySource(const std::string& client_path) {
 
     shim::ShimConfig config;
     config.serve_depth = false;
+    config.ir_port = 10013;
     config.ir_source = &source;
-    shim::ShimServer server(config);
     std::string err;
-    if (!server.Start(&err)) {
-        std::printf("  SKIP (the shim could not bind the IR port: %s)\n", err.c_str());
+    bool switched = false;
+    uint16_t port = 0;
+    std::unique_ptr<shim::ShimServer> server = StartShim(config, &switched, &port, &err);
+    if (!server) {
+        std::printf("  SKIP (the shim could not bind an IR port: %s)\n", err.c_str());
         return;
     }
-    server.StartThread();
+    server->StartThread();
+    const std::string daemon_flag = switched ? " --daemon shim" : "";
 
     char temp[] = "/tmp/raptor_shim_empty_XXXXXX";
     const char* dir = mkdtemp(temp);
     if (!dir) {
-        server.Stop();
-        server.Join();
+        server->Stop();
+        server->Join();
         std::printf("  SKIP (mkdtemp failed)\n");
         return;
     }
     const std::string log_path = std::string(dir) + "/client.log";
     const std::string out_path = std::string(dir) + "/frame.raw";
-    const std::string command = "'" + client_path + "' --live 127.0.0.1 10013 1 '" + out_path +
-                                "' --dump-replies > '" + log_path + "' 2>&1";
+    const std::string command = "'" + client_path + "' --live 127.0.0.1 " + std::to_string(port) + " 1 '" +
+                                out_path + "'" + daemon_flag + " --dump-replies > '" + log_path + "' 2>&1";
     const int rc = std::system(command.c_str());
     const int exit_code = WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
-    server.Stop();
-    server.Join();
+    server->Stop();
+    server->Join();
 
     const std::string client_log = ReadFile(log_path);
     Check("a run with no frames exits 1 (the client's no-data verdict)", exit_code == 1);
     Check("the client reports empty replies", CountAfter(client_log, "empty=") > 0);
     Check("the client reports no data and no errors",
           CountAfter(client_log, "data=") == 0 && CountAfter(client_log, "error=") == 0);
-    Check("the shim answered the no-data form, not an error", server.stats().empty > 0 && server.stats().unknown == 0);
+    Check("the shim answered the no-data form, not an error",
+          server->stats().empty > 0 && server->stats().unknown == 0);
 
+    capture::RemoveTree(std::string(dir));
+}
+
+// Row #179: the switch. The default is the vendor daemon and nothing about a
+// default run changes; the shim's ports are its own so both can listen at once.
+void TestDaemonSwitch() {
+    std::printf("daemon switch\n");
+    const openscanner::DaemonSelection vendor = openscanner::VendorDaemon();
+    const openscanner::DaemonSelection shim = openscanner::ShimDaemon();
+    Check("the default selection is the vendor daemon", vendor.kind == openscanner::DaemonKind::kVendor);
+    Check("the vendor daemon keeps its ports", vendor.ir_port == 10013 && vendor.depth_port == 10010);
+    Check("the shim's ports are its own, not the vendor's",
+          shim.is_shim() && shim.ir_port != vendor.ir_port && shim.depth_port != vendor.depth_port);
+    Check("the shim's defaults are the header's", shim.ir_port == openscanner::kShimIrPort &&
+                                                      shim.depth_port == openscanner::kShimDepthPort);
+
+    openscanner::DaemonSelection parsed;
+    Check("'vendor' parses", openscanner::ParseDaemonName("vendor", &parsed) && !parsed.is_shim());
+    Check("'shim' parses", openscanner::ParseDaemonName("shim", &parsed) && parsed.is_shim() &&
+                               parsed.ir_port == openscanner::kShimIrPort);
+    openscanner::DaemonSelection untouched = openscanner::VendorDaemon();
+    Check("a typo is refused, not defaulted", !openscanner::ParseDaemonName("shimm", &untouched) &&
+                                                   untouched.kind == openscanner::DaemonKind::kVendor);
+
+    const std::string shim_line = openscanner::DescribeDaemon(shim);
+    Check("the shim's line names the switch, its ports and that nothing was replaced",
+          shim_line.find("daemon=shim") != std::string::npos &&
+              shim_line.find("IR " + std::to_string(shim.ir_port)) != std::string::npos &&
+              shim_line.find("neither stopped nor replaced") != std::string::npos);
+    const std::string vendor_line = openscanner::DescribeDaemon(vendor);
+    Check("the vendor's line names the product default",
+          vendor_line.find("daemon=vendor") != std::string::npos &&
+              vendor_line.find("product default") != std::string::npos);
+
+    shim::ShimConfig defaults;
+    Check("the shim server's defaults are the switch's shim ports",
+          defaults.ir_port == openscanner::kShimIrPort && defaults.depth_port == openscanner::kShimDepthPort);
+}
+
+// The live seam without any device: every gate is a fake, so the refusals and
+// the mapping are exact.
+struct FakeTransport : raw_capture::FrameSource {
+    bool configured_ = true;
+    std::string configuration_error_ = "not-configured: the fake transport has no endpoint";
+    bool has_frame_ = true;
+    raw_capture::Frame next;
+
+    FakeTransport() {
+        next.kind = raw_capture::StreamKind::kIr;
+        next.seq = 9;
+        next.timestamp_us = 4242;
+        next.width = 1920;
+        next.height = 1200;
+        next.stride = 1920;
+        next.format = 0x3231564e;  // a UVC fourcc, deliberately not an OBFormat
+        next.data.assign(1920, 0x5a);
+    }
+
+    bool Next(raw_capture::Frame* frame, std::string* error) override {
+        if (!has_frame_) {
+            if (error) error->clear();  // the clean end
+            return false;
+        }
+        has_frame_ = false;
+        if (frame) *frame = next;
+        return true;
+    }
+    bool configured() const override { return configured_; }
+    std::string configuration_error() const override { return configuration_error_; }
+};
+
+struct FakeWords : shim::ObFrameWordsProvider {
+    bool supplied = true;
+    shim::ObFrameWords words{7, 255, 4};
+    bool Words(uint64_t, uint64_t, shim::ObFrameWords* out) const override {
+        if (!supplied) return false;
+        if (out) *out = words;
+        return true;
+    }
+};
+
+struct FakeClaim : shim::ClaimChannel {
+    State state = State::kClaimedByHelper;
+    std::string detail = "claimed (fake)";
+    State Query(std::string* out) override {
+        if (out) *out = detail;
+        return state;
+    }
+};
+
+void TestLiveSeam() {
+    std::printf("live source seam\n");
+    FakeTransport transport;
+    FakeWords words;
+    FakeClaim claim;
+    std::string err;
+
+    {
+        FakeClaim unclaimed;
+        unclaimed.state = FakeClaim::State::kNotClaimed;
+        unclaimed.detail = "openscanner-helper reports released";
+        shim::LiveSource source(&transport, &words, &unclaimed);
+        Check("an unclaimed device is refused", !source.Start(shim::IrInterface(), &err));
+        Check("the refusal is not-configured and names the helper",
+              err.find("not-configured") != std::string::npos &&
+                  err.find("openscanner-helper") != std::string::npos);
+    }
+    {
+        transport.configured_ = false;
+        shim::LiveSource source(&transport, &words, &claim);
+        Check("an unconfigured transport is refused", !source.Start(shim::IrInterface(), &err));
+        Check("the transport's own reason is carried", err.find("no endpoint") != std::string::npos);
+        transport.configured_ = true;
+    }
+    {
+        shim::LiveSource source(&transport, nullptr, &claim);
+        Check("missing OB words are refused", !source.Start(shim::IrInterface(), &err));
+        Check("the refusal names the OB words", err.find("OB words") != std::string::npos);
+    }
+    {
+        shim::LiveSource source(&transport, &words, &claim);
+        Check("the configured seam starts", source.Start(shim::IrInterface(), &err));
+
+        shim::FramePayload payload;
+        Check("a frame crosses the seam", source.Next(shim::IrInterface(), &payload, &err));
+        Check("the payload is the frame's bytes", payload.data == transport.next.data);
+        Check("e1 is the transport's timestamp", payload.e1_us == 4242);
+        Check("e2/e3/e10 come from the words provider, not from the frame",
+              payload.e2 == 7 && payload.e3 == 255 && payload.e10 == 4);
+        Check("the UVC fourcc is not used as the OBFormat", payload.e3 != transport.next.format);
+        Check("the absent sibling planes stay empty", payload.data2.empty() && payload.data3.empty());
+
+        Check("the end of the stream is a clean stop, not an error",
+              !source.Next(shim::IrInterface(), &payload, &err) && err.empty());
+
+        transport.has_frame_ = true;  // a frame to map, but no words for it
+        words.supplied = false;
+        Check("a frame without OB words is refused, not filled in",
+              !source.Next(shim::IrInterface(), &payload, &err) &&
+                  err.find("OB words") != std::string::npos);
+        words.supplied = true;
+    }
+    {
+        // The production factory: #178's transport is not landed, so it
+        // refuses with the descriptor field that is missing; with no claim
+        // it names the helper too.
+        FakeClaim unclaimed;
+        unclaimed.state = FakeClaim::State::kNotClaimed;
+        unclaimed.detail = "openscanner-helper reports released";
+        std::string why;
+        std::unique_ptr<shim::LiveSource> source(shim::LiveSourceFactory::Create(&unclaimed, &why));
+        Check("the production live source refuses for now", source == nullptr);
+        Check("the refusal names the descriptor map", why.find("usb-descriptor-map.md") != std::string::npos);
+        Check("the refusal names the helper claim", why.find("openscanner-helper") != std::string::npos);
+    }
+}
+
+// The switch-on path end to end: the shim on its own port, the client told to
+// use it. The switch-off path is the same client on the same port without the
+// flag, which must be refused as an unknown interface port.
+void TestSwitchOnPath(const std::string& client_path) {
+    std::printf("switch on: the client against the shim\n");
+    if (client_path.empty()) {
+        std::printf("  SKIP (no raptor_client path given)\n");
+        return;
+    }
+    char temp[] = "/tmp/raptor_switch_XXXXXX";
+    const char* dir = mkdtemp(temp);
+    if (!dir) {
+        std::printf("  SKIP (mkdtemp failed)\n");
+        return;
+    }
+    const std::string root = dir;
+    std::string err;
+    if (!WriteSyntheticBundle(root, 4, "ob_rpc_get_frame0-2-12", 10013, &err)) {
+        std::printf("  SKIP (the synthetic bundle could not be written: %s)\n", err.c_str());
+        capture::RemoveTree(root);
+        return;
+    }
+    shim::BundleSource source;
+    if (!source.Open(root, shim::IrInterface(), &err)) {
+        std::printf("  SKIP (the bundle source could not open: %s)\n", err.c_str());
+        capture::RemoveTree(root);
+        return;
+    }
+    shim::ShimConfig config;
+    config.serve_depth = false;
+    config.ir_port = openscanner::kShimIrPort;
+    config.ir_source = &source;
+    shim::ShimServer server(config);
+    if (!server.Start(&err)) {
+        std::printf("  SKIP (the shim could not bind its port: %s)\n", err.c_str());
+        capture::RemoveTree(root);
+        return;
+    }
+    server.StartThread();
+
+    const std::string out_path = root + "/switched.raw";
+    const std::string log_path = root + "/switched.log";
+    const std::string command = "'" + client_path + "' --live 127.0.0.1 " +
+                                std::to_string(openscanner::kShimIrPort) + " 2 '" + out_path +
+                                "' --daemon shim --frames 4 --dump-replies > '" + log_path + "' 2>&1";
+    const int rc = std::system(command.c_str());
+    const int exit_code = WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
+
+    // The switch off: the same client, the same shim port, no flag. The
+    // default table has no such interface port, so the client refuses.
+    const std::string off_log = root + "/off.log";
+    const std::string off_out = root + "/off.raw";
+    const std::string off_command = "'" + client_path + "' --live 127.0.0.1 " +
+                                    std::to_string(openscanner::kShimIrPort) + " 1 '" + off_out +
+                                    "' > '" + off_log + "' 2>&1";
+    const int off_rc = std::system(off_command.c_str());
+    const int off_exit = WIFEXITED(off_rc) ? WEXITSTATUS(off_rc) : -1;
+
+    server.Stop();
+    server.Join();
+    const shim::ShimStats stats = server.stats();
+    const std::string log = ReadFile(log_path);
+    const std::string off_text = ReadFile(off_log);
+
+    Check("the switched client exits 0", exit_code == 0);
+    Check("the switch is logged by name", log.find("daemon=shim") != std::string::npos);
+    Check("the log names the shim's port", log.find("IR " + std::to_string(openscanner::kShimIrPort)) !=
+                                               std::string::npos);
+    Check("the log says the vendor daemon was not replaced",
+          log.find("neither stopped nor replaced") != std::string::npos);
+    Check("the shim served the frames on its own port", stats.frames >= 4 && stats.get_frame >= 4);
+    Check("the client pulled them", log.find("data=") != std::string::npos && CountAfter(log, "data=") > 0);
+
+    Check("with the switch off the same port is refused (no default change)", off_exit == 2);
+    Check("the refusal names the port as unknown",
+          off_text.find("is not an interface port") != std::string::npos);
+
+    capture::RemoveTree(root);
+}
+
+// The CLI's live mode with no #178 transport: a clean refusal, not a guessed
+// device and not a hang.
+void TestLiveCliRefusal(const std::string& shim_path) {
+    std::printf("live mode refuses without the transport\n");
+    if (shim_path.empty()) {
+        std::printf("  SKIP (no raptor_shim path given)\n");
+        return;
+    }
+    char temp[] = "/tmp/raptor_live_refusal_XXXXXX";
+    const char* dir = mkdtemp(temp);
+    if (!dir) {
+        std::printf("  SKIP (mkdtemp failed)\n");
+        return;
+    }
+    const std::string log_path = std::string(dir) + "/shim.log";
+    const std::string command =
+        "'" + shim_path + "' --source live --no-depth --ir-port 20013 --seconds 1 > '" + log_path + "' 2>&1";
+    const int rc = std::system(command.c_str());
+    const int exit_code = WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
+    const std::string text = ReadFile(log_path);
+    Check("the live CLI exits 2", exit_code == 2);
+    Check("it names the refusal", text.find("live source refused") != std::string::npos);
+    Check("the refusal says not-configured", text.find("not-configured") != std::string::npos);
+    Check("it names the missing descriptor map",
+          text.find("usb-descriptor-map.md") != std::string::npos);
+    Check("it names the helper claim", text.find("openscanner-helper") != std::string::npos);
     capture::RemoveTree(std::string(dir));
 }
 
@@ -438,12 +732,17 @@ void TestEmptySource(const std::string& client_path) {
 
 int main(int argc, char** argv) {
     const std::string client_path = argc > 1 ? argv[1] : "";
+    const std::string shim_path = argc > 2 ? argv[2] : "";
     TestFrameArray();
     TestDiscovery();
     TestVendorFraming();
     TestInterfaceTable();
+    TestDaemonSwitch();
+    TestLiveSeam();
     TestClientAgainstShim(client_path);
     TestEmptySource(client_path);
+    TestSwitchOnPath(client_path);
+    TestLiveCliRefusal(shim_path);
 
     std::printf("raptor_shim_test: %d check(s), %d failure(s)\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;

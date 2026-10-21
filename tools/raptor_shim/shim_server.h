@@ -17,6 +17,7 @@
 #include <thread>
 #include <vector>
 
+#include "openscanner/daemon_switch.h"
 #include "frame_source.h"
 #include "properties.h"
 
@@ -24,8 +25,10 @@ namespace shim {
 
 struct ShimConfig {
     std::string host = "127.0.0.1";
-    uint16_t ir_port = 10013;
-    uint16_t depth_port = 10010;
+    // The shim's own ports (daemon_switch.h): the vendor daemon keeps its
+    // pair, so the two can listen at once and the switch picks one.
+    uint16_t ir_port = openscanner::kShimIrPort;
+    uint16_t depth_port = openscanner::kShimDepthPort;
     bool serve_ir = true;
     bool serve_depth = true;
     // One source per interface: the two #132 bundles are separate captures.

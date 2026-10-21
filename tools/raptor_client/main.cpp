@@ -22,7 +22,8 @@
 //       capture started), so the replay paces on the inter-arrival deltas
 //       between stamps. Each frame is routed by the interface suffix on
 //       its method name to that interface's own port.
-//   raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]
+//   raptor_client --live <host> [port] [seconds] [out.raw] [--daemon vendor|shim]
+//       [--pull-ms N] [--quiet]
 //       one interface per run: the port picks the interface and every method
 //       name carries that interface's suffix (ob_rpc_start_stream0-2-12 on
 //       port 10013, ob_rpc_start_stream0-2-10 on port 10010).
@@ -40,6 +41,9 @@
 //       [--reply-timeout-ms N] bounds the connect and every reply read
 //       (default 5000); on expiry the run names the endpoint, interface and
 //       unanswered method and exits 3 instead of hanging.
+//       [--daemon shim] dials the shim's ports instead of the vendor daemon's
+//       and logs the selection; absent, the run is unchanged. The ports and
+//       the log line are engine/include/openscanner/daemon_switch.h (row #179).
 //   raptor_client --selftest-dump              the reply-structure dump, no device
 //   raptor_client --selftest-capture           the capture round-trip, no device
 //   raptor_client --selftest-live              the live path's method names, no device
@@ -78,6 +82,8 @@
 
 #include "capture.h"
 #include "telemetry.h"
+
+#include "openscanner/daemon_switch.h"
 
 namespace {
 
@@ -3769,6 +3775,8 @@ int main(int argc, char** argv) {
         int max_frames = 0;
         int timeout_ms = kDefaultLiveTimeoutMs;
         bool log = true;
+        std::string daemon_name;
+        bool daemon_given = false;
         std::string capture_dir;
         int capture_seconds = kDefaultCaptureSeconds;
         uint64_t capture_bytes = kDefaultCaptureBytes;
@@ -3787,6 +3795,10 @@ int main(int argc, char** argv) {
                 else if (a == "--capture" && i + 1 < argc) capture_dir = argv[++i];
                 else if (a == "--capture-seconds" && i + 1 < argc) capture_seconds = std::atoi(argv[++i]);
                 else if (a == "--capture-bytes" && i + 1 < argc) capture_bytes = std::strtoull(argv[++i], nullptr, 10);
+                else if (a == "--daemon" && i + 1 < argc) {
+                    daemon_name = argv[++i];
+                    daemon_given = true;
+                }
                 else if ((a == "--ir-port" || a == "--depth-port") && i + 1 < argc) {
                     int p = std::atoi(argv[++i]);
                     std::string name = (a == "--ir-port") ? "IR" : "depth";
@@ -3803,6 +3815,26 @@ int main(int argc, char** argv) {
                 positionals.push_back(a);
             }
         }
+        // Row #179: the explicit daemon switch. Without the flag nothing
+        // changes — the vendor daemon's ports and no extra log line. With it,
+        // the selected daemon's ports are the route table's, and the choice is
+        // logged. Nothing here starts or stops either daemon.
+        openscanner::DaemonSelection selection = openscanner::VendorDaemon();
+        if (daemon_given) {
+            if (!openscanner::ParseDaemonName(daemon_name, &selection)) {
+                std::fprintf(stderr, "--daemon wants %s (got '%s')\n", openscanner::DaemonNames(),
+                             daemon_name.c_str());
+                return 2;
+            }
+            if (selection.is_shim()) {
+                routes.SetPortByName("IR", selection.ir_port);
+                routes.SetPortByName("depth", selection.depth_port);
+                // A bare `--live host --daemon shim` streams the shim's IR
+                // interface; an explicit port still wins.
+                if (positionals.size() < 2) port = selection.ir_port;
+            }
+        }
+
         if (positionals.size() > 0) host = positionals[0];
         if (positionals.size() > 1) port = (uint16_t)std::atoi(positionals[1].c_str());
         if (positionals.size() > 2) seconds = std::atoi(positionals[2].c_str());
@@ -3834,6 +3866,12 @@ int main(int argc, char** argv) {
         if (!route) {
             std::fprintf(stderr, "[live] %s\n", UnknownPortMessage(routes, port).c_str());
             return 2;
+        }
+        if (daemon_given) {
+            // The switch is explicit and logged; the default run prints
+            // nothing new, so existing records and parsers are unaffected.
+            std::printf("[live] %s\n", openscanner::DescribeDaemon(selection).c_str());
+            std::fflush(stdout);
         }
         CaptureSession capture;
         if (!capture_dir.empty() && !capture.Start(capture_dir, capture_seconds, capture_bytes)) return 2;
@@ -3870,7 +3908,7 @@ int main(int argc, char** argv) {
         "      --reply-timeout-ms bounds each reply read (default 2000); on\n"
         "      expiry the replay names the frame and its interface and exits\n"
         "      non-zero.\n"
-        "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
+        "  raptor_client --live <host> [port] [seconds] [out.raw] [--daemon vendor|shim] [--pull-ms N] [--quiet]\n"
         "      [--frames N] [--reply-timeout-ms N] [--dump-replies] [--capture DIR]\n"
         "      [--capture-seconds N] [--capture-bytes N] [--ir-port N] [--depth-port N]\n"
         "      ONE interface per run: the port picks the interface, and every\n"
