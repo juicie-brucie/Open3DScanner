@@ -223,11 +223,12 @@ pgrep -x RPCServer || echo "RPCServer stopped"
 - The helper itself should not need sudo — the privilege model is #177; the only admin
   step should be stopping/replacing the vendor's agent, not the helper.
 
-1. **#169 — the USB descriptor capture.** `system_profiler SPUSBDataType` or a protocol
-   analyzer on the scanner; fill `tools/raw_capture/descriptor_table.h`: interface and
-   alternate setting, endpoint address, transfer type, max packet, UVC pixel
-   format/stride, HID control endpoint/report id. The table is `known`/`unknown` only —
-   no guesses.
+1. **#169 — the USB descriptor capture.** Run
+   `./build/tools/raw_capture/raw_capture --probe` (row #178) with the device attached:
+   it prints the exact table fields (interfaces/alt settings, endpoints, UVC VS, HID) and
+   a copy-paste block. Paste that into `tools/raw_capture/descriptor_table.h`. A field it
+   prints `unknown` still needs the `system_profiler SPUSBDataType`/analyzer read; the
+   table is `known`/`unknown` only — no guesses.
 2. **#170 — claim/release.** Vendor daemon stopped; `openscanner-helper` claims; quit and
    unplug release; `--seize` is opt-in only.
 3. **#171 — the live raw capture.** IR + depth to the sink with **no vendor process**;
