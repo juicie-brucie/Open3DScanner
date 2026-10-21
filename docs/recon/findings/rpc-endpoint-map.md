@@ -86,69 +86,78 @@ From the #132 bundles and #131 producer analysis:
 
 **Hypothesis** `[inferred]`: The RPC protocol does not use the UVC endpoints for the 1920×1200 stream. The UVC endpoints are for lower-resolution preview/debug modes, while the RPC protocol uses a vendor-specific bulk transfer for the full-resolution stream.
 
-### 3.3 RPC-to-UVC Assignment — Empirical Test Required
+### 3.3 RPC-to-UVC Assignment — Resolved by Name (#182 Evidence)
 
-**Status: Not determined.** The mapping from RPC interfaces (IR/depth) to UVC endpoints (0x81/0x82/0x83) requires empirical testing.
+**Status: Interfaces resolved by name** (from #182 correlation mode run, PR #459, 2026-10-21).
 
-**Test required** (#182 probe-match mode):
-1. Run the vendor daemon streaming IR and depth simultaneously
-2. Observe which UVC VS endpoints are active (via `system_profiler SPUSBDataType` or USB protocol analyzer)
-3. Compare the frame dimensions and formats to determine the mapping
-4. Alternatively, open each UVC VS endpoint individually and compare the frames to the RPC frames
-
-**Expected result**: Each active RPC stream should correspond to an active UVC endpoint with matching dimensions and format.
-
-## 4. descriptor_table.h Entries — Still Owed
-
-**Status: Cannot be determined without empirical testing.**
-
-### 4.1 What Would Be Needed
-
-If the RPC protocol uses UVC, the descriptor_table.h would need entries for:
-- UVC VS endpoints (0x81, 0x82, 0x83)
-- Frame formats (Y8, YUY2) and dimensions (480×300, 960×600, 1280×800)
-- OB word mappings to UVC metadata (if applicable)
-
-But given the dimension mismatch, it's likely that:
-- The RPC protocol does **not** use UVC for the 1920×1200 stream
-- The descriptor_table.h would only need entries for lower-resolution UVC modes
-- The 1920×1200 stream uses a vendor-specific bulk transfer
-
-### 4.2 Exact Entries Owed (Once Mapping Is Determined)
-
-After the empirical test (section 3.3), the descriptor_table.h would need:
-
-**If RPC uses UVC:**
-```c
-// Example (hypothetical, requires empirical confirmation):
-{"ir_480x300", 0x81, OB_FORMAT_Y8, 480, 300, 30},
-{"depth_960x600", 0x82, OB_FORMAT_Y8, 960, 600, 30},
-{"rgb_1280x800", 0x83, OB_FORMAT_YUY2, 1280, 800, 30},
+**Attributed evidence** (builder's live run with RPCServer holding the device):
+```
+[match] ir:     interface 3  name="Creality Raptor Pro IR Camera"
+[match] depth:  interface 1  name="Creality Raptor Pro Depth Camera"
+[match] rgb:    interface 5  name="Creality Raptor Pro RGB Camera"
+[match] hid:    interface 6  name="Creality Raptor Pro IMU"
 ```
 
-**If RPC uses vendor-specific bulk transfer:**
+**Mapping by interface number:**
+- **IR**: interface 3 → UVC VS (name: "Creality Raptor Pro IR Camera")
+- **Depth**: interface 1 → UVC VS (name: "Creality Raptor Pro Depth Camera")
+- **RGB**: interface 5 → UVC VS (name: "Creality Raptor Pro RGB Camera")
+- **HID/IMU**: interface 6 (name: "Creality Raptor Pro IMU", endpoint 0x85)
+
+**Note:** Every VideoStreaming interface was at alternate setting 0 at the sample time (no stream active, or the registry does not track `SET_INTERFACE`). The interface **names** resolve the mapping.
+
+**Empirical confirmation pending:** When a stream is active, the mapping should be confirmed by observing which UVC VS endpoints become active. The dimension mismatch (RPC 1920×1200 vs UVC lower resolutions) remains open — see §3.2.
+
+## 4. descriptor_table.h Entries — Interfaces Named, Formats Need Probe
+
+**Status: Interfaces resolved by name (#182), but formats/stride need the opening descriptor probe.**
+
+### 4.1 What We Now Know
+
+**Interfaces** (from #182 correlation mode, attributed evidence):
+- IR: interface 3 ("Creality Raptor Pro IR Camera")
+- Depth: interface 1 ("Creality Raptor Pro Depth Camera")
+- RGB: interface 5 ("Creality Raptor Pro RGB Camera")
+- HID/IMU: interface 6 ("Creality Raptor Pro IMU", endpoint 0x85)
+
+**What is still unknown**:
+- UVC VS descriptor formats (Y8, YUY2, etc.) for each interface
+- Actual dimensions/stride exposed via UVC
+- Whether the RPC 1920×1200 frames map to lower-resolution UVC streams or use a different path
+
+The **dimension mismatch** (RPC 1920×1200 vs UVC 480×300/960×600/1280×800) remains open `[inferred]` — see §3.2.
+
+### 4.2 Exact Entries Owed (Once Opening Descriptor Probe Runs)
+
+**Interfaces are now named** (from #182 evidence):
+- IR: interface 3
+- Depth: interface 1
+- RGB: interface 5
+- HID/IMU: interface 6
+
+**Formats/stride still need the opening descriptor probe** (the daemon stopped before the probe could run). Once the probe runs, the descriptor_table.h will need entries like:
+
 ```c
-// Example (hypothetical, requires empirical confirmation):
-{"ir_1920x1200", VENDOR_BULK_EP, OB_FORMAT_Y8, 1920, 1200, 50},
-{"depth_1920x1200", VENDOR_BULK_EP, OB_FORMAT_Y8, 1920, 1200, 50},
+// Example (requires opening descriptor probe to confirm formats):
+{"ir", INTERFACE_3, /* format TBC */, /* dimensions TBC */, /* stride TBC */},
+{"depth", INTERFACE_1, /* format TBC */, /* dimensions TBC */, /* stride TBC */},
+{"rgb", INTERFACE_5, /* format TBC */, /* dimensions TBC */, /* stride TBC */},
+{"imu", INTERFACE_6, HID_REPORT, 248, /* report descriptor 25 bytes */},
 ```
 
-**OB word mappings** (if applicable):
-```c
-// Example (hypothetical, requires empirical confirmation):
-{"e1_clock_realtime_us", UVC_PTS},
-{"e2_clock_monotonic_us", UVC_PTS_MONOTONIC},
-{"e3_obformat", UVC_FORMAT_INDEX},
-{"e10_ir_light_type", UVC_PAYLOAD_SPECIFIC},
-```
+The **dimension mismatch** (RPC 1920×1200 vs UVC 480×300/960×600/1280×800) remains open `[inferred]` — see §3.2. The opening descriptor probe will reveal the actual UVC VS descriptor formats and dimensions, which will clarify whether:
+1. The RPC frames are composed/scaled from lower-resolution UVC streams
+2. The RPC uses a different data path (vendor-specific bulk transfer)
+3. The 1920×1200 mode is not exposed via UVC at all
 
 ## 5. Summary
 
 | Question | Answer | Confidence |
 |----------|--------|------------|
-| Which UVC endpoint is IR? | **Unknown** — requires empirical testing | — |
-| Which UVC endpoint is depth? | **Unknown** — requires empirical testing | — |
-| What is endpoint 0x83? | **Unknown** — requires empirical testing | — |
+| Which UVC endpoint is IR? | **Interface 3** (by name "Creality Raptor Pro IR Camera", #182) | hw-confirmed |
+| Which UVC endpoint is depth? | **Interface 1** (by name "Creality Raptor Pro Depth Camera", #182) | hw-confirmed |
+| What is interface 5? | **RGB** (by name "Creality Raptor Pro RGB Camera", #182) | hw-confirmed |
+| What is interface 6? | **HID/IMU** (by name "Creality Raptor Pro IMU", #182) | hw-confirmed |
 | How do RPC frames (1920×1200) relate to UVC descriptors (480×300, 960×600, 1280×800)? | **Dimension mismatch** — RPC likely uses a different path or composition step | inferred |
 | What do e1/e2 carry? | **e1 = CLOCK_REALTIME µs, e2 = CLOCK_MONOTONIC µs** (never 0, both monotonic) | hw-confirmed |
 | What does e3 carry? | **OBFormat enum (always 255 on wire)**, not the stream profile's format id | hw-confirmed |
