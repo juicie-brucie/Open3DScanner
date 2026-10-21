@@ -23,6 +23,8 @@
 #include "bundle_source.h"
 #include "discovery.h"
 #include "frame_source.h"
+#include "helper_claim.h"
+#include "live_source.h"
 #include "shim_server.h"
 
 namespace {
@@ -39,6 +41,10 @@ void Usage() {
                  "                   [--seconds N] [--discovery-bind IP:PORT]\n"
                  "  --ir-bundle      the #132 capture bundle that serves IR frames\n"
                  "  --depth-bundle   the #132 capture bundle that serves depth frames\n"
+                 "  --source MODE    none | bundle | live (default: bundle when a bundle is given)\n"
+                 "                   live is refused cleanly until the #178 transport and the\n"
+                 "                   helper's claim exist; nothing is guessed\n"
+                 "  --helper-service NAME  the helper's Mach service for the claim query\n"
                  "  --no-ir/--no-depth  do not listen on that interface\n"
                  "  --seconds N      run for N seconds (0 = until SIGINT/SIGTERM)\n"
                  "  --discovery-bind bind UDP for GVCP DISCOVERY_CMD logging (off by default:\n"
@@ -61,6 +67,8 @@ int main(int argc, char** argv) {
     std::string ir_bundle;
     std::string depth_bundle;
     std::string discovery_bind;
+    std::string source_kind;
+    std::string helper_service = "org.openscanner.helper";
     int seconds = 0;
 
     for (int i = 1; i < argc; ++i) {
@@ -78,6 +86,10 @@ int main(int argc, char** argv) {
             ir_bundle = argv[++i];
         } else if (arg == "--depth-bundle" && i + 1 < argc) {
             depth_bundle = argv[++i];
+        } else if (arg == "--source" && i + 1 < argc) {
+            source_kind = argv[++i];
+        } else if (arg == "--helper-service" && i + 1 < argc) {
+            helper_service = argv[++i];
         } else if (arg == "--no-ir") {
             config.serve_ir = false;
         } else if (arg == "--no-depth") {
@@ -100,10 +112,36 @@ int main(int argc, char** argv) {
         std::fflush(stdout);
     };
 
+    if (!source_kind.empty() && source_kind != "none" && source_kind != "bundle" && source_kind != "live") {
+        std::fprintf(stderr, "raptor_shim: --source wants none|bundle|live (got '%s')\n", source_kind.c_str());
+        return 2;
+    }
+    if (source_kind == "live" && (!ir_bundle.empty() || !depth_bundle.empty())) {
+        std::fprintf(stderr, "raptor_shim: --source live serves the live transport, not a bundle\n");
+        return 2;
+    }
+    if (source_kind.empty()) source_kind = (ir_bundle.empty() && depth_bundle.empty()) ? "none" : "bundle";
+
     shim::BundleSource ir_source;
     shim::BundleSource depth_source;
+    shim::HelperClaimChannel claim_channel(helper_service);
+    std::unique_ptr<shim::LiveSource> live_source;
     std::string err;
-    if (!ir_bundle.empty()) {
+
+    if (source_kind == "live") {
+        // The live path: ask the helper for the claim, then the transport for
+        // its configuration. Every missing piece is named; none is guessed.
+        live_source.reset(shim::LiveSourceFactory::Create(&claim_channel, &err));
+        if (!live_source) {
+            std::fprintf(stderr, "raptor_shim: live source refused: %s\n", err.c_str());
+            return 2;
+        }
+        config.ir_source = live_source.get();
+        config.depth_source = live_source.get();
+        std::printf("[shim] live source: started\n");
+    }
+
+    if (source_kind == "bundle" && !ir_bundle.empty()) {
         if (!ir_source.Open(ir_bundle, shim::IrInterface(), &err)) {
             std::fprintf(stderr, "raptor_shim: IR bundle: %s\n", err.c_str());
             return 2;
@@ -111,7 +149,7 @@ int main(int argc, char** argv) {
         config.ir_source = &ir_source;
         std::printf("[shim] IR frames from %s\n", ir_bundle.c_str());
     }
-    if (!depth_bundle.empty()) {
+    if (source_kind == "bundle" && !depth_bundle.empty()) {
         if (!depth_source.Open(depth_bundle, shim::DepthInterface(), &err)) {
             std::fprintf(stderr, "raptor_shim: depth bundle: %s\n", err.c_str());
             return 2;
@@ -175,7 +213,7 @@ int main(int argc, char** argv) {
         std::printf("[shim] method tally: %s x%llu\n", entry.first.c_str(),
                     (unsigned long long)entry.second);
     }
-    if (ir_bundle.size()) {
+    if (source_kind == "bundle" && ir_bundle.size()) {
         std::printf("[shim] IR bundle: served=%llu wraps=%llu skipped=%llu\n",
                     (unsigned long long)ir_source.frames_served(), (unsigned long long)ir_source.wraps(),
                     (unsigned long long)ir_source.skipped());
