@@ -10,11 +10,13 @@ What is the pull semantics of `ob_rpc_get_frame`? Does the client receive a stre
 
 The #132 hardware run captured complete RPC reply streams from both IR and depth interfaces post-power-cycle, with `pull_ms=0` (back-to-back polling, no artificial delay).
 
+**Correction to #131 element naming:** The observed 11-element array has e1=0 for every reply and e2 carries the actual microsecond timestamps. This corrects the #131 element naming where e1 was named "the frame's µs timestamp". All timestamp references below refer to e2.
+
 ### 2.1 IR Interface (port 10013)
 
 - **180 frames in 30 seconds** = **6.0 Hz effective rate**
 - **0 empty replies** (180/180 data-bearing)
-- **Monotonically increasing e1 timestamps** (0 non-increasing pairs)
+- **Monotonically increasing e2 timestamps** (0 non-increasing pairs)
 - **Inter-frame delta**: min=101,645 µs, max=233,336 µs, **mean=166,870 µs**
 - Every frame is Bin(2304000) = 2.3 MB (whole frame, from #174)
 
@@ -22,7 +24,7 @@ The #132 hardware run captured complete RPC reply streams from both IR and depth
 
 - **200 frames in 30 seconds** = **6.67 Hz effective rate**
 - **0 empty replies** (200/200 data-bearing)
-- **Monotonically increasing e1 timestamps** (0 non-increasing pairs)
+- **Monotonically increasing e2 timestamps** (0 non-increasing pairs)
 - **Inter-frame delta**: min=64,055 µs, max=167,291 µs, **mean=139,214 µs**
 - 199 frames are Bin(2304000), 1 frame is Bin(1321920) (partial frame at msgid=914)
 
@@ -31,7 +33,7 @@ The #132 hardware run captured complete RPC reply streams from both IR and depth
 **Answer: Each `get_frame` reply returns the LATEST AVAILABLE frame, not a re-send.**
 
 Evidence:
-- e1 timestamps are **monotonically increasing** on both interfaces
+- e2 timestamps are **monotonically increasing** on both interfaces
 - No duplicate timestamps observed
 - Each reply carries a NEWER frame than the previous one
 - The daemon does not queue frames for later delivery; it returns the most recent frame when polled
@@ -117,7 +119,7 @@ This implies the daemon has an internal buffer that holds the most recent frame 
 
 **This is consistent with a "latest frame" model, not a "queue all frames" model.**
 
-If the daemon queued all frames, the client would see a backlog of frames on the first poll (after a slow start), and the e1 timestamps would show the device's 50 fps production rate. Instead, the e1 timestamps show the client's ~6-7 Hz poll rate.
+If the daemon queued all frames, the client would see a backlog of frames on the first poll (after a slow start), and the e2 timestamps would show the device's 50 fps production rate. Instead, the e2 timestamps show the client's ~6-7 Hz poll rate.
 
 ## 9. Implications for C2 (Phase B)
 
@@ -140,7 +142,7 @@ The raptor_client implementation polls at ~6-7 Hz (limited by sequential RPC rou
 
 Does the daemon have a ring buffer of N frames, or does it only keep the latest frame?
 
-**Test:** Start the stream, wait 1 second (during which the daemon produces ~50 frames), then poll once. If the daemon only keeps the latest frame, the first poll will return the most recent frame (e1 timestamp ≈ start_time + 1s). If the daemon queues all frames, the first poll will return the oldest frame (e1 timestamp ≈ start_time), and subsequent polls will drain the queue.
+**Test:** Start the stream, wait 1 second (during which the daemon produces ~50 frames), then poll once. If the daemon only keeps the latest frame, the first poll will return the most recent frame (e2 timestamp ≈ start_time + 1s). If the daemon queues all frames, the first poll will return the oldest frame (e2 timestamp ≈ start_time), and subsequent polls will drain the queue.
 
 ### 10.2 The Partial Frame (Bin(1321920))
 
