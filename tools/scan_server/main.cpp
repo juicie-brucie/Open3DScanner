@@ -497,6 +497,21 @@ static void RecordFrame(const std::vector<uint8_t>& frame) {
     ++g_recorded_frame_count;
 }
 
+// Row #163: the broadcast counters as the tick's delta baseline. Reading them
+// is one accessor call; the max/peak fields stay in their monotonic form.
+perf::BroadcastCumulative BroadcastCumulativeNow(openscanner::WsBroadcastServer& server) {
+    const openscanner::WsBroadcastServer::BroadcastStats stats = server.GetBroadcastStats();
+    perf::BroadcastCumulative now;
+    now.sends = stats.sends;
+    now.bytes = stats.bytes;
+    now.send_us_total = stats.send_us_total;
+    now.send_us_max = stats.send_us_max;
+    now.drops = stats.drops;
+    now.timeouts = stats.timeouts;
+    now.queue_depth_max = stats.queue_depth_max;
+    return now;
+}
+
 void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0, bool use_deadline = false) {
     openscanner::WsBroadcastServer server;
     ConfigureStatic(server);
@@ -540,6 +555,7 @@ void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0, bo
     perf::CloudChangeTracker cloud_tracker;
     int64_t last_cloud_flush_us = perf::TickPerf::SteadyNowUs();
     int64_t next_deadline_us = perf::TickPerf::SteadyNowUs() + static_cast<int64_t>(interval_ms * 1000.0);
+    perf::BroadcastCumulative bcast_previous;
 
     while (true) {
         auto tick_start = std::chrono::steady_clock::now();
@@ -619,6 +635,16 @@ void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0, bo
             sample.bytes = frame_bytes;
             sample.clients = static_cast<uint32_t>(server.ConnectedClientCount());
             sample.nominal_wait_us = static_cast<int64_t>(interval_ms * 1000.0);
+            // Row #163: the broadcast counters' deltas for this tick.
+            const perf::BroadcastCumulative bcast_now = BroadcastCumulativeNow(server);
+            const perf::BroadcastDelta bcast_delta = perf::DeltaBetween(bcast_previous, bcast_now);
+            bcast_previous = bcast_now;
+            sample.bcast_sends = bcast_delta.sends;
+            sample.bcast_send_us_total = bcast_delta.send_us_total;
+            sample.bcast_send_us_max = bcast_delta.send_us_max;
+            sample.bcast_drops = bcast_delta.drops;
+            sample.bcast_timeouts = bcast_delta.timeouts;
+            sample.bcast_queue_max = bcast_delta.queue_max;
             tick_perf.EndTick(sample);
         }
     }
@@ -1130,6 +1156,8 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     // aligned with the toggle moment.
     uint32_t last_cloud_points = 0;
     bool hardware_paused = false;
+    // Row #163: the tick's broadcast-counter delta baseline.
+    perf::BroadcastCumulative bcast_previous;
     // Separate from hardware_paused: records what we last *attempted*
     // (regardless of outcome), so a failed resume on fragile hardware is
     // tried exactly once per click, not retried every 100ms tick until it
@@ -1431,6 +1459,16 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
             sample.bytes = frame_bytes;
             sample.clients = frame_clients;
             sample.nominal_wait_us = static_cast<int64_t>(kLiveTickIntervalMs) * 1000;
+            // Row #163: the broadcast counters' deltas for this tick.
+            const perf::BroadcastCumulative bcast_now = BroadcastCumulativeNow(server);
+            const perf::BroadcastDelta bcast_delta = perf::DeltaBetween(bcast_previous, bcast_now);
+            bcast_previous = bcast_now;
+            sample.bcast_sends = bcast_delta.sends;
+            sample.bcast_send_us_total = bcast_delta.send_us_total;
+            sample.bcast_send_us_max = bcast_delta.send_us_max;
+            sample.bcast_drops = bcast_delta.drops;
+            sample.bcast_timeouts = bcast_delta.timeouts;
+            sample.bcast_queue_max = bcast_delta.queue_max;
             tick_perf.EndTick(sample);
         }
         if (perf::TickPerf::SteadyNowUs() - last_cloud_flush_us >= 5000000) {
