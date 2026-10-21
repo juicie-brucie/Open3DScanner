@@ -57,6 +57,12 @@ endif()
 add_executable(perf_budget perf_budget.cpp)
 target_link_libraries(perf_budget PRIVATE openscanner_engine)
 
+# Hardware-free test for the allocation-free cloud-snapshot encoder (row #164):
+# byte-identical to the shared header's encoder, one reusable buffer.
+add_executable(fast_encode_test fast_encode_test.cpp)
+target_link_libraries(fast_encode_test PRIVATE openscanner_engine)
+add_test(NAME fast_encode_test COMMAND fast_encode_test)
+
 
 # Hardware-free selftest for the runtime plane-removal command (row #158):
 # the command, the transition log and the WebSocket round trip, with a mock
