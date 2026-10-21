@@ -14,11 +14,15 @@ hardware worktree (`~/DevReposiMac/Open3DScanner-wt-hw`); do not edit it.
   1344 ticks); its **picture-unchanged** visual and **#76**'s coverage/red overlay ride the T2
   UI-open A/B. **#160** (the coverage update trigger) landed in #413; #76's acceptance still
   needs that live run.
-- **#167 — the device-enumeration race — blocks every `scan_server --live` start.** Four
-  consecutive starts logged `DeviceManager list: (1)` → `get_device_num -> count=0` → **SIGSEGV
-  11** (#151 ×2, #71 attempt 6, #93 markerless). **Do not start T2 until #167 is fixed.**
-- **#161** is the depth-interface timeout build (build3); **#168** is the `--capture` path hang
-  (IR, 2-for-2). **Do not run T3's depth/capture until both land.**
+- **#167 — the device-enumeration race — is intermittent, not every start.** Five occurrences
+  are now recorded: the first at 06:23 (`plan153` attempt 1), then 17:39:58, 17:58:09, 18:00:59
+  and 18:08:15 — each logs `DeviceManager list: (1)` → `count=0` → **SIGSEGV 11** in the SDK
+  teardown. Two clean starts (17:00:47 `plan153`, 17:29:57 `plan76`) sit in the same window, so
+  a clean start is not evidence the race is gone. **Do not schedule T2 until #167 lands**;
+  build1 owns the bounded retry.
+- **#161** is the depth-interface timeout (landed, PR #416); its live depth retry is the
+  hardware card. **#168** is the `--capture` path hang (IR, 2-for-2, both exit 143 with zero
+  output); build2 owns it. **Do not run T3's depth/capture until #168 lands.**
 - The old untracked batch is no longer the #392 HOLD: #392 landed the #71 attempt 5/#123/
   ungated-2 records; the newest crash/hang records are a separate, unlanded batch (provenance
   gaps).
@@ -77,7 +81,9 @@ T3's depth run**; keep T2 (different binary path). Both outcomes are results.
 
 ## T2 — The UI-open A/B (the follow-up to the 2026-10-20 data)
 
-**Blocked on #167** — do not run this until the device-enumeration race is fixed. Once it is,
+**Blocked on #167** — do not run this until the device-enumeration race is fixed. The race is
+intermittent (two clean starts sit in the same 17:xx window), so a start that succeeds does
+not clear the block. Once it is,
 this run closes #153's picture, #76's coverage/red overlay, #93's markerless HUD, #141's UI half,
 #151's fused rate and #71's A/B. #160's coverage fix is already on `main`.
 
