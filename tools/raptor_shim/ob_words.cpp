@@ -13,6 +13,10 @@ uint64_t ClockUs(clockid_t id) {
 
 class SystemClocks : public HostClocks {
 public:
+    bool Ok() const override {
+        struct timespec ts = {};
+        return clock_gettime(CLOCK_REALTIME, &ts) == 0 && clock_gettime(CLOCK_MONOTONIC, &ts) == 0;
+    }
     uint64_t RealtimeUs() const override { return ClockUs(CLOCK_REALTIME); }
     uint64_t MonotonicUs() const override { return ClockUs(CLOCK_MONOTONIC); }
 };
@@ -42,6 +46,11 @@ bool HostClockObWords::Configured(const Interface& iface, std::string* why) cons
         if (why) *why = "not-configured: e1/e2 (the host clocks) have no source";
         return false;
     }
+    if (!clocks_->Ok()) {
+        // Never fill e1/e2 with a zero: the bytes say e1 is never 0.
+        if (why) *why = "not-configured: e1/e2 (the host clocks cannot be read)";
+        return false;
+    }
     if (!light_) {
         if (why) *why = "not-configured: e10 (the " + iface.name + " frame's IR light type) has no source";
         return false;
@@ -54,7 +63,7 @@ bool HostClockObWords::Words(const Interface& iface, uint64_t seq, uint64_t time
                              ObFrameWords* out) const {
     (void)seq;           // the frame's sequence number is not an OB word
     (void)timestamp_us;  // the UVC PTS is the device clock; see the header
-    if (!clocks_) {
+    if (!clocks_ || !clocks_->Ok()) {
         return false;
     }
     ObFrameWords words;

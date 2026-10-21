@@ -560,8 +560,10 @@ struct FakeWords : shim::ObFrameWordsProvider {
 };
 
 struct FakeClocks : shim::HostClocks {
+    bool ok = true;
     uint64_t realtime = 1792552122036427ull;
     uint64_t monotonic = 211599394ull;
+    bool Ok() const override { return ok; }
     uint64_t RealtimeUs() const override { return realtime; }
     uint64_t MonotonicUs() const override { return monotonic; }
 };
@@ -687,6 +689,13 @@ void TestLiveSeam() {
         Check("e10 is the light source's value", out.e10 == light.value);
         Check("the device PTS is not written into e1 or e2",
               out.e1 != 4242 && out.e2 != 4242);
+
+        FakeClocks unreadable;
+        unreadable.ok = false;
+        FakeLight any_light;
+        shim::HostClockObWords no_clock(&unreadable, &any_light);
+        Check("unreadable host clocks refuse by name", !no_clock.Configured(shim::IrInterface(), &err));
+        Check("the refusal names e1/e2 and the clocks", err.find("not-configured: e1/e2") != std::string::npos);
 
         FakeLight unwired;
         unwired.supplied = false;

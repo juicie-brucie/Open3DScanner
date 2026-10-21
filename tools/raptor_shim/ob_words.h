@@ -34,6 +34,9 @@ namespace shim {
 class HostClocks {
 public:
     virtual ~HostClocks() = default;
+    // False when either clock cannot be read: the words are then refused
+    // rather than filled with a zero (e1 is never 0 in the 380 replies).
+    virtual bool Ok() const = 0;
     virtual uint64_t RealtimeUs() const = 0;   // CLOCK_REALTIME, µs
     virtual uint64_t MonotonicUs() const = 0;  // CLOCK_MONOTONIC, µs
 };
