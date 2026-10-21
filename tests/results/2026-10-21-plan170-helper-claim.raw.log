@@ -1,0 +1,48 @@
+=== STEP 1 — refusal with vendor daemon running (RPCServer PID 76444) ===
+helper: claim: start
+helper: claim: idle -> claiming (start)
+helper: claim: claiming -> released (claim failed: the USB device open was refused (0xe00002c5): another process holds the scanner (stop it: that is the operator gate))
+helper: once: claim: ok=false state=released (the USB device open was refused (0xe00002c5): another process holds the scanner (stop it: that is the operator gate))
+helper: claim: quit
+helper: claim: released (no claim held, backend not called)
+helper: once: release: ok=true state=released (no claim held)
+EXIT:1
+
+=== STEP 2 — claim with vendor daemon stopped (launchctl bootout) ===
+helper: claim: start
+helper: claim: idle -> claiming (start)
+helper: claim: claiming -> claimed (device=iokit-usb)
+helper: once: claim: ok=true state=claimed (claimed via iokit-usb)
+helper: claim: quit
+helper: claim: claimed -> releasing (quit)
+helper: claim: releasing -> released (quit: release complete)
+helper: once: release: ok=true state=released (released on quit)
+EXIT:0
+
+=== STEP 3 — claim and hold, release on SIGTERM ===
+helper: xpc: listening on Mach service org.openscanner.helper
+helper: xpc: listener error: Connection invalid (a Mach service not registered with launchd reports this; the claim and its release still run)
+helper: claim: start
+helper: claim: idle -> claiming (start)
+helper: claim: claiming -> claimed (device=iokit-usb)
+helper: start: claim: ok=true state=claimed (claimed via iokit-usb)
+helper: start: serving (no data path; this build carries no streaming)
+helper: quit: signal
+helper: claim: quit
+helper: claim: claimed -> releasing (quit)
+helper: claim: releasing -> released (quit: release complete)
+helper: quit: release: ok=true state=released (released on quit)
+EXIT:0
+
+=== STEP 4 — claim and hold, release on unplug ===
+helper: xpc: listening on Mach service org.openscanner.helper
+helper: xpc: listener error: Connection invalid (a Mach service not registered with launchd reports this; the claim and its release still run)
+helper: claim: start
+helper: claim: idle -> claiming (start)
+helper: claim: claiming -> claimed (device=iokit-usb)
+helper: start: claim: ok=true state=claimed (claimed via iokit-usb)
+helper: start: serving (no data path; this build carries no streaming)
+helper: claim: claimed -> releasing (unplug)
+helper: claim: releasing -> released (unplug: release complete)
+[helper remained running after unplug release — expected; no re-claim on reconnect in this row]
+[killed by agent to end the step]
