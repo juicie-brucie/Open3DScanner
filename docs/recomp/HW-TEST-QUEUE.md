@@ -14,15 +14,14 @@ hardware worktree (`~/DevReposiMac/Open3DScanner-wt-hw`); do not edit it.
   1344 ticks); its **picture-unchanged** visual and **#76**'s coverage/red overlay ride the T2
   UI-open A/B. **#160** (the coverage update trigger) landed in #413; #76's acceptance still
   needs that live run.
-- **#167 — the device-enumeration race — is intermittent, not every start.** Five occurrences
-  are now recorded: the first at 06:23 (`plan153` attempt 1), then 17:39:58, 17:58:09, 18:00:59
-  and 18:08:15 — each logs `DeviceManager list: (1)` → `count=0` → **SIGSEGV 11** in the SDK
-  teardown. Two clean starts (17:00:47 `plan153`, 17:29:57 `plan76`) sit in the same window, so
-  a clean start is not evidence the race is gone. **Do not schedule T2 until #167 lands**;
-  build1 owns the bounded retry.
-- **#161** is the depth-interface timeout (landed, PR #416); its live depth retry is the
-  hardware card. **#168** is the `--capture` path hang (IR, 2-for-2, both exit 143 with zero
-  output); build2 owns it. **Do not run T3's depth/capture until #168 lands.**
+- **#167 — the fix is landed (PR #418); the live start re-run is the card.** The race is
+  intermittent, not every start: five occurrences are recorded (first at 06:23 `plan153`
+  attempt 1, then 17:39:58, 17:58:09, 18:00:59, 18:08:15), and two clean starts (17:00:47
+  `plan153`, 17:29:57 `plan76`) sit in the same window. Run **T0** before T2; a clean start is
+  not proof the race is gone.
+- **#161** is landed (PR #416) and its live depth retry is the hardware card. **#168**'s
+  `--capture` hang fix is landed (PR #421); its device re-run is the card. **T3's
+  depth/capture waits for T0 and the #168 device re-run.**
 - The old untracked batch is no longer the #392 HOLD: #392 landed the #71 attempt 5/#123/
   ungated-2 records; the newest crash/hang records are a separate, unlanded batch (provenance
   gaps).
@@ -43,6 +42,23 @@ hardware worktree (`~/DevReposiMac/Open3DScanner-wt-hw`); do not edit it.
 - The operator's visual read is evidence by attribution; do not re-analyse the recording.
 
 ---
+
+## T0 — the #167 enumeration-race re-run (run first)
+
+**Row:** #167's acceptance. The bounded retry is on `main` (PR #418). Run the live start
+**five times** from the hardware worktree, rebuilding it from current `main` first:
+
+```
+./build/tools/scan_server/scan_server --live 8787
+```
+
+Record, per start: the `DeviceManager` list line, every
+`obscan_device_management_get_device_num` line, the `settled after N probe(s)` line if
+present, and the exit code. **Acceptance:** no `count=0` → SIGSEGV; a transient `0`
+either recovers (`settled after N`) or exits 2 with the new no-device line. A clean start
+does not clear the race — it is intermittent. **Then** run T1a/T1b/T2.
+
+**Records:** one record for the five starts, with the raw logs and the binary sha.
 
 ## T1 — The room floor (run first)
 
@@ -210,6 +226,6 @@ No cross-repo edit.
 
 ## Order and stop rules, in one line
 
-**T1a → T1b → T2 → (T3 only if T1b passed) → T4 (separate) → T5 (after the ground-truth read)
-→ T6 (when the scanner is on Windows).** One interface per live run; no build mid-session; a
+**T0 → T1a → T1b → T2 → (T3 only after T0 and the #168 device re-run) → T4 (separate) →
+T5 (after the ground-truth read) → T6 (when the scanner is on Windows).** One interface per live run; no build mid-session; a
 failed IR floor cancels T3 but not T2.
