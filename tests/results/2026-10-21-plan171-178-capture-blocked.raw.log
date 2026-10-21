@@ -1,0 +1,15 @@
+[table] identity: VID 0x2BC5 PID 0x0C03 (known)
+[table] stream ir    rpc port 10013 (known, suffix 0-2-12)
+[table]   usb endpoint: unknown
+[table]   format/stride: unknown
+[table] stream depth rpc port 10010 (known, suffix 0-2-10)
+[table]   usb endpoint: unknown
+[table]   format/stride: unknown
+[table] rpc ports: rgb 10012 (known), imu 10011 (known) — not captured here
+[table] control (laser/exposure): unknown — HID report descriptor and vendor control endpoint are not in the map
+---
+[capture] sink: /tmp/test_capture.bin (16 bytes)
+[capture] stop: not-configured
+[capture] detail: not-configured: ir interface_number, alternate_setting, endpoint_address, transfer, pixel_format, bytes_per_line, width/height (run raw_capture --probe and fill descriptor_table.h)
+[capture] frames: 0 (ir 0, depth 0), 0 record bytes
+EXIT:2
