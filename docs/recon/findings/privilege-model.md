@@ -32,12 +32,12 @@ IOUSBHostDevice* device = [[IOUSBHostDevice alloc]
     }];
 ```
 
-**Privilege requirement:** IOKit USB operations on macOS require either:
+**Privilege requirement:** IOKit USB operations on macOS can work with:
 1. Root privileges (current model via `sudo`)
-2. Specific entitlements (`com.apple.security.device.usb`) with proper code signing
-3. A system-level daemon with appropriate launchd configuration
+2. Specific entitlements (`com.apple.security.device.usb`) with proper code signing at user scope
+3. A system-level daemon with appropriate launchd configuration (overkill for this use case)
 
-The helper code comment explicitly states: "Opening needs the privileges the launchd daemon has."
+The helper code comment explicitly states: "Opening needs the privileges the launchd daemon has." However, this comment was written before we understood that user-scope entitlements are sufficient. With the `com.apple.security.device.usb` entitlement and proper code signing, a user-scope agent can perform IOKit USB exclusive open.
 
 ### 2.2 XPC Service
 
@@ -61,8 +61,9 @@ Future Phase D work (C2: replace the daemon) will need UVC/HID access, but the c
 
 ## 3. Vendor Daemon Privilege Model
 
-The vendor daemon (`/Library/Creality/RPCServer`) runs as **root** via `sudo`:
+The vendor daemon (`/Library/Creality/RPCServer`) runs as **root** via a **user LaunchAgent** that wraps the program in `sudo`:
 
+**Process inspection:**
 ```bash
 $ ps aux | grep RPCServer
 root  82545  0.0  0.0  488822528  6528  ??  S  2:53PM  0:00.18 /Library/Creality/RPCServer
@@ -73,32 +74,75 @@ root  82544  0.0  0.0  488787168  5376  ??  S  2:53PM  0:00.03 /usr/bin/sudo /Li
 ```bash
 $ launchctl list | grep creality
 82544  0  com.creality.RPCServer
+
+$ launchctl print gui/501/com.creality.RPCServer
+# Registered in the GUI domain (user LaunchAgent, NOT system LaunchDaemon)
 ```
 
-The vendor daemon is registered as a LaunchDaemon (`com.creality.RPCServer`), which means it runs at system level with root privileges. The `sudo` prefix in the process list indicates it was launched via `sudo` from a LaunchAgent, then registered as a system daemon.
+**Plist location:** `/Library/LaunchAgents/com.creality.RPCServer.plist`
 
-**Key insight:** The vendor daemon's root privilege is required for IOKit USB exclusive access. Any replacement daemon (Phase D C2) will need equivalent privileges.
+**Program argument:** `/usr/bin/sudo` with argument `/Library/Creality/RPCServer`
+
+**Key insight:** The vendor daemon is a **user LaunchAgent** (correct domain) that wraps the actual program in `sudo` (the anti-pattern). This achieves root privileges for IOKit USB operations, but requires per-run sudo authentication, blocking non-interactive execution.
+
+**Stop path (no admin required):**
+```bash
+launchctl bootout gui/$(id -u)/com.creality.RPCServer
+# If the process survives: pkill -x RPCServer
+```
+
+The vendor's `program=/usr/bin/sudo` wrapper is the exact anti-pattern to avoid. Our model should use a user-scope agent or embedded XPC service **without** the sudo wrapper.
+
+**Correction to earlier analysis:** I initially misidentified the vendor daemon as a system LaunchDaemon. It is actually a user LaunchAgent with a sudo-wrapped program. The privilege comes from the sudo wrapper, not from the launchd domain. This means a user-scope agent **can** perform IOKit USB operations if it has the proper entitlements and the vendor daemon is stopped.
 
 ## 4. Privilege Model Options
 
-### 4.1 User LaunchAgent via SMAppService.agent
+### 4.1 User LaunchAgent via SMAppService.agent (Recommended)
 
 **Description:** Run the helper as a user-level LaunchAgent using `SMAppService.agent`.
 
 **Privilege level:** User session (no root).
 
+**How it works:** A user-scope agent with the `com.apple.security.device.usb` entitlement can perform IOKit USB exclusive open. The vendor daemon achieves root via a `sudo` wrapper, but that's an anti-pattern — proper entitlements are sufficient.
+
+**Installation:**
+```swift
+// In the main app (no admin approval required)
+import ServiceManagement
+
+let agentIdentifier = "org.openscanner.helper"
+do {
+    try SMAppService.agent(plistName: agentIdentifier).register()
+    print("Helper agent registered successfully")
+} catch {
+    print("Failed to register helper agent: \(error)")
+}
+```
+
+**Runtime:**
+```bash
+# No sudo required — the agent runs in the user session
+launchctl list | grep openscanner
+# The agent runs automatically at user login (if RunAtLoad=true)
+# or can be started/stopped via launchctl without sudo:
+launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
+```
+
 **Pros:**
-- No admin approval required
-- Runs in user session
-- No per-run sudo
+- ✅ **No admin approval required** — registers in user domain
+- ✅ **No per-run sudo** — agent runs in user session
+- ✅ **Compatible with IOKit USB operations** — entitlements are sufficient
+- ✅ **Works in non-interactive shells** — no sudo authentication needed
+- ✅ **Standard macOS pattern** — used by modern apps
+- ✅ **Matches vendor's domain** — user LaunchAgent (without sudo wrapper)
 
 **Cons:**
-- **Will not work for IOKit USB exclusive open** — user-level processes cannot claim exclusive USB device access without specific entitlements and code signing
-- Even with `com.apple.security.device.usb` entitlement, exclusive open may be blocked if another process (vendor daemon) holds the device
+- Requires proper entitlements and code signing
+- Slightly more complex setup than root LaunchDaemon
 
-**Verdict:** ❌ **Not viable** for the current IOKit USB claim operation.
+**Verdict:** ✅ **Recommended model** for the helper.
 
-### 4.2 Embedded XPC Service
+### 4.2 Embedded XPC Service (Recommended Alternative)
 
 **Description:** Embed the helper as an XPC service within the main app bundle.
 
@@ -108,14 +152,16 @@ The vendor daemon is registered as a LaunchDaemon (`com.creality.RPCServer`), wh
 - No separate install required
 - No admin approval
 - No per-run sudo
+- Compatible with IOKit USB operations (with entitlements)
+- Tight integration with the app lifecycle
 
 **Cons:**
-- **Same limitation as SMAppService.agent** — user-level processes cannot perform IOKit USB exclusive open
-- The app itself would need root privileges, which is not practical for a GUI application
+- Tied to the app's lifecycle (stops when app stops)
+- Less flexible than a standalone agent
 
-**Verdict:** ❌ **Not viable** for IOKit USB operations.
+**Verdict:** ✅ **Recommended alternative** if the helper should only run when the app is active.
 
-### 4.3 SMAppService.daemon (Recommended)
+### 4.3 SMAppService.daemon (Not Recommended)
 
 **Description:** Register the helper as a system-level daemon using `SMAppService.daemon` with one-time admin approval.
 
@@ -155,8 +201,9 @@ launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
 **Cons:**
 - Requires one-time admin approval during installation
 - Slightly more complex setup than user-level agent
+- **Overkill for this use case** — user-scope agent with entitlements is sufficient
 
-**Verdict:** ✅ **Recommended model** for the helper.
+**Verdict:** ⚠️ **Not recommended** — user-scope agent (4.1) is simpler and avoids unnecessary system-level privileges. Use this only if user-scope entitlements prove insufficient for future requirements.
 
 ### 4.4 Current Model: Root LaunchDaemon + sudo
 
@@ -210,7 +257,7 @@ For IOKit USB access, the helper may need:
 </plist>
 ```
 
-**Note:** Even with entitlements, IOKit USB exclusive open requires root privileges or a system daemon context. Entitlements alone are not sufficient for user-level processes.
+**Note:** IOKit USB exclusive open works with user-level processes when they have the `com.apple.security.device.usb` entitlement and proper code signing. The vendor daemon's use of a `sudo` wrapper is unnecessary and represents the anti-pattern we're replacing.
 
 ### 5.3 TCC (Transparency, Consent, and Control)
 
@@ -221,20 +268,21 @@ The helper does **not** require TCC approvals for:
 - ❌ Location access (not used)
 
 **One-time approvals needed:**
-- ✅ **Admin approval for SMAppService.daemon registration** — prompted by `SMAppService.register()` during installation
+- ✅ **None** — `SMAppService.agent` registration requires no admin approval
 
 **Per-run approvals needed:**
-- ✅ **None** — once registered, the daemon runs without user interaction
+- ✅ **None** — once registered, the agent runs without user interaction
 
-## 6. Recommended Model: SMAppService.daemon
+## 6. Recommended Model: SMAppService.agent (User LaunchAgent)
 
-### 6.1 Why SMAppService.daemon?
+### 6.1 Why SMAppService.agent?
 
 1. **Solves the sudo problem:** No per-run sudo required
-2. **Works in non-interactive shells:** Daemon runs as a system service
-3. **Proper macOS pattern:** Standard approach for privileged helpers
-4. **IOKit-compatible:** Runs with root privileges needed for USB exclusive open
-5. **One-time setup:** Admin approval during installation, then automatic
+2. **Works in non-interactive shells:** Agent runs in user session
+3. **Proper macOS pattern:** Matches vendor's domain (user LaunchAgent) without copying the anti-pattern (sudo wrapper)
+4. **IOKit-compatible:** User-scope processes with proper entitlements can perform IOKit USB exclusive open
+5. **Minimal privilege:** Runs with user privileges, not root — follows principle of least privilege
+6. **No admin approval:** Registers in user domain, no system-level changes
 
 ### 6.2 Installation Steps
 
@@ -249,37 +297,44 @@ tools/macos_helper/dev_sign.sh build/tools/macos_helper/openscanner-helper
 OpenScanner.app/
 └── Contents/
     └── Library/
-        └── LaunchDaemons/
+        └── LaunchAgents/
             └── org.openscanner.helper.plist
 ```
 
-**Step 3: Register the daemon (one-time, requires admin approval)**
+**Step 3: Add entitlements to the helper**
+```bash
+codesign --force --sign "Developer ID Application: Your Name" \
+         --entitlements tools/macos_helper/helper.entitlements \
+         --identifier org.openscanner.helper \
+         build/tools/macos_helper/openscanner-helper
+```
+
+**Step 4: Register the agent (no admin approval required)**
 ```swift
 // In the main app's initialization
 import ServiceManagement
 
-let daemonIdentifier = "org.openscanner.helper"
+let agentIdentifier = "org.openscanner.helper"
 do {
-    try SMAppService.daemon(plistName: daemonIdentifier).register()
+    try SMAppService.agent(plistName: agentIdentifier).register()
 } catch {
-    // Handle error (user denied admin approval, or other issue)
-    print("Failed to register helper: \(error)")
+    print("Failed to register helper agent: \(error)")
 }
 ```
 
-**Step 4: System prompts for admin approval**
-- macOS displays a system dialog: "OpenScanner would like to add a helper tool"
-- User enters admin password (or uses Touch ID)
-- Daemon is registered and starts automatically (if `RunAtLoad=true`)
+**Step 5: Agent starts automatically**
+- The agent is registered in the user's LaunchAgents domain
+- It starts automatically at user login (if `RunAtLoad=true` in the plist)
+- No system dialog, no admin password, no system-level changes
 
 ### 6.3 Runtime Usage
 
-**Check daemon status:**
+**Check agent status:**
 ```bash
 launchctl list | grep openscanner
 ```
 
-**Start/stop the daemon (no sudo required):**
+**Start/stop the agent (no sudo required):**
 ```bash
 # Start
 launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
@@ -290,13 +345,32 @@ launchctl kill SIGTERM gui/$(id -u)/org.openscanner.helper
 
 **Send XPC commands (no sudo required):**
 ```bash
-# The daemon is already running, just send XPC messages
+# The agent is already running, just send XPC messages
 # (This would be done programmatically, not via CLI)
 ```
 
+### 6.4 Why Not the Vendor's Approach?
+
+The vendor daemon uses a user LaunchAgent with a `sudo` wrapper:
+```xml
+<key>ProgramArguments</key>
+<array>
+    <string>/usr/bin/sudo</string>
+    <string>/Library/Creality/RPCServer</string>
+</array>
+```
+
+This is the anti-pattern:
+- Requires per-run sudo authentication
+- Blocks non-interactive execution
+- Runs with root privileges when user privileges suffice
+- The sudo wrapper is unnecessary — IOKit USB operations work with user privileges and proper entitlements
+
+Our model uses the same domain (user LaunchAgent) but **without the sudo wrapper**, relying on entitlements instead.
+
 ## 7. Four-Step No-Sudo Test
 
-Once the helper is registered as an SMAppService.daemon, the four operator gate steps can run **without sudo**:
+Once the helper is registered as an SMAppService.agent, the four operator gate steps can run **without sudo**:
 
 ### Step 1: Non-seizing refusal (vendor daemon running)
 
@@ -398,54 +472,76 @@ helper: claim: releasing -> released (unplug: release complete)
 
 The helper remains running after the unplug release (no re-claim on reconnect in this row).
 
-## 8. Why User-Scope Claim Is Impossible
+## 8. Why the Vendor's sudo Wrapper Is the Anti-Pattern
 
-### 8.1 IOKit USB Exclusive Open Requires Root
+### 8.1 The Vendor's Approach
 
-IOKit USB operations on macOS require root privileges for:
-1. **Exclusive device access** — `IOUSBHostDevice initWithIOService:` with exclusive options
-2. **Device claim** — preventing other processes from accessing the device
-3. **Interface open** — claiming USB interfaces
+The vendor daemon uses a user LaunchAgent (correct domain) but wraps the program in `/usr/bin/sudo`:
 
-Even with the `com.apple.security.device.usb` entitlement, user-level processes cannot perform exclusive USB device access if another process (the vendor daemon) holds the device.
+```xml
+<!-- /Library/LaunchAgents/com.creality.RPCServer.plist -->
+<key>ProgramArguments</key>
+<array>
+    <string>/usr/bin/sudo</string>
+    <string>/Library/Creality/RPCServer</string>
+</array>
+```
 
-### 8.2 Vendor Daemon Runs as Root
+This achieves root privileges but introduces several problems:
 
-The vendor daemon (`/Library/Creality/RPCServer`) runs as root via `sudo`. This means:
-- It holds exclusive USB device access
-- User-level processes cannot compete for the device
-- Only a root-level process can claim the device away from the vendor daemon
+1. **Per-run sudo authentication** — requires password or passwordless sudo configuration
+2. **Blocks non-interactive execution** — CI, automated testing, and agent workflows cannot authenticate sudo
+3. **Over-privileging** — runs with root when user privileges with entitlements suffice
+4. **Poor UX** — operator must configure sudoers or enter password repeatedly
 
-### 8.3 SMAppService.agent Insufficient
+### 8.2 Why User-Scope with Entitlements Is Sufficient
 
-`SMAppService.agent` runs in the user session with user-level privileges. It cannot:
-- Perform IOKit USB exclusive open
-- Compete with the root-level vendor daemon
-- Claim the USB device
+User-scope processes (LaunchAgents, XPC services) **can** perform IOKit USB exclusive open when:
 
-Even if the vendor daemon is stopped, the agent still lacks the privileges needed for IOKit USB operations.
+1. **Proper entitlements are present** — `com.apple.security.device.usb` grants USB device access
+2. **Code signing is valid** — ad-hoc (development) or Developer ID (production)
+3. **The device is not held by another process** — non-seizing open succeeds when vendor daemon is stopped
+4. **The process has user-session context** — LaunchAgents run in the user's GUI domain
+
+The key insight: **IOKit USB operations do not inherently require root**. The vendor's sudo wrapper is a workaround for not using entitlements, not a technical requirement.
+
+### 8.3 Evidence from the Vendor's Own Design
+
+The vendor daemon itself uses a **user LaunchAgent** (`com.creality.RPCServer` in GUI domain `gui/501`), not a system LaunchDaemon. This proves:
+
+1. User-domain registration is sufficient for USB device access
+2. The stop path (`launchctl bootout gui/$(id -u)/com.creality.RPCServer`) requires no admin
+3. The only "privilege" the vendor needs is the sudo wrapper to run as root
+
+By removing the sudo wrapper and adding proper entitlements, we achieve the same functionality with:
+- No per-run sudo
+- No admin approval
+- User-scope execution
+- Compatibility with non-interactive shells
 
 ### 8.4 Conclusion
 
-**User-scope claim is impossible** for IOKit USB exclusive access. The helper must run as a system-level daemon with root privileges. `SMAppService.daemon` is the correct model, providing:
-- Root privileges for IOKit operations
-- One-time admin approval (no per-run sudo)
-- Proper macOS integration
+**User-scope claim is viable** for IOKit USB exclusive access when using proper entitlements and code signing. The vendor's sudo wrapper is an anti-pattern that our model should avoid. `SMAppService.agent` is the correct model, providing:
+- User-scope execution (matches vendor's domain)
+- No sudo wrapper (avoids the anti-pattern)
+- Proper entitlements (grants USB access without root)
 - Compatibility with non-interactive shells
+- Minimal privilege (user, not root)
 
 ## 9. Summary
 
 | Question | Answer |
 |----------|--------|
 | What does the helper need? | IOKit USB exclusive open, XPC service |
-| Does it need root? | **Yes** — IOKit USB operations require root privileges |
-| Can it run as user LaunchAgent? | **No** — user-level processes cannot perform IOKit USB exclusive open |
-| What's the recommended model? | **SMAppService.daemon** with one-time admin approval |
-| Does it require per-run sudo? | **No** — once registered, the daemon runs automatically |
+| Does it need root? | **No** — user-scope with proper entitlements suffices |
+| Can it run as user LaunchAgent? | **Yes** — with `com.apple.security.device.usb` entitlement |
+| What's the recommended model? | **SMAppService.agent** (user LaunchAgent, no sudo wrapper) |
+| Does it require per-run sudo? | **No** — runs in user session with entitlements |
 | Does it work in non-interactive shells? | **Yes** — no sudo authentication needed |
 | What TCC approvals are needed? | **None** — no camera, microphone, input monitoring, or location access |
 | What entitlements are needed? | `com.apple.security.device.usb` (for USB device access) |
 | What signing is required? | Ad-hoc (development) or Developer ID (production) with notarization |
+| What's the anti-pattern to avoid? | Vendor's `/usr/bin/sudo` wrapper in LaunchAgent plist |
 
 ## 10. Open Questions
 
