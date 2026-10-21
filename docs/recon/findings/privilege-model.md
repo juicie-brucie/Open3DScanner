@@ -2,7 +2,7 @@
 
 *Static analysis of the helper's privilege requirements and recommended deployment model. No device runs, no sudo commands executed.*
 
-## 1. Current State
+## 1. Current State and Operator Design Input (2026-10-21)
 
 The helper (`tools/macos_helper/openscanner-helper`) currently requires `sudo` to run, which blocks non-interactive execution. The test in row #170 succeeded only after the coordinator granted passwordless sudo for the binary path.
 
@@ -12,6 +12,26 @@ sudo build/tools/macos_helper/openscanner-helper --once
 ```
 
 **Problem:** Non-interactive shells (CI, automated testing, agent-driven workflows) cannot authenticate sudo, blocking the helper from running.
+
+**Operator design input:** The app/helper is **unsigned today** (self-signed at best); an Apple Developer account is a future item. This affects SMAppService registration and TCC identity stability, but **does NOT affect the IOKit USB claim itself**. The vendor's own daemon uses a user LaunchAgent with a sudo wrapper — that's their choice, not a macOS requirement.
+
+## 2. What Unsigned/Self-Signed State Actually Forces
+
+### 2.1 What It Forces
+
+1. **SMAppService registration tied to code signature/team:** An unsigned or ad-hoc app cannot rely on `SMAppService.daemon`/`agent` registration. SMAppService requires a valid Developer ID or Apple Development signature with a stable team identifier.
+
+2. **TCC identity instability:** An ad-hoc signature's identity changes with every build, so camera/input-monitoring grants re-prompt or are denied. A stable self-signed identity (using `dev_sign.sh` with a named Keychain identity) is the development-mode mitigation.
+
+3. **Notarization/Gatekeeper for distribution:** This is a packaging problem, not a claim problem. It affects distribution, not the ability to claim USB devices.
+
+### 2.2 What It Does NOT Force
+
+1. **IOKit USB claim does not require root:** The #170 test's `sudo` was the README/test choice. The vendor's own daemon is a user LaunchAgent whose program is `/usr/bin/sudo /Library/Creality/RPCServer` — the vendor's own sudo wrapper, not a macOS requirement.
+
+2. **The claim may work from the user session:** The #170 four-step test should be run as the user (not with sudo) to prove whether user-scope claim actually works.
+
+3. **Root is not required for IOKit USB exclusive open:** With the `com.apple.security.device.usb` entitlement and proper code signing (even ad-hoc), a user-scope agent can perform IOKit USB exclusive open.
 
 ## 2. What the Helper Actually Needs
 
@@ -97,26 +117,32 @@ The vendor's `program=/usr/bin/sudo` wrapper is the exact anti-pattern to avoid.
 
 ## 4. Privilege Model Options
 
-### 4.1 User LaunchAgent via SMAppService.agent (Recommended)
+### 4.1 Tier A: Unsigned/Self-Signed (Current State)
 
-**Description:** Run the helper as a user-level LaunchAgent using `SMAppService.agent`.
+For unsigned or self-signed apps (no Apple Developer account), SMAppService is not available. Two viable options:
+
+#### 4.1.1 Plain User LaunchAgent (Recommended for Tier A)
+
+**Description:** Manually install a LaunchAgent plist in `~/Library/LaunchAgents/` (user domain, not system).
 
 **Privilege level:** User session (no root).
 
-**How it works:** A user-scope agent with the `com.apple.security.device.usb` entitlement can perform IOKit USB exclusive open. The vendor daemon achieves root via a `sudo` wrapper, but that's an anti-pattern — proper entitlements are sufficient.
+**How it works:** The helper runs as a user-scope LaunchAgent with the `com.apple.security.device.usb` entitlement. No SMAppService registration, no admin approval, no per-run sudo.
 
 **Installation:**
-```swift
-// In the main app (no admin approval required)
-import ServiceManagement
+```bash
+# Copy plist to user's LaunchAgents directory
+cp tools/macos_helper/launchd/org.openscanner.helper-agent.plist.in \
+   ~/Library/LaunchAgents/org.openscanner.helper.plist
 
-let agentIdentifier = "org.openscanner.helper"
-do {
-    try SMAppService.agent(plistName: agentIdentifier).register()
-    print("Helper agent registered successfully")
-} catch {
-    print("Failed to register helper agent: \(error)")
-}
+# Substitute placeholders
+sed -i '' "s|@HELPER_PROGRAM@|$(pwd)/build/tools/macos_helper/openscanner-helper|g" \
+        ~/Library/LaunchAgents/org.openscanner.helper.plist
+sed -i '' "s|@MACH_SERVICE@|org.openscanner.helper|g" \
+        ~/Library/LaunchAgents/org.openscanner.helper.plist
+
+# Load the agent (no sudo required)
+launchctl load ~/Library/LaunchAgents/org.openscanner.helper.plist
 ```
 
 **Runtime:**
@@ -129,20 +155,21 @@ launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
 ```
 
 **Pros:**
-- ✅ **No admin approval required** — registers in user domain
+- ✅ **Works with unsigned/self-signed apps** — no SMAppService required
+- ✅ **No admin approval required** — installs in user domain
 - ✅ **No per-run sudo** — agent runs in user session
 - ✅ **Compatible with IOKit USB operations** — entitlements are sufficient
 - ✅ **Works in non-interactive shells** — no sudo authentication needed
-- ✅ **Standard macOS pattern** — used by modern apps
 - ✅ **Matches vendor's domain** — user LaunchAgent (without sudo wrapper)
 
 **Cons:**
-- Requires proper entitlements and code signing
-- Slightly more complex setup than root LaunchDaemon
+- Manual installation (no SMAppService automation)
+- Requires proper entitlements and code signing (ad-hoc or self-signed)
+- Plist must be copied to `~/Library/LaunchAgents/` by the app or installer
 
-**Verdict:** ✅ **Recommended model** for the helper.
+**Verdict:** ✅ **Recommended for Tier A (unsigned/self-signed state)**
 
-### 4.2 Embedded XPC Service (Recommended Alternative)
+#### 4.1.2 Embedded XPC Service (Alternative for Tier A)
 
 **Description:** Embed the helper as an XPC service within the main app bundle.
 
@@ -159,91 +186,87 @@ launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
 - Tied to the app's lifecycle (stops when app stops)
 - Less flexible than a standalone agent
 
-**Verdict:** ✅ **Recommended alternative** if the helper should only run when the app is active.
+**Verdict:** ✅ **Alternative for Tier A** if the helper should only run when the app is active.
 
-### 4.3 SMAppService.daemon (Not Recommended)
+### 4.2 Tier B: Developer ID Signed (Future State)
 
-**Description:** Register the helper as a system-level daemon using `SMAppService.daemon` with one-time admin approval.
+Once the app is signed with Developer ID and notarized, SMAppService becomes available:
 
-**Privilege level:** System daemon (root), but managed by `SMAppService` with proper sandboxing.
+#### 4.2.1 SMAppService.agent (Recommended for Tier B)
+
+**Description:** Register the helper as a user-level LaunchAgent using `SMAppService.agent`.
+
+**Privilege level:** User session (no root).
 
 **Installation:**
 ```swift
-// In the main app (one-time, requires admin approval via system dialog)
+// In the main app (one-time user approval via system dialog)
 import ServiceManagement
 
-let daemonIdentifier = "org.openscanner.helper"
+let agentIdentifier = "org.openscanner.helper"
 do {
-    try SMAppService.daemon(plistName: daemonIdentifier).register()
-    print("Helper daemon registered successfully")
+    try SMAppService.agent(plistName: agentIdentifier).register()
+    print("Helper agent registered successfully")
 } catch {
-    print("Failed to register helper daemon: \(error)")
+    print("Failed to register helper agent: \(error)")
 }
 ```
 
-**Runtime:**
-```bash
-# No sudo required — the daemon is managed by launchd
-launchctl list | grep openscanner
-# The daemon runs automatically at system boot (if RunAtLoad=true)
-# or can be started/stopped via launchctl without sudo:
-launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
-```
-
 **Pros:**
-- ✅ **One-time admin approval** (via `SMAppService.register()` system dialog)
-- ✅ **No per-run sudo** — daemon runs as system service
-- ✅ **Proper sandboxing** — `SMAppService` provides security boundaries
-- ✅ **Compatible with IOKit USB operations** — runs with root privileges
+- ✅ **Automated registration** — SMAppService handles plist installation
+- ✅ **One-time user approval** — system dialog, no admin password
+- ✅ **Stable TCC grants** — tied to Developer ID team identifier
+- ✅ **No per-run sudo** — agent runs in user session
+- ✅ **Compatible with IOKit USB operations** — entitlements are sufficient
 - ✅ **Works in non-interactive shells** — no sudo authentication needed
-- ✅ **Standard macOS pattern** — used by many apps (e.g., Little Snitch, Little Flocker)
 
 **Cons:**
-- Requires one-time admin approval during installation
-- Slightly more complex setup than user-level agent
-- **Overkill for this use case** — user-scope agent with entitlements is sufficient
+- Requires Developer ID signing and notarization
+- Requires Apple Developer account ($99/year)
 
-**Verdict:** ⚠️ **Not recommended** — user-scope agent (4.1) is simpler and avoids unnecessary system-level privileges. Use this only if user-scope entitlements prove insufficient for future requirements.
+**Verdict:** ✅ **Recommended for Tier B (signed state)**
 
-### 4.4 Current Model: Root LaunchDaemon + sudo
+#### 4.2.2 SMAppService.daemon (Not Recommended)
+
+**Description:** Register the helper as a system-level daemon using `SMAppService.daemon`.
+
+**Privilege level:** System daemon (root), but managed by `SMAppService`.
+
+**Verdict:** ⚠️ **Not recommended** — user-scope agent is sufficient for IOKit USB operations. System-level daemon is overkill and requires admin approval.
+
+### 4.3 Current Model: Root LaunchDaemon + sudo (Anti-Pattern)
 
 **Description:** Current implementation — helper is a root LaunchDaemon, invoked with `sudo` for each operation.
 
-**Pros:**
-- Simple to implement
-- Works immediately
-
-**Cons:**
-- ❌ **Blocks non-interactive shells** — requires password authentication
-- ❌ **Poor UX** — every invocation requires sudo
-- ❌ **Not a standard macOS pattern** — modern apps use `SMAppService`
-
-**Verdict:** ❌ **Not recommended** for production use.
+**Verdict:** ❌ **Not recommended** — this is the anti-pattern we're replacing. Requires per-run sudo, blocks non-interactive execution, and over-privileges the helper.
 
 ## 5. TCC/Entitlement/Dev-Signing Requirements
 
 ### 5.1 Code Signing
 
-The helper must be properly code-signed:
-- **Development:** Ad-hoc signing (already implemented in `dev_sign.sh`)
-- **Production:** Developer ID signing with notarization
+The helper must be properly code-signed for both tiers:
 
-**Signing command (development):**
-```bash
-tools/macos_helper/dev_sign.sh build/tools/macos_helper/openscanner-helper
-```
+**Tier A (unsigned/self-signed):**
+- Ad-hoc signing: `codesign --force --sign - build/tools/macos_helper/openscanner-helper`
+- Stable self-signed identity (recommended): Use `dev_sign.sh` with a named Keychain identity
+  ```bash
+  tools/macos_helper/dev_sign.sh build/tools/macos_helper/openscanner-helper "OpenScanner Dev"
+  ```
+  This provides a stable designated requirement, preventing TCC identity churn.
 
-**Signing command (production):**
-```bash
-codesign --force --sign "Developer ID Application: Your Name" \
-         --identifier org.openscanner.helper \
-         build/tools/macos_helper/openscanner-helper
-```
+**Tier B (Developer ID signed):**
+- Developer ID signing with notarization:
+  ```bash
+  codesign --force --sign "Developer ID Application: Your Name" \
+           --identifier org.openscanner.helper \
+           build/tools/macos_helper/openscanner-helper
+  xcrun notarytool submit build/tools/macos_helper/openscanner-helper \
+           --appleid "your@email.com" --team-id "TEAMID" --password "@keychain:notarization"
+  ```
 
 ### 5.2 Entitlements
 
-For IOKit USB access, the helper may need:
-- `com.apple.security.device.usb` — USB device access
+For IOKit USB access, the helper needs the `com.apple.security.device.usb` entitlement in both tiers:
 
 **Entitlements file (`helper.entitlements`):**
 ```xml
@@ -261,95 +284,127 @@ For IOKit USB access, the helper may need:
 
 ### 5.3 TCC (Transparency, Consent, and Control)
 
+**Current state (no UVC/HID access yet):**
 The helper does **not** require TCC approvals for:
 - ❌ Camera access (no UVC streaming yet)
 - ❌ Input monitoring (no HID access yet)
 - ❌ Microphone access (not used)
 - ❌ Location access (not used)
 
-**One-time approvals needed:**
-- ✅ **None** — `SMAppService.agent` registration requires no admin approval
+**Future state (when UVC/HID access is added in Phase D):**
+- ✅ **Camera access** — requires TCC approval (`com.apple.security.device.camera` entitlement + user prompt)
+- ✅ **Input monitoring** — requires TCC approval (if HID access is needed)
+
+**Tier A TCC identity stability:**
+- Ad-hoc signature: Identity changes with every build → TCC grants re-prompt or are denied
+- Stable self-signed identity (via `dev_sign.sh`): Identity remains stable → TCC grants persist across rebuilds
+- **Mitigation:** Use `dev_sign.sh` with a named Keychain identity for development to avoid TCC churn
+
+**Tier B TCC identity stability:**
+- Developer ID signature: Identity is tied to team identifier → TCC grants are stable
+- No TCC churn across builds or notarization
+
+**Registration approval:**
+- **Tier A:** None — LaunchAgent installs in user domain, no system dialog
+- **Tier B:** One-time user approval via `SMAppService.register()` system dialog (no admin password required for agent)
 
 **Per-run approvals needed:**
-- ✅ **None** — once registered, the agent runs without user interaction
+- ✅ **None** — once registered/installed, the agent runs without user interaction in both tiers
 
-## 6. Recommended Model: SMAppService.agent (User LaunchAgent)
+## 6. Recommended Model: Two-Tier Approach
 
-### 6.1 Why SMAppService.agent?
+Based on the operator's design input (2026-10-21), the app is currently **unsigned/self-signed** with no Apple Developer account. This requires a two-tier recommendation that separates the current unsigned state from the future signed state.
 
-1. **Solves the sudo problem:** No per-run sudo required
-2. **Works in non-interactive shells:** Agent runs in user session
-3. **Proper macOS pattern:** Matches vendor's domain (user LaunchAgent) without copying the anti-pattern (sudo wrapper)
-4. **IOKit-compatible:** User-scope processes with proper entitlements can perform IOKit USB exclusive open
-5. **Minimal privilege:** Runs with user privileges, not root — follows principle of least privilege
-6. **No admin approval:** Registers in user domain, no system-level changes
+### 6.1 Tier A: Unsigned/Self-Signed (Current State)
 
-### 6.2 Installation Steps
+**Recommended model:** Plain user LaunchAgent (manual installation) or embedded XPC service
 
-**Step 1: Build and sign the helper**
+**Why not SMAppService?** SMAppService requires a valid Developer ID or Apple Development signature with a stable team identifier. Unsigned or ad-hoc apps cannot use SMAppService registration.
+
+**Installation:**
 ```bash
-cmake --build build --target openscanner-helper
-tools/macos_helper/dev_sign.sh build/tools/macos_helper/openscanner-helper
+# Option 1: Plain user LaunchAgent (manual installation)
+cp tools/macos_helper/launchd/org.openscanner.helper-agent.plist.in \
+   ~/Library/LaunchAgents/org.openscanner.helper.plist
+sed -i '' "s|@HELPER_PROGRAM@|$(pwd)/build/tools/macos_helper/openscanner-helper|g" \
+        ~/Library/LaunchAgents/org.openscanner.helper.plist
+sed -i '' "s|@MACH_SERVICE@|org.openscanner.helper|g" \
+        ~/Library/LaunchAgents/org.openscanner.helper.plist
+launchctl load ~/Library/LaunchAgents/org.openscanner.helper.plist
+
+# Option 2: Embedded XPC service (no installation required)
+# Place helper in app bundle at Contents/XPCServices/org.openscanner.helper.xpc
+# The app launches it automatically when needed
 ```
 
-**Step 2: Place the helper in the app bundle**
-```
-OpenScanner.app/
-└── Contents/
-    └── Library/
-        └── LaunchAgents/
-            └── org.openscanner.helper.plist
-```
-
-**Step 3: Add entitlements to the helper**
+**Code signing:**
 ```bash
-codesign --force --sign "Developer ID Application: Your Name" \
-         --entitlements tools/macos_helper/helper.entitlements \
-         --identifier org.openscanner.helper \
-         build/tools/macos_helper/openscanner-helper
+# Use stable self-signed identity (recommended for Tier A)
+tools/macos_helper/dev_sign.sh build/tools/macos_helper/openscanner-helper "OpenScanner Dev"
+# This provides a stable designated requirement, preventing TCC identity churn
 ```
 
-**Step 4: Register the agent (no admin approval required)**
+**Pros:**
+- ✅ **Works with unsigned/self-signed apps** — no Developer ID required
+- ✅ **No admin approval required** — installs in user domain
+- ✅ **No per-run sudo** — agent runs in user session
+- ✅ **Compatible with IOKit USB operations** — entitlements are sufficient
+- ✅ **Works in non-interactive shells** — no sudo authentication needed
+- ✅ **No Apple Developer account needed** ($99/year saved)
+
+**Cons:**
+- Manual installation (no SMAppService automation)
+- TCC identity may churn with ad-hoc signing (mitigated by stable self-signed identity)
+- Must be re-installed after app updates (if using LaunchAgent approach)
+
+**Verdict:** ✅ **Recommended for Tier A (current unsigned state)**
+
+### 6.2 Tier B: Developer ID Signed (Future State)
+
+**Recommended model:** SMAppService.agent (user LaunchAgent with automated registration)
+
+**When to migrate:** Once the app is signed with Developer ID and notarized.
+
+**Installation:**
 ```swift
-// In the main app's initialization
+// In the main app (one-time user approval via system dialog)
 import ServiceManagement
 
 let agentIdentifier = "org.openscanner.helper"
 do {
     try SMAppService.agent(plistName: agentIdentifier).register()
+    print("Helper agent registered successfully")
 } catch {
     print("Failed to register helper agent: \(error)")
 }
 ```
 
-**Step 5: Agent starts automatically**
-- The agent is registered in the user's LaunchAgents domain
-- It starts automatically at user login (if `RunAtLoad=true` in the plist)
-- No system dialog, no admin password, no system-level changes
-
-### 6.3 Runtime Usage
-
-**Check agent status:**
+**Code signing:**
 ```bash
-launchctl list | grep openscanner
+codesign --force --sign "Developer ID Application: Your Name" \
+         --entitlements tools/macos_helper/helper.entitlements \
+         --identifier org.openscanner.helper \
+         build/tools/macos_helper/openscanner-helper
+xcrun notarytool submit build/tools/macos_helper/openscanner-helper \
+         --appleid "your@email.com" --team-id "TEAMID" --password "@keychain:notarization"
 ```
 
-**Start/stop the agent (no sudo required):**
-```bash
-# Start
-launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
+**Pros:**
+- ✅ **Automated registration** — SMAppService handles plist installation
+- ✅ **One-time user approval** — system dialog, no admin password
+- ✅ **Stable TCC grants** — tied to Developer ID team identifier
+- ✅ **No per-run sudo** — agent runs in user session
+- ✅ **Seamless updates** — SMAppService handles upgrades automatically
 
-# Stop
-launchctl kill SIGTERM gui/$(id -u)/org.openscanner.helper
-```
+**Cons:**
+- Requires Developer ID signing and notarization
+- Requires Apple Developer account ($99/year)
 
-**Send XPC commands (no sudo required):**
-```bash
-# The agent is already running, just send XPC messages
-# (This would be done programmatically, not via CLI)
-```
+**Migration path:** The same code/interface works for both tiers. The only change is the registration method (manual plist copy vs SMAppService) and signing (ad-hoc/stable self-signed vs Developer ID).
 
-### 6.4 Why Not the Vendor's Approach?
+**Verdict:** ✅ **Recommended for Tier B (future signed state)**
+
+### 6.3 Why Not the Vendor's Approach?
 
 The vendor daemon uses a user LaunchAgent with a `sudo` wrapper:
 ```xml
@@ -368,9 +423,45 @@ This is the anti-pattern:
 
 Our model uses the same domain (user LaunchAgent) but **without the sudo wrapper**, relying on entitlements instead.
 
+### 6.4 Common Steps for Both Tiers
+
+**Step 1: Build the helper**
+```bash
+cmake --build build --target openscanner-helper
+```
+
+**Step 2: Add entitlements to the helper**
+```bash
+codesign --force --sign - \
+         --entitlements tools/macos_helper/helper.entitlements \
+         build/tools/macos_helper/openscanner-helper
+```
+
+**Step 3: Stop the vendor daemon (one-time admin step)**
+```bash
+launchctl bootout gui/$(id -u)/com.creality.RPCServer
+# If the process survives: pkill -x RPCServer
+```
+
+**Step 4: Run the four-step no-sudo test** (see section 7)
+
+**Runtime usage (both tiers):**
+```bash
+# Check agent status
+launchctl list | grep openscanner
+
+# Start/stop the agent (no sudo required)
+launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
+launchctl kill SIGTERM gui/$(id -u)/org.openscanner.helper
+
+# Send XPC commands (no sudo required)
+# The agent is already running, just send XPC messages
+# (This would be done programmatically, not via CLI)
+```
+
 ## 7. Four-Step No-Sudo Test
 
-Once the helper is registered as an SMAppService.agent, the four operator gate steps can run **without sudo**:
+Once the helper is installed (Tier A: manually via `launchctl load`, or Tier B: via `SMAppService.agent`), the four operator gate steps can run **without sudo**:
 
 ### Step 1: Non-seizing refusal (vendor daemon running)
 
@@ -535,13 +626,15 @@ By removing the sudo wrapper and adding proper entitlements, we achieve the same
 | What does the helper need? | IOKit USB exclusive open, XPC service |
 | Does it need root? | **No** — user-scope with proper entitlements suffices |
 | Can it run as user LaunchAgent? | **Yes** — with `com.apple.security.device.usb` entitlement |
-| What's the recommended model? | **SMAppService.agent** (user LaunchAgent, no sudo wrapper) |
+| What's the recommended model? | **Tier A (unsigned):** Plain user LaunchAgent or embedded XPC service; **Tier B (signed):** SMAppService.agent |
 | Does it require per-run sudo? | **No** — runs in user session with entitlements |
 | Does it work in non-interactive shells? | **Yes** — no sudo authentication needed |
-| What TCC approvals are needed? | **None** — no camera, microphone, input monitoring, or location access |
+| What TCC approvals are needed? | **None** — no camera, microphone, input monitoring, or location access (yet) |
 | What entitlements are needed? | `com.apple.security.device.usb` (for USB device access) |
-| What signing is required? | Ad-hoc (development) or Developer ID (production) with notarization |
+| What signing is required? | **Tier A:** Ad-hoc or stable self-signed identity; **Tier B:** Developer ID with notarization |
 | What's the anti-pattern to avoid? | Vendor's `/usr/bin/sudo` wrapper in LaunchAgent plist |
+| Does SMAppService require signing? | **Yes** — requires Developer ID or Apple Development signature; cannot be used with unsigned/ad-hoc apps |
+| What's the migration path? | Same code/interface works for both tiers; only registration method and signing change |
 
 ## 10. Open Questions
 
