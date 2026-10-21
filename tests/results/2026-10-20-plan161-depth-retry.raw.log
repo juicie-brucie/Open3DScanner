@@ -1,0 +1,4 @@
+[live] connected 127.0.0.1:10010 (depth, suffix 0-2-10, pull_ms=0, per-call logging=on, timeout 5000 ms)
+[live] calling ob_rpc_start_stream0-2-10
+[dump] reply method=ob_rpc_start_stream0-2-10 kind=Timeout msgid=- envelope=Timeout result=Timeout
+[live] TIMEOUT: 127.0.0.1:10010 (depth, suffix 0-2-10) ob_rpc_start_stream0-2-10: no complete reply within 5000 ms - the connection was established and the daemon did not answer
