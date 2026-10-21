@@ -117,11 +117,11 @@ The vendor's `program=/usr/bin/sudo` wrapper is the exact anti-pattern to avoid.
 
 ## 5. Privilege Model Options
 
-### 4.1 Tier A: Unsigned/Self-Signed (Current State)
+### 5.1 Tier A: Unsigned/Self-Signed (Current State)
 
 For unsigned or self-signed apps (no Apple Developer account), SMAppService is not available. Two viable options:
 
-#### 4.1.1 Plain User LaunchAgent (Recommended for Tier A)
+#### 5.1.1 Plain User LaunchAgent (Recommended for Tier A)
 
 **Description:** Manually install a LaunchAgent plist in `~/Library/LaunchAgents/` (user domain, not system).
 
@@ -169,7 +169,7 @@ launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
 
 **Verdict:** ✅ **Recommended for Tier A (unsigned/self-signed state)**
 
-#### 4.1.2 Embedded XPC Service (Alternative for Tier A)
+#### 5.1.2 Embedded XPC Service (Alternative for Tier A)
 
 **Description:** Embed the helper as an XPC service within the main app bundle.
 
@@ -188,11 +188,11 @@ launchctl kickstart -kp gui/$(id -u)/org.openscanner.helper
 
 **Verdict:** ✅ **Alternative for Tier A** if the helper should only run when the app is active.
 
-### 4.2 Tier B: Developer ID Signed (Future State)
+### 5.2 Tier B: Developer ID Signed (Future State)
 
 Once the app is signed with Developer ID and notarized, SMAppService becomes available:
 
-#### 4.2.1 SMAppService.agent (Recommended for Tier B)
+#### 5.2.1 SMAppService.agent (Recommended for Tier B)
 
 **Description:** Register the helper as a user-level LaunchAgent using `SMAppService.agent`.
 
@@ -226,7 +226,7 @@ do {
 
 **Verdict:** ✅ **Recommended for Tier B (signed state)**
 
-#### 4.2.2 SMAppService.daemon (Not Recommended)
+#### 5.2.2 SMAppService.daemon (Not Recommended)
 
 **Description:** Register the helper as a system-level daemon using `SMAppService.daemon`.
 
@@ -234,7 +234,7 @@ do {
 
 **Verdict:** ⚠️ **Not recommended** — user-scope agent is sufficient for IOKit USB operations. System-level daemon is overkill and requires admin approval.
 
-### 4.3 Current Model: Root LaunchDaemon + sudo (Anti-Pattern)
+### 5.3 Current Model: Root LaunchDaemon + sudo (Anti-Pattern)
 
 **Description:** Current implementation — helper is a root LaunchDaemon, invoked with `sudo` for each operation.
 
@@ -242,7 +242,7 @@ do {
 
 ## 6. TCC/Entitlement/Dev-Signing Requirements
 
-### 5.1 Code Signing
+### 6.1 Code Signing
 
 The helper must be properly code-signed for both tiers:
 
@@ -264,7 +264,7 @@ The helper must be properly code-signed for both tiers:
            --appleid "your@email.com" --team-id "TEAMID" --password "@keychain:notarization"
   ```
 
-### 5.2 Entitlements
+### 6.2 Entitlements
 
 For IOKit USB access, the helper needs the `com.apple.security.device.usb` entitlement in both tiers:
 
@@ -282,7 +282,7 @@ For IOKit USB access, the helper needs the `com.apple.security.device.usb` entit
 
 **Note:** IOKit USB exclusive open works with user-level processes when they have the `com.apple.security.device.usb` entitlement and proper code signing. The vendor daemon's use of a `sudo` wrapper is unnecessary and represents the anti-pattern we're replacing.
 
-### 5.3 TCC (Transparency, Consent, and Control)
+### 6.3 TCC (Transparency, Consent, and Control)
 
 **Current state (no UVC/HID access yet):**
 The helper does **not** require TCC approvals for:
@@ -315,7 +315,7 @@ The helper does **not** require TCC approvals for:
 
 Based on the operator's design input (2026-10-21), the app is currently **unsigned/self-signed** with no Apple Developer account. This requires a two-tier recommendation that separates the current unsigned state from the future signed state.
 
-### 6.1 Tier A: Unsigned/Self-Signed (Current State)
+### 7.1 Tier A: Unsigned/Self-Signed (Current State)
 
 **Recommended model:** Plain user LaunchAgent (manual installation) or embedded XPC service
 
@@ -359,7 +359,7 @@ tools/macos_helper/dev_sign.sh build/tools/macos_helper/openscanner-helper "Open
 
 **Verdict:** ✅ **Recommended for Tier A (current unsigned state)**
 
-### 6.2 Tier B: Developer ID Signed (Future State)
+### 7.2 Tier B: Developer ID Signed (Future State)
 
 **Recommended model:** SMAppService.agent (user LaunchAgent with automated registration)
 
@@ -404,7 +404,7 @@ xcrun notarytool submit build/tools/macos_helper/openscanner-helper \
 
 **Verdict:** ✅ **Recommended for Tier B (future signed state)**
 
-### 6.3 Why Not the Vendor's Approach?
+### 7.3 Why Not the Vendor's Approach?
 
 The vendor daemon uses a user LaunchAgent with a `sudo` wrapper:
 ```xml
@@ -423,7 +423,7 @@ This is the anti-pattern:
 
 Our model uses the same domain (user LaunchAgent) but **without the sudo wrapper**, relying on entitlements instead.
 
-### 6.4 Common Steps for Both Tiers
+### 7.4 Common Steps for Both Tiers
 
 **Step 1: Build the helper**
 ```bash
@@ -565,7 +565,7 @@ The helper remains running after the unplug release (no re-claim on reconnect in
 
 ## 9. Why the Vendor's sudo Wrapper Is the Anti-Pattern
 
-### 8.1 The Vendor's Approach
+### 9.1 The Vendor's Approach
 
 The vendor daemon uses a user LaunchAgent (correct domain) but wraps the program in `/usr/bin/sudo`:
 
@@ -618,6 +618,8 @@ By removing the sudo wrapper and adding proper entitlements, we achieve the same
 - Proper entitlements (grants USB access without root)
 - Compatibility with non-interactive shells
 - Minimal privilege (user, not root)
+
+**Falsifier.** If the operator's four-step test fails — the helper cannot claim the USB device as the user (the claim refuses, or the device cannot be opened without root) — the user-scope hypothesis is **falsified**, and the signed `SMAppService.daemon` route is the path (with the Developer ID/notarization the account buys). If the test passes, the unsigned user-scope tier stands and no developer account is needed for the run.
 
 ## 10. Summary
 
