@@ -139,7 +139,8 @@ std::unique_ptr<Listener> MakeMachServiceListener(const char* mach_service_name,
     xpc_connection_t connection = xpc_connection_create_mach_service(
         mach_service_name, queue, XPC_CONNECTION_MACH_SERVICE_LISTENER);
     if (!connection) {
-        dispatch_release(queue);
+        // No dispatch_release(queue): ServiceQueue() is process-lifetime and
+        // deliberately never released (see above).
         if (err) *err = std::string("could not create a listener for ") + mach_service_name;
         return nullptr;
     }
