@@ -1,5 +1,6 @@
 add_library(raw_capture_core STATIC
     raw_capture.cpp
+    correlation.cpp
     descriptor_probe.cpp
     uvc_frames.cpp
     hid_report.cpp
@@ -13,7 +14,7 @@ target_link_libraries(raw_capture PRIVATE raw_capture_core)
 
 if(APPLE)
     # The live backends and the descriptor probe (row #178): IOUSBHost only.
-    target_sources(raw_capture PRIVATE iokit_probe.mm iokit_source.mm)
+    target_sources(raw_capture PRIVATE iokit_probe.mm iokit_source.mm iokit_registry.mm)
     target_link_libraries(raw_capture PRIVATE
         "-framework CoreFoundation"
         "-framework Foundation"
@@ -33,3 +34,9 @@ add_test(NAME raw_capture_test COMMAND raw_capture_test)
 add_executable(raw_capture_probe_test probe_test.cpp)
 target_link_libraries(raw_capture_probe_test PRIVATE raw_capture_core)
 add_test(NAME raw_capture_probe_test COMMAND raw_capture_probe_test)
+
+# Row #182's coverage: the IR/depth/RGB correlation from interface names and
+# alternate settings, and the watch tracker. Device-free.
+add_executable(raw_capture_correlation_test correlation_test.cpp)
+target_link_libraries(raw_capture_correlation_test PRIVATE raw_capture_core)
+add_test(NAME raw_capture_correlation_test COMMAND raw_capture_correlation_test)
