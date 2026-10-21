@@ -1,11 +1,35 @@
-add_executable(raw_capture main.cpp raw_capture.cpp)
-target_include_directories(raw_capture PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(raw_capture_core STATIC
+    raw_capture.cpp
+    descriptor_probe.cpp
+    uvc_frames.cpp
+    hid_report.cpp
+    live_source.cpp
+)
+target_include_directories(raw_capture_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(raw_capture_core PUBLIC cxx_std_17)
 
-# Row #171 (Phase D seed 3): the device-free coverage of the raw capture path.
-# The capture sink and its bounds, the mock source, the capture-file reader,
-# and the bounded/fail-closed laser + exposure command path — no device, no
-# vendor SDK, no network. The live "IR+depth on a known scene with no vendor
-# process" gate is the operator's; this test is what runs here.
-add_executable(raw_capture_test raw_capture_test.cpp raw_capture.cpp)
-target_include_directories(raw_capture_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(raw_capture main.cpp)
+target_link_libraries(raw_capture PRIVATE raw_capture_core)
+
+if(APPLE)
+    # The live backends and the descriptor probe (row #178): IOUSBHost only.
+    target_sources(raw_capture PRIVATE iokit_probe.mm iokit_source.mm)
+    target_link_libraries(raw_capture PRIVATE
+        "-framework CoreFoundation"
+        "-framework Foundation"
+        "-framework IOKit"
+        "-framework IOUSBHost"
+    )
+endif()
+
+# Row #171's coverage: the capture sink and its bounds, the mock source, the
+# capture-file reader, and the bounded/fail-closed command path.
+add_executable(raw_capture_test raw_capture_test.cpp)
+target_link_libraries(raw_capture_test PRIVATE raw_capture_core)
 add_test(NAME raw_capture_test COMMAND raw_capture_test)
+
+# Row #178's coverage: the descriptor parser (a synthetic USB tree), the UVC
+# payload assembler, and the HID output-report builder. Device-free.
+add_executable(raw_capture_probe_test probe_test.cpp)
+target_link_libraries(raw_capture_probe_test PRIVATE raw_capture_core)
+add_test(NAME raw_capture_probe_test COMMAND raw_capture_probe_test)

@@ -47,11 +47,32 @@ struct StreamSpec {
 };
 
 // The vendor-command transport (laser/exposure, #101's property map).
+//
+// The endpoint is one field; the report layout is another. The descriptor
+// probe finds the endpoint and the HID descriptor's length, but the mapping
+// from #101's property ids to report bytes needs the HID report descriptor's
+// usages, which #169 has not captured. Every field below is therefore
+// unconfigured until the operator fills it from that capture.
+enum class FieldEncoding { kUnknown, kU8, kU16le, kU32le, kF32le };
+
+struct PropertyField {
+    uint32_t property = 0;
+    int report_id = kUnset;
+    int offset = kUnset;                // byte offset in the output report
+    int size = 0;                       // 1, 2 or 4 bytes
+    FieldEncoding encoding = FieldEncoding::kUnknown;
+    bool configured = false;
+};
+
 struct ControlSpec {
     Knowledge knowledge = Knowledge::kUnknown;
     const char* missing = "HID report descriptor and vendor control endpoint are not in the map";
     EndpointSpec endpoint;
     int report_id = kUnset;             // HID feature report id, when it is HID
+    int report_length = 0;              // the output report's length, from the report descriptor
+    // The #101 properties this path can carry; each is unconfigured by
+    // default and is filled from the captured report descriptor.
+    PropertyField fields[5];
 };
 
 struct DescriptorTable {

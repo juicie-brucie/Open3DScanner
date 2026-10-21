@@ -228,4 +228,10 @@ public:
     }
 };
 
+// The live backends (row #178). null + `why` when the table still lacks a
+// required field; the caller reports that verbatim. On a non-macOS build the
+// answer is a named "macOS-only" refusal.
+std::unique_ptr<FrameSource> MakeLiveUvcSource(StreamKind kind, std::string* why);
+std::unique_ptr<CommandTransport> MakeLiveHidTransport(std::string* why);
+
 }  // namespace raw_capture
