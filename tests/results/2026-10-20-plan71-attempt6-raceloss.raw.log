@@ -1,0 +1,48 @@
+[launcher] Running live scan server in a worker process (up to 300s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/20 18:01:11.076130][info][2269203][Context.cpp:67] Context created with config: default config!
+[10/20 18:01:11.076158][info][2269203][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/20 18:01:11.081364][info][2269203][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/20 18:01:11.081412][info][2269203][DeviceManager.cpp:15] Current found device(s): (0)
+[10/20 18:01:11.081420][info][2269203][Context.cpp:82] EnumerateNetDevice:true
+[10/20 18:01:11.081681][info][2269219][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/20 18:01:11.081721][info][2269219][GVCPClient.cpp:325] bind 0.0.0.0:54850
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[10/20 18:01:11.081896][info][2269219][GVCPClient.cpp:325] bind 172.22.20.183:0
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/20 18:01:11.081932][info][2269219][GVCPClient.cpp:325] bind 0.0.0.0:64977
+[10/20 18:01:11.081952][info][2269219][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/20 18:01:11.081968][info][2269219][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/20 18:01:11.081994][info][2269219][GVCPClient.cpp:325] bind 0.0.0.0:61361
+[10/20 18:01:11.082016][info][2269219][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/20 18:01:11.082034][info][2269219][GVCPClient.cpp:325] bind 169.254.113.120:0
+[10/20 18:01:11.082059][info][2269219][GVCPClient.cpp:325] bind 0.0.0.0:57130
+[10/20 18:01:11.082077][info][2269219][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en9
+[10/20 18:01:11.082282][error][2269222][GVCPClient.cpp:355] sendto failed with error:49
+[10/20 18:01:11.082696][info][2269222][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/20 18:01:11.082713][info][2269222][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/20 18:01:12.090417][info][2269219][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/20 18:01:12.090543][info][2269219][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/20 18:01:13.092595][info][2269219][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/20 18:01:13.092647][info][2269219][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/20 18:01:13.092726][info][2269219][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/20 18:01:13.193176][info][2269219][Ethernet.cpp:244] rpc client connection state:1
+[10/20 18:01:14.088715][info][2269228][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**7 logs in 3005ms, last: 18:01:12.091473**]
+[10/20 18:01:14.088715][info][2269227][GVCPClient.cpp:421] 0, 3, 248, 1 [**7 logs in 3005ms, last: 18:01:12.091471**]
+[10/20 18:01:15.093777][error][2269307][GVCPClient.cpp:355] sendto failed with error:49 [**1 logs in 4011ms, last: 18:01:12.090898**]
+[10/20 18:01:16.095831][info][2269480][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**1 logs in 4005ms, last: 18:01:13.092121**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=0
+[launcher] Worker crashed or timed out inside the vendor SDK (child killed by signal Segmentation fault: 11).
