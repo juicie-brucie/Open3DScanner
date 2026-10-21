@@ -120,6 +120,8 @@ All three runs show perfect tracking with no failures, lost frames, or markerles
 
 **#93 attribution:** Row #93 attempted a server-side markerless run with the histogram 5615 SUCCESS / 31 LOST / 1343 FAILURE_MARKERLESS (total 7089 frames). This represents a mixed tracking outcome with ~80% success, ~0.4% lost, and ~19% markerless failures, consistent with the intended markerless test scenario where the lens was occluded to trigger markerless failures.
 
+The #93 histogram is the **lens-occlusion rerun**, `tests/results/2026-10-20-plan93-markerless-rerun.raw.log`: `tracking_status samples=6989 histogram: SUCCESS=5615 LOST=31 FAILURE_MARKERLESS=1343`. The `plan93-markerless-raceloss` record is the crash run (48 lines, no tracking data) and is not the source.
+
 ## 5. Spikes and outliers
 
 ### 4.1 Large spikes (tick_max > 200ms)
