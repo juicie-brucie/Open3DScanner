@@ -188,6 +188,41 @@ defect). Record the capture bundle manifest.
 **Rows:** #169 (the descriptor map — the gate), #171 (raw capture), #170 (claim/release),
 #172 (the shim A/B). **One vendor daemon / SDK user at a time.** No product switch.
 
+### Stopping the vendor daemon (the #170 test path)
+
+The vendor's "daemon" is a **user LaunchAgent**, not a system daemon:
+
+- label **`com.creality.RPCServer`**, GUI domain —
+  `launchctl print gui/$(id -u)/com.creality.RPCServer`;
+- plist `/Library/LaunchAgents/com.creality.RPCServer.plist`;
+- program `/usr/bin/sudo` with argument `/Library/Creality/RPCServer`, working directory
+  `/Library/Creality`;
+- it persists after the Creality Scan app quits; the app's launch re-registers it.
+
+```bash
+# 1. Quit the Creality Scan app (if open)
+osascript -e 'tell application "Creality Scan" to quit' 2>/dev/null || true
+pkill -x "Creality Scan" 2>/dev/null || true
+pkill -x CrealityScan 2>/dev/null || true
+
+# 2. Boot the LaunchAgent out of the user's GUI domain (no sudo)
+launchctl bootout gui/$(id -u)/com.creality.RPCServer
+
+# 3. If the root RPCServer process survives the bootout, stop it (admin)
+sudo pkill -x RPCServer
+
+# 4. Verify the vendor side is gone BEFORE the helper claim
+pgrep -x RPCServer || echo "RPCServer stopped"
+```
+
+- The `bootout` is per-login; the vendor app re-registers the agent when it launches.
+  Re-run it before every run, or `launchctl disable gui/$(id -u)/com.creality.RPCServer`
+  to keep it down across logins (the vendor app may re-enable it).
+- The #170 refusal's `0xe00002c5` is the proof the RPCServer still held the device; the
+  helper's claim succeeds only after this stop.
+- The helper itself should not need sudo — the privilege model is #177; the only admin
+  step should be stopping/replacing the vendor's agent, not the helper.
+
 1. **#169 — the USB descriptor capture.** `system_profiler SPUSBDataType` or a protocol
    analyzer on the scanner; fill `tools/raw_capture/descriptor_table.h`: interface and
    alternate setting, endpoint address, transfer type, max packet, UVC pixel
