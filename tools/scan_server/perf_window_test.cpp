@@ -2,8 +2,9 @@
 //
 // Asserts the schema: the four historical work segments keep indices 0-3 and
 // their names; the wait (4), the exposure re-assert (5) and the cloud release
-// (6) are separate; overshoot = wait - nominal; and the untimed residual is
-// `period - sum(segments)`. The `BeginTickAt` seam makes it deterministic.
+// (6) are separate; overshoot = wait - nominal; tick_overshoot = tick - nominal;
+// and the untimed residual is `period - sum(segments)`. The `BeginTickAt` seam
+// makes it deterministic (a fake clock: the test supplies each tick's start).
 #include "perf_window.h"
 
 #include <cstdio>
@@ -72,6 +73,7 @@ void CheckFieldsAndResidual() {
     Check(snap.segment[perf::kRelease].p50 == 500, "release p50 recorded");
     Check(snap.overshoot.p50 == 30000, "overshoot = wait - nominal");
     Check(snap.tick.p50 == 140000, "tick_total = the realized period");
+    Check(snap.tick_overshoot.p50 == 40000, "tick_overshoot = tick - nominal");
     Check(snap.residual.p50 == 140000 - work, "residual = period - sum(segments)");
     Check(snap.residual.p50 == 3500, "residual value");
     Check(snap.mean_clients > 1.99 && snap.mean_clients < 2.01, "mean clients");
@@ -88,9 +90,40 @@ void CheckShortWaitIsNegativeOvershoot() {
     sample.wait_us = 90000;
     sample.nominal_wait_us = 100000;
     tp.EndTick(sample);
+    // A 90 ms period against a 100 ms pacing budget: the whole tick is early.
+    tp.BeginTickAt(90000);
     const perf::TickPerf::Snapshot snap = tp.TakeSnapshot();
     Check(snap.segment[perf::kWait].p50 == 90000, "short wait recorded");
     Check(snap.overshoot.p50 == -10000, "a short wait is a negative overshoot");
+    Check(snap.tick_overshoot.p50 == -10000, "a short tick is a negative tick_overshoot");
+}
+
+// Row #141: a spike that moves no segment must be visible. Ten steady ticks,
+// then one 500 ms period with the same work: no segment changes, but
+// tick_overshoot and the residual carry the spike.
+void CheckSpikeMovesNoSegment() {
+    perf::TickPerf tp;
+    int64_t now_us = 0;
+    for (int i = 0; i < 10; ++i) {
+        tp.BeginTickAt(now_us);
+        perf::TickPerf::Sample sample;
+        sample.pose_us = 100;
+        sample.getter_us = 200;
+        sample.post_us = 300;
+        sample.broadcast_us = 400;
+        sample.wait_us = 90000;
+        sample.nominal_wait_us = 100000;
+        tp.EndTick(sample);
+        now_us += 92000;
+    }
+    // The next tick starts 500 ms after the last one, with the same work.
+    tp.BeginTickAt(now_us + 408000);
+    const perf::TickPerf::Snapshot snap = tp.TakeSnapshot();
+    Check(snap.segment[perf::kWait].max == 90000, "the spike moves no wait");
+    Check(snap.segment[perf::kPostproc].max == 300, "the spike moves no work segment");
+    Check(snap.tick.max == 500000, "the spike is in the realized tick");
+    Check(snap.tick_overshoot.max == 400000, "tick - nominal exposes the spike");
+    Check(snap.residual.max == 409000, "the untimed residual exposes the spike");
 }
 
 // Row #153: the window counts how many times the exposure config was pushed,
@@ -180,6 +213,7 @@ int main() {
     CheckStableIndicesAndNames();
     CheckFieldsAndResidual();
     CheckShortWaitIsNegativeOvershoot();
+    CheckSpikeMovesNoSegment();
     CheckExposureApplyCount();
     CheckBroadcastDeltas();
     if (g_failures != 0) {
@@ -187,7 +221,8 @@ int main() {
         return 1;
     }
     std::printf("[perf_window_test] PASS: 4 work segments unchanged; wait/exposure/release separate; "
-                "overshoot = wait - nominal; residual = period - sum; the exposure pushes are counted; "
+                "overshoot = wait - nominal; tick_overshoot = tick - nominal; residual = period - sum; "
+                "a spike that moves no segment is visible; the exposure pushes are counted; "
                 "the broadcast deltas subtract and carry new maxima only\n");
     return 0;
 }
