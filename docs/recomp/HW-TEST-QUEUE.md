@@ -7,17 +7,21 @@ hardware worktree (`~/DevReposiMac/Open3DScanner-wt-hw`); do not edit it.
 
 ## Current state
 
-- `#157` (suffix), `#140` (capture), `#158` (mid-session plane toggle) and `#153` (on-change
-  exposure) are landed. The #153 live run confirms the exposure half
-  (`exposure_mean=0.00 ms`, `exposure_applies_total=0` over 1344 ticks); its
-  **picture-unchanged** visual is still owed.
-- `#76` is **blocked on the browser readout**, not the device: the coverage percentage and red
-  overlay are client-side JavaScript. Both #153's and #76's remaining observations need a
-  **UI-open** run.
-- The live path's `#157` fix has **never met the daemon** — both 2026-10-20 live runs died at
-  the first RPC **before** it landed. **T1 is the proof.**
-- The old untracked batch (#71 attempt 5, #123, ungated batches) is the **#392 HOLD**; do not
-  add new records to it.
+- `#157` (suffix) is **`DONE`**: the 2026-10-20 #127 retry proved it against the real daemon on
+  IR — 33 `get_frame` calls, **30 data / 3 empty / 0 errors**, each data reply `Bin(2304000)`.
+  The T1a replay is banked; re-run T1 only if the binary changes.
+- `#153`'s exposure half is confirmed (`exposure_mean=0.00 ms`, `exposure_applies_total=0` over
+  1344 ticks); its **picture-unchanged** visual and **#76**'s coverage/red overlay ride the T2
+  UI-open A/B. **#160** (the coverage update trigger) landed in #413; #76's acceptance still
+  needs that live run.
+- **#167 — the device-enumeration race — blocks every `scan_server --live` start.** Four
+  consecutive starts logged `DeviceManager list: (1)` → `get_device_num -> count=0` → **SIGSEGV
+  11** (#151 ×2, #71 attempt 6, #93 markerless). **Do not start T2 until #167 is fixed.**
+- **#161** is the depth-interface timeout build (build3); **#168** is the `--capture` path hang
+  (IR, 2-for-2). **Do not run T3's depth/capture until both land.**
+- The old untracked batch is no longer the #392 HOLD: #392 landed the #71 attempt 5/#123/
+  ungated-2 records; the newest crash/hang records are a separate, unlanded batch (provenance
+  gaps).
 
 ## Rules for every run
 
@@ -72,6 +76,10 @@ T3's depth run**; keep T2 (different binary path). Both outcomes are results.
 ---
 
 ## T2 — The UI-open A/B (the follow-up to the 2026-10-20 data)
+
+**Blocked on #167** — do not run this until the device-enumeration race is fixed. Once it is,
+this run closes #153's picture, #76's coverage/red overlay, #93's markerless HUD, #141's UI half,
+#151's fused rate and #71's A/B. #160's coverage fix is already on `main`.
 
 **Rows:** #71 (single-session A/B), #153 (picture unchanged), #76 (coverage/red overlay), #93
 (markerless HUD), #141 UI half, #151 fused rate.
@@ -133,7 +141,11 @@ the move; the dispatcher applies it.
 
 ---
 
-## T3 — Depth (only if T1b's IR run passed)
+## T3 — Depth (blocked on #161 and #168)
+
+**Do not run the depth or `--capture` path until both land:** #161 is the RPC timeout (build3),
+#168 is the `--capture` startup hang (IR, 2-for-2). Once both are fixed, this run feeds #132 and
+then #143/#124's remaining clauses/#159's capture.
 
 **Row:** #132 (the gap-free capture / band rule / pixel scale), then #143, #124's remaining
 clauses, #159's capture.
