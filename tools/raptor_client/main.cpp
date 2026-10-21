@@ -441,7 +441,7 @@ public:
         Value resp = ReadMessageWithDeadline(timeout_ms_);
         // The capture records the bytes as they arrived, so it runs before
         // the shape checks: a reply that fails them is still evidence.
-        RecordCapture(method, resp);
+        RecordCapture(method, resp, timeout_ms_);
         if (resp.kind == Value::Kind::Timeout) return resp;
         if (resp.kind != Value::Kind::Array || resp.array.size() < 4) return Error("bad response");
         if (resp.array[0].kind != Value::Kind::UInt || resp.array[0].u != 1) return Error("not a response");
@@ -458,7 +458,7 @@ public:
     bool sendRaw(const Bytes& frame) { return WriteAll(frame); }
     Value readReply(const std::string& method = "") {
         Value v = ReadMessage();
-        RecordCapture(method, v);
+        RecordCapture(method, v, 0);
         return v;
     }
 
@@ -468,7 +468,7 @@ public:
     // deadline passes. The live path uses the same bound through call().
     Value readReplyWithDeadline(int timeout_ms, const std::string& method = "") {
         Value v = ReadMessageWithDeadline(timeout_ms);
-        RecordCapture(method, v);
+        RecordCapture(method, v, timeout_ms);
         return v;
     }
 
@@ -484,11 +484,36 @@ public:
     // connection reads is written to the bundle, byte for byte.
     void set_capture(capture::Recorder* c) { capture_ = c; }
 
+    // Bound the blocking socket calls on this connection (row #168). The
+    // capture path sets it; a read whose bound expires is a Timeout value,
+    // and the recorder names the unanswered method. A send that cannot make
+    // progress is a failed write, so a peer that stops reading cannot hold
+    // the run either.
+    void set_io_timeout(int ms) {
+        if (fd_ < 0 || ms <= 0) return;
+        capture_read_timeout_ms_ = ms;
+        struct timeval tv = {};
+        tv.tv_sec = ms / 1000;
+        tv.tv_usec = (ms % 1000) * 1000;
+        setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    }
+
 private:
     // Hand the reply to the capture, if one is running. A read that did
-    // not complete (a timeout) records nothing.
-    void RecordCapture(const std::string& method, const Value& envelope) {
-        if (!capture_ || !last_read_ok_) return;
+    // not complete (a timeout) records nothing, and names the timeout
+    // instead: the bundle is incomplete and the run must say so.
+    void RecordCapture(const std::string& method, const Value& envelope, int timeout_ms) {
+        if (!capture_) return;
+        if (!last_read_ok_) {
+            if (last_timed_out_ || envelope.kind == Value::Kind::Timeout) {
+                // Name the bound that actually expired: the reply read's,
+                // not this connection's fallback socket bound.
+                const int bound = envelope.kind == Value::Kind::Timeout ? timeout_ms : capture_read_timeout_ms_;
+                capture_->NoteReadTimeout(port_, method, bound);
+            }
+            return;
+        }
         uint64_t msgid = 0;
         if (envelope.kind == Value::Kind::Array && envelope.array.size() >= 2 &&
             envelope.array[1].kind == Value::Kind::UInt) {
@@ -505,6 +530,8 @@ private:
     bool connect_timed_out_ = false;
     Bytes last_raw_;
     bool last_read_ok_ = false;
+    bool last_timed_out_ = false;
+    int capture_read_timeout_ms_ = 0;
     capture::Recorder* capture_ = nullptr;
     bool WriteAll(const Bytes& b) {
         size_t sent = 0;
@@ -521,12 +548,23 @@ private:
         Bytes buf;
         uint8_t tmp[65536];
         last_read_ok_ = false;
+        last_timed_out_ = false;
         for (;;) {
             Reader r(buf.data(), buf.size());
             Value v = r.parse();
             if (r.ok()) { last_raw_ = buf; last_read_ok_ = true; return v; }
             ssize_t n = recv(fd_, tmp, sizeof(tmp), 0);
-            if (n <= 0) return Error("eof");
+            if (n == 0) return Error("eof");
+            if (n < 0) {
+                if (errno == EINTR) continue;
+                // A socket read bound expired (row #168): name it, so the
+                // capture records a timeout rather than a transport error.
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    last_timed_out_ = true;
+                    return Timeout();
+                }
+                return Error("recv failed");
+            }
             buf.insert(buf.end(), tmp, tmp + n);
             if (buf.size() > (1u << 26)) return Error("response too large");
         }
@@ -541,6 +579,7 @@ private:
         Bytes buf;
         uint8_t tmp[65536];
         last_read_ok_ = false;
+        last_timed_out_ = false;
         for (;;) {
             Reader r(buf.data(), buf.size());
             Value v = r.parse();
@@ -799,6 +838,16 @@ void DumpReply(const std::string& method, const Value& envelope, const Bytes& ra
 constexpr int kDefaultCaptureSeconds = 30;
 constexpr uint64_t kDefaultCaptureBytes = 64ull * 1024 * 1024;
 
+// Row #168: the capture path's socket bound. The capture's seconds budget
+// is only consulted between replies, so a daemon that accepts the
+// connection and then never answers would hold the run past its own budget.
+// A socket bound makes the budget reachable; the expiry is a named failure.
+constexpr int kCaptureIoTimeoutMs = 2000;
+
+// A failed capture is its own exit code: the bundle is incomplete, so the
+// run must not read as a success (see capture.h, Recorder::Failed).
+constexpr int kExitCaptureFailed = 4;
+
 // The path of this binary, for the manifest's hash.
 std::string g_binary_path;
 
@@ -816,20 +865,41 @@ public:
         }
         std::printf("[capture] recording every reply into %s (bounds: %d s, %llu B)\n",
                     recorder_->dir().c_str(), seconds_cap, (unsigned long long)bytes_cap);
+        // Row #168: the record must show that the bundle opened before the
+        // first blocking call. stdout is block-buffered when it is a file,
+        // so an unflushed line is absent from a run that is killed later —
+        // the "zero output" the hang records observed.
+        std::fflush(stdout);
         return true;
     }
     capture::Recorder* recorder() { return recorder_.get(); }
-    // Close the bundle and write the manifest.
-    void Stop() {
-        if (!recorder_) return;
+    // Close the bundle and write the manifest. Returns false when the
+    // capture failed (an unusable directory, a write error, or a reply read
+    // that timed out), after naming the reason.
+    bool Stop() {
+        if (!recorder_) return true;
         std::string branch, commit;
         capture::ReadGitBranchAndCommit(".", &branch, &commit);
+        const bool budget_expired = recorder_->SecondsBudgetExpired() && !recorder_->Capped();
+        const int seconds_cap = recorder_->seconds_cap();
         std::string manifest = recorder_->Close(branch, commit);
+        const bool failed = recorder_->Failed();
+        const std::string error = recorder_->error();
         std::printf("[capture] %llu record(s), %llu byte(s) written\n",
                     (unsigned long long)recorder_->RecordCount(),
                     (unsigned long long)recorder_->BytesWritten());
+        if (budget_expired) {
+            // The wall, not a reply, ended the run. Say which.
+            std::printf("[capture] the %d s time budget expired; stopping\n", seconds_cap);
+        }
         if (!manifest.empty()) std::printf("[capture] manifest: %s\n", manifest.c_str());
+        std::fflush(stdout);
         recorder_.reset();
+        if (failed) {
+            std::fprintf(stderr, "[capture] the bundle is incomplete: %s\n", error.c_str());
+            std::fflush(stderr);
+        }
+        return !failed && !manifest.empty();
     }
 
 private:
@@ -1259,6 +1329,10 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
         return kExitLiveFailed;
     }
     rpc.set_capture(capture);
+    // Row #168: a capture-enabled run bounds every socket call, so the
+    // capture's own seconds budget is a wall rather than a check that only
+    // runs once a reply arrives.
+    if (capture) rpc.set_io_timeout(kCaptureIoTimeoutMs);
     std::printf("[live] connected %s:%u (%s, suffix %s, pull_ms=%d, per-call logging=%s, timeout %d ms)\n",
                 host.c_str(), port, route.name.c_str(), route.suffix.c_str(), pull_ms, log ? "on" : "off",
                 timeout_ms);
@@ -1288,7 +1362,12 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
     FrameTally tally;
     auto last_log = std::chrono::steady_clock::now() - std::chrono::seconds(1);
     auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
-    while (std::chrono::steady_clock::now() < deadline) {
+    // The capture ends the run on its own failure or its time wall, not
+    // only after the next reply (see capture.h, Recorder).
+    auto capture_done = [&] {
+        return capture && (capture->Failed() || capture->SecondsBudgetExpired());
+    };
+    while (std::chrono::steady_clock::now() < deadline && !capture_done()) {
         if (max_frames > 0 && st.get_calls >= (uint64_t)max_frames) break;
         Packer p;
         p.array(0);
@@ -2938,6 +3017,111 @@ int CaptureSelftest() {
         check("the byte bound stops the recording", false);
     }
 
+    // Row #168: the capture's startup ordering and its bounded failure
+    // paths. A capture-enabled live run must not reach the wire with a
+    // bundle it cannot write, and must not stay up when a reply read does
+    // not complete.
+    {
+        capture::Recorder fresh;
+        const std::string fresh_dir = bundle + "/startup";
+        std::string fresh_err;
+        bool fresh_open = fresh.Open(fresh_dir, g_binary_path, 0, 0, &fresh_err);
+        check("the startup creates the bundle before any reply", fresh_open);
+        struct stat st;
+        check("the startup creates replies/",
+              stat((fresh_dir + "/replies").c_str(), &st) == 0 && S_ISDIR(st.st_mode));
+        // The startup state is an empty replies/: no port file exists until
+        // the first reply is recorded.
+        capture::Reader empty_reader;
+        std::string empty_err;
+        check("the startup writes no reply file", !empty_reader.Open(fresh_dir, &empty_err));
+        check("the startup leaves no write probe", stat((fresh_dir + "/replies/.write-probe").c_str(), &st) != 0);
+        fresh.Close("selftest-branch", "0123456789abcdef0123456789abcdef01234567");
+    }
+
+    // A directory that cannot be created is refused at startup, before the
+    // connection: the error names it.
+    {
+        const std::string not_a_dir = bundle + "/not-a-dir";
+        {
+            std::ofstream f(not_a_dir, std::ios::binary);
+            f << "x";
+        }
+        capture::Recorder blocked;
+        std::string blocked_err;
+        check("a capture directory that cannot be created is refused",
+              !blocked.Open(not_a_dir + "/cap", g_binary_path, 0, 0, &blocked_err) &&
+                  blocked_err.find("cannot create") != std::string::npos);
+    }
+
+    // An existing replies/ that cannot be written is refused at startup, not
+    // discovered at the first reply. (The mode bits do not stop root.)
+    {
+        const std::string ro = bundle + "/readonly";
+        mkdir(ro.c_str(), 0755);
+        mkdir((ro + "/replies").c_str(), 0555);
+        capture::Recorder locked;
+        std::string locked_err;
+        bool locked_open = locked.Open(ro, g_binary_path, 0, 0, &locked_err);
+        if (geteuid() == 0) {
+            std::printf("[capture-selftest] SKIP (running as root bypasses the mode bits)\n");
+        } else {
+            check("an unwritable capture directory is refused at startup",
+                  !locked_open && locked_err.find("not writable") != std::string::npos);
+        }
+        chmod((ro + "/replies").c_str(), 0755);
+    }
+
+    // A reply file that cannot be opened fails the bundle: the recorder must
+    // not silently drop the evidence. Occupying the port file's name with a
+    // directory reproduces the open failure.
+    {
+        capture::Recorder broken;
+        const std::string broken_dir = bundle + "/broken";
+        std::string broken_err;
+        bool broken_open = broken.Open(broken_dir, g_binary_path, 0, 0, &broken_err);
+        check("the write-failure bundle opens", broken_open);
+        mkdir((broken_dir + "/replies/port-10013.bin").c_str(), 0755);
+        broken.Record(10013, "ob_rpc_get_frame0-2-12", 1, no_data);
+        check("a reply file that cannot be opened fails the capture",
+              broken.Failed() && broken.error().find("port-10013.bin") != std::string::npos);
+        check("a failed capture records no reply", broken.RecordCount() == 0);
+        check("a failed capture still writes its manifest for evidence",
+              !broken.Close("selftest-branch", "0123456789abcdef0123456789abcdef01234567").empty());
+    }
+
+    // A reply read that did not complete is a named timeout, not a silent
+    // gap: the failure names the port, the method and the bound.
+    {
+        capture::Recorder timed;
+        std::string timed_err;
+        if (timed.Open(bundle + "/timeout", g_binary_path, 0, 0, &timed_err)) {
+            timed.NoteReadTimeout(10013, "ob_rpc_get_frame0-2-12", 2000);
+            check("a read timeout fails the capture and names the port, method and bound",
+                  timed.Failed() && timed.error().find("10013") != std::string::npos &&
+                      timed.error().find("ob_rpc_get_frame0-2-12") != std::string::npos &&
+                      timed.error().find("2000 ms") != std::string::npos);
+            timed.Close("selftest-branch", "0123456789abcdef0123456789abcdef01234567");
+        } else {
+            check("a read timeout fails the capture and names the port, method and bound", false);
+        }
+    }
+
+    // The seconds budget is a wall the run can consult before the next
+    // reply, so a capture cannot outlive its own budget while a read blocks.
+    {
+        capture::Recorder budget;
+        std::string budget_err;
+        if (budget.Open(bundle + "/budget", g_binary_path, 1, 0, &budget_err)) {
+            check("a fresh capture's time budget has not expired", !budget.SecondsBudgetExpired());
+            std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+            check("the time budget expires without a reply", budget.SecondsBudgetExpired());
+            budget.Close("selftest-branch", "0123456789abcdef0123456789abcdef01234567");
+        } else {
+            check("the time budget expires without a reply", false);
+        }
+    }
+
     capture::RemoveTree(bundle);
     std::printf("[capture-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
     return failures ? 1 : 0;
@@ -3404,7 +3588,7 @@ int main(int argc, char** argv) {
         if (!capture_dir.empty() && !capture.Start(capture_dir, capture_seconds, capture_bytes)) return 2;
         int rc = Live(host, port, *route, seconds, out, pull_ms, max_frames, log, capture.recorder(), nullptr,
                       timeout_ms);
-        capture.Stop();
+        if (!capture.Stop() && (rc == 0 || rc == 1)) rc = kExitCaptureFailed;
         return rc;
     }
     std::printf(
@@ -3485,6 +3669,11 @@ int main(int argc, char** argv) {
         "                                    sha256 and size\n"
         "      --capture-seconds N (default 30) and --capture-bytes N (default 64 MiB)\n"
         "      bound the capture; 0 means no bound of that kind. The live run stops\n"
-        "      when a bound is reached.\n");
+        "      when a bound is reached. A capture-enabled live run also bounds each\n"
+        "      socket call and every reply read: a daemon that stops answering ends\n"
+        "      the run with a named timeout, the manifest is still written, and the\n"
+        "      exit is non-zero (3 = the daemon timed out, 4 = the bundle is\n"
+        "      incomplete). A directory that cannot be written is refused before the\n"
+        "      connection, so the run never reaches the wire.\n");
     return 0;
 }

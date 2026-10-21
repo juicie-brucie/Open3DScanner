@@ -89,8 +89,13 @@ public:
     bool Open(const std::string& dir, const std::string& binary_path, int seconds_cap, uint64_t bytes_cap,
               std::string* err);
 
-    // Record one reply. Ignored once a cap is hit.
+    // Record one reply. Ignored once a cap is hit or the bundle has failed.
     void Record(uint16_t port, const std::string& method, uint64_t msgid, const std::vector<uint8_t>& bytes);
+
+    // Note a reply read that did not complete: the socket's read bound
+    // expired before the daemon answered. The first one names the failure;
+    // later ones are ignored.
+    void NoteReadTimeout(uint16_t port, const std::string& method, int timeout_ms);
 
     // True once a cap stopped the recording.
     bool Capped() const { return capped_; }
@@ -99,6 +104,18 @@ public:
     uint64_t RecordCount() const { return records_; }
     uint64_t BytesWritten() const { return bytes_written_; }
     const std::string& dir() const { return dir_; }
+    int seconds_cap() const { return seconds_cap_; }
+
+    // The bundle is incomplete: the directory could not be written, a reply
+    // could not be, or a reply read did not complete. error() names the
+    // first failure. A failed capture is never a successful run.
+    bool Failed() const { return failed_; }
+    const std::string& error() const { return error_; }
+
+    // The seconds budget has run out, whether or not a reply arrived to
+    // notice it. The live loop consults this between replies, so the budget
+    // is a wall and not a check that only runs after a reply.
+    bool SecondsBudgetExpired() const;
 
     // Close the files and write the manifest. Returns the manifest's path.
     std::string Close(const std::string& branch, const std::string& commit);
@@ -108,6 +125,11 @@ private:
         std::unique_ptr<std::ofstream> out;
         uint64_t records = 0;
     };
+
+    // The first failure wins: it names what broke, and the bundle is then
+    // incomplete. The line is printed as it happens, so a run that is
+    // killed later still records the cause.
+    void Fail(const std::string& why);
 
     std::string dir_;
     std::string binary_path_;
@@ -120,6 +142,8 @@ private:
     bool capped_ = false;
     bool capped_seconds_ = false;
     bool capped_bytes_ = false;
+    bool failed_ = false;
+    std::string error_;
     bool open_ = false;
     // Two connections can share a port (the replay's per-interface routing
     // may point both at one port), so the writes are serialised.

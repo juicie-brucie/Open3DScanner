@@ -338,6 +338,8 @@ Recorder::~Recorder() { Close("unknown", "unknown"); }
 
 bool Recorder::Open(const std::string& dir, const std::string& binary_path, int seconds_cap, uint64_t bytes_cap,
                     std::string* err) {
+    failed_ = false;
+    error_.clear();
     if (dir.empty()) {
         if (err) *err = "the capture directory is empty";
         return false;
@@ -358,6 +360,26 @@ bool Recorder::Open(const std::string& dir, const std::string& binary_path, int 
         if (err) *err = "cannot create the capture directory " + replies;
         return false;
     }
+    // An existing directory that cannot be written is not a capture. Probe
+    // it at startup, so the run says so before the first blocking call
+    // instead of discovering it at the first reply.
+    const std::string probe = replies + "/.write-probe";
+    {
+        std::ofstream p(probe, std::ios::binary | std::ios::trunc);
+        bool ok = static_cast<bool>(p);
+        if (ok) {
+            p.put('\0');
+            p.flush();
+            ok = p.good();
+            p.close();
+            ok = ok && !p.fail();
+        }
+        unlink(probe.c_str());
+        if (!ok) {
+            if (err) *err = "the capture directory is not writable: " + replies;
+            return false;
+        }
+    }
     dir_ = resolved;
     binary_path_ = binary_path;
     seconds_cap_ = seconds_cap;
@@ -370,7 +392,7 @@ bool Recorder::Open(const std::string& dir, const std::string& binary_path, int 
 
 void Recorder::Record(uint16_t port, const std::string& method, uint64_t msgid,
                       const std::vector<uint8_t>& bytes) {
-    if (!open_ || capped_) return;
+    if (!open_ || failed_ || capped_) return;
     if (seconds_cap_ > 0 && NowMs() - start_ms_ >= (uint64_t)seconds_cap_ * 1000) {
         capped_seconds_ = true;
         capped_ = true;
@@ -387,10 +409,11 @@ void Recorder::Record(uint16_t port, const std::string& method, uint64_t msgid,
     std::lock_guard<std::mutex> lock(mutex_);
     PortFile& pf = files_[port];
     if (!pf.out) {
-        pf.out.reset(new std::ofstream(dir_ + "/replies/port-" + std::to_string(port) + ".bin",
-                                       std::ios::binary | std::ios::trunc));
+        const std::string path = dir_ + "/replies/port-" + std::to_string(port) + ".bin";
+        pf.out.reset(new std::ofstream(path, std::ios::binary | std::ios::trunc));
         if (!pf.out || !pf.out->good()) {
             pf.out.reset();
+            Fail("cannot open the reply file " + path);
             return;
         }
         std::string header;
@@ -413,9 +436,33 @@ void Recorder::Record(uint16_t port, const std::string& method, uint64_t msgid,
     PutU32(&prefix, (uint32_t)body.size());
     pf.out->write(prefix.data(), (std::streamsize)prefix.size());
     pf.out->write(body.data(), (std::streamsize)body.size());
+    if (!pf.out->good()) {
+        Fail("a write to " + dir_ + "/replies/port-" + std::to_string(port) + ".bin failed (the disk may be full)");
+        return;
+    }
     pf.records++;
     records_++;
     bytes_written_ += prefix.size() + body.size();
+}
+
+void Recorder::NoteReadTimeout(uint16_t port, const std::string& method, int timeout_ms) {
+    if (failed_) return;
+    std::string why = "no complete reply on port " + std::to_string(port) + " for " + method;
+    if (timeout_ms > 0) why += " within " + std::to_string(timeout_ms) + " ms";
+    why += "; the capture stopped answering";
+    Fail(why);
+}
+
+void Recorder::Fail(const std::string& why) {
+    if (failed_) return;
+    failed_ = true;
+    error_ = why;
+    std::fprintf(stderr, "[capture] FAILED: %s\n", why.c_str());
+    std::fflush(stderr);
+}
+
+bool Recorder::SecondsBudgetExpired() const {
+    return open_ && seconds_cap_ > 0 && NowMs() - start_ms_ >= (uint64_t)seconds_cap_ * 1000;
 }
 
 std::string Recorder::Close(const std::string& branch, const std::string& commit) {
@@ -471,8 +518,14 @@ std::string Recorder::Close(const std::string& branch, const std::string& commit
 
     const std::string manifest = dir_ + "/manifest.json";
     std::ofstream out(manifest, std::ios::binary | std::ios::trunc);
-    if (out) out.write(json.data(), (std::streamsize)json.size());
+    bool wrote = static_cast<bool>(out);
+    if (wrote) out.write(json.data(), (std::streamsize)json.size());
     out.close();
+    wrote = wrote && !out.fail();
+    if (!wrote) {
+        Fail("cannot write the manifest " + manifest);
+        return "";
+    }
     return manifest;
 }
 
