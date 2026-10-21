@@ -1,4 +1,4 @@
-add_executable(raptor_client main.cpp capture.cpp)
+add_executable(raptor_client main.cpp capture.cpp telemetry.cpp)
 target_include_directories(raptor_client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Hardware-free smoke test for the replay's pacing and its bounded reply
@@ -29,3 +29,9 @@ add_test(NAME raptor_client_live_suffix COMMAND raptor_client --selftest-live)
 # named timeout and the timeout exit code, not a hang — the depth
 # interface's observed stall.
 add_test(NAME raptor_client_live_timeout COMMAND raptor_client --selftest-live-timeout)
+
+# Hardware-free test for the frame path's timing (row #175): the latency
+# percentile rule, the payload/wire rates and the first-frame stamp on an
+# injected clock, then a real live run against the loopback interface mock
+# so the printed summary and the per-call dump line are the run's own.
+add_test(NAME raptor_client_telemetry COMMAND raptor_client --selftest-telemetry)
