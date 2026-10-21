@@ -52,7 +52,10 @@ Gating checks
                   #54 class: a parse error kills the whole page.
   build           cmake configure + build + ctest -LE hardware; runs only when
                   the working tree is the PR head or --build is passed (CI runs
-                  it from the head checkout).
+                  it from the head checkout). When ctest fails, its captured
+                  output (the FAILED block and the per-test details) is printed
+                  before the report, so the CI log names the tests (row #185);
+                  the exit code alone still decides the check.
 
 Reported only: tier, inventory (files not mentioned in the PR body), header
 (comment-only vs code change in obscan_api.h), modes, hook probe matrix diff.
@@ -223,6 +226,23 @@ def selftest():
     if record_accompanied("tests/results/x-confirmed.md", [],
                           "raw log `tests/results/x-baseline.log`"):
         bad.append("record-provenance: a citation of a file not in the PR must not satisfy")
+    # build output (row #185): a failing ctest run must carry the FAILED block
+    # and the per-test output into the log; a passing or empty run must not.
+    sample = ("Test project /x\n"
+              "The following tests FAILED:\n"
+              "\t  5 - raw_capture_test (Failed)\n"
+              "Errors while running CTest\n")
+    block = ctest_failure_block(8, sample, "ctest stderr\n")
+    if "The following tests FAILED" not in block or "raw_capture_test (Failed)" not in block:
+        bad.append("build-output: the FAILED block must survive into the log")
+    if "exit 8" not in block or "ctest stderr" not in block:
+        bad.append("build-output: the exit code and stderr must be kept")
+    if "(no ctest output was captured)" not in ctest_failure_block(8, "", ""):
+        bad.append("build-output: an empty capture must say so")
+    if not ctest_failed(8, sample) or ctest_failed(0, sample):
+        bad.append("build-output: only a non-zero exit is a failure")
+    if ctest_failed(8, "No tests were found"):
+        bad.append("build-output: an empty suite is not a ctest failure")
 
     # archives: the record factory's line must verify, and a hand-typed hash
     # must not (row #165). `fetch` stands in for tests/results/<name> at head.
@@ -279,7 +299,7 @@ def selftest():
 
     for b in bad:
         print("SELFTEST FAIL:", b)
-    print(f"selftest: {len(TIER_CASES)} tier cases + record/archives cases, {'FAIL' if bad else 'ok'}")
+    print(f"selftest: {len(TIER_CASES)} tier cases + record/archives/build-output cases, {'FAIL' if bad else 'ok'}")
     return 1 if bad else 0
 
 
@@ -293,6 +313,32 @@ def git(*args):
 
 def git_bytes(*args):
     return subprocess.run(["git"] + list(args), capture_output=True).stdout
+
+
+def ctest_failed(returncode, output):
+    """True when a ctest run is a failure (row #185).
+
+    `No tests were found` is not a failure: the suite is empty at this
+    configuration, which the report says separately.
+    """
+    return returncode != 0 and "No tests were found" not in output
+
+
+def ctest_failure_block(returncode, stdout, stderr):
+    """The block printed to the CI log when ctest fails (row #185).
+
+    `--output-on-failure` already captures the failing tests' output; before
+    this change it was discarded and the report carried only the exit code,
+    so a CI failure could not name a test. Keep the whole capture: ctest puts
+    `The following tests FAILED` and the per-test output in stdout, and some
+    platforms add diagnostics on stderr.
+    """
+    captured = (stdout + stderr).strip()
+    return "\n".join([
+        f"--- ctest failed (exit {returncode}) ---",
+        captured if captured else "(no ctest output was captured)",
+        "--- end ctest output ---",
+    ])
 
 
 # The whitespace rule, in one place: `scripts/git-hooks/pre-commit` runs this
@@ -742,8 +788,17 @@ def main():
             add("build", False, "cmake configure/build failed (see CI log)")
         else:
             ct = sh(["ctest", "--test-dir", "build", "-LE", "hardware", "--output-on-failure"])
-            no_tests = "No tests were found" in (ct.stdout + ct.stderr)
-            add("build", ct.returncode == 0 or no_tests,
+            output = ct.stdout + ct.stderr
+            no_tests = "No tests were found" in output
+            # Row #185: the CI log must name the failing tests. The decision
+            # is unchanged (the exit code, with the empty-suite case allowed);
+            # only the captured output is now carried into the log.
+            if ctest_failed(ct.returncode, output):
+                print()
+                print(ctest_failure_block(ct.returncode, ct.stdout, ct.stderr))
+                print()
+                sys.stdout.flush()
+            add("build", not ctest_failed(ct.returncode, output),
                 "build ok; ctest: " + ("no tests selected" if no_tests else f"exit {ct.returncode}"))
     else:
         report.append(("build", "INFO", "skipped (working tree is not the PR head; runs in CI)"))
