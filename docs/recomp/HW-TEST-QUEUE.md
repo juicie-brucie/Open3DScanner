@@ -183,6 +183,71 @@ defect). Record the capture bundle manifest.
 
 ---
 
+## T7 — the USB daemon bring-up (operator; #169 first)
+
+**Rows:** #169 (the descriptor map — the gate), #171 (raw capture), #170 (claim/release),
+#172 (the shim A/B). **One vendor daemon / SDK user at a time.** No product switch.
+
+### Stopping the vendor daemon (the #170 test path)
+
+The vendor's "daemon" is a **user LaunchAgent**, not a system daemon:
+
+- label **`com.creality.RPCServer`**, GUI domain —
+  `launchctl print gui/$(id -u)/com.creality.RPCServer`;
+- plist `/Library/LaunchAgents/com.creality.RPCServer.plist`;
+- program `/usr/bin/sudo` with argument `/Library/Creality/RPCServer`, working directory
+  `/Library/Creality`;
+- it persists after the Creality Scan app quits; the app's launch re-registers it.
+
+```bash
+# 1. Quit the Creality Scan app (if open)
+osascript -e 'tell application "Creality Scan" to quit' 2>/dev/null || true
+pkill -x "Creality Scan" 2>/dev/null || true
+pkill -x CrealityScan 2>/dev/null || true
+
+# 2. Boot the LaunchAgent out of the user's GUI domain (no sudo)
+launchctl bootout gui/$(id -u)/com.creality.RPCServer
+
+# 3. If the root RPCServer process survives the bootout, stop it (admin)
+sudo pkill -x RPCServer
+
+# 4. Verify the vendor side is gone BEFORE the helper claim
+pgrep -x RPCServer || echo "RPCServer stopped"
+```
+
+- The `bootout` is per-login; the vendor app re-registers the agent when it launches.
+  Re-run it before every run, or `launchctl disable gui/$(id -u)/com.creality.RPCServer`
+  to keep it down across logins (the vendor app may re-enable it).
+- The #170 refusal's `0xe00002c5` is the proof the RPCServer still held the device; the
+  helper's claim succeeds only after this stop.
+- The helper itself should not need sudo — the privilege model is #177; the only admin
+  step should be stopping/replacing the vendor's agent, not the helper.
+
+1. **#169 — the USB descriptor capture.** Run
+   `./build/tools/raw_capture/raw_capture --probe` (row #178) with the device attached:
+   it prints the exact table fields (interfaces/alt settings, endpoints, UVC VS, HID) and
+   a copy-paste block. Paste that into `tools/raw_capture/descriptor_table.h`. A field it
+   prints `unknown` still needs the `system_profiler SPUSBDataType`/analyzer read; the
+   table is `known`/`unknown` only — no guesses. The probe alone leaves the IR/depth
+   assignment open (OQ-169e): run the correlation mode (#182) with the vendor daemon
+   streaming, or resolve #183.
+2. **#170 — claim/release.** Register the helper as the **user LaunchAgent** (#181) so
+   the shim's XPC `status` answers — no per-run sudo. Vendor daemon stopped;
+   `openscanner-helper` claims; quit and
+   unplug release; `--seize` is opt-in only.
+3. **#171 — the live raw capture.** IR + depth to the sink with **no vendor process**;
+   the format/stride from the table.
+4. **#172 — the vendor A/B.** The shim with the live source vs the vendor daemon on the
+   same known scene; `raptor_client` unchanged; the frames match within the stated
+   metric. The product switch stays held (behind #126 and this A/B).
+
+### Depth after IR (the #175 stall)
+
+After an IR `raptor_client` session, the RPCServer does not answer the depth port's
+`start_stream0-2-10` (a 5 s timeout; the 2026-10-21 depth addendum). **Run depth first,
+or restart the vendor agent between the IR and depth sessions** (the same bootout path as
+above), before recording a depth run.
+
 ## T4 — The operator capture session (#145 + #150, one sitting)
 
 **Rows:** #145 (three modes + pause/resume + exposure slider + power-on; the mode-name →
@@ -227,5 +292,6 @@ No cross-repo edit.
 ## Order and stop rules, in one line
 
 **T0 → T1a → T1b → T2 → (T3 only after T0 and the #168 device re-run) → T4 (separate) →
-T5 (after the ground-truth read) → T6 (when the scanner is on Windows).** One interface per live run; no build mid-session; a
+T5 (after the ground-truth read) → T6 (when the scanner is on Windows) → T7 (the daemon
+bring-up, after #169's descriptor capture).** One interface per live run; no build mid-session; a
 failed IR floor cancels T3 but not T2.

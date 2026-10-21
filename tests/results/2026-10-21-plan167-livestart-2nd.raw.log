@@ -1,0 +1,415 @@
+=== RUN 1 ===
+[launcher] Running live scan server in a worker process (up to 300s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/21 12:58:27.299766][info][3438893][Context.cpp:67] Context created with config: default config!
+[10/21 12:58:27.299786][info][3438893][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/21 12:58:27.304294][info][3438893][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/21 12:58:27.304321][info][3438893][DeviceManager.cpp:15] Current found device(s): (0)
+[10/21 12:58:27.304325][info][3438893][Context.cpp:82] EnumerateNetDevice:true
+[10/21 12:58:27.304592][info][3438907][GVCPClient.cpp:325] bind 127.0.0.1:0
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[10/21 12:58:27.304789][info][3438907][GVCPClient.cpp:325] bind 0.0.0.0:63047
+[10/21 12:58:27.304864][info][3438907][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/21 12:58:27.304893][info][3438907][GVCPClient.cpp:325] bind 0.0.0.0:64136
+[10/21 12:58:27.304912][info][3438907][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/21 12:58:27.304925][info][3438907][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/21 12:58:27.304949][info][3438907][GVCPClient.cpp:325] bind 0.0.0.0:59629
+[10/21 12:58:27.304963][info][3438907][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/21 12:58:27.304985][info][3438907][GVCPClient.cpp:325] bind 169.254.35.181:0
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/21 12:58:27.305021][info][3438907][GVCPClient.cpp:325] bind 0.0.0.0:49771
+[10/21 12:58:27.305042][info][3438907][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en9
+[10/21 12:58:27.305213][error][3438910][GVCPClient.cpp:355] sendto failed with error:49
+[10/21 12:58:27.305610][info][3438910][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/21 12:58:27.305626][info][3438910][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/21 12:58:28.315571][info][3438907][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/21 12:58:28.315635][info][3438907][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/21 12:58:29.321295][info][3438907][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/21 12:58:29.321307][info][3438907][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/21 12:58:29.321313][info][3438907][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/21 12:58:29.424074][info][3438907][Ethernet.cpp:244] rpc client connection state:1
+[10/21 12:58:29.424709][info][3438907][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 12:58:29.424752][info][3438907][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 12:58:29.424761][info][3438907][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 12:58:29.525089][info][3438907][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 12:58:29.626123][info][3438907][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 12:58:29.626196][info][3438907][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 12:58:29.634937][info][3438907][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:58:29.634957][info][3438907][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 12:58:29.835714][info][3438907][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:58:29.835729][info][3438907][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/21 12:58:29.835737][info][3438907][RPCClientPort.cpp:241] No stream need to stop
+[10/21 12:58:29.835742][info][3438907][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/21 12:58:29.835887][info][3438907][RPCClientPort.cpp:241] No stream need to stop
+[10/21 12:58:29.835899][info][3438907][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/21 12:58:29.936397][info][3438907][Ethernet.cpp:244] rpc client connection state:1
+[10/21 12:58:29.936770][info][3438907][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 12:58:29.936783][info][3438907][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 12:58:29.936791][info][3438907][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 12:58:30.040696][info][3438907][RPCClientPort.cpp:20] create client port cost:104ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 12:58:30.144795][info][3438907][RPCClientPort.cpp:20] create client port cost:103ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 12:58:30.144867][info][3438907][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 12:58:30.153813][info][3438907][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:58:30.153834][info][3438907][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 12:58:30.331459][info][3438914][GVCPClient.cpp:421] 0, 3, 248, 1 [**7 logs in 3025ms, last: 12:58:28.316229**]
+[10/21 12:58:30.331482][info][3438915][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**7 logs in 3025ms, last: 12:58:28.316232**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=1
+[worker] obscan_context_create_session                 -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_create_scan                    -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_preview                           -> OB_SCAN_SUCCESS (0)
+[10/21 12:58:30.649418][info][3438893][RPCClientPort.cpp:20] create client port cost:104ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/21 12:58:30.650604][info][3438893][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[10/21 12:58:30.652389][info][3438895][AccelSensor.cpp:22] AccelSensor created
+[10/21 12:58:30.652395][info][3438895][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/21 12:58:30.653614][info][3438895][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 12:58:30.653664][info][3438895][GyroSensor.cpp:23] GyroSensor created!
+[10/21 12:58:30.653670][info][3438895][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/21 12:58:30.654754][info][3438895][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 12:58:30.758285][info][3438908][RPCClientPort.cpp:20] create client port cost:104ms,port name:Creality Raptor Pro RGB Camera,client port:10012
+--- exit ---
+
+=== RUN 2 ===
+[launcher] Running live scan server in a worker process (up to 300s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/21 12:58:52.261028][info][3439624][Context.cpp:67] Context created with config: default config!
+[10/21 12:58:52.261067][info][3439624][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/21 12:58:52.265969][info][3439624][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/21 12:58:52.265994][info][3439624][DeviceManager.cpp:15] Current found device(s): (0)
+[10/21 12:58:52.265999][info][3439624][Context.cpp:82] EnumerateNetDevice:true
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/21 12:58:52.266566][info][3439639][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/21 12:58:52.266661][info][3439639][GVCPClient.cpp:325] bind 0.0.0.0:57858
+[10/21 12:58:52.266834][info][3439639][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/21 12:58:52.266890][info][3439639][GVCPClient.cpp:325] bind 0.0.0.0:59155
+[10/21 12:58:52.266912][info][3439639][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/21 12:58:52.266993][info][3439639][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/21 12:58:52.267033][info][3439639][GVCPClient.cpp:325] bind 0.0.0.0:52638
+[10/21 12:58:52.267052][info][3439639][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/21 12:58:52.267073][info][3439639][GVCPClient.cpp:325] bind 169.254.35.181:0
+[10/21 12:58:52.267107][info][3439639][GVCPClient.cpp:325] bind 0.0.0.0:53184
+[10/21 12:58:52.267125][info][3439639][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en9
+[10/21 12:58:52.267310][error][3439642][GVCPClient.cpp:355] sendto failed with error:49
+[10/21 12:58:52.267831][info][3439642][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/21 12:58:52.267899][info][3439642][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/21 12:58:53.275997][info][3439639][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/21 12:58:53.276090][info][3439639][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/21 12:58:54.282171][info][3439639][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/21 12:58:54.282204][info][3439639][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/21 12:58:54.282231][info][3439639][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/21 12:58:54.383061][info][3439639][Ethernet.cpp:244] rpc client connection state:1
+[10/21 12:58:54.383584][info][3439639][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 12:58:54.383654][info][3439639][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 12:58:54.383665][info][3439639][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 12:58:54.488978][info][3439639][RPCClientPort.cpp:20] create client port cost:104ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 12:58:54.590965][info][3439639][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 12:58:54.591212][info][3439639][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 12:58:54.603168][info][3439639][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:58:54.603204][info][3439639][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 12:58:54.810036][info][3439639][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:58:54.810062][info][3439639][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/21 12:58:54.810074][info][3439639][RPCClientPort.cpp:241] No stream need to stop
+[10/21 12:58:54.810085][info][3439639][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/21 12:58:54.810249][info][3439639][RPCClientPort.cpp:241] No stream need to stop
+[10/21 12:58:54.810257][info][3439639][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/21 12:58:54.911426][info][3439639][Ethernet.cpp:244] rpc client connection state:1
+[10/21 12:58:54.911834][info][3439639][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 12:58:54.911881][info][3439639][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 12:58:54.911901][info][3439639][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 12:58:55.014006][info][3439639][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 12:58:55.118277][info][3439639][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 12:58:55.118535][info][3439639][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 12:58:55.129832][info][3439639][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:58:55.129861][info][3439639][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 12:58:55.273414][info][3439648][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**7 logs in 3005ms, last: 12:58:53.277711**]
+[10/21 12:58:55.275676][info][3439647][GVCPClient.cpp:421] 0, 3, 248, 1 [**7 logs in 3007ms, last: 12:58:53.277709**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=1
+[worker] obscan_context_create_session                 -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_create_scan                    -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_preview                           -> OB_SCAN_SUCCESS (0)
+[10/21 12:58:55.418871][info][3439624][RPCClientPort.cpp:20] create client port cost:102ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/21 12:58:55.420240][info][3439624][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[10/21 12:58:55.430535][info][3439627][AccelSensor.cpp:22] AccelSensor created
+[10/21 12:58:55.430550][info][3439627][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/21 12:58:55.431760][info][3439627][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 12:58:55.433665][info][3439627][GyroSensor.cpp:23] GyroSensor created!
+[10/21 12:58:55.433674][info][3439627][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/21 12:58:55.435125][info][3439627][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 12:58:55.437978][info][3439627][ScannerAbstractDevice.cpp:808] switchDepthWorkMode done! same mode. currentDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}, targetDepthMode:{name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+--- exit ---
+
+=== RUN 3 ===
+[launcher] Running live scan server in a worker process (up to 300s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/21 12:59:17.302120][info][3440548][Context.cpp:67] Context created with config: default config!
+[10/21 12:59:17.302223][info][3440548][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/21 12:59:17.309673][info][3440548][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/21 12:59:17.309696][info][3440548][DeviceManager.cpp:15] Current found device(s): (0)
+[10/21 12:59:17.309700][info][3440548][Context.cpp:82] EnumerateNetDevice:true
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/21 12:59:17.310473][info][3440564][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/21 12:59:17.310546][info][3440564][GVCPClient.cpp:325] bind 0.0.0.0:55384
+[10/21 12:59:17.310607][info][3440564][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/21 12:59:17.310637][info][3440564][GVCPClient.cpp:325] bind 0.0.0.0:61562
+[10/21 12:59:17.310679][info][3440564][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/21 12:59:17.310696][info][3440564][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/21 12:59:17.310720][info][3440564][GVCPClient.cpp:325] bind 0.0.0.0:61347
+[10/21 12:59:17.310759][info][3440564][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/21 12:59:17.311074][info][3440564][GVCPClient.cpp:325] bind 169.254.35.181:0
+[10/21 12:59:17.311108][info][3440564][GVCPClient.cpp:325] bind 0.0.0.0:56071
+[10/21 12:59:17.311131][info][3440564][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en9
+[10/21 12:59:17.311313][error][3440567][GVCPClient.cpp:355] sendto failed with error:49
+[10/21 12:59:17.312010][info][3440567][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/21 12:59:17.313107][info][3440567][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/21 12:59:18.360264][info][3440564][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/21 12:59:18.360366][info][3440564][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/21 12:59:19.369417][info][3440564][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/21 12:59:19.369497][info][3440564][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/21 12:59:19.369504][info][3440564][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/21 12:59:19.471370][info][3440564][Ethernet.cpp:244] rpc client connection state:1
+[10/21 12:59:19.471765][info][3440564][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 12:59:19.471778][info][3440564][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 12:59:19.471802][info][3440564][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 12:59:19.575443][info][3440564][RPCClientPort.cpp:20] create client port cost:104ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 12:59:19.683155][info][3440564][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 12:59:19.683329][info][3440564][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 12:59:19.705164][info][3440564][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:59:19.705200][info][3440564][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 12:59:19.911029][info][3440564][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:59:19.911111][info][3440564][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/21 12:59:19.911133][info][3440564][RPCClientPort.cpp:241] No stream need to stop
+[10/21 12:59:19.911146][info][3440564][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/21 12:59:19.911406][info][3440564][RPCClientPort.cpp:241] No stream need to stop
+[10/21 12:59:19.911420][info][3440564][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/21 12:59:20.012668][info][3440564][Ethernet.cpp:244] rpc client connection state:1
+[10/21 12:59:20.013314][info][3440564][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 12:59:20.013373][info][3440564][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 12:59:20.013395][info][3440564][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 12:59:20.117812][info][3440564][RPCClientPort.cpp:20] create client port cost:104ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 12:59:20.223711][info][3440564][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 12:59:20.226835][info][3440564][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 12:59:20.245445][info][3440564][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:59:20.245471][info][3440564][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 12:59:20.330751][info][3440573][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**7 logs in 3017ms, last: 12:59:18.363551**]
+[10/21 12:59:20.331512][info][3440572][GVCPClient.cpp:421] 0, 3, 248, 1 [**7 logs in 3019ms, last: 12:59:18.363550**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=1
+[worker] obscan_context_create_session                 -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_create_scan                    -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_preview                           -> OB_SCAN_SUCCESS (0)
+[10/21 12:59:20.471718][info][3440548][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/21 12:59:20.471978][info][3440548][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[10/21 12:59:20.473827][info][3440552][AccelSensor.cpp:22] AccelSensor created
+[10/21 12:59:20.473834][info][3440552][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/21 12:59:20.475330][info][3440552][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 12:59:20.475515][info][3440552][GyroSensor.cpp:23] GyroSensor created!
+[10/21 12:59:20.475523][info][3440552][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/21 12:59:20.476412][info][3440552][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 12:59:20.485881][info][3440552][ScannerAbstractDevice.cpp:808] switchDepthWorkMode done! same mode. currentDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}, targetDepthMode:{name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+--- exit ---
+
+=== RUN 4 ===
+[launcher] Running live scan server in a worker process (up to 300s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/21 12:59:42.302642][info][3442078][Context.cpp:67] Context created with config: default config!
+[10/21 12:59:42.302672][info][3442078][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/21 12:59:42.309649][info][3442078][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/21 12:59:42.309709][info][3442078][DeviceManager.cpp:15] Current found device(s): (0)
+[10/21 12:59:42.309713][info][3442078][Context.cpp:82] EnumerateNetDevice:true
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/21 12:59:42.310219][info][3442093][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/21 12:59:42.310254][info][3442093][GVCPClient.cpp:325] bind 0.0.0.0:57700
+[10/21 12:59:42.310329][info][3442093][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/21 12:59:42.310363][info][3442093][GVCPClient.cpp:325] bind 0.0.0.0:57277
+[10/21 12:59:42.310381][info][3442093][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/21 12:59:42.310399][info][3442093][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/21 12:59:42.310424][info][3442093][GVCPClient.cpp:325] bind 0.0.0.0:64105
+[10/21 12:59:42.310444][info][3442093][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/21 12:59:42.310454][info][3442093][GVCPClient.cpp:325] bind 169.254.35.181:0
+[10/21 12:59:42.310477][info][3442093][GVCPClient.cpp:325] bind 0.0.0.0:49309
+[10/21 12:59:42.310497][info][3442093][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en9
+[10/21 12:59:42.310645][error][3442096][GVCPClient.cpp:355] sendto failed with error:49
+[10/21 12:59:42.310956][info][3442096][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/21 12:59:42.310972][info][3442096][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/21 12:59:43.322081][info][3442093][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/21 12:59:43.322217][info][3442093][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/21 12:59:44.329681][info][3442093][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/21 12:59:44.329691][info][3442093][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/21 12:59:44.329697][info][3442093][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/21 12:59:44.434713][info][3442093][Ethernet.cpp:244] rpc client connection state:1
+[10/21 12:59:44.435385][info][3442093][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 12:59:44.435424][info][3442093][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 12:59:44.435436][info][3442093][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 12:59:44.536855][info][3442093][RPCClientPort.cpp:20] create client port cost:101ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 12:59:44.642197][info][3442093][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 12:59:44.642265][info][3442093][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 12:59:44.652710][info][3442093][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:59:44.652733][info][3442093][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 12:59:44.857673][info][3442093][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:59:44.857693][info][3442093][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/21 12:59:44.857701][info][3442093][RPCClientPort.cpp:241] No stream need to stop
+[10/21 12:59:44.857708][info][3442093][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/21 12:59:44.857827][info][3442093][RPCClientPort.cpp:241] No stream need to stop
+[10/21 12:59:44.857846][info][3442093][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/21 12:59:44.961050][info][3442093][Ethernet.cpp:244] rpc client connection state:1
+[10/21 12:59:44.961415][info][3442093][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 12:59:44.961429][info][3442093][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 12:59:44.961436][info][3442093][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 12:59:45.066328][info][3442093][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 12:59:45.171971][info][3442093][RPCClientPort.cpp:20] create client port cost:104ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 12:59:45.172086][info][3442093][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 12:59:45.183143][info][3442093][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 12:59:45.183165][info][3442093][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 12:59:45.317306][info][3442101][GVCPClient.cpp:421] 0, 3, 248, 1 [**7 logs in 3006ms, last: 12:59:43.325169**]
+[10/21 12:59:45.317306][info][3442102][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**7 logs in 3006ms, last: 12:59:43.325177**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=1
+[worker] obscan_context_create_session                 -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_create_scan                    -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_preview                           -> OB_SCAN_SUCCESS (0)
+[10/21 12:59:45.471990][info][3442078][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/21 12:59:45.472928][info][3442078][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[10/21 12:59:45.478070][info][3442081][AccelSensor.cpp:22] AccelSensor created
+[10/21 12:59:45.478080][info][3442081][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/21 12:59:45.479471][info][3442081][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 12:59:45.490413][info][3442081][GyroSensor.cpp:23] GyroSensor created!
+[10/21 12:59:45.490438][info][3442081][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/21 12:59:45.492667][info][3442081][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 12:59:45.500198][info][3442081][ScannerAbstractDevice.cpp:808] switchDepthWorkMode done! same mode. currentDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}, targetDepthMode:{name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+--- exit ---
+
+=== RUN 5 ===
+[launcher] Running live scan server in a worker process (up to 300s)...
+[vulkan_disable_interpose] loaded
+[worker] Loading OBScan SDK from: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.dylib
+[worker] Press Ctrl+C to stop early — this will run the normal pause/stop/destroy teardown
+[worker] instead of being killed mid-scan.
+[1;33mSDK version 3.5.3.260921[0m
+obscan_context_create
+library path: /Applications/CrealityScan.app/Contents/PlugIns/liborbbec_scan.3.5.3.dylib
+
+Parent directory: /Applications/CrealityScan.app/Contents/PlugIns
+
+scan log dir: /tmp/openscanner_live_server_scan_log
+[10/21 13:00:07.330688][info][3443043][Context.cpp:67] Context created with config: default config!
+[10/21 13:00:07.330709][info][3443043][Context.cpp:72] Context work_dir=/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+[10/21 13:00:07.334545][info][3443043][MacPal.cpp:159] Create PollingDeviceWatcher!
+[10/21 13:00:07.334566][info][3443043][DeviceManager.cpp:15] Current found device(s): (0)
+[10/21 13:00:07.334574][info][3443043][Context.cpp:82] EnumerateNetDevice:true
+[worker] obscan_context_create                         -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_get_device_management          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_data_msg_listener          -> OB_SCAN_SUCCESS (0)
+[worker] obscan_context_add_process_msg_listener       -> OB_SCAN_SUCCESS (0)
+[worker] obscan_device_management_add_device_msg_listener -> OB_SCAN_SUCCESS (0)
+[10/21 13:00:07.334861][info][3443058][GVCPClient.cpp:325] bind 127.0.0.1:0
+[10/21 13:00:07.334904][info][3443058][GVCPClient.cpp:325] bind 0.0.0.0:50030
+[10/21 13:00:07.334962][info][3443058][GVCPClient.cpp:325] bind 172.22.20.183:0
+[10/21 13:00:07.334989][info][3443058][GVCPClient.cpp:325] bind 0.0.0.0:49165
+[10/21 13:00:07.335010][info][3443058][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en0
+[10/21 13:00:07.335024][info][3443058][GVCPClient.cpp:325] bind 172.22.20.198:0
+[10/21 13:00:07.335047][info][3443058][GVCPClient.cpp:325] bind 0.0.0.0:51688
+[10/21 13:00:07.335065][info][3443058][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en1
+[10/21 13:00:07.335077][info][3443058][GVCPClient.cpp:325] bind 169.254.35.181:0
+[10/21 13:00:07.335101][info][3443058][GVCPClient.cpp:325] bind 0.0.0.0:62526
+[10/21 13:00:07.335115][info][3443058][GVCPClient.cpp:239] local mac address: 02:00:00:00:00:00,local ip address:0.0.0.0, interfaceName:en9
+[10/21 13:00:07.335240][error][3443061][GVCPClient.cpp:355] sendto failed with error:49
+[10/21 13:00:07.335505][info][3443061][GVCPClient.cpp:421] 0, 3, 248, 1
+[10/21 13:00:07.335521][info][3443061][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0
+[10/21 13:00:08.348043][info][3443058][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03
+[10/21 13:00:08.348130][info][3443058][Ethernet.cpp:69] NetDeviceWatcher detected new device, uid:30:30:34:30:35:30
+[10/21 13:00:09.352807][info][3443058][DeviceManager.cpp:188] Device changed! removed: 0, added: 1
+[10/21 13:00:09.352817][info][3443058][DeviceManager.cpp:15] Current device(s) list: (1)
+[10/21 13:00:09.352822][info][3443058][DeviceManager.cpp:24] 	- Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN, Connection: USB3.0
+[10/21 13:00:09.454173][info][3443058][Ethernet.cpp:244] rpc client connection state:1
+[10/21 13:00:09.455163][info][3443058][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 13:00:09.455194][info][3443058][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 13:00:09.455204][info][3443058][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 13:00:09.560158][info][3443058][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 13:00:09.665304][info][3443058][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 13:00:09.665379][info][3443058][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 13:00:09.674360][info][3443058][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 13:00:09.674378][info][3443058][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 13:00:09.879979][info][3443058][PioneerDevice.cpp:59] Pioneer device destroyed! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 13:00:09.879993][info][3443058][AbstractDevice.cpp:110] Abstract device destroyed!
+[10/21 13:00:09.880000][info][3443058][RPCClientPort.cpp:241] No stream need to stop
+[10/21 13:00:09.880009][info][3443058][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro IMU
+[10/21 13:00:09.880213][info][3443058][RPCClientPort.cpp:241] No stream need to stop
+[10/21 13:00:09.880266][info][3443058][RPCClientPort.cpp:46] rpc client destroyed:Creality Raptor Pro Depth Camera
+[10/21 13:00:09.984619][info][3443058][Ethernet.cpp:244] rpc client connection state:1
+[10/21 13:00:09.985496][info][3443058][AbstractDevice.cpp:87] SDK Version - Commit: 37c5cb4a4, Built at: 2026-09-03 18:46:06
+[10/21 13:00:09.985510][info][3443058][ScannerAbstractDevice.cpp:36] ScannerAbstractDevice default constructor ...
+[10/21 13:00:09.985523][info][3443058][PioneerDevice.cpp:36] PioneerDevice default constructor ...
+[10/21 13:00:10.088706][info][3443058][RPCClientPort.cpp:20] create client port cost:103ms,port name:Creality Raptor Pro Depth Camera,client port:10010
+[10/21 13:00:10.195789][info][3443058][RPCClientPort.cpp:20] create client port cost:105ms,port name:Creality Raptor Pro IMU,client port:10011
+[10/21 13:00:10.195827][info][3443058][RPCClientPort.cpp:69] set switch depth work mode operation timeout to 5000ms
+[10/21 13:00:10.203701][info][3443058][PioneerDevice.cpp:54] Pioneer device created! PID:3075, SN:CR0886100SN, depthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+[10/21 13:00:10.203732][info][3443058][DeviceManager.cpp:157] Device created successfully! Name: CR-Scan Raptor Pro, PID: 0x0c03, SN/ID: CR0886100SN
+[10/21 13:00:10.340116][info][3443067][GVCPClient.cpp:421] 0, 3, 248, 1 [**7 logs in 3004ms, last: 13:00:08.348979**]
+[10/21 13:00:10.344412][info][3443068][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**7 logs in 3008ms, last: 13:00:08.348981**]
+[worker] obscan_device_management_get_device_num -> OB_SCAN_SUCCESS, count=1
+[worker] obscan_context_create_session                 -> OB_SCAN_SUCCESS (0)
+[worker] obscan_session_create_scan                    -> OB_SCAN_SUCCESS (0)
+[worker] obscan_scan_preview                           -> OB_SCAN_SUCCESS (0)
+[10/21 13:00:10.489713][info][3443043][RPCClientPort.cpp:20] create client port cost:100ms,port name:Creality Raptor Pro IR Camera,client port:10013
+[10/21 13:00:10.490161][info][3443043][PioneerDevice.cpp:584] OB_SENSOR_IR_LEFT sensor has been created!
+[10/21 13:00:10.491585][info][3443046][AccelSensor.cpp:22] AccelSensor created
+[10/21 13:00:10.491592][info][3443046][ScannerAbstractDevice.cpp:483] Accel sensor has been created!
+[10/21 13:00:10.492617][info][3443046][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 13:00:10.492681][info][3443046][GyroSensor.cpp:23] GyroSensor created!
+[10/21 13:00:10.492686][info][3443046][ScannerAbstractDevice.cpp:519] Gyro sensor has been created!
+[10/21 13:00:10.493458][info][3443046][RPCClientPort.cpp:381] Stop imu stream error: std::bad_cast
+[10/21 13:00:10.495500][info][3443046][ScannerAbstractDevice.cpp:808] switchDepthWorkMode done! same mode. currentDepthMode: {name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}, targetDepthMode:{name: Laser Lines Scan, checksum(hex): 551cc6b785df988e243c449d3d38086c, optionCode: 46(0x2e000000)}
+--- exit ---
+

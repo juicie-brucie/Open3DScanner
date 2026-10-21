@@ -28,6 +28,12 @@ add_executable(device_probe_test device_probe_test.cpp)
 target_link_libraries(device_probe_test PRIVATE openscanner_engine)
 add_test(NAME device_probe_test COMMAND device_probe_test)
 
+# Hardware-free test for the vendor model.ply reader and the session-folder
+# resolver (row #149): small synthetic fixtures, the named failure paths.
+add_executable(model_ply_test model_ply_test.cpp)
+target_link_libraries(model_ply_test PRIVATE openscanner_engine)
+add_test(NAME model_ply_test COMMAND model_ply_test)
+
 # Hardware-free test for the per-client broadcast counters (row #163): a real
 # loopback server, fast clients, the 1-vs-8 fan-out, and a stalled client that
 # exercises the drop and the send timeout.

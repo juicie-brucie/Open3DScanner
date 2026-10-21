@@ -22,7 +22,8 @@
 //       capture started), so the replay paces on the inter-arrival deltas
 //       between stamps. Each frame is routed by the interface suffix on
 //       its method name to that interface's own port.
-//   raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]
+//   raptor_client --live <host> [port] [seconds] [out.raw] [--daemon vendor|shim]
+//       [--pull-ms N] [--quiet]
 //       one interface per run: the port picks the interface and every method
 //       name carries that interface's suffix (ob_rpc_start_stream0-2-12 on
 //       port 10013, ob_rpc_start_stream0-2-10 on port 10010).
@@ -40,10 +41,14 @@
 //       [--reply-timeout-ms N] bounds the connect and every reply read
 //       (default 5000); on expiry the run names the endpoint, interface and
 //       unanswered method and exits 3 instead of hanging.
+//       [--daemon shim] dials the shim's ports instead of the vendor daemon's
+//       and logs the selection; absent, the run is unchanged. The ports and
+//       the log line are engine/include/openscanner/daemon_switch.h (row #179).
 //   raptor_client --selftest-dump              the reply-structure dump, no device
 //   raptor_client --selftest-capture           the capture round-trip, no device
 //   raptor_client --selftest-live              the live path's method names, no device
 //   raptor_client --selftest-live-timeout      the live path's bounded wait, no device
+//   raptor_client --selftest-telemetry         the frame-path timing arithmetic, no device
 //   raptor_client --capture-dump <dir>         read a capture bundle back
 //
 // Wall: tools/** only. Clean-room: implements the spec; no vendor binary.
@@ -76,6 +81,9 @@
 #include <vector>
 
 #include "capture.h"
+#include "telemetry.h"
+
+#include "openscanner/daemon_switch.h"
 
 namespace {
 
@@ -430,18 +438,35 @@ public:
     // envelope [1, msgid, nil, result]; the caller unwraps it with Result().
     // The read is bounded by timeout_ms_ (row #161): an unanswered call is
     // a Timeout value, never an indefinite wait.
-    Value call(const std::string& method, const Bytes& params) {
+    Value call(const std::string& method, const Bytes& params, bool frame_call = false) {
         Packer p;
         p.array(4);
         p.uint(0);
         p.uint(++msgid_);
         p.str(method);
         p.raw(params.data(), params.size());
-        if (!WriteAll(p.out)) return Error("write failed");
+        // Row #175: the latency clock starts at the write, so a slow send is
+        // part of what the caller waited for.
+        const auto t0 = std::chrono::steady_clock::now();
+        if (!WriteAll(p.out)) {
+            last_timing_ = CallTiming{ElapsedUs(t0), p.out.size(), 0, false};
+            if (telemetry_) telemetry_->RecordOtherCall(last_timing_.request_bytes, 0);
+            return Error("write failed");
+        }
         Value resp = ReadMessageWithDeadline(timeout_ms_);
+        last_timing_ = CallTiming{ElapsedUs(t0), p.out.size(), last_raw_.size(),
+                                  resp.kind == Value::Kind::Timeout};
         // The capture records the bytes as they arrived, so it runs before
         // the shape checks: a reply that fails them is still evidence.
         RecordCapture(method, resp, timeout_ms_);
+        if (telemetry_) {
+            if (frame_call) {
+                telemetry_->RecordFrameCall(last_timing_.elapsed_us, last_timing_.request_bytes,
+                                            last_timing_.reply_bytes, last_timing_.timed_out);
+            } else {
+                telemetry_->RecordOtherCall(last_timing_.request_bytes, last_timing_.reply_bytes);
+            }
+        }
         if (resp.kind == Value::Kind::Timeout) return resp;
         if (resp.kind != Value::Kind::Array || resp.array.size() < 4) return Error("bad response");
         if (resp.array[0].kind != Value::Kind::UInt || resp.array[0].u != 1) return Error("not a response");
@@ -476,6 +501,22 @@ public:
     // prints a head of them, so the envelope's own bytes sit next to the
     // unwrapped result.
     const Bytes& lastRaw() const { return last_raw_; }
+
+    // What the last call cost (row #175): send -> complete reply, in
+    // microseconds, and the bytes that crossed the socket for it. The dump
+    // prints these on the reply line; the run summary accumulates them.
+    struct CallTiming {
+        uint64_t elapsed_us = 0;
+        size_t request_bytes = 0;
+        size_t reply_bytes = 0;
+        bool timed_out = false;
+    };
+    const CallTiming& last_timing() const { return last_timing_; }
+
+    // Row #175: when set, every call on this connection is recorded. A frame
+    // call is recorded as a latency sample; everything else contributes wire
+    // bytes only (the property sets are not frame latency).
+    void set_telemetry(raptor::Telemetry* telemetry) { telemetry_ = telemetry; }
 
     // The port this connection talks to.
     uint16_t port() const { return port_; }
@@ -528,7 +569,14 @@ private:
     int timeout_ms_ = kDefaultLiveTimeoutMs;
     std::string connect_error_;
     bool connect_timed_out_ = false;
+    static uint64_t ElapsedUs(std::chrono::steady_clock::time_point start) {
+        return (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
+                   std::chrono::steady_clock::now() - start)
+            .count();
+    }
     Bytes last_raw_;
+    CallTiming last_timing_;
+    raptor::Telemetry* telemetry_ = nullptr;
     bool last_read_ok_ = false;
     bool last_timed_out_ = false;
     int capture_read_timeout_ms_ = 0;
@@ -549,6 +597,7 @@ private:
         uint8_t tmp[65536];
         last_read_ok_ = false;
         last_timed_out_ = false;
+        last_raw_.clear();
         for (;;) {
             Reader r(buf.data(), buf.size());
             Value v = r.parse();
@@ -580,6 +629,7 @@ private:
         uint8_t tmp[65536];
         last_read_ok_ = false;
         last_timed_out_ = false;
+        last_raw_.clear();
         for (;;) {
             Reader r(buf.data(), buf.size());
             Value v = r.parse();
@@ -788,7 +838,8 @@ bool IsGetFrameMethod(const std::string& method) {
 // The dump's text for one reply: the method, the kind of the unwrapped
 // result, the msgid, the kind of the envelope the reply arrived in, and
 // the result's shape.
-std::string FormatReplyDump(const std::string& method, const Value& envelope, const Bytes& raw) {
+std::string FormatReplyDump(const std::string& method, const Value& envelope, const Bytes& raw,
+                            const RpcClient::CallTiming* timing = nullptr) {
     Value result = Result(envelope);
     std::string msgid = "-";
     if (envelope.kind == Value::Kind::Array && envelope.array.size() >= 2 &&
@@ -798,6 +849,14 @@ std::string FormatReplyDump(const std::string& method, const Value& envelope, co
     std::string line = "[dump] reply method=" + method + " kind=" + KindName(result.kind) +
                        " msgid=" + msgid + " envelope=" + KindName(envelope.kind) +
                        " result=" + DescribeResult(result);
+    // Row #175: the per-call latency sits on the reply line, so a
+    // --dump-replies run reads the timing the summary is computed from.
+    // Absent when the caller has no measurement (the dump selftest's
+    // synthetic values), which keeps the recorded dump shapes unchanged.
+    if (timing) {
+        line += " lat=" + std::to_string(timing->elapsed_us) + "us wire=" +
+                std::to_string(timing->request_bytes + timing->reply_bytes) + "B";
+    }
     if (IsGetFrameMethod(method)) {
         line += "\n[dump] get_frame raw len=" + std::to_string(raw.size()) +
                 " head=[" + HexBytes(raw, kDumpRawBytes) + "]";
@@ -812,9 +871,10 @@ bool g_dump_replies = false;
 // string so the lines can be compared byte for byte.
 std::string* g_dump_sink = nullptr;
 
-void DumpReply(const std::string& method, const Value& envelope, const Bytes& raw) {
+void DumpReply(const std::string& method, const Value& envelope, const Bytes& raw,
+               const RpcClient::CallTiming* timing = nullptr) {
     if (!g_dump_replies) return;
-    std::string text = FormatReplyDump(method, envelope, raw);
+    std::string text = FormatReplyDump(method, envelope, raw, timing);
     if (g_dump_sink) {
         *g_dump_sink += text + "\n";
     } else {
@@ -1356,6 +1416,14 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
     std::printf("[live] start_stream -> %s\n", started.kind == Value::Kind::Bool && started.b ? "true" : "non-error");
     std::fflush(stdout);
 
+    // Row #175: the timing window opens once the stream is running, so the
+    // first-frame mark and the rates describe the frame loop and not the
+    // handshake. The telemetry is attached after start_stream, so the
+    // start's own bytes are outside the window's wire total.
+    raptor::Telemetry telemetry;
+    rpc.set_telemetry(&telemetry);
+    telemetry.Begin();
+
     const std::string get_frame_method = MethodFor(route, "ob_rpc_get_frame");
     uint16_t request_id = 0;
     bool saved = false;
@@ -1373,13 +1441,13 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
         p.array(0);
         // The reply is the envelope [1, msgid, nil, result]; the frame is
         // the payload at index 3, so unwrap before looking at it.
-        Value envelope = rpc.call(get_frame_method, p.out);
+        Value envelope = rpc.call(get_frame_method, p.out, /*frame_call=*/true);
         if (envelope.kind == Value::Kind::Timeout) {
             std::fprintf(stderr, "%s\n", LiveTimeoutMessage(host, port, route, get_frame_method, timeout_ms).c_str());
             st.timed_out = true;
             break;
         }
-        DumpReply(get_frame_method, envelope, rpc.lastRaw());
+        DumpReply(get_frame_method, envelope, rpc.lastRaw(), &rpc.last_timing());
         Value frame = Result(envelope);
         // The result is the 11-element array: what it holds is the band's
         // length, or the no-data form.
@@ -1394,6 +1462,12 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
             payload = &frame.array[kFrameBufferElement].bin;
         } else if (frame.kind == Value::Kind::Bin) {
             payload = &frame.bin;
+        }
+        // Row #175: the frame path's own bytes, and the first one that
+        // carried a frame — the mark is set once and later frames leave it.
+        if (payload && !payload->empty()) {
+            telemetry.AddPayload(payload->size());
+            telemetry.MarkFirstFrame();
         }
         bool should_log = false;
         if (frame.kind == Value::Kind::Error) {
@@ -1450,6 +1524,9 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
             break;
         }
     }
+    // Row #175: snapshot at the loop's end, before stop_stream, so the
+    // window is the frame loop's own span.
+    const raptor::TimingSummary timing = telemetry.Snapshot();
     // The stop is its own method, with the same parameters the start
     // sent (protocol-spec.md §7). A connection that already timed out is
     // not asked to stop: that would spend a second bound on a daemon that
@@ -1473,6 +1550,7 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
     std::printf("[live] done: get_frame=%llu data=%llu empty=%llu error=%llu; %s\n",
                 (unsigned long long)st.get_calls, (unsigned long long)st.data, (unsigned long long)st.empty,
                 (unsigned long long)st.errors, st.timed_out ? "timed out, stream not stopped" : "stream stopped");
+    std::printf("%s\n", raptor::FormatTimingSummary(timing, route.name).c_str());
     DumpTally(tally);
     if (st.timed_out) return kExitLiveTimeout;
     return st.data > 0 ? 0 : kExitLiveFailed;
@@ -3265,10 +3343,14 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
     std::printf("[replay] sending unchanged request frames (reply timeout %d ms)\n", reply_timeout_ms);
     uint64_t bins = 0, empties = 0, errors = 0;
     FrameTally tally;
+    // Row #175: the replay's timing window, over the sends it actually makes.
+    raptor::Telemetry telemetry;
+    telemetry.Begin();
     for (size_t i = 0; i < frames.size(); ++i) {
         int64_t wait = (i == 0) ? FirstFrameWaitMs(deltas[i]) : deltas[i];
         if (wait > 0) std::this_thread::sleep_for(std::chrono::milliseconds(wait));
         RpcClient& rpc = *conns[frame_suffix[i]];
+        const auto t0 = std::chrono::steady_clock::now();
         if (!rpc.sendRaw(frames[i])) {
             std::fprintf(stderr, "[replay] frame %zu (%s): send failed\n", i + 1,
                          frame_suffix[i].c_str());
@@ -3280,7 +3362,12 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
         // frame reads as the envelope array ("empty") — the bug row #122
         // names. A Timeout is not an array, so it passes through unchanged.
         Value envelope = rpc.readReplyWithDeadline(reply_timeout_ms, frame_method[i]);
-        DumpReply(frame_method[i], envelope, rpc.lastRaw());
+        const RpcClient::CallTiming timing{
+            (uint64_t)std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - t0)
+                .count(),
+            frames[i].size(), rpc.lastRaw().size(), envelope.kind == Value::Kind::Timeout};
+        DumpReply(frame_method[i], envelope, rpc.lastRaw(), &timing);
         Value reply = Result(envelope);
         if (IsGetFrameMethod(frame_method[i])) {
             // The result is the 11-element array: the band's length, or the
@@ -3288,6 +3375,16 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
             FrameArray fa = ParseFrameArray(reply);
             DumpFrameSummary(fa, reply);
             tally.Add(rpc.port(), fa);
+            telemetry.RecordFrameCall(timing.elapsed_us, timing.request_bytes, timing.reply_bytes,
+                                      timing.timed_out);
+            const size_t payload_bytes =
+                fa.is_form ? fa.band_len : (reply.kind == Value::Kind::Bin ? reply.bin.size() : 0);
+            if (payload_bytes > 0) {
+                telemetry.AddPayload(payload_bytes);
+                telemetry.MarkFirstFrame();
+            }
+        } else {
+            telemetry.RecordOtherCall(timing.request_bytes, timing.reply_bytes);
         }
         if (reply.kind == Value::Kind::Bin) {
             ++bins;
@@ -3313,8 +3410,167 @@ int Replay(const std::string& host, const RouteTable& routes, const std::string&
     }
     std::printf("[replay] done: bin=%llu empty=%llu error=%llu\n", (unsigned long long)bins,
                 (unsigned long long)empties, (unsigned long long)errors);
+    std::printf("%s\n", raptor::FormatTimingSummary(telemetry.Snapshot(), "replay").c_str());
     DumpTally(tally);
     return bins > 0 ? 0 : 1;
+}
+
+// ---------------------------------------------------------------------------
+// Row #175: the frame-path timing arithmetic and the first-frame marker.
+//
+// Two halves, both device-free:
+//   - the arithmetic on an injected clock, so the percentile rule, the rates
+//     and the first-frame stamp are exact values and not "looks reasonable";
+//   - a real live run against the loopback interface mock, so the line the
+//     operator reads is the line the run actually prints.
+// ---------------------------------------------------------------------------
+int TelemetrySelftest() {
+    int failures = 0;
+    auto check = [&](const std::string& name, bool pass) {
+        std::printf("[telemetry-selftest] %-58s %s\n", name.c_str(), pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+
+    // -- the arithmetic, on a clock we control --
+    {
+        uint64_t now = 1000;
+        raptor::Telemetry t([&now] { return now; });
+        t.Begin();
+        for (int i = 1; i <= 20; ++i) {
+            t.RecordFrameCall((uint64_t)i, 100, 200, /*timed_out=*/false);
+            t.AddPayload(7);
+        }
+        now = 1500;
+        t.MarkFirstFrame();
+        now = 900000;
+        t.MarkFirstFrame();  // a later frame does not move the mark
+        now = 1001000;       // window = 1 000 000 us = 1 s
+        const raptor::TimingSummary s = t.Snapshot();
+        check("twenty calls: n is 20", s.calls == 20);
+        check("p50 is the 10th sample (nearest rank), not an interpolation", s.p50_us == 10);
+        check("p95 is the 19th sample (nearest rank)", s.p95_us == 19);
+        check("max is the largest sample", s.max_us == 20);
+        check("mean is 10.5 us, rounded to 11", s.mean_us == 11);
+        check("timeouts are counted separately from the samples", s.timeouts == 0);
+        check("payload and wire totals sum every call", s.payload_bytes == 140 && s.wire_bytes == 6000);
+        check("bytes/s are over the 1 s window",
+              (long)s.payload_bytes_per_s == 140 && (long)s.wire_bytes_per_s == 6000);
+        check("the clock is named", std::string(raptor::Telemetry::clock_name()) == "steady_clock");
+        check("the first frame is stamped once, 500 us in", s.have_first_frame && s.first_frame_us == 500);
+        const std::string line = raptor::FormatTimingSummary(s, "depth");
+        check("the summary line carries every field with its unit",
+              line.rfind("[timing] depth: n=20 ", 0) == 0 &&
+                  line.find("clock=steady_clock") != std::string::npos &&
+                  line.find("p50=10us") != std::string::npos &&
+                  line.find("p95=19us") != std::string::npos &&
+                  line.find("max=20us") != std::string::npos &&
+                  line.find("payload=140B/s") != std::string::npos &&
+                  line.find("wire=6000B/s") != std::string::npos &&
+                  line.find("first_frame=500us") != std::string::npos &&
+                  line.find("timeouts=0") != std::string::npos);
+    }
+
+    {
+        uint64_t now = 0;
+        raptor::Telemetry one([&now] { return now; });
+        one.Begin();
+        one.RecordFrameCall(42, 1, 2, false);
+        raptor::TimingSummary s = one.Snapshot();
+        check("one sample: p50 = p95 = max = mean",
+              s.p50_us == 42 && s.p95_us == 42 && s.max_us == 42 && s.mean_us == 42);
+
+        raptor::Telemetry two([&now] { return now; });
+        two.Begin();
+        two.RecordFrameCall(5, 0, 0, false);
+        two.RecordFrameCall(9, 0, 0, false);
+        s = two.Snapshot();
+        check("two samples: p50 is the lower, p95 the upper, mean between",
+              s.p50_us == 5 && s.p95_us == 9 && s.mean_us == 7);
+
+        raptor::Telemetry timeout([&now] { return now; });
+        timeout.Begin();
+        timeout.RecordFrameCall(5000000, 10, 0, true);
+        s = timeout.Snapshot();
+        check("a timed-out call is a latency sample and a timeout count", s.calls == 1 && s.timeouts == 1);
+
+        raptor::Telemetry none([&now] { return now; });
+        none.Begin();
+        s = none.Snapshot();
+        check("no calls: empty, no first frame, no division by zero",
+              s.empty() && s.calls == 0 && !s.have_first_frame && s.payload_bytes_per_s == 0.0 &&
+                  s.wire_bytes_per_s == 0.0);
+
+        uint64_t tick = 5;
+        raptor::Telemetry zero([&tick] { return tick; });
+        zero.Begin();
+        zero.RecordFrameCall(1, 10, 10, false);
+        s = zero.Snapshot();
+        check("a zero-length window reports zero rates", s.window_us == 0 && s.wire_bytes_per_s == 0.0);
+    }
+
+    // -- a real live run against the loopback mock --
+    RouteTable routes;
+    const InterfaceRoute* depth = RouteForPort(routes, 10010);
+    if (!depth) {
+        std::printf("[telemetry-selftest] SKIP (the depth route is missing)\n");
+        return failures ? 1 : 0;
+    }
+    MockInterfaceDaemon daemon(*depth);
+    if (!daemon.Start()) {
+        std::printf("[telemetry-selftest] SKIP (the loopback mock could not start)\n");
+        return failures ? 1 : 0;
+    }
+    RouteTable live_routes;
+    live_routes.SetPortByName("depth", daemon.port());
+    const InterfaceRoute* route = RouteForPort(live_routes, daemon.port());
+
+    char out_path[] = "/tmp/raptor_tm_XXXXXX";
+    int ofd = mkstemp(out_path);
+    if (ofd < 0) {
+        daemon.Stop();
+        std::printf("[telemetry-selftest] SKIP (mkstemp failed)\n");
+        return failures ? 1 : 0;
+    }
+    close(ofd);
+
+    FdRedirect out_cap;
+    const bool captured = out_cap.Begin(STDOUT_FILENO, "/tmp/raptor_tm_out_XXXXXX");
+    g_dump_replies = true;
+    std::string dump_text;
+    g_dump_sink = &dump_text;
+    LiveStats st;
+    const int rc = Live("127.0.0.1", daemon.port(), *route, 5, out_path, 0, 3, false, nullptr, &st,
+                        kDefaultLiveTimeoutMs);
+    g_dump_replies = false;
+    g_dump_sink = nullptr;
+    const std::string out_text = out_cap.Finish();
+    daemon.Stop();
+    unlink(out_path);
+
+    check("the loopback live run succeeds", captured && rc == 0 && st.get_calls == 3);
+    const size_t at = out_text.find("[timing] depth: ");
+    check("the run prints the timing line beside its counters", at != std::string::npos);
+    if (at != std::string::npos) {
+        size_t end = out_text.find('\n', at);
+        if (end == std::string::npos) end = out_text.size();
+        const std::string line = out_text.substr(at, end - at);
+        // The observed line is the evidence a record cites, so print it.
+        std::printf("[telemetry-selftest] observed: %s\n", line.c_str());
+        check("the line counts the three frame pulls", line.find("n=3 ") != std::string::npos);
+        check("the line carries a latency and a wire rate",
+              line.find("p50=") != std::string::npos && line.find("max=") != std::string::npos &&
+                  line.find("wire=") != std::string::npos);
+        check("the mock's bands make the payload rate non-zero",
+              line.find("payload=0B/s") == std::string::npos);
+        check("the first frame is marked, not 'none'", line.find("first_frame=none") == std::string::npos);
+        check("the loopback run sees no timeout", line.find("timeouts=0") != std::string::npos);
+    }
+    check("the per-call dump line carries latency and wire bytes",
+          dump_text.find("method=ob_rpc_get_frame0-2-10") != std::string::npos &&
+              dump_text.find("lat=") != std::string::npos && dump_text.find("wire=") != std::string::npos);
+
+    std::printf("[telemetry-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
 }
 
 // Row #117: the bounded reply read, exercised with no device. A loopback
@@ -3442,6 +3698,7 @@ int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--selftest-dump") return ReplyDumpSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--selftest-capture") return CaptureSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--selftest-live") return LiveSuffixSelftest();
+    if (argc >= 2 && std::string(argv[1]) == "--selftest-telemetry") return TelemetrySelftest();
     if (argc >= 2 && std::string(argv[1]) == "--selftest-live-timeout") return LiveTimeoutSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
@@ -3518,6 +3775,8 @@ int main(int argc, char** argv) {
         int max_frames = 0;
         int timeout_ms = kDefaultLiveTimeoutMs;
         bool log = true;
+        std::string daemon_name;
+        bool daemon_given = false;
         std::string capture_dir;
         int capture_seconds = kDefaultCaptureSeconds;
         uint64_t capture_bytes = kDefaultCaptureBytes;
@@ -3536,6 +3795,10 @@ int main(int argc, char** argv) {
                 else if (a == "--capture" && i + 1 < argc) capture_dir = argv[++i];
                 else if (a == "--capture-seconds" && i + 1 < argc) capture_seconds = std::atoi(argv[++i]);
                 else if (a == "--capture-bytes" && i + 1 < argc) capture_bytes = std::strtoull(argv[++i], nullptr, 10);
+                else if (a == "--daemon" && i + 1 < argc) {
+                    daemon_name = argv[++i];
+                    daemon_given = true;
+                }
                 else if ((a == "--ir-port" || a == "--depth-port") && i + 1 < argc) {
                     int p = std::atoi(argv[++i]);
                     std::string name = (a == "--ir-port") ? "IR" : "depth";
@@ -3552,6 +3815,26 @@ int main(int argc, char** argv) {
                 positionals.push_back(a);
             }
         }
+        // Row #179: the explicit daemon switch. Without the flag nothing
+        // changes — the vendor daemon's ports and no extra log line. With it,
+        // the selected daemon's ports are the route table's, and the choice is
+        // logged. Nothing here starts or stops either daemon.
+        openscanner::DaemonSelection selection = openscanner::VendorDaemon();
+        if (daemon_given) {
+            if (!openscanner::ParseDaemonName(daemon_name, &selection)) {
+                std::fprintf(stderr, "--daemon wants %s (got '%s')\n", openscanner::DaemonNames(),
+                             daemon_name.c_str());
+                return 2;
+            }
+            if (selection.is_shim()) {
+                routes.SetPortByName("IR", selection.ir_port);
+                routes.SetPortByName("depth", selection.depth_port);
+                // A bare `--live host --daemon shim` streams the shim's IR
+                // interface; an explicit port still wins.
+                if (positionals.size() < 2) port = selection.ir_port;
+            }
+        }
+
         if (positionals.size() > 0) host = positionals[0];
         if (positionals.size() > 1) port = (uint16_t)std::atoi(positionals[1].c_str());
         if (positionals.size() > 2) seconds = std::atoi(positionals[2].c_str());
@@ -3583,6 +3866,12 @@ int main(int argc, char** argv) {
         if (!route) {
             std::fprintf(stderr, "[live] %s\n", UnknownPortMessage(routes, port).c_str());
             return 2;
+        }
+        if (daemon_given) {
+            // The switch is explicit and logged; the default run prints
+            // nothing new, so existing records and parsers are unaffected.
+            std::printf("[live] %s\n", openscanner::DescribeDaemon(selection).c_str());
+            std::fflush(stdout);
         }
         CaptureSession capture;
         if (!capture_dir.empty() && !capture.Start(capture_dir, capture_seconds, capture_bytes)) return 2;
@@ -3619,7 +3908,7 @@ int main(int argc, char** argv) {
         "      --reply-timeout-ms bounds each reply read (default 2000); on\n"
         "      expiry the replay names the frame and its interface and exits\n"
         "      non-zero.\n"
-        "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
+        "  raptor_client --live <host> [port] [seconds] [out.raw] [--daemon vendor|shim] [--pull-ms N] [--quiet]\n"
         "      [--frames N] [--reply-timeout-ms N] [--dump-replies] [--capture DIR]\n"
         "      [--capture-seconds N] [--capture-bytes N] [--ir-port N] [--depth-port N]\n"
         "      ONE interface per run: the port picks the interface, and every\n"

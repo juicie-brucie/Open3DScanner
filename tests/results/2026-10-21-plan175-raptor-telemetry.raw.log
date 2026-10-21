@@ -1,0 +1,324 @@
+=== RUN 1: IR port 10013 (first call after RPCServer start) ===
+[live] connected 127.0.0.1:10013 (IR, suffix 0-2-12, pull_ms=0, per-call logging=on, timeout 5000 ms)
+[live] calling ob_rpc_start_stream0-2-12
+[live] start_stream -> true
+[live] GET_FRAME #1 -> empty (kind=7)
+[live] SET prop=3 value=0 reqid=1 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=2 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=3 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=4 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=5 -> rpc kind=5
+[live] GET_FRAME #2 -> empty (kind=7)
+[live] SET prop=3 value=0 reqid=6 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=7 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=8 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=9 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=10 -> rpc kind=5
+[live] GET_FRAME #3 -> empty (kind=7)
+[live] SET prop=3 value=0 reqid=11 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=12 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=13 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=14 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=15 -> rpc kind=5
+[live] saved first frame: /tmp/raptor_frame.raw (2304000 bytes)
+[live] GET_FRAME #4 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=16 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=17 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=18 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=19 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=20 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=21 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=22 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=23 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=24 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=25 -> rpc kind=5
+[live] GET_FRAME #6 -> band(2304000) head=[10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=26 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=27 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=28 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=29 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=30 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=31 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=32 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=33 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=34 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=35 -> rpc kind=5
+[live] GET_FRAME #8 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=36 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=37 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=38 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=39 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=40 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=41 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=42 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=43 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=44 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=45 -> rpc kind=5
+[live] GET_FRAME #10 -> band(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=46 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=47 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=48 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=49 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=50 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=51 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=52 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=53 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=54 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=55 -> rpc kind=5
+[live] GET_FRAME #12 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=56 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=57 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=58 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=59 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=60 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=61 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=62 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=63 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=64 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=65 -> rpc kind=5
+[live] GET_FRAME #14 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=66 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=67 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=68 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=69 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=70 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=71 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=72 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=73 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=74 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=75 -> rpc kind=5
+[live] GET_FRAME #16 -> band(2304000) head=[11 11 10 10 11 10 10 10 10 0f 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=76 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=77 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=78 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=79 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=80 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=81 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=82 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=83 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=84 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=85 -> rpc kind=5
+[live] GET_FRAME #18 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=86 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=87 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=88 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=89 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=90 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=91 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=92 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=93 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=94 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=95 -> rpc kind=5
+[live] GET_FRAME #20 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=96 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=97 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=98 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=99 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=100 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=101 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=102 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=103 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=104 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=105 -> rpc kind=5
+[live] GET_FRAME #22 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 …]
+[live] SET prop=3 value=0 reqid=106 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=107 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=108 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=109 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=110 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=111 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=112 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=113 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=114 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=115 -> rpc kind=5
+[live] GET_FRAME #24 -> band(2304000) head=[10 10 11 10 11 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=116 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=117 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=118 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=119 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=120 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=121 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=122 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=123 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=124 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=125 -> rpc kind=5
+[live] GET_FRAME #26 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=126 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=127 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=128 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=129 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=130 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=131 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=132 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=133 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=134 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=135 -> rpc kind=5
+[live] GET_FRAME #28 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=136 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=137 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=138 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=139 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=140 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=141 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=142 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=143 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=144 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=145 -> rpc kind=5
+[live] GET_FRAME #30 -> band(2304000) head=[10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=146 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=147 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=148 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=149 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=150 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=151 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=152 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=153 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=154 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=155 -> rpc kind=5
+[live] GET_FRAME #32 -> band(2304000) head=[10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=156 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=157 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=158 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=159 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=160 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=161 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=162 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=163 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=164 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=165 -> rpc kind=5
+[live] GET_FRAME #34 -> band(2304000) head=[11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=166 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=167 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=168 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=169 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=170 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=171 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=172 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=173 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=174 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=175 -> rpc kind=5
+[live] GET_FRAME #36 -> band(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=176 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=177 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=178 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=179 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=180 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=181 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=182 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=183 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=184 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=185 -> rpc kind=5
+[live] GET_FRAME #38 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=186 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=187 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=188 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=189 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=190 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=191 -> rpc kind=5
+[live] SET prop=192 value=0 reqid=192 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=193 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=194 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=195 -> rpc kind=5
+[live] GET_FRAME #40 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=196 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=197 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=198 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=199 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=200 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=201 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=202 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=203 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=204 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=205 -> rpc kind=5
+[live] GET_FRAME #42 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=206 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=207 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=208 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=209 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=210 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=211 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=212 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=213 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=214 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=215 -> rpc kind=5
+[live] GET_FRAME #44 -> band(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=216 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=217 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=218 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=219 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=220 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=221 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=222 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=223 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=224 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=225 -> rpc kind=5
+[live] GET_FRAME #46 -> band(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=226 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=227 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=228 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=229 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=230 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=231 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=232 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=233 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=234 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=235 -> rpc kind=5
+[live] GET_FRAME #48 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 …]
+[live] SET prop=3 value=0 reqid=236 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=237 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=238 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=239 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=240 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=241 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=242 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=243 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=244 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=245 -> rpc kind=5
+[live] GET_FRAME #50 -> band(2304000) head=[10 10 11 10 10 10 10 10 10 10 11 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=246 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=247 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=248 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=249 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=250 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=251 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=252 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=253 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=254 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=255 -> rpc kind=5
+[live] GET_FRAME #52 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=256 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=257 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=258 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=259 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=260 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=261 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=262 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=263 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=264 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=265 -> rpc kind=5
+[live] GET_FRAME #54 -> band(2304000) head=[10 10 11 10 10 10 10 10 10 0f 10 10 10 10 11 10 …]
+[live] SET prop=3 value=0 reqid=266 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=267 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=268 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=269 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=270 -> rpc kind=5
+[live] SET prop=3 value=0 reqid=271 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=272 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=273 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=274 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=275 -> rpc kind=5
+[live] GET_FRAME #56 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[live] SET prop=3 value=0 reqid=276 -> rpc kind=5
+[live] SET prop=152 value=0 reqid=277 -> rpc kind=5
+[live] SET prop=153 value=1 reqid=278 -> rpc kind=5
+[live] SET prop=154 value=866000 reqid=279 -> rpc kind=5
+[live] SET prop=155 value=866000 reqid=280 -> rpc kind=5
+[live] done: get_frame=56 data=53 empty=3 error=0; stream stopped
+[timing] IR: n=56 clock=steady_clock p50=119727us p95=130739us max=143509us mean=115531us; payload=15033194B/s wire=15035512B/s; first_frame=244826us; timeouts=0; window=8122825us
+EXIT_IR:0
+
+=== RUN 2: depth port 10010 (immediately after IR run — pipeline stalled) ===
+[live] connected 127.0.0.1:10010 (depth, suffix 0-2-10, pull_ms=0, per-call logging=on, timeout 5000 ms)
+[live] calling ob_rpc_start_stream0-2-10
+[live] TIMEOUT: 127.0.0.1:10010 (depth, suffix 0-2-10) ob_rpc_start_stream0-2-10: no complete reply within 5000 ms - the connection was established and the daemon did not answer
+EXIT_DEPTH:3

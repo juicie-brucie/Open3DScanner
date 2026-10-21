@@ -1,5 +1,9 @@
-add_executable(raptor_client main.cpp capture.cpp)
-target_include_directories(raptor_client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(raptor_client main.cpp capture.cpp telemetry.cpp)
+# Row #179: the daemon-switch header (engine/include) is header-only.
+target_include_directories(raptor_client PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/engine/include
+)
 
 # Hardware-free smoke test for the replay's pacing and its bounded reply
 # read (row #117): the framing selftest, the absolute-timestamp -> delta
@@ -29,3 +33,9 @@ add_test(NAME raptor_client_live_suffix COMMAND raptor_client --selftest-live)
 # named timeout and the timeout exit code, not a hang — the depth
 # interface's observed stall.
 add_test(NAME raptor_client_live_timeout COMMAND raptor_client --selftest-live-timeout)
+
+# Hardware-free test for the frame path's timing (row #175): the latency
+# percentile rule, the payload/wire rates and the first-frame stamp on an
+# injected clock, then a real live run against the loopback interface mock
+# so the printed summary and the per-call dump line are the run's own.
+add_test(NAME raptor_client_telemetry COMMAND raptor_client --selftest-telemetry)
