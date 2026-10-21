@@ -223,9 +223,63 @@ def selftest():
     if record_accompanied("tests/results/x-confirmed.md", [],
                           "raw log `tests/results/x-baseline.log`"):
         bad.append("record-provenance: a citation of a file not in the PR must not satisfy")
+
+    # archives: the record factory's line must verify, and a hand-typed hash
+    # must not (row #165). `fetch` stands in for tests/results/<name> at head.
+    fixtures = {
+        "2026-01-01-hang.raw.log": b"",                      # a hang's 0-byte log
+        "2026-01-01-pass.raw.log": b"frame 1\nframe 2\n",
+    }
+    fetch = lambda name: fixtures.get(name)
+    for name, content in fixtures.items():
+        sha = sha256_bytes(content)
+        line = f"- Raw log: [`{name}`](./{name}), sha256 `{sha}`\n"
+        probs, verified = citation_problems(line, fetch, "x.md")
+        if probs or verified != 1:
+            bad.append(f"archives: the generated line for {name} must verify ({probs})")
+        # The same line, one hex digit hand-typed wrong.
+        wrong_sha = sha[:-1] + ("0" if sha[-1] != "0" else "1")
+        probs, verified = citation_problems(
+            f"- Raw log: [`{name}`](./{name}), sha256 `{wrong_sha}`\n", fetch, "x.md")
+        if not probs or verified != 0:
+            bad.append(f"archives: a hand-typed hash for {name} must fail")
+    probs, verified = citation_problems(
+        "- Raw log: [`absent.raw.log`](./absent.raw.log), sha256 `" + "a" * 64 + "`\n", fetch, "x.md")
+    if not probs or verified != 0:
+        bad.append("archives: a citation with no file beside it must fail")
+
+    # The generator itself, through the same resolver: the acceptance
+    # sentence end to end. Skipped where the script is not runnable here.
+    gen = os.path.join("scripts", "hw-postflight.sh")
+    if os.path.isfile(gen):
+        with tempfile.TemporaryDirectory() as td:
+            for name, content in fixtures.items():
+                path = os.path.join(td, name)
+                with open(path, "wb") as f:
+                    f.write(content)
+                r = sh(["bash", gen, "--citation", path])
+                if r.returncode != 0:
+                    bad.append(f"record-factory: the generator failed for {name}: {r.stderr.strip()}")
+                    continue
+                print(f"record-factory: {name} -> {r.stdout.strip()}")
+                probs, verified = citation_problems(r.stdout, fetch, "x.md")
+                if probs or verified != 1:
+                    bad.append(f"record-factory: the generated line for {name} must verify ({probs})")
+                wrong = re.sub(r"sha256 `([0-9a-f]{64})`",
+                               lambda m: "sha256 `" + m.group(1)[:-1] + "f`" if m.group(1)[-1] != "f"
+                               else "sha256 `" + m.group(1)[:-1] + "0`", r.stdout)
+                probs, verified = citation_problems(wrong, fetch, "x.md")
+                if not probs or verified != 0:
+                    bad.append(f"record-factory: a hand-typed hash for {name} must fail")
+            r = sh(["bash", gen, "--citation", os.path.join(td, "absent.raw.log")])
+            if r.returncode == 0:
+                bad.append("record-factory: a missing raw log must be refused")
+    else:
+        print(f"record-factory: SKIP (no {gen} in this tree)")
+
     for b in bad:
         print("SELFTEST FAIL:", b)
-    print(f"selftest: {len(TIER_CASES) + 12} cases, {'FAIL' if bad else 'ok'}")
+    print(f"selftest: {len(TIER_CASES)} tier cases + record/archives cases, {'FAIL' if bad else 'ok'}")
     return 1 if bad else 0
 
 
@@ -272,6 +326,45 @@ def staged_whitespace():
 
 def sha256_bytes(b):
     return hashlib.sha256(b).hexdigest()
+
+
+def citation_problems(text, fetch, label):
+    """Resolve the `sha256 `<hex>`` claims a record makes (the `archives` rule).
+
+    `fetch(name)` returns the bytes of `tests/results/<name>` at the PR head,
+    or None when that file is not there. The cited artifact is the nearest
+    name in the 300 characters before the hash — a link target
+    `(./x.raw.log)` or a backticked `x.raw.log` — so the generated line
+
+        - Raw log: [`x.raw.log`](./x.raw.log), sha256 `<hex>`
+
+    resolves to tests/results/x.raw.log. The first name that resolves is the
+    one compared; a name that is not in the tree does not resolve at all.
+
+    Returns (problems, verified_count). Row #165 pins this function with the
+    selftest cases below: the record factory's generated line must verify and
+    a wrong hand-typed hash must not.
+    """
+    problems, verified = [], 0
+    for m in re.finditer(r"sha256\s*`([0-9a-f]{64})`", text):
+        cited = m.group(1)
+        ctx = text[max(0, m.start() - 300):m.start()]
+        names = [a or b for a, b in re.findall(r"\(\./([^)]+)\)|`([^`]+\.(?:ips|md|log|txt))`", ctx)]
+        resolved = False
+        for name in names[::-1]:
+            data = fetch(name)
+            if data is None:
+                continue
+            resolved = True
+            if sha256_bytes(data) == cited:
+                verified += 1
+            else:
+                problems.append(f"{label}: cited sha256 does not match tests/results/{name}")
+            break
+        if not resolved:
+            problems.append(
+                f"{label}: cited sha256 {cited[:12]}… does not resolve to a file named next to it")
+    return problems, verified
 
 
 def pr_files(pr):
@@ -525,24 +618,16 @@ def main():
                 arch_problems.append(f"{bn}: sha256 mismatch vs {src}")
     for path in md_touched:
         text = git("show", f"{head_ref}:{path}").stdout
-        for m in re.finditer(r"sha256\s*`([0-9a-f]{64})`", text):
-            cited = m.group(1)
-            ctx = text[max(0, m.start() - 300):m.start()]
-            names = [a or b for a, b in re.findall(r"\(\./([^)]+)\)|`([^`]+\.(?:ips|md|log|txt))`", ctx)]
-            resolved = False
-            for name in names[::-1]:
-                p = f"tests/results/{name}"
-                if git("cat-file", "-e", f"{head_ref}:{p}").returncode == 0:
-                    if sha256_bytes(git_bytes("show", f"{head_ref}:{p}")) == cited:
-                        arch_verified += 1
-                        resolved = True
-                    else:
-                        arch_problems.append(f"{path}: cited sha256 does not match {p}")
-                        resolved = True
-                    break
-            if not resolved:
-                arch_problems.append(
-                    f"{path}: cited sha256 {cited[:12]}… does not resolve to a file named next to it")
+
+        def fetch(name, _ref=head_ref):
+            p = f"tests/results/{name}"
+            if git("cat-file", "-e", f"{_ref}:{p}").returncode != 0:
+                return None
+            return git_bytes("show", f"{_ref}:{p}")
+
+        probs, verified = citation_problems(text, fetch, path)
+        arch_problems += probs
+        arch_verified += verified
     arch_detail = "; ".join(filter(None, [
         f"{arch_verified} cited hash(es) verified" if arch_verified else "",
         f"{arch_local} .ips compared against DiagnosticReports (local)" if arch_local else "",
