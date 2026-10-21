@@ -1,0 +1,1045 @@
+# Extract of 2026-10-21-plan151-93-153-session.raw.log lines 18270–19305
+# Contains: LOST/FAILURE_MARKERLESS/SUCCESS tracking_status sequence around occlusion event
+# and session histogram at line 32465
+# Companion to: 2026-10-21-plan93-hud-half.md
+# Full session log: 2026-10-21-plan151-93-153-session.raw.log (32466 lines)
+
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[10/21 14:26:14.469957][warning][3517704][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=1 (LOST)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker] tick 1650/3000: color_cloud num_points=14042 (max seen so far: 14042), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=1 change_rate=0.2/s run_ticks p50=4 p95=4 max=4
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[perf] window 5.1s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.7/s points=14038.7 bytes=168708.4 | pose p50=0.00 p95=0.03 max=0.03 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.17 p95=0.31 max=0.34 ms | bcast p50=0.17 p95=0.49 max=0.63 ms | wait p50=103.06 p95=104.88 max=127.45 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=3.06 p95=4.88 max=27.45 ms | tick_overshoot p50=3.13 p95=5.31 max=27.71 ms | residual p50=0.02 p95=0.08 max=0.17 ms | tick p50=103.13 p95=105.31 max=127.71 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=103 mean=85.66us max=0 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker] tick 1700/3000: color_cloud num_points=14042 (max seen so far: 14042), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=0 change_rate=0.0/s run_ticks p50=0 p95=0 max=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[perf] window 5.1s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.7/s points=14042.0 bytes=168748.5 | pose p50=0.01 p95=0.02 max=0.03 ms | getter p50=0.00 p95=0.00 max=0.01 ms | post p50=0.19 p95=0.26 max=0.48 ms | bcast p50=0.17 p95=0.31 max=0.32 ms | wait p50=102.76 p95=105.01 max=105.09 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=2.76 p95=5.01 max=5.09 ms | tick_overshoot p50=3.14 p95=5.52 max=5.58 ms | residual p50=0.02 p95=0.07 max=0.18 ms | tick p50=103.14 p95=105.52 max=105.58 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=103 mean=79.32us max=0 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker] tick 1750/3000: color_cloud num_points=14042 (max seen so far: 14042), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=0 change_rate=0.0/s run_ticks p50=0 p95=0 max=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[perf] window 5.1s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.7/s points=14042.0 bytes=168738.8 | pose p50=0.01 p95=0.04 max=0.14 ms | getter p50=0.00 p95=0.01 max=0.03 ms | post p50=0.18 p95=0.28 max=0.38 ms | bcast p50=0.12 p95=0.38 max=0.65 ms | wait p50=103.25 p95=104.53 max=104.72 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=3.25 p95=4.53 max=4.71 ms | tick_overshoot p50=3.55 p95=5.11 max=5.67 ms | residual p50=0.02 p95=0.09 max=0.28 ms | tick p50=103.55 p95=105.11 max=105.67 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=102 mean=75.27us max=0 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[10/21 14:26:30.132412][warning][3517704][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=5 (FAILURE_MARKERLESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+
+# --- session histogram (line 32465 of full log) ---
+[worker] tracking_status samples=8814 histogram: SUCCESS=8313 LOST=26 FAILURE_MARKERLESS=475
