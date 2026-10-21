@@ -1,169 +1,148 @@
 # RPC-to-UVC Endpoint Map — Row #183 / OQ-169e
 
-*Static analysis attempt from vendor binary and existing findings. No device, no new capture. Binary analysis tools were unavailable; this finding documents what is known and specifies the empirical tests needed.*
+*Static analysis from #132 bundles (2026-10-20) and vendor binary. No device, no new capture. `[inferred]` — binary analysis was unavailable; dimensions reconciled from bundle bytes and probe data.*
 
 ## 1. The Question
 
-Map the two RPC interfaces (IR 10013, depth 10010) to the UVC VS interfaces/endpoints (0x81, 0x82, 0x83), reconcile the frame dimensions, and map the OB words (e1, e2, e3, e10).
+Map the two RPC interfaces (IR 10013, depth 10010) to the UVC VS interfaces/endpoints (0x81, 0x82, 0x83), reconcile the frame dimensions (RPC 1920×1200 vs UVC 480×300 / 960×600 / 1280×800), and map the OB words (e1, e2, e3, e10) from the #132 bytes.
 
-## 2. What Is Known from Existing Findings
+## 2. The Evidence — #132 Bundle Bytes
 
-### 2.1 RPC Interfaces (from stream-profiles-row114.md)
+### 2.1 Bundle Contents (Decoded from RCRP Format)
 
-| Interface | Port | Suffix | Stream Type | Profiles |
-|-----------|------|--------|-------------|----------|
-| RGB | 10012 | 0-2-14 | 2 (inferred) | 23 |
-| IR | 10013 | 0-2-12 | 6 | 54 |
-| Depth | 10010 | 0-2-10 | 7 | 89 |
+**IR bundle** (`~/captures/plan132-ir-v2/replies/port-10013.bin`):
+- **180 get_frame replies** (0 empty)
+- All frames are Bin(2304000) = 2.3 MB (whole 1920×1200 frames)
+- e1 values: 1792552122036427 → 1792552151906115 (CLOCK_REALTIME µs, never 0)
+- e2 values: 211599394 → 241468880 (CLOCK_MONOTONIC µs, monotonic, 0 non-monotonic pairs)
+- e3: always 255 (180/180)
+- e10: **mixed 3 and 4** (84×3, 96×4) — NOT constant per interface
 
-**Stream profiles actually used** (from session4 capture):
-- IR: `[6, 9, 1920, 1200, 50]` — stream type 6, format 9, 1920×1200@50
-- Depth: `[7, 9, 1920, 1200, 50]` — stream type 7, format 9, 1920×1200@50
+**Depth bundle** (`~/captures/plan132-depth-v2/replies/port-10010.bin`):
+- **200 get_frame replies** (0 empty)
+- 199 frames are Bin(2304000), 1 frame is Bin(1321920) (partial frame at msgid=914, 688.5 rows)
+- e1 values: 1792552171141573 → 1792552198840797 (CLOCK_REALTIME µs, never 0)
+- e2 values: 260704758 → 288403983 (CLOCK_MONOTONIC µs, monotonic, 0 non-monotonic pairs)
+- e3: always 255 (200/200)
+- e10: **mixed 3 and 4** (4×3, 196×4) — NOT constant per interface
 
-**Available resolutions** (from profile lists):
-- IR: 960×600, 1280×800, 1520×1200, 1600×1000, 1920×1200
-- Depth: 480×300, 960×600, 1280×800, 1520×1200, 1600×1000, 1920×1200
+**Correction to #172 record:** The #172 RPC shim test observed "[10]=UInt(4) on IR, UInt(3) on depth" as a sample observation (62 IR frames, 70 depth frames). The #132 bundles show e10 is **mixed on both interfaces**, not constant. e10 is a per-frame value (the IR light type), not a per-stream constant.
 
-### 2.2 UVC VS Endpoints (from T7 probe, plan178-probe.md)
+### 2.2 OB Words — Byte-Backed Semantics
 
-| Endpoint | Format | Resolution |
-|----------|--------|------------|
-| 0x81 | Y8 | 480×300 |
-| 0x82 | Y8 | 960×600 |
-| 0x83 | YUY2 | 1280×800 |
+From the #132 bundles and #131 producer analysis:
 
-**HID interface**: Interface 6, endpoint 0x85, interrupt, max packet 248 bytes, report descriptor 25 bytes.
+| Element | Wire form | C++ type | Semantics | Source |
+|---------|-----------|----------|-----------|--------|
+| e0 | `uint64` 0 | `u64` | always 0 (padding) | #131 §10.3 |
+| e1 | `uint64` | `u64` | **CLOCK_REALTIME** µs (wall-clock timestamp) | #132 bundles (e.g., 1792552122036427 = 2026-10-21 03:08:42 UTC) |
+| e2 | `uint64` | `u64` | **CLOCK_MONOTONIC** µs (monotonic counter) | #132 bundles (monotonic, 0 non-monotonic pairs) |
+| e3 | `uint8` 255 | `OBFormat` | format field (always 255 on wire, not the stream profile's format id 9) | #131 §10.3, #132 bundles (255/380) |
+| e4 | `bin16` 2304000 | `vector<char>` | frame payload (whole 1920×1200×1 byte frame) | #132 bundles, #174 |
+| e5 | `uint32` 2304000 | `uint` | payload length | #132 bundles |
+| e6 | `bin8` 0 | `vector<char>` | secondary data buffer (empty) | #132 bundles |
+| e7 | `uint8` 0 | `uint` | secondary buffer length | #132 bundles |
+| e8 | `bin8` 6 | `vector<char>` | tertiary data buffer (6 bytes, opaque) | #132 bundles |
+| e9 | `uint8` 6 | `uint` | tertiary buffer length | #132 bundles |
+| e10 | `uint32` 3 or 4 | `OBIRFrameLightType_t` | **IR light type** (per-frame, mixed 3/4 on both IR and depth) | #132 bundles, #131 §10.3 |
 
-### 2.3 RPC Frame Structure (from frame-codec.md, #174)
+**Correction to pull-semantics.md §2 (2026-10-21):** The prior correction stated "e1=0 for every reply" — this was **wrong**. The #132 bundles show e1 is **never 0** (0/380). e1 carries CLOCK_REALTIME µs (wall-clock), e2 carries CLOCK_MONOTONIC µs (monotonic counter). Both are real timestamps.
 
-RPC frames are `Bin(2304000)` = 1920×1200×1 byte = **whole frames**, not bands.
+**e3 source:** The observed 255 is the `OBFormat` enum value from the PAL frame's `+0x18` offset (#131 §10.3). It is **not** the stream profile's format id 9 (which is sent in `start_stream` params). The descriptor table has no OBFormat field — e3 is carried in the RPC reply, not in the UVC descriptor. The descriptor table should carry the UVC pixel format (Y8, YUY2, etc.), not the OBFormat enum.
 
-The 11-element array structure:
-- e0: u64 (always 0)
-- e1: u64 (timestamp, µs)
-- e2: u64 (second time/counter word)
-- e3: u32 (format, always 255 on wire)
-- e4: bin (frame payload, 2304000 bytes)
-- e5: u32 (payload length)
-- e6: bin (secondary buffer, 0 bytes)
-- e7: u32 (secondary length)
-- e8: bin (tertiary buffer, 6 bytes)
-- e9: u32 (tertiary length)
-- e10: u32 (IR light type: 0 for depth, 2 for IR)
+**e10 semantics:** e10 is `OBIRFrameLightType_t`, a per-frame value indicating the IR light type (3 or 4). It varies per frame on both IR and depth interfaces (IR: 84×3, 96×4; depth: 4×3, 196×4). This is **not** a per-stream constant. On a live UVC frame, e10 would come from the device's IR light control state (which laser pattern is active for that frame).
 
-## 3. The Dimension Mismatch
+**Where e1/e2 come from on a live UVC frame:** On a UVC frame, the timestamp would come from the UVC payload header (PTS — Presentation Time Stamp). The RPC reply's e1 (CLOCK_REALTIME) and e2 (CLOCK_MONOTONIC) are filled by the RPCServer from the PAL frame's timestamp fields. On a live UVC frame, the device's firmware would provide the timestamp in the UVC payload header, not from CLOCK_REALTIME/CLOCK_MONOTONIC.
 
-**Critical observation**: The RPC frames are 1920×1200, but the UVC VS descriptors are 480×300, 960×600, and 1280×800. These dimensions do not match.
+## 3. RPC-to-UVC Mapping — Static Analysis Failed
 
-### 3.1 Possible Explanations
+**Status: Could not be determined statically.** The binary analysis tools were unavailable, and the vendor binary does not contain obvious symbols mapping RPC ports to UVC endpoints.
 
+### 3.1 What We Know
+
+**RPC interfaces** (from stream-profiles-row114.md):
+- IR: port 10013, suffix `0-2-12`, stream type 6, 54 profiles
+- Depth: port 10010, suffix `0-2-10`, stream type 7, 89 profiles
+- RGB: port 10012, suffix `0-2-14`, stream type 2, 23 profiles
+
+**UVC VS endpoints** (from T7 probe, plan178-probe.md):
+- 0x81: Y8, 480×300
+- 0x82: Y8, 960×600
+- 0x83: YUY2, 1280×800
+- HID interface 6, endpoint 0x85 (interrupt, max packet 248 bytes, report descriptor 25 bytes)
+
+**RPC frame dimensions** (from #132 bundles, #174):
+- All frames are Bin(2304000) = 1920×1200×1 byte (whole frame)
+
+### 3.2 The Dimension Mismatch
+
+**Critical observation:** RPC frames are 1920×1200, but UVC VS descriptors are 480×300, 960×600, and 1280×800. These dimensions do not match.
+
+**Possible explanations** `[inferred]`:
 1. **Composition/fusion**: The 1920×1200 RPC frame is composed from multiple UVC streams (e.g., stereo IR + depth fusion).
 2. **Different path**: The RPC protocol uses a different data path than UVC (e.g., vendor-specific bulk transfer, not UVC).
 3. **Scaling/composition step**: There is an intermediate processing step that scales or composes the UVC frames into the RPC frame.
 4. **Mode-dependent**: The UVC descriptors represent different modes, not simultaneous streams. The 1920×1200 mode is not exposed via UVC.
 
-### 3.2 What the Evidence Suggests
+**Hypothesis** `[inferred]`: The RPC protocol does not use the UVC endpoints for the 1920×1200 stream. The UVC endpoints are for lower-resolution preview/debug modes, while the RPC protocol uses a vendor-specific bulk transfer for the full-resolution stream.
 
-The RPC stream profiles include 1920×1200, but the UVC descriptors only go up to 1280×800. This suggests that:
-- The 1920×1200 mode is **not exposed via UVC**
-- The RPC protocol uses a **different data path** than UVC
-- The UVC endpoints (0x81, 0x82, 0x83) represent **lower-resolution modes** (480×300, 960×600, 1280×800)
+### 3.3 RPC-to-UVC Assignment — Empirical Test Required
 
-**Hypothesis**: The RPC protocol does not use the UVC endpoints for the 1920×1200 stream. The UVC endpoints are for lower-resolution preview/debug modes, while the RPC protocol uses a vendor-specific bulk transfer for the full-resolution stream.
+**Status: Not determined.** The mapping from RPC interfaces (IR/depth) to UVC endpoints (0x81/0x82/0x83) requires empirical testing.
 
-**Confidence**: `[inferred]` — based on dimension mismatch, not confirmed by binary analysis.
+**Test required** (#182 probe-match mode):
+1. Run the vendor daemon streaming IR and depth simultaneously
+2. Observe which UVC VS endpoints are active (via `system_profiler SPUSBDataType` or USB protocol analyzer)
+3. Compare the frame dimensions and formats to determine the mapping
+4. Alternatively, open each UVC VS endpoint individually and compare the frames to the RPC frames
 
-## 4. RPC-to-UVC Mapping (Static Analysis Failed)
+**Expected result**: Each active RPC stream should correspond to an active UVC endpoint with matching dimensions and format.
 
-**Status**: Could not be determined statically. The binary analysis tools were unavailable, and the vendor binary does not contain obvious symbols mapping RPC ports to UVC endpoints.
+## 4. descriptor_table.h Entries — Still Owed
 
-### 4.1 What We Can Infer
+**Status: Cannot be determined without empirical testing.**
 
-Based on the available resolutions:
-- UVC 0x81 (480×300): Only depth offers this resolution → **likely depth**
-- UVC 0x82 (960×600): Both IR and depth offer this → **ambiguous**
-- UVC 0x83 (1280×800): Both IR and depth offer this → **ambiguous**
-
-But this is speculative. The actual mapping requires empirical testing.
-
-### 4.2 Empirical Test Required
-
-**Test**: Run the vendor daemon streaming IR and depth simultaneously, and observe which UVC VS endpoints are active.
-
-**Steps**:
-1. Start the vendor daemon (CrealityScan or RPCServer)
-2. Start streaming IR on port 10013
-3. Start streaming depth on port 10010
-4. Use `system_profiler SPUSBDataType` or a USB protocol analyzer to observe which UVC endpoints are active
-5. Compare the frame dimensions and formats to determine the mapping
-
-**Expected result**: Each active RPC stream should correspond to an active UVC endpoint with matching dimensions.
-
-## 5. OB Words Mapping
-
-### 5.1 What the OB Words Are (from frame-codec.md, #131)
-
-The OB words are fields in the 11-element RPC frame array:
-- **e1**: Timestamp (µs) — the frame's primary timestamp
-- **e2**: Second time/counter word — a second 64-bit time word, unit unknown
-- **e3**: Format field — always 255 on wire, not the stream profile's format id
-- **e10**: IR light type — 0 for depth, 2 for IR
-
-### 5.2 Mapping to UVC
-
-If the RPC protocol uses UVC, the OB words would map to UVC metadata:
-- **e1 (timestamp)**: Could map to UVC PTS (Presentation Time Stamp)
-- **e2 (counter)**: Could map to UVC frame counter or clock
-- **e3 (format)**: Could map to UVC format index
-- **e10 (light type)**: Could map to UVC payload-specific metadata (e.g., IR LED state)
-
-But this is speculative. The actual mapping requires:
-1. Confirming that RPC uses UVC (which the dimension mismatch suggests it does not)
-2. Empirical testing to correlate OB words with UVC metadata
-
-### 5.3 Empirical Test Required
-
-**Test**: Capture both RPC frames and UVC frames simultaneously, and correlate the OB words with UVC metadata.
-
-**Steps**:
-1. Start the vendor daemon
-2. Start streaming on an RPC port
-3. Simultaneously capture the RPC frames (via msgpack-RPC) and UVC frames (via USB capture)
-4. Compare timestamps, frame counters, and metadata fields
-5. Determine the mapping
-
-**Expected result**: If RPC uses UVC, the OB words should correlate with UVC metadata fields.
-
-## 6. descriptor_table.h Entries
-
-**Status**: Cannot be determined without empirical testing.
-
-### 6.1 What Would Be Needed
+### 4.1 What Would Be Needed
 
 If the RPC protocol uses UVC, the descriptor_table.h would need entries for:
 - UVC VS endpoints (0x81, 0x82, 0x83)
-- Frame formats and dimensions
-- OB word mappings to UVC metadata
+- Frame formats (Y8, YUY2) and dimensions (480×300, 960×600, 1280×800)
+- OB word mappings to UVC metadata (if applicable)
 
 But given the dimension mismatch, it's likely that:
 - The RPC protocol does **not** use UVC for the 1920×1200 stream
 - The descriptor_table.h would only need entries for lower-resolution UVC modes
 - The 1920×1200 stream uses a vendor-specific bulk transfer
 
-### 6.2 Empirical Test Required
+### 4.2 Exact Entries Owed (Once Mapping Is Determined)
 
-**Test**: After determining the RPC-to-UVC mapping (section 4.2), create descriptor_table.h entries for the confirmed mappings.
+After the empirical test (section 3.3), the descriptor_table.h would need:
 
-**Steps**:
-1. Perform the empirical test from section 4.2
-2. For each confirmed RPC-to-UVC mapping, create a descriptor_table.h entry with:
-   - UVC endpoint address
-   - Frame format (Y8, YUY2, etc.)
-   - Frame dimensions
-   - OB word mappings (if applicable)
-3. For the 1920×1200 stream, create a vendor-specific bulk transfer entry (if confirmed)
+**If RPC uses UVC:**
+```c
+// Example (hypothetical, requires empirical confirmation):
+{"ir_480x300", 0x81, OB_FORMAT_Y8, 480, 300, 30},
+{"depth_960x600", 0x82, OB_FORMAT_Y8, 960, 600, 30},
+{"rgb_1280x800", 0x83, OB_FORMAT_YUY2, 1280, 800, 30},
+```
 
-## 7. Summary
+**If RPC uses vendor-specific bulk transfer:**
+```c
+// Example (hypothetical, requires empirical confirmation):
+{"ir_1920x1200", VENDOR_BULK_EP, OB_FORMAT_Y8, 1920, 1200, 50},
+{"depth_1920x1200", VENDOR_BULK_EP, OB_FORMAT_Y8, 1920, 1200, 50},
+```
+
+**OB word mappings** (if applicable):
+```c
+// Example (hypothetical, requires empirical confirmation):
+{"e1_clock_realtime_us", UVC_PTS},
+{"e2_clock_monotonic_us", UVC_PTS_MONOTONIC},
+{"e3_obformat", UVC_FORMAT_INDEX},
+{"e10_ir_light_type", UVC_PAYLOAD_SPECIFIC},
+```
+
+## 5. Summary
 
 | Question | Answer | Confidence |
 |----------|--------|------------|
@@ -171,28 +150,20 @@ But given the dimension mismatch, it's likely that:
 | Which UVC endpoint is depth? | **Unknown** — requires empirical testing | — |
 | What is endpoint 0x83? | **Unknown** — requires empirical testing | — |
 | How do RPC frames (1920×1200) relate to UVC descriptors (480×300, 960×600, 1280×800)? | **Dimension mismatch** — RPC likely uses a different path or composition step | inferred |
-| What do the OB words map to in UVC? | **Unknown** — requires empirical testing | — |
+| What do e1/e2 carry? | **e1 = CLOCK_REALTIME µs, e2 = CLOCK_MONOTONIC µs** (never 0, both monotonic) | hw-confirmed |
+| What does e3 carry? | **OBFormat enum (always 255 on wire)**, not the stream profile's format id | hw-confirmed |
+| What does e10 carry? | **IR light type (per-frame, mixed 3/4 on both interfaces)**, not a per-stream constant | hw-confirmed |
 | What descriptor_table.h entries are needed? | **Unknown** — requires empirical testing | — |
 
-**Key finding**: The RPC frames are 1920×1200, but the UVC descriptors only go up to 1280×800. This strongly suggests that the RPC protocol does not use UVC for the full-resolution stream. The UVC endpoints likely represent lower-resolution preview/debug modes, while the RPC protocol uses a vendor-specific bulk transfer for the full-resolution stream.
+## 6. Corrections to Existing Findings
 
-**Next steps**: Empirical testing to confirm the RPC-to-UVC mapping and determine the actual data path.
+1. **pull-semantics.md §2** (corrected 2026-10-21 by #183): The prior correction stated "e1=0 for every reply" — this was **wrong**. The #132 bundles show e1 is **never 0** (0/380). e1 carries CLOCK_REALTIME µs, e2 carries CLOCK_MONOTONIC µs.
 
-## 8. Open Questions
-
-1. **Does the RPC protocol use UVC at all?** The dimension mismatch suggests it does not for the 1920×1200 stream, but it might use UVC for lower-resolution modes.
-
-2. **What is the actual data path for the 1920×1200 RPC stream?** If not UVC, is it a vendor-specific bulk transfer, isochronous transfer, or something else?
-
-3. **Are the UVC endpoints (0x81, 0x82, 0x83) used by the RPC protocol, or are they for a different purpose (e.g., preview, debug)?**
-
-4. **What is the relationship between the RPC stream profiles and the UVC descriptors?** Do they represent different modes, or is there a mapping that we're missing?
-
-5. **Do the OB words have any relationship to UVC metadata, or are they RPC-specific?**
+2. **#172 record** (plan172-rpc-shim-ab.md line 91): The #172 record observed "[10]=UInt(4) on IR, UInt(3) on depth" as a sample. The #132 bundles show e10 is **mixed on both interfaces** (IR: 84×3, 96×4; depth: 4×3, 196×4). e10 is a per-frame value, not a per-stream constant.
 
 ---
 
 **Wall**: `docs/recon/**`
-**Status**: `[inferred]` — static analysis failed due to tool unavailability; empirical testing required
-**Related**: #114 (stream profiles), #124/#174 (frame codec), #131 (frame producer), #169 (USB descriptor map)
-**Operator action required**: Empirical test to determine RPC-to-UVC mapping (see sections 4.2, 5.3, 6.2)
+**Status**: `[inferred]` — static analysis from #132 bundles and vendor binary; RPC-to-UVC mapping requires empirical testing
+**Supersedes**: None — this is a new analysis
+**Related**: #114 (stream profiles), #124/#174 (frame codec), #131 (frame producer), #143 (pull semantics), #169 (USB descriptor map), #172 (RPC shim), #182 (probe-match mode)
