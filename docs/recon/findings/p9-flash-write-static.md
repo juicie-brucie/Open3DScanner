@@ -18,9 +18,10 @@ Row #102 (observation-based) answered: "no persistent writes observed in the cap
 
 4. **Categorized the callers.** Grouped the 19 sites into three classes:
    - `DeviceParamAccessor::*` methods (7 sites) — calibration/config updaters
-   - `*DeviceHandle::restoreFactorySetting` methods (8 sites) — factory reset
+   - `*DeviceHandle::restoreFactorySetting` methods (9 sites) — factory reset (1 Ferret, 1 Otter, 5 Raptor, 2 SermoonSerialAbstract)
    - `*DeviceHandle::resumeDeviceParam` methods (3 sites) — parameter restore
-   - Plus 1 additional site in `SermoonSerialAbstractDeviceHandle::restoreFactorySetting`
+
+   19 entries: 7 calibration updaters + 9 factory reset + 3 parameter restore = 19.
 
 5. **Traced the caller chain for `DeviceParamAccessor::*` methods.** Found their callers:
    - `OrbbecDevice::update_calibration_param` @`0x1b5774`
@@ -68,11 +69,10 @@ This is the only function in the vendor binary that writes to device flash. It c
 
 **Summary:**
 - 7 sites: calibration/config updaters
-- 11 sites: factory reset (across 4 device-handle types)
-- 3 sites: parameter restore (SermoonS1 only)
-- 1 site: factory reset (SermoonSerialAbstract)
+- 9 sites: factory reset (1 FerretDeviceHandle, 1 OtterSerialDeviceHandle, 5 RaptorSerialDeviceHandle, 2 SermoonSerialAbstractDeviceHandle)
+- 3 sites: parameter restore (SermoonS1DeviceHandle)
 
-Total: 19 sites, all in either calibration-updater, factory-reset, or parameter-restore functions.
+19 entries: 7 calibration updaters + 9 factory reset + 3 parameter restore = 19. All in either calibration-updater, factory-reset, or parameter-restore functions.
 
 ### 3.3 What Each Updater Writes
 
@@ -117,7 +117,7 @@ All `OrbbecDevice::update_*` methods (the wrappers that call `OrbbecInternalDevi
 | `update_user_origin_calibration_param` | `calibration_avatar_func` (2×) |
 | `update_line_laser_light_plane_param` | `DownloadCalibParamsIntoScanner` (1×), `calibration_raptor_pro_func` (1×) |
 
-**Total: 28 call sites, all in `OrbbecCalib::*` functions.**
+**Total: 29 call sites in `OrbbecCalib::*` functions** (14+7+3+1+2+2 = 29).
 
 ### 4.3 The `OrbbecCalib::*` Functions
 
@@ -191,8 +191,10 @@ obscan_session_*
 
 All 19 flash-write call sites in the vendor binary are in one of three categories:
 1. **Calibration updaters** (7 sites) — reachable only from `OrbbecCalib::*` functions
-2. **Factory reset** (11 sites) — reachable only from `obscan_device_management_restore_device_to_factory_settings`
+2. **Factory reset** (9 sites: 1 Ferret, 1 Otter, 5 Raptor, 2 SermoonSerialAbstract) — reachable only from `obscan_device_management_restore_device_to_factory_settings`
 3. **Parameter restore** (3 sites) — reachable only from `obscan_device_management_resume_device_param`
+
+19 entries: 7 calibration updaters + 9 factory reset + 3 parameter restore = 19.
 
 None of these are reachable from the normal scan flow (`obscan_scan_start` → `obscan_scan_stop`).
 
