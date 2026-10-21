@@ -1,6 +1,6 @@
 # RPC-to-UVC Endpoint Map — Row #183 / OQ-169e
 
-*Static analysis from #132 bundles (2026-10-20) and vendor binary. No device, no new capture. `[inferred]` — binary analysis was unavailable; dimensions reconciled from bundle bytes and probe data.*
+*Static analysis from #132 bundles (2026-10-20) and #182 attributed evidence (2026-10-21). No device, no new capture. Interface mapping resolved by #182; dimension mismatch and formats remain `[inferred]` pending opening descriptor probe.*
 
 ## 1. The Question
 
@@ -54,9 +54,9 @@ From the #132 bundles and #131 producer analysis:
 
 **Where e1/e2 come from on a live UVC frame:** On a UVC frame, the timestamp would come from the UVC payload header (PTS — Presentation Time Stamp). The RPC reply's e1 (CLOCK_REALTIME) and e2 (CLOCK_MONOTONIC) are filled by the RPCServer from the PAL frame's timestamp fields. On a live UVC frame, the device's firmware would provide the timestamp in the UVC payload header, not from CLOCK_REALTIME/CLOCK_MONOTONIC.
 
-## 3. RPC-to-UVC Mapping — Static Analysis Failed
+## 3. RPC-to-UVC Mapping
 
-**Status: Could not be determined statically.** The binary analysis tools were unavailable, and the vendor binary does not contain obvious symbols mapping RPC ports to UVC endpoints.
+**Status: Interfaces resolved by name (#182), dimension mismatch remains open [inferred].**
 
 ### 3.1 What We Know
 
@@ -106,7 +106,7 @@ From the #132 bundles and #131 producer analysis:
 
 **Note:** Every VideoStreaming interface was at alternate setting 0 at the sample time (no stream active, or the registry does not track `SET_INTERFACE`). The interface **names** resolve the mapping.
 
-**Empirical confirmation pending:** When a stream is active, the mapping should be confirmed by observing which UVC VS endpoints become active. The dimension mismatch (RPC 1920×1200 vs UVC lower resolutions) remains open — see §3.2.
+**Dimension mismatch remains open:** The RPC frames are 1920×1200 but UVC VS descriptors are 480×300/960×600/1280×800. This mismatch requires further investigation — see §3.2.
 
 ## 4. descriptor_table.h Entries — Interfaces Named, Formats Need Probe
 
@@ -162,7 +162,7 @@ The **dimension mismatch** (RPC 1920×1200 vs UVC 480×300/960×600/1280×800) r
 | What do e1/e2 carry? | **e1 = CLOCK_REALTIME µs, e2 = CLOCK_MONOTONIC µs** (never 0, both monotonic) | hw-confirmed |
 | What does e3 carry? | **OBFormat enum (always 255 on wire)**, not the stream profile's format id | hw-confirmed |
 | What does e10 carry? | **IR light type (per-frame, mixed 3/4 on both interfaces)**, not a per-stream constant | hw-confirmed |
-| What descriptor_table.h entries are needed? | **Unknown** — requires empirical testing | — |
+| What descriptor_table.h entries are needed? | **Interfaces named (#182), formats/stride need opening descriptor probe** | hw-confirmed (interfaces), inferred (formats) |
 
 ## 6. Corrections to Existing Findings
 
@@ -173,6 +173,6 @@ The **dimension mismatch** (RPC 1920×1200 vs UVC 480×300/960×600/1280×800) r
 ---
 
 **Wall**: `docs/recon/**`
-**Status**: `[inferred]` — static analysis from #132 bundles and vendor binary; RPC-to-UVC mapping requires empirical testing
+**Status**: `[hw-confirmed]` interface mapping via #182; `[inferred]` dimension mismatch analysis; formats/stride require opening descriptor probe
 **Supersedes**: None — this is a new analysis
 **Related**: #114 (stream profiles), #124/#174 (frame codec), #131 (frame producer), #143 (pull semantics), #169 (USB descriptor map), #172 (RPC shim), #182 (probe-match mode)
