@@ -2,9 +2,11 @@
 //
 // Device-free: no vendor SDK, no device, no network beyond loopback. It
 // measures the stages the contract budgets, using the product's own code —
-// the V1 encoder (engine/include/openscanner/frame_protocol.h) and the
+// the V1 encoder (tools/scan_server/fast_encode.h, row #164) and the
 // WebSocket broadcast (engine/src/ws_broadcast_server.cpp) — so a change to
-// either shows up here as a change in the numbers.
+// either shows up here as a change in the numbers. The shared header's
+// encoder (engine/include/openscanner/frame_protocol.h) is measured beside
+// it as the byte-equivalence reference.
 //
 // Bounded: every phase has a fixed iteration count and a wall-clock cap.
 //
@@ -17,13 +19,15 @@
 //   encode.us.2304             its encode time per frame (median)
 //   encode.bytes.20000         the V1 frame's size, the live point budget
 //   encode.us.20000            its encode time per frame (median)
+//   encode.reference_us.*      the shared header encoder on the same points
+//   encode.equivalent          1 when the two encoders' bytes are identical
+//   encode.alloc_blocks.*      the live-block delta across the timed loop
 //   bcast.us.1                 the broadcast's cost per frame, 1 client
 //   bcast.us.8                 the broadcast's cost per frame, 8 clients
 //   bcast.us_per_client.8      the per-client marginal cost at 8 clients
-//   alloc.count_per_frame       the allocator calls per encoded frame
-//   alloc.bytes_per_frame       the bytes the allocator hands out per frame
-//   alloc.live_bytes            the live (in-use) bytes at the end
-//   bcast.alloc_count_per_frame the allocator calls per broadcast (8 clients)
+//   alloc.bytes_per_frame      the frame's resident buffer bytes
+//   alloc.live_bytes           the live (in-use) bytes at the end
+//   alloc.live_blocks_delta    the live-block delta across the encoder loop
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -46,6 +50,7 @@
 #include <malloc/malloc.h>
 #endif
 
+#include "fast_encode.h"
 #include "openscanner/frame_protocol.h"
 #include "openscanner/ws_broadcast_server.h"
 
@@ -247,51 +252,94 @@ int main(int argc, char** argv) {
     }
 
     // --- the encoder ---------------------------------------------------
+    //
+    // Row #164: the product's encoder is tools/scan_server/fast_encode.h —
+    // one sized buffer, no per-float push_back. The reference below is the
+    // shared header's encoder on the same points; the bytes must be
+    // identical (fast_encode_test asserts the same equivalence in ctest).
     const uint32_t counts[2] = {kSyntheticPoints, kLivePoints};
     const int iters[2] = {encode_iters_small, encode_iters_live};
+    bool all_equal = true;
+    bool all_roundtrip = true;
     for (int c = 0; c < 2; ++c) {
         const std::vector<float> xyz = MakePoints(counts[c]);
-        // One warm-up pass, so the first timed frame is not the one that
-        // pays for the buffer's first touch.
-        std::vector<uint8_t> warm = openscanner::frame_protocol::encode_cloud_snapshot(1, 0.0, 0.0, xyz.data(),
-                                                                                      counts[c]);
+
+        // The product's path. One warm-up frame, so the buffer's single
+        // allocation is not in the timed loop.
+        openscanner::fast_encode::CloudSnapshotBuffer buffer;
+        const std::vector<uint8_t>& fast_warm = buffer.Encode(1, 0.0, 0.0, xyz.data(), counts[c]);
+        // The reference: the shared header's encoder.
+        const std::vector<uint8_t> ref_warm =
+            openscanner::frame_protocol::encode_cloud_snapshot(1, 0.0, 0.0, xyz.data(), counts[c]);
+        const bool equal = fast_warm.size() == ref_warm.size() &&
+                           std::memcmp(fast_warm.data(), ref_warm.data(), fast_warm.size()) == 0;
+        if (!equal) all_equal = false;
+
         size_t live_before = 0, live_after = 0, blocks_before = 0, blocks_after = 0;
-        ZoneStats(&live_before, &blocks_before);
         std::vector<double> samples;
         samples.reserve(iters[c]);
-        std::vector<uint8_t> encoded;
+        // The snapshot follows the sample buffer's own allocation, so the
+        // delta is the encoder's.
+        ZoneStats(&live_before, &blocks_before);
         for (int i = 0; i < iters[c]; ++i) {
             auto t0 = Clock::now();
-            encoded = openscanner::frame_protocol::encode_cloud_snapshot(static_cast<uint32_t>(i), 0.0, 0.0,
-                                                                        xyz.data(), counts[c]);
+            buffer.Encode(static_cast<uint32_t>(i), 0.0, 0.0, xyz.data(), counts[c]);
             auto t1 = Clock::now();
             samples.push_back(std::chrono::duration<double, std::micro>(t1 - t0).count());
         }
         ZoneStats(&live_after, &blocks_after);
         char key[64];
         std::snprintf(key, sizeof(key), "encode.bytes.%u", counts[c]);
-        PrintInt(key, encoded.size());
+        PrintInt(key, fast_warm.size());
         std::snprintf(key, sizeof(key), "encode.us.%u", counts[c]);
         Print(key, MedianUs(samples));
+        std::snprintf(key, sizeof(key), "encode.alloc_blocks.%u", counts[c]);
+        PrintInt(key, blocks_after >= blocks_before ? blocks_after - blocks_before : 0);
         if (c == 1) {
             // The live frame is the one the budgets are written against.
-            PrintInt("encode.bytes.live", encoded.size());
+            PrintInt("encode.bytes.live", fast_warm.size());
             Print("encode.us.live", MedianUs(samples));
-            // The bytes the encoder asks the allocator for per frame: the
-            // reserved buffer is handed out in one block (the reserve is in
-            // the encoder), so the churn per frame is the frame's size.
-            Print("alloc.bytes_per_frame", static_cast<double>(encoded.size()));
+            // The frame's bytes. With the reusable buffer this one block
+            // is held for the run: the encoder adds no per-frame churn.
+            Print("alloc.bytes_per_frame", static_cast<double>(fast_warm.size()));
             PrintInt("alloc.live_blocks_delta", blocks_after >= blocks_before ? blocks_after - blocks_before : 0);
         }
-        // The decoder must read back what the encoder wrote.
+
+        // The reference encoder, timed on the same points. Its returned
+        // vector allocates and frees once per frame — the waste #164 removes.
+        std::vector<uint8_t> ref = openscanner::frame_protocol::encode_cloud_snapshot(
+            1, 0.0, 0.0, xyz.data(), counts[c]);  // warm-up
+        std::vector<double> ref_samples;
+        ref_samples.reserve(iters[c]);
+        ZoneStats(&live_before, &blocks_before);
+        for (int i = 0; i < iters[c]; ++i) {
+            auto t0 = Clock::now();
+            ref = openscanner::frame_protocol::encode_cloud_snapshot(static_cast<uint32_t>(i), 0.0, 0.0,
+                                                                    xyz.data(), counts[c]);
+            auto t1 = Clock::now();
+            ref_samples.push_back(std::chrono::duration<double, std::micro>(t1 - t0).count());
+        }
+        ZoneStats(&live_after, &blocks_after);
+        std::snprintf(key, sizeof(key), "encode.reference_us.%u", counts[c]);
+        Print(key, MedianUs(ref_samples));
+        std::snprintf(key, sizeof(key), "encode.reference_alloc_blocks.%u", counts[c]);
+        PrintInt(key, blocks_after >= blocks_before ? blocks_after - blocks_before : 0);
+        if (c == 1) Print("encode.reference_us.live", MedianUs(ref_samples));
+
+        // The decoder must read back what the product's encoder wrote.
         uint32_t seq = 0, out_count = 0;
         double t_cap = 0.0, t_srv = 0.0;
         const float* out_xyz = nullptr;
-        bool ok = openscanner::frame_protocol::decode_cloud_snapshot(encoded.data(), encoded.size(), &seq, &t_cap,
-                                                                      &t_srv, &out_xyz, &out_count);
-        Print("encode.roundtrip_ok", ok && out_count == counts[c] ? 1.0 : 0.0);
-        (void)warm;
+        bool ok = openscanner::frame_protocol::decode_cloud_snapshot(fast_warm.data(), fast_warm.size(), &seq,
+                                                                      &t_cap, &t_srv, &out_xyz, &out_count);
+        const bool roundtrip = ok && out_count == counts[c];
+        if (!roundtrip) all_roundtrip = false;
+        std::snprintf(key, sizeof(key), "encode.roundtrip_ok.%u", counts[c]);
+        Print(key, roundtrip ? 1.0 : 0.0);
+        (void)ref;
     }
+    Print("encode.equivalent", all_equal ? 1.0 : 0.0);
+    Print("encode.roundtrip_ok", all_roundtrip ? 1.0 : 0.0);
 
     // --- the broadcast --------------------------------------------------
     {
@@ -302,8 +350,9 @@ int main(int argc, char** argv) {
             return 2;
         }
         std::vector<float> xyz = MakePoints(kLivePoints);
-        std::vector<uint8_t> frame =
-            openscanner::frame_protocol::encode_cloud_snapshot(1, 0.0, 0.0, xyz.data(), kLivePoints);
+        // Row #164: the broadcast's input is the product encoder's bytes.
+        std::vector<uint8_t> frame(openscanner::fast_encode::CloudSnapshotSize(kLivePoints));
+        openscanner::fast_encode::EncodeCloudSnapshot(1, 0.0, 0.0, xyz.data(), kLivePoints, frame.data());
 
         for (int clients : {1, 8}) {
             std::vector<std::unique_ptr<DrainClient>> pool;

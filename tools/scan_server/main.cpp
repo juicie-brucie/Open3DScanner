@@ -92,6 +92,7 @@
 #include "device_probe.h"      // the bounded device-enumeration wait (row #167)
 #include "perf_window.h"       // per-tick latency instrumentation (row #111)
 #include "exposure_apply.h"    // when the exposure/laser config is pushed (row #153)
+#include "fast_encode.h"       // the allocation-free cloud-snapshot encoder (row #164)
 
 namespace {
 
@@ -453,10 +454,16 @@ std::string BuildStatusJson(const char* mode, const ControlState& state, bool fo
 
 // Wire format shared with ui/app.js: u32 frame_id, f64 capture_timestamp_ms,
 // u32 point_count, then point_count * (f32 x, f32 y, f32 z).
-std::vector<uint8_t> BuildFrame(uint32_t frame_id, double capture_timestamp_ms, const float* xyz,
-                                 uint32_t point_count) {
-    return openscanner::frame_protocol::encode_cloud_snapshot(frame_id, capture_timestamp_ms, NowMs(),
-                                                             xyz == nullptr ? nullptr : xyz, point_count);
+//
+// Row #164: the bytes come from fast_encode.h, which writes the same layout
+// into one reusable buffer. The reference is a thread_local buffer, so the
+// tick allocates on its first frame and not per frame; callers must use the
+// reference before the next BuildFrame on the same thread (every call site
+// broadcasts/records it immediately).
+const std::vector<uint8_t>& BuildFrame(uint32_t frame_id, double capture_timestamp_ms, const float* xyz,
+                                       uint32_t point_count) {
+    static thread_local openscanner::fast_encode::CloudSnapshotBuffer buffer;
+    return buffer.Encode(frame_id, capture_timestamp_ms, NowMs(), xyz == nullptr ? nullptr : xyz, point_count);
 }
 
 static void RecordFrame(const std::vector<uint8_t>& frame) {
@@ -568,7 +575,7 @@ void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0, bo
         }
 
         if (control.scanning.load() && !control.paused.load()) {
-            std::vector<uint8_t> buf;
+            const std::vector<uint8_t>* buf = nullptr;
             {
                 perf::SegTimer t(&s_post_us);
                 std::vector<Vec3> frame_points = base_points;
@@ -576,17 +583,17 @@ void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0, bo
                 angle += 0.02;
                 frame_points_count = static_cast<uint32_t>(frame_points.size());
                 cloud_tracker.Observe(CloudHash(frame_points.data(), sizeof(Vec3), frame_points_count));
-                buf = BuildFrame(frame_id++, now_ms, reinterpret_cast<const float*>(frame_points.data()),
-                                 frame_points_count);
+                buf = &BuildFrame(frame_id++, now_ms, reinterpret_cast<const float*>(frame_points.data()),
+                                  frame_points_count);
             }
             {
                 perf::SegTimer t(&s_bcast_us);
                 if (server.ConnectedClientCount() > 0) {
-                    server.BroadcastBinary(buf.data(), buf.size());
+                    server.BroadcastBinary(buf->data(), buf->size());
                 }
             }
-            frame_bytes += buf.size();
-            RecordFrame(buf);
+            frame_bytes += buf->size();
+            RecordFrame(*buf);
         }
 
         int64_t s_wait_us = 0;
@@ -1365,7 +1372,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                         xyz.push_back(cloud.points[src].z);
                     }
                     uint32_t broadcast_count = static_cast<uint32_t>(xyz.size() / 3);
-                    std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
+                    const std::vector<uint8_t>& buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
                     post_timer.Stop();
                     {
                         perf::SegTimer bcast_timer(&s_bcast_us);
@@ -1379,17 +1386,17 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                 } else {
                     // Broadcast an empty frame too, so the UI's data-fps/HUD
                     // reflects a real, live connection rather than going idle.
-                    std::vector<uint8_t> buf;
+                    const std::vector<uint8_t>* buf = nullptr;
                     {
                         perf::SegTimer t(&s_post_us);
-                        buf = BuildFrame(frame_id++, NowMs(), nullptr, 0);
+                        buf = &BuildFrame(frame_id++, NowMs(), nullptr, 0);
                     }
                     {
                         perf::SegTimer bcast_timer(&s_bcast_us);
-                        server.BroadcastBinary(buf.data(), buf.size());
+                        server.BroadcastBinary(buf->data(), buf->size());
                     }
-                    frame_bytes += buf.size();
-            RecordFrame(buf);
+                    frame_bytes += buf->size();
+            RecordFrame(*buf);
                     ++g_cloud_frames_broadcast;
                 }
                 // Release is a no-op in the vendor (native `ret`); call it
@@ -1470,7 +1477,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                 xyz[i * 3 + 1] = mesh.vertices[src].y;
                 xyz[i * 3 + 2] = mesh.vertices[src].z;
             }
-            std::vector<uint8_t> buf = BuildFrame(frame_id++, NowMs(), xyz.data(), preview_count);
+            const std::vector<uint8_t>& buf = BuildFrame(frame_id++, NowMs(), xyz.data(), preview_count);
             server.BroadcastBinary(buf.data(), buf.size());
             RecordFrame(buf);
             ++g_cloud_frames_broadcast;
@@ -1492,7 +1499,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     cxyz[i * 3 + 1] = mesh.vertices[off + i].y;
                     cxyz[i * 3 + 2] = mesh.vertices[off + i].z;
                 }
-                std::vector<uint8_t> cbuf = BuildFrame(frame_id++, NowMs(), cxyz.data(), cnt);
+                const std::vector<uint8_t>& cbuf = BuildFrame(frame_id++, NowMs(), cxyz.data(), cnt);
                 server.BroadcastBinary(cbuf.data(), cbuf.size());
                 RecordFrame(cbuf);
                 ++g_full_detail_chunks_broadcast;
