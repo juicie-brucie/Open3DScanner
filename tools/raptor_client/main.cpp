@@ -1283,9 +1283,31 @@ Value StopStream(RpcClient& c, const InterfaceRoute& route, uint32_t w, uint32_t
 
 // Decode the vendor response (RespHeader: magic 5242, size, opcode, requestId,
 // errorCode) if it is a bin; returns true when errorCode == 0.
+// The vendor response's bytes, whichever msgpack form carried them.
+//
+// Row #184: the daemon returns `ob_rpc_send_data`'s result as a msgpack **str**,
+// not a bin — the #132 captures have 897 IR replies of 0 bytes and 1000 depth
+// replies of 64 bytes, all `str`. The client used to require a bin, so every
+// SET logged `rpc kind=5` and no ack was ever parsed. Both forms are the same
+// bytes, so both are accepted here; the wire is unchanged.
+bool VendorResponseBytes(const Value& value, const uint8_t** data, size_t* size) {
+    if (value.kind == Value::Kind::Bin) {
+        *data = value.bin.data();
+        *size = value.bin.size();
+        return true;
+    }
+    if (value.kind == Value::Kind::Str) {
+        *data = reinterpret_cast<const uint8_t*>(value.s.data());
+        *size = value.s.size();
+        return true;
+    }
+    return false;
+}
+
 bool VendorAccepted(const Value& rpc_result, uint16_t* out_opcode, uint16_t* out_reqid, uint16_t* out_error) {
-    if (rpc_result.kind != Value::Kind::Bin || rpc_result.bin.size() < 10) return false;
-    const Bytes& b = rpc_result.bin;
+    const uint8_t* b = nullptr;
+    size_t n = 0;
+    if (!VendorResponseBytes(rpc_result, &b, &n) || n < 10) return false;
     auto le16 = [&](size_t o) { return (uint16_t)(b[o] | (b[o + 1] << 8)); };
     if (le16(0) != 0x4252) return false;  // "BR"
     if (out_opcode) *out_opcode = le16(4);
@@ -1314,9 +1336,20 @@ bool SetProperty(RpcClient& c, const InterfaceRoute& route, uint32_t prop, int32
         if (r.kind == Value::Kind::Error) {
             std::printf("[live] SET prop=%u value=%d reqid=%u -> rpc ERROR: %s\n", prop, value, request_id,
                         r.error.c_str());
-        } else if (r.kind == Value::Kind::Bin) {
-            std::printf("[live] SET prop=%u value=%d reqid=%u -> vendor %s (opcode=%u reqid=%u err=%u, %zu B)\n",
-                        prop, value, request_id, accepted ? "ACCEPT" : "REJECT", opcode, reqid, err, r.bin.size());
+        } else if (r.kind == Value::Kind::Bin || r.kind == Value::Kind::Str) {
+            const uint8_t* bytes = nullptr;
+            size_t size = 0;
+            VendorResponseBytes(r, &bytes, &size);
+            if (size == 0) {
+                // The IR interface answers a SET with an empty str: no ack
+                // bytes to parse, and not a rejection either.
+                std::printf("[live] SET prop=%u value=%d reqid=%u -> vendor no ack (0 B)\n", prop, value,
+                            request_id);
+            } else {
+                std::printf(
+                    "[live] SET prop=%u value=%d reqid=%u -> vendor %s (opcode=%u reqid=%u err=%u, %zu B)\n",
+                    prop, value, request_id, accepted ? "ACCEPT" : "REJECT", opcode, reqid, err, size);
+            }
         } else if (r.kind == Value::Kind::Timeout) {
             std::printf("[live] SET prop=%u value=%d reqid=%u -> rpc TIMEOUT\n", prop, value, request_id);
         } else {
@@ -1331,6 +1364,15 @@ bool SetProperty(RpcClient& c, const InterfaceRoute& route, uint32_t prop, int32
 // The number of property sets the live path sends per frame pull (the
 // laser trio and the exposure pair, protocol-spec §3.1).
 constexpr int kLivePropertySets = 5;
+
+// The cycle's properties and values (protocol-spec.md §3.1 / row #101).
+struct LivePropertySet {
+    uint32_t prop;
+    int32_t value;
+};
+constexpr LivePropertySet kLivePropertyCycle[kLivePropertySets] = {
+    {3, 0}, {152, 0}, {153, 1}, {154, 866000}, {155, 866000},
+};
 
 // What a live run saw. The counters are the run's verdict: a run that
 // pulled frames is a success, whatever shape the replies had.
@@ -1504,10 +1546,14 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
             std::fflush(stdout);
         }
         // §3.1 host-driven loops: laser trio and exposure, at the observed cadence.
-        const uint32_t props[kLivePropertySets] = {3, 152, 153, 154, 155};
-        const int32_t values[kLivePropertySets] = {0, 0, 1, 866000, 866000};
-        for (int k = 0; k < kLivePropertySets; ++k) {
-            if (!SetProperty(rpc, route, props[k], values[k], ++request_id, log)) {
+        //
+        // Row #184: one table, iterated. The five properties are a single
+        // constexpr array, so they cannot drift apart and there is no index to
+        // get wrong; the request id is this loop's own counter, independent of
+        // the property. (The #175 IR log's lone `prop=192` is not producible by
+        // the shipped loop: its table is in read-only __TEXT,__const.)
+        for (const LivePropertySet& set : kLivePropertyCycle) {
+            if (!SetProperty(rpc, route, set.prop, set.value, ++request_id, log)) {
                 std::fprintf(stderr, "%s\n",
                              LiveTimeoutMessage(host, port, route, MethodFor(route, "ob_rpc_send_data"), timeout_ms)
                                  .c_str());
@@ -2599,6 +2645,27 @@ int LiveSuffixSelftest() {
                   MethodFor(*depth, "ob_rpc_stop_stream") == "ob_rpc_stop_stream0-2-10");
     }
 
+    {
+        // Row #184: the daemon's send_data result is a msgpack str (the #132
+        // captures: 897 IR empty replies, 1000 depth replies of 64 B), never a
+        // bin. The same bytes must parse whichever form carries them.
+        Value ack;
+        ack.kind = Value::Kind::Str;
+        ack.s.assign(64, '\0');
+        ack.s[0] = 0x52;  // "BR"
+        ack.s[1] = 0x42;
+        ack.s[4] = (char)kOpSetProperty;
+        ack.s[6] = 7;
+        uint16_t opcode = 0, reqid = 0, error = 0xffff;
+        check("a vendor ack carried as a str is parsed",
+              VendorAccepted(ack, &opcode, &reqid, &error) && opcode == kOpSetProperty && reqid == 7 &&
+                  error == 0);
+        Value empty;
+        empty.kind = Value::Kind::Str;
+        check("an empty str is no ack, not a rejection",
+              !VendorAccepted(empty, nullptr, nullptr, nullptr));
+    }
+
     // One live run per interface, against the mock that serves it.
     struct Run {
         const char* label;
@@ -2667,6 +2734,42 @@ int LiveSuffixSelftest() {
               daemon.CountOf(get_frame) == 3);
         check((tag + "the property sets are the suffixed send_data").c_str(),
               daemon.CountOf(send_data) == (size_t)(3 * kLivePropertySets));
+
+        // Row #184: the SET cycle's contract — exactly the five properties, in
+        // order, every frame, with the reqid its own counter. This is the
+        // regression guard for the #175 IR log's lone `prop=192`.
+        std::vector<uint32_t> cycle_props;
+        std::vector<uint16_t> cycle_reqids;
+        bool cycle_ok = true;
+        for (const MockInterfaceDaemon::Call& call : daemon.calls()) {
+            if (call.method != send_data) continue;
+            const Value& params = call.params;
+            if (params.kind != Value::Kind::Array || params.array.empty() ||
+                params.array[0].kind != Value::Kind::Bin || params.array[0].bin.size() < 16) {
+                cycle_ok = false;
+                continue;
+            }
+            const Bytes& vendor = params.array[0].bin;
+            auto le16 = [&](size_t o) { return (uint16_t)(vendor[o] | (vendor[o + 1] << 8)); };
+            auto le32 = [&](size_t o) {
+                return (uint32_t)vendor[o] | ((uint32_t)vendor[o + 1] << 8) |
+                       ((uint32_t)vendor[o + 2] << 16) | ((uint32_t)vendor[o + 3] << 24);
+            };
+            if (le16(0) != 0x4d47 || le16(4) != kOpSetProperty) cycle_ok = false;
+            cycle_props.push_back(le32(8));
+            cycle_reqids.push_back(le16(6));
+        }
+        const uint32_t want_props[kLivePropertySets] = {3, 152, 153, 154, 155};
+        bool props_ok = cycle_ok && cycle_props.size() == (size_t)(3 * kLivePropertySets);
+        for (size_t i = 0; props_ok && i < cycle_props.size(); ++i) {
+            if (cycle_props[i] != want_props[i % kLivePropertySets]) props_ok = false;
+        }
+        check((tag + "the SET cycle is exactly 3/152/153/154/155, every frame").c_str(), props_ok);
+        bool reqids_ok = cycle_reqids.size() == (size_t)(3 * kLivePropertySets);
+        for (size_t i = 0; reqids_ok && i < cycle_reqids.size(); ++i) {
+            if (cycle_reqids[i] != (uint16_t)(i + 1)) reqids_ok = false;
+        }
+        check((tag + "the SET reqids are 1..15, independent of the properties").c_str(), reqids_ok);
 
         // The sequence: start, then each frame pull with its property
         // sets, then the stop.
