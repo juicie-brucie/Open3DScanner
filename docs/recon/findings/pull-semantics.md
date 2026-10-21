@@ -10,7 +10,7 @@ What is the pull semantics of `ob_rpc_get_frame`? Does the client receive a stre
 
 The #132 hardware run captured complete RPC reply streams from both IR and depth interfaces post-power-cycle, with `pull_ms=0` (back-to-back polling, no artificial delay).
 
-**Correction to #131 element naming:** The observed 11-element array has e1=0 for every reply and e2 carries the actual microsecond timestamps. This corrects the #131 element naming where e1 was named "the frame's µs timestamp". All timestamp references below refer to e2.
+**Correction to #131 element naming (corrected 2026-10-21 by #183):** Both e1 and e2 carry real timestamps. e1 is **CLOCK_REALTIME** in microseconds (e.g., 1792552122036427 ≈ 2026-10-21 03:08:42 UTC); e2 is **CLOCK_MONOTONIC** in microseconds (e.g., 211599394). The prior correction incorrectly stated "e1=0 for every reply" — the #132 bundles show e1 is **never 0** (0/380 replies have e1=0). All timestamp references below should consider both e1 (wall-clock) and e2 (monotonic).
 
 ### 2.1 IR Interface (port 10013)
 
