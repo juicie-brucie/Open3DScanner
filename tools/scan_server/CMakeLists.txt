@@ -28,6 +28,13 @@ add_executable(device_probe_test device_probe_test.cpp)
 target_link_libraries(device_probe_test PRIVATE openscanner_engine)
 add_test(NAME device_probe_test COMMAND device_probe_test)
 
+# Hardware-free test for the per-client broadcast counters (row #163): a real
+# loopback server, fast clients, the 1-vs-8 fan-out, and a stalled client that
+# exercises the drop and the send timeout.
+add_executable(ws_broadcast_counters_test ws_broadcast_counters_test.cpp)
+target_link_libraries(ws_broadcast_counters_test PRIVATE openscanner_engine)
+add_test(NAME ws_broadcast_counters_test COMMAND ws_broadcast_counters_test)
+
 # Hardware-free smoke test for the HUD's frame-age arithmetic (row #142): it
 # pins the arithmetic and, when the built server is available, takes a real age
 # off the synthetic server. The UI is plain JS with no build step, so node is

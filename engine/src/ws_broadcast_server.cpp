@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cerrno>
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -215,7 +217,19 @@ bool ReadFrame(socket_t client, uint8_t* opcode, std::vector<uint8_t>* payload) 
     return true;
 }
 
-bool SendAll(socket_t sock, const uint8_t* data, size_t len) {
+// True when a failed send failed because the socket's SO_SNDTIMEO elapsed
+// (row #163 counts these separately from a reset/closed peer).
+bool IsSendTimeout() {
+#if defined(_WIN32)
+    const int err = WSAGetLastError();
+    return err == WSAETIMEDOUT || err == WSAEWOULDBLOCK;
+#else
+    return errno == EAGAIN || errno == EWOULDBLOCK;
+#endif
+}
+
+bool SendAll(socket_t sock, const uint8_t* data, size_t len, bool* out_timed_out = nullptr) {
+    if (out_timed_out != nullptr) *out_timed_out = false;
     size_t sent = 0;
     while (sent < len) {
 #if defined(_WIN32)
@@ -228,7 +242,10 @@ bool SendAll(socket_t sock, const uint8_t* data, size_t len) {
 #endif
         ssize_t n = send(sock, data + sent, len - sent, flags);
 #endif
-        if (n <= 0) return false;  // Failed/timed-out send: caller drops this client.
+        if (n <= 0) {  // Failed/timed-out send: caller drops this client.
+            if (out_timed_out != nullptr) *out_timed_out = IsSendTimeout();
+            return false;
+        }
         sent += static_cast<size_t>(n);
     }
     return true;
@@ -236,8 +253,10 @@ bool SendAll(socket_t sock, const uint8_t* data, size_t len) {
 
 // Encodes and sends one unmasked WebSocket frame (server->client frames are
 // never masked per RFC 6455). Returns false if the peer stalled/gone; the
-// caller must not write another frame to that socket.
-bool SendFrame(socket_t sock, uint8_t opcode, const uint8_t* payload, size_t len) {
+// caller must not write another frame to that socket. `out_timed_out` says
+// whether the failure was the socket's send timeout.
+bool SendFrame(socket_t sock, uint8_t opcode, const uint8_t* payload, size_t len,
+               bool* out_timed_out = nullptr) {
     std::vector<uint8_t> header;
     header.push_back(0x80 | opcode);  // FIN=1, opcode
     if (len <= 125) {
@@ -252,9 +271,15 @@ bool SendFrame(socket_t sock, uint8_t opcode, const uint8_t* payload, size_t len
             header.push_back(static_cast<uint8_t>((static_cast<uint64_t>(len) >> (i * 8)) & 0xFF));
         }
     }
-    if (!SendAll(sock, header.data(), header.size())) return false;
-    if (len > 0 && !SendAll(sock, payload, len)) return false;
+    if (!SendAll(sock, header.data(), header.size(), out_timed_out)) return false;
+    if (len > 0 && !SendAll(sock, payload, len, out_timed_out)) return false;
     return true;
+}
+
+int64_t UsSince(std::chrono::steady_clock::time_point start) {
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+               std::chrono::steady_clock::now() - start)
+        .count();
 }
 
 }  // namespace
@@ -266,13 +291,100 @@ struct WsBroadcastServer::Impl {
     socket_t listen_socket = OPENSCANNER_INVALID_SOCKET;
     std::thread accept_thread;
 
+    // Row #163: one entry per client, with the counters measured on its send
+    // path. Everything below `id` is guarded by clients_mutex (the send path
+    // and the snapshot both take it).
+    struct ClientEntry {
+        socket_t socket = OPENSCANNER_INVALID_SOCKET;
+        uint64_t id = 0;
+        uint64_t sends = 0;
+        uint64_t bytes = 0;
+        uint64_t send_us_last = 0;
+        uint64_t send_us_total = 0;
+        uint64_t send_us_max = 0;
+        uint64_t drops = 0;
+        uint64_t timeouts = 0;
+    };
+    struct Stats {
+        uint64_t broadcasts = 0;
+        uint64_t sends = 0;
+        uint64_t bytes = 0;
+        uint64_t send_us_last = 0;
+        uint64_t send_us_total = 0;
+        uint64_t send_us_max = 0;
+        uint64_t drops = 0;
+        uint64_t timeouts = 0;
+    };
+
     std::string static_root;
     mutable std::mutex clients_mutex;
-    std::vector<socket_t> clients;
+    std::vector<ClientEntry> clients;
     std::vector<std::thread> reader_threads;
+    uint64_t next_client_id = 1;
+    Stats stats;
+    // Read without the lock: a snapshot must be able to say whether a send is
+    // in flight even while the broadcaster holds clients_mutex.
+    std::atomic<uint32_t> in_flight{0};
+    std::atomic<uint32_t> in_flight_max{0};
 
     std::mutex handler_mutex;
     WsBroadcastServer::TextMessageHandler text_handler;
+
+    void NoteInFlight(uint32_t now) {
+        uint32_t peak = in_flight_max.load(std::memory_order_relaxed);
+        while (now > peak &&
+               !in_flight_max.compare_exchange_weak(peak, now, std::memory_order_relaxed)) {
+        }
+    }
+
+    // One broadcast to every connected client, with the counters (row #163).
+    // Caller holds clients_mutex.
+    void BroadcastFrame(uint8_t opcode, const uint8_t* data, size_t len) {
+        if (clients.empty()) return;
+        ++stats.broadcasts;
+        for (auto it = clients.begin(); it != clients.end();) {
+            ClientEntry& client = *it;
+            bool timed_out = false;
+            const auto start = std::chrono::steady_clock::now();
+            const uint32_t depth = in_flight.fetch_add(1, std::memory_order_relaxed) + 1;
+            NoteInFlight(depth);
+            const bool sent = SendFrame(client.socket, opcode, data, len, &timed_out);
+            const int64_t us = UsSince(start);
+            in_flight.fetch_sub(1, std::memory_order_relaxed);
+
+            ++client.sends;
+            client.send_us_last = static_cast<uint64_t>(us);
+            client.send_us_total += static_cast<uint64_t>(us);
+            if (static_cast<uint64_t>(us) > client.send_us_max) {
+                client.send_us_max = static_cast<uint64_t>(us);
+            }
+            ++stats.sends;
+            stats.send_us_last = static_cast<uint64_t>(us);
+            stats.send_us_total += static_cast<uint64_t>(us);
+            if (static_cast<uint64_t>(us) > stats.send_us_max) {
+                stats.send_us_max = static_cast<uint64_t>(us);
+            }
+
+            if (!sent) {
+                // A partial frame already went out; never write another frame
+                // to this socket. Drop it from the broadcast list and wake its
+                // reader, which owns the actual close().
+                ++client.drops;
+                ++stats.drops;
+                if (timed_out) {
+                    ++client.timeouts;
+                    ++stats.timeouts;
+                }
+                const socket_t dead = client.socket;
+                it = clients.erase(it);
+                OPENSCANNER_SHUTDOWN(dead);
+            } else {
+                client.bytes += len;
+                stats.bytes += len;
+                ++it;
+            }
+        }
+    }
 
     void AcceptLoop() {
         while (running.load()) {
@@ -315,7 +427,10 @@ struct WsBroadcastServer::Impl {
 #endif
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
-                clients.push_back(client);
+                ClientEntry entry;
+                entry.socket = client;
+                entry.id = next_client_id++;
+                clients.push_back(entry);
                 reader_threads.emplace_back([this, client]() { ClientReadLoop(client); });
             }
         }
@@ -420,7 +535,9 @@ struct WsBroadcastServer::Impl {
             }
         }
         std::lock_guard<std::mutex> lock(clients_mutex);
-        clients.erase(std::remove(clients.begin(), clients.end(), client), clients.end());
+        clients.erase(std::remove_if(clients.begin(), clients.end(),
+                                     [client](const ClientEntry& entry) { return entry.socket == client; }),
+                      clients.end());
         OPENSCANNER_CLOSESOCK(client);
     }
 };
@@ -481,7 +598,7 @@ void WsBroadcastServer::Stop() {
     std::vector<socket_t> clients_copy;
     {
         std::lock_guard<std::mutex> lock(impl_->clients_mutex);
-        clients_copy = impl_->clients;
+        for (const auto& entry : impl_->clients) clients_copy.push_back(entry.socket);
     }
     for (socket_t client : clients_copy) {
         OPENSCANNER_CLOSESOCK(client);
@@ -502,36 +619,51 @@ void WsBroadcastServer::Stop() {
 
 void WsBroadcastServer::BroadcastBinary(const uint8_t* data, size_t size) {
     std::lock_guard<std::mutex> lock(impl_->clients_mutex);
-    for (auto it = impl_->clients.begin(); it != impl_->clients.end();) {
-        if (!SendFrame(*it, 0x2 /* binary */, data, size)) {
-            // A partial frame already went out; never write another frame to
-            // this socket. Drop it from the broadcast list and wake its
-            // reader, which owns the actual close().
-            socket_t dead = *it;
-            it = impl_->clients.erase(it);
-            OPENSCANNER_SHUTDOWN(dead);
-        } else {
-            ++it;
-        }
-    }
+    impl_->BroadcastFrame(0x2 /* binary */, data, size);
 }
 
 void WsBroadcastServer::BroadcastText(const std::string& text) {
     std::lock_guard<std::mutex> lock(impl_->clients_mutex);
-    for (auto it = impl_->clients.begin(); it != impl_->clients.end();) {
-        if (!SendFrame(*it, 0x1 /* text */, reinterpret_cast<const uint8_t*>(text.data()), text.size())) {
-            socket_t dead = *it;
-            it = impl_->clients.erase(it);
-            OPENSCANNER_SHUTDOWN(dead);
-        } else {
-            ++it;
-        }
-    }
+    impl_->BroadcastFrame(0x1 /* text */, reinterpret_cast<const uint8_t*>(text.data()), text.size());
 }
 
 size_t WsBroadcastServer::ConnectedClientCount() const {
     std::lock_guard<std::mutex> lock(impl_->clients_mutex);
     return impl_->clients.size();
+}
+
+WsBroadcastServer::BroadcastStats WsBroadcastServer::GetBroadcastStats() const {
+    BroadcastStats out;
+    // The in-flight counters are atomic so they can be read even while the
+    // broadcaster holds the client lock (it holds it for the whole send).
+    out.queue_depth = impl_->in_flight.load(std::memory_order_relaxed);
+    out.queue_depth_max = impl_->in_flight_max.load(std::memory_order_relaxed);
+
+    std::lock_guard<std::mutex> lock(impl_->clients_mutex);
+    const Impl::Stats& stats = impl_->stats;
+    out.broadcasts = stats.broadcasts;
+    out.sends = stats.sends;
+    out.bytes = stats.bytes;
+    out.send_us_last = stats.send_us_last;
+    out.send_us_total = stats.send_us_total;
+    out.send_us_max = stats.send_us_max;
+    out.drops = stats.drops;
+    out.timeouts = stats.timeouts;
+    out.connected = impl_->clients.size();
+    out.per_client.reserve(impl_->clients.size());
+    for (const auto& client : impl_->clients) {
+        BroadcastClientStats entry;
+        entry.id = client.id;
+        entry.sends = client.sends;
+        entry.bytes = client.bytes;
+        entry.send_us_last = client.send_us_last;
+        entry.send_us_total = client.send_us_total;
+        entry.send_us_max = client.send_us_max;
+        entry.drops = client.drops;
+        entry.timeouts = client.timeouts;
+        out.per_client.push_back(entry);
+    }
+    return out;
 }
 
 }  // namespace openscanner

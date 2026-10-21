@@ -115,6 +115,64 @@ void CheckExposureApplyCount() {
     Check(snap.segment[perf::kExposure].p50 == 0, "the ticks that skipped it measure zero");
 }
 
+// Row #163: the broadcast counters are cumulative; the tick's delta must
+// subtract the counters and only carry a max/peak when it advanced.
+void CheckBroadcastDeltas() {
+    perf::BroadcastCumulative previous;
+    previous.sends = 10;
+    previous.bytes = 1000;
+    previous.send_us_total = 500;
+    previous.send_us_max = 80;
+    previous.drops = 1;
+    previous.timeouts = 1;
+    previous.queue_depth_max = 2;
+
+    perf::BroadcastCumulative now = previous;
+    now.sends += 8;
+    now.bytes += 800;
+    now.send_us_total += 400;
+    now.drops += 1;
+    now.timeouts += 0;  // a non-timeout drop
+    const perf::BroadcastDelta no_new_max = perf::DeltaBetween(previous, now);
+    Check(no_new_max.sends == 8, "the delta subtracts the send count");
+    Check(no_new_max.bytes == 800, "the delta subtracts the bytes");
+    Check(no_new_max.send_us_total == 400, "the delta subtracts the send time total");
+    Check(no_new_max.send_us_max == 0, "no new maximum -> 0, not the stale maximum");
+    Check(no_new_max.drops == 1, "the drop delta");
+    Check(no_new_max.timeouts == 0, "the timeout delta");
+    Check(no_new_max.queue_max == 0, "no new queue peak -> 0");
+
+    now.send_us_max = 90;
+    now.queue_depth_max = 3;
+    const perf::BroadcastDelta with_max = perf::DeltaBetween(previous, now);
+    Check(with_max.send_us_max == 90, "a new lifetime maximum is carried");
+    Check(with_max.queue_max == 3, "a new in-flight peak is carried");
+
+    // The same values flow into the window snapshot.
+    perf::TickPerf tp;
+    int64_t now_us = 0;
+    for (int i = 0; i < 5; ++i) {
+        tp.BeginTickAt(now_us);
+        perf::TickPerf::Sample sample;
+        sample.nominal_wait_us = 100000;
+        sample.bcast_sends = 8;
+        sample.bcast_send_us_total = 160;
+        sample.bcast_send_us_max = (i == 2) ? 40 : 0;
+        sample.bcast_drops = (i == 3) ? 1 : 0;
+        sample.bcast_timeouts = (i == 3) ? 1 : 0;
+        sample.bcast_queue_max = (i == 1) ? 1 : 0;
+        tp.EndTick(sample);
+        now_us += 140000;
+    }
+    const perf::TickPerf::Snapshot snap = tp.TakeSnapshot();
+    Check(snap.bcast_sends == 40, "the window sums the per-client sends");
+    Check(snap.bcast_send_us_total == 800, "the window sums the send time");
+    Check(snap.bcast_send_us_max == 40, "the window keeps the biggest new max");
+    Check(snap.bcast_drops == 1, "the window counts the drops");
+    Check(snap.bcast_timeouts == 1, "the window counts the timeouts");
+    Check(snap.bcast_queue_max == 1, "the window keeps the in-flight peak");
+}
+
 }  // namespace
 
 int main() {
@@ -123,11 +181,13 @@ int main() {
     CheckFieldsAndResidual();
     CheckShortWaitIsNegativeOvershoot();
     CheckExposureApplyCount();
+    CheckBroadcastDeltas();
     if (g_failures != 0) {
         std::fprintf(stderr, "[perf_window_test] %d check(s) failed\n", g_failures);
         return 1;
     }
     std::printf("[perf_window_test] PASS: 4 work segments unchanged; wait/exposure/release separate; "
-                "overshoot = wait - nominal; residual = period - sum; the exposure pushes are counted\n");
+                "overshoot = wait - nominal; residual = period - sum; the exposure pushes are counted; "
+                "the broadcast deltas subtract and carry new maxima only\n");
     return 0;
 }

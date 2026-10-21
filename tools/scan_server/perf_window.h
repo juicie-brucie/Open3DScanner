@@ -67,6 +67,41 @@ private:
     std::chrono::steady_clock::time_point start_;
 };
 
+// Row #163: the broadcast counters are cumulative; the tick turns them into
+// per-tick deltas. The max/peak fields are monotonic, so a tick carries a new
+// maximum only when the lifetime maximum advanced during it (0 = no new max).
+struct BroadcastCumulative {
+    uint64_t sends = 0;
+    uint64_t bytes = 0;
+    uint64_t send_us_total = 0;
+    uint64_t send_us_max = 0;
+    uint64_t drops = 0;
+    uint64_t timeouts = 0;
+    uint32_t queue_depth_max = 0;
+};
+
+struct BroadcastDelta {
+    uint64_t sends = 0;
+    uint64_t bytes = 0;
+    uint64_t send_us_total = 0;
+    uint64_t send_us_max = 0;
+    uint64_t drops = 0;
+    uint64_t timeouts = 0;
+    uint32_t queue_max = 0;
+};
+
+inline BroadcastDelta DeltaBetween(const BroadcastCumulative& previous, const BroadcastCumulative& now) {
+    BroadcastDelta delta;
+    delta.sends = now.sends - previous.sends;
+    delta.bytes = now.bytes - previous.bytes;
+    delta.send_us_total = now.send_us_total - previous.send_us_total;
+    delta.send_us_max = now.send_us_max > previous.send_us_max ? now.send_us_max : 0;
+    delta.drops = now.drops - previous.drops;
+    delta.timeouts = now.timeouts - previous.timeouts;
+    delta.queue_max = now.queue_depth_max > previous.queue_depth_max ? now.queue_depth_max : 0;
+    return delta;
+}
+
 class TickPerf {
 public:
     static constexpr int kCapacity = 512;        // > one 5 s window at 10 Hz
@@ -124,6 +159,14 @@ public:
         uint64_t bytes = 0;
         uint32_t clients = 0;      // connected at broadcast time (0 = no send)
         int64_t nominal_wait_us = 0;
+        // Row #163: the per-client broadcast counters' deltas for this tick,
+        // from WsBroadcastServer::GetBroadcastStats() — measured at the send.
+        uint64_t bcast_sends = 0;
+        uint64_t bcast_send_us_total = 0;
+        uint64_t bcast_send_us_max = 0;  // 0 = no new maximum this tick
+        uint64_t bcast_drops = 0;
+        uint64_t bcast_timeouts = 0;
+        uint32_t bcast_queue_max = 0;    // 0 = no new peak this tick
     };
 
     // Call once at the end of the tick.
@@ -150,6 +193,19 @@ public:
         Push(clients_, clients_n_, static_cast<int64_t>(sample.clients));
         exposure_applies_ += sample.exposure_applies;
         cumulative_exposure_applies_ += sample.exposure_applies;
+        // Row #163: the broadcast counters are cumulative deltas per tick.
+        bcast_sends_ += sample.bcast_sends;
+        bcast_send_us_ += sample.bcast_send_us_total;
+        bcast_send_us_max_ = std::max(bcast_send_us_max_, sample.bcast_send_us_max);
+        bcast_drops_ += sample.bcast_drops;
+        bcast_timeouts_ += sample.bcast_timeouts;
+        bcast_queue_max_ = std::max(bcast_queue_max_, sample.bcast_queue_max);
+        cumulative_bcast_sends_ += sample.bcast_sends;
+        cumulative_bcast_send_us_ += sample.bcast_send_us_total;
+        cumulative_bcast_send_us_max_ = std::max(cumulative_bcast_send_us_max_, sample.bcast_send_us_max);
+        cumulative_bcast_drops_ += sample.bcast_drops;
+        cumulative_bcast_timeouts_ += sample.bcast_timeouts;
+        cumulative_bcast_queue_max_ = std::max(cumulative_bcast_queue_max_, sample.bcast_queue_max);
         ++ticks_;
         cumulative_points_ += sample.points;
         cumulative_bytes_ += sample.bytes;
@@ -174,6 +230,13 @@ public:
         double mean_clients = 0.0;
         int64_t nominal_wait_us = 0;
         uint32_t exposure_applies = 0;  // pushes in the window (row #153)
+        // Row #163: the broadcast's measured send counters.
+        uint64_t bcast_sends = 0;         // per-client sends in the window
+        uint64_t bcast_send_us_total = 0; // for the mean: total / sends
+        uint64_t bcast_send_us_max = 0;
+        uint64_t bcast_drops = 0;
+        uint64_t bcast_timeouts = 0;
+        uint32_t bcast_queue_max = 0;
     };
 
     // Compute the current window without printing or resetting (used by the
@@ -193,6 +256,12 @@ public:
         snap.mean_clients = clients_n_ > 0 ? static_cast<double>(Sum(clients_, clients_n_)) / clients_n_ : 0.0;
         snap.nominal_wait_us = last_nominal_wait_us_;
         snap.exposure_applies = exposure_applies_;
+        snap.bcast_sends = bcast_sends_;
+        snap.bcast_send_us_total = bcast_send_us_;
+        snap.bcast_send_us_max = bcast_send_us_max_;
+        snap.bcast_drops = bcast_drops_;
+        snap.bcast_timeouts = bcast_timeouts_;
+        snap.bcast_queue_max = bcast_queue_max_;
         return snap;
     }
 
@@ -216,6 +285,16 @@ public:
                     " (wait - nominal; positive = the pacing call ran long)");
         std::printf(" residual_mean=%.2fms", static_cast<double>(cumulative_residual_us_) / ticks_ / 1000.0);
         std::printf(" exposure_applies_total=%lld", static_cast<long long>(cumulative_exposure_applies_));
+        // Row #163: the broadcast counters, cumulative over the run.
+        const double bcast_mean_us = cumulative_bcast_sends_ > 0
+                                         ? static_cast<double>(cumulative_bcast_send_us_) / cumulative_bcast_sends_
+                                         : 0.0;
+        std::printf(" bcast_sends_total=%lld bcast_send_mean_us=%.2f bcast_send_max_us=%lld"
+                    " bcast_queue_max=%u bcast_drops_total=%lld bcast_timeouts_total=%lld",
+                    static_cast<long long>(cumulative_bcast_sends_), bcast_mean_us,
+                    static_cast<long long>(cumulative_bcast_send_us_max_), cumulative_bcast_queue_max_,
+                    static_cast<long long>(cumulative_bcast_drops_),
+                    static_cast<long long>(cumulative_bcast_timeouts_));
         std::printf("\n");
         std::fflush(stdout);
     }
@@ -249,8 +328,18 @@ private:
         // window — the skip is visible here (1 per window instead of one per
         // tick).
         std::printf(" | exposure n=%u", snap.exposure_applies);
-        std::printf(" | bcast_per_client=%.2f us (derived mean; per-client send stats need engine/**)\n",
-                    snap.mean_clients > 0 ? (snap.segment[kBroadcast].p50 / snap.mean_clients) : 0.0);
+        // Row #163: the measured per-client send counters, replacing the old
+        // bcast_per_client proxy (the broadcast segment divided by the client
+        // count, which was never a per-client send).
+        const double bcast_mean_us = snap.bcast_sends > 0
+                                         ? static_cast<double>(snap.bcast_send_us_total) / snap.bcast_sends
+                                         : 0.0;
+        std::printf(" | bcast_send n=%llu mean=%.2fus max=%llu us",
+                    static_cast<unsigned long long>(snap.bcast_sends), bcast_mean_us,
+                    static_cast<unsigned long long>(snap.bcast_send_us_max));
+        std::printf(" | bcast_queue max=%u | bcast_drops=%llu timeouts=%llu\n", snap.bcast_queue_max,
+                    static_cast<unsigned long long>(snap.bcast_drops),
+                    static_cast<unsigned long long>(snap.bcast_timeouts));
         std::fflush(stdout);
 
         for (int s = 0; s < kSegmentCount; ++s) {
@@ -261,6 +350,12 @@ private:
         residual_n_ = 0;
         clients_n_ = 0;
         exposure_applies_ = 0;
+        bcast_sends_ = 0;
+        bcast_send_us_ = 0;
+        bcast_send_us_max_ = 0;
+        bcast_drops_ = 0;
+        bcast_timeouts_ = 0;
+        bcast_queue_max_ = 0;
     }
 
     static Percentiles PercentilesOf(const int64_t* values, int count) {
@@ -293,6 +388,20 @@ private:
         if (index >= count) index = count - 1;
         return scratch[index];
     }
+
+    // Row #163: the broadcast send counters, window and cumulative.
+    uint64_t bcast_sends_ = 0;
+    uint64_t bcast_send_us_ = 0;
+    uint64_t bcast_send_us_max_ = 0;
+    uint64_t bcast_drops_ = 0;
+    uint64_t bcast_timeouts_ = 0;
+    uint32_t bcast_queue_max_ = 0;
+    uint64_t cumulative_bcast_sends_ = 0;
+    uint64_t cumulative_bcast_send_us_ = 0;
+    uint64_t cumulative_bcast_send_us_max_ = 0;
+    uint64_t cumulative_bcast_drops_ = 0;
+    uint64_t cumulative_bcast_timeouts_ = 0;
+    uint32_t cumulative_bcast_queue_max_ = 0;
 
     int64_t last_us_ = 0;
     int64_t flush_start_us_ = 0;

@@ -63,6 +63,47 @@ public:
     // Number of currently-connected clients. Thread-safe.
     size_t ConnectedClientCount() const;
 
+    // Per-client broadcast counters (row #163), measured at the send: every
+    // SendFrame call is timed and its outcome recorded, so none of these is
+    // derived from the frame cadence.
+    //
+    // This server has no user-space send queue: Broadcast* writes
+    // synchronously, under the client list's lock, with a 100 ms SO_SNDTIMEO
+    // per client. `queue_depth` is therefore the number of clients whose send
+    // is in flight at the instant of the snapshot, and `queue_depth_max` is
+    // the peak since Start() — a stalled client shows up as depth 1 held for
+    // the timeout. Units are microseconds for the send times.
+    struct BroadcastClientStats {
+        uint64_t id = 0;             // connection id, 1-based, monotonic
+        uint64_t sends = 0;          // frames attempted to this client
+        uint64_t bytes = 0;          // payload bytes of the successful sends
+        uint64_t send_us_last = 0;   // the most recent send
+        uint64_t send_us_total = 0;  // mean = send_us_total / sends
+        uint64_t send_us_max = 0;
+        uint64_t drops = 0;          // failed sends that removed the client
+        uint64_t timeouts = 0;       // drops whose socket error was the send timeout
+    };
+
+    struct BroadcastStats {
+        uint64_t broadcasts = 0;     // Broadcast* calls that had at least one client
+        uint64_t sends = 0;          // per-client frame sends (successful + failed)
+        uint64_t bytes = 0;          // payload bytes of the successful sends
+        uint64_t send_us_last = 0;
+        uint64_t send_us_total = 0;
+        uint64_t send_us_max = 0;
+        uint64_t drops = 0;
+        uint64_t timeouts = 0;
+        uint32_t queue_depth = 0;     // clients in a send now
+        uint32_t queue_depth_max = 0; // peak since Start()
+        size_t connected = 0;
+        std::vector<BroadcastClientStats> per_client;  // current clients, connection order
+    };
+
+    // A cumulative snapshot since Start(). Thread-safe; it takes the client
+    // list's lock, so it can wait behind a send in progress (bounded by the
+    // 100 ms send timeout).
+    BroadcastStats GetBroadcastStats() const;
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
