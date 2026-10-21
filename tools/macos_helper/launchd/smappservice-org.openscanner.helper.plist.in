@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SMAppService form of the privileged helper (row #170).
+
+  SMAppService registers a daemon plist that lives inside the app bundle at
+  Contents/Library/LaunchDaemons/. @HELPER_BUNDLE_PROGRAM@ is the helper's
+  path relative to the bundle root, e.g. Contents/MacOS/openscanner-helper.
+  Packaging (bundle placement, signing, notarization) is a later row; this
+  template exists so the service definition is written down with the code.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>@MACH_SERVICE@</string>
+
+  <key>BundleProgram</key>
+  <string>@HELPER_BUNDLE_PROGRAM@</string>
+
+  <key>MachServices</key>
+  <dict>
+    <key>@MACH_SERVICE@</key>
+    <true/>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <false/>
+</dict>
+</plist>

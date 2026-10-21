@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LaunchDaemon form of the privileged helper (row #170).
+
+  Development template only: the build does not install it. Substitute
+  @HELPER_PROGRAM@ (the built openscanner-helper) and @MACH_SERVICE@
+  (org.openscanner.helper) and read tools/macos_helper/README.md before
+  loading it. The SMAppService form is smappservice-org.openscanner.helper.plist.in.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>@MACH_SERVICE@</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>@HELPER_PROGRAM@</string>
+    <string>--claim</string>
+    <string>iokit</string>
+  </array>
+
+  <key>MachServices</key>
+  <dict>
+    <key>@MACH_SERVICE@</key>
+    <true/>
+  </dict>
+
+  <!-- Start with the system, but do not restart a helper that exits: a claim
+       refusal is a state to read, not a loop to spin. -->
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <false/>
+
+  <key>StandardErrorPath</key>
+  <string>/var/log/openscanner-helper.log</string>
+</dict>
+</plist>
