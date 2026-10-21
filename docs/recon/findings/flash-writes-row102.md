@@ -1,6 +1,6 @@
 # Flash Writes During Normal Operation — Row #102 / OQ-F3
 
-*Observation-derived from session4 capture (2026-10-18, 86 s window). `[inferred]` — no vendor binary, no gated run. Captures stay outside repo.*
+*Observation-derived from session4 capture (2026-10-18, 86 s window). `[inferred]` — no vendor binary, no gated run. Static falsification of "no required persistent writes during normal operation" by row #162 (P9) confirms via full caller-chain enumeration — see `p9-flash-write-static.md`. Captures stay outside repo.*
 
 ## 1. The Question
 
@@ -136,9 +136,11 @@ The following commands could theoretically write to flash but were observed to b
 
 ## 5. What Would Falsify This
 
+**Static falsification complete (row #162 / P9).** See `p9-flash-write-static.md` for the full analysis. The vendor binary's sole flash-write function (`AbstractDeviceHandle::updateFlashData` at `0x315638`) has 19 call sites, all in calibration-updater, factory-reset, or parameter-restore functions. None are reachable from the normal scan flow (`obscan_scan_start` → `obscan_scan_stop`). **Required persistent write during normal operation: NO.**
+
 The verdict would be false if:
 
-1. **A flash write opcode exists but was not used in this session.** The public `Protocol.hpp` header does not list a flash write opcode, but opcode 25 (flash read) is also not in the public header — it's a firmware extension. The write path exists — `AbstractDeviceHandle::updateFlashData` targets `0x211000` (laser-plane record, bricking-capable per `FULL-INDEPENDENCE.md` §233, `calibration-store.md` §1.1) — but the wire opcode is unknown and the capture shows normal operation did not invoke it. A symmetric flash write extension could exist but not have been invoked during this 86 s capture.
+1. **A flash write opcode exists but was not used in this session.** The public `Protocol.hpp` header does not list a flash write opcode, but opcode 25 (flash read) is also not in the public header — it's a firmware extension. The write path exists — `AbstractDeviceHandle::updateFlashData` targets `0x211000` (laser-plane record, bricking-capable per `FULL-INDEPENDENCE.md` §233, `calibration-store.md` §1.1) — but the wire opcode is unknown and the capture shows normal operation did not invoke it. A symmetric flash write extension could exist but not have been invoked during this 86 s capture. **[Static analysis shows this is not the case — see `p9-flash-write-static.md`]**
 
 2. **One of the "volatile" writes actually commits to flash on a timer or trigger.** For example, `SET_STRUCTURE_DATA_V1_1` might schedule a flash write that happens later. The 22 flash reads at t=25.369–25.382 (0.32 s after the opcode 28 write) could be reading back the committed data. But this is speculative — the reads are reads, not writes.
 
