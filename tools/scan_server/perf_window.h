@@ -3,10 +3,12 @@
 // cadence. The hardware baseline is #112.
 //
 // Per tick it accumulates four segments — pose, the publish getter, our
-// post-processing + encode, and the broadcast — plus the realized tick period
-// and the cloud frame's points/bytes. A `[perf] window` line is printed every
-// 5 s (the data must survive a teardown that can hang, #89), with a cumulative
-// summary at teardown.
+// post-processing + encode, and the broadcast — plus the pacing wait, the two
+// vendor calls (exposure, release), the realized tick period and the cloud
+// frame's points/bytes. `overshoot` is wait - nominal; `tick_overshoot` is
+// tick - nominal; `residual` is tick - sum(segments), the untimed remainder.
+// A `[perf] window` line is printed every 5 s (the data must survive a
+// teardown that can hang, #89), with a cumulative summary at teardown.
 //
 // No allocation on the timing path: SegTimer is one steady_clock pair into a
 // caller-owned int64; samples land in fixed arrays. The percentile scratch is a
@@ -134,6 +136,13 @@ public:
             const int64_t residual = period_us - pending_work_us_;
             Push(residual_us_, residual_n_, residual);
             cumulative_residual_us_ += residual;
+            // Row #141: the whole tick against the pacing budget. `overshoot`
+            // is the wait alone (wait - nominal); this is tick - nominal, so
+            // work and untimed time that the wait does not account for show.
+            const int64_t tick_overshoot = period_us - last_nominal_wait_us_;
+            Push(tick_overshoot_us_, tick_overshoot_n_, tick_overshoot);
+            cumulative_tick_overshoot_us_ += tick_overshoot;
+            if (tick_overshoot > max_tick_overshoot_us_) max_tick_overshoot_us_ = tick_overshoot;
         }
         last_us_ = now_us;
         have_last_ = true;
@@ -224,8 +233,9 @@ public:
         double mean_points = 0.0;
         double mean_bytes = 0.0;
         Percentiles segment[kSegmentCount];
-        Percentiles overshoot;
-        Percentiles residual;
+        Percentiles overshoot;       // wait - nominal
+        Percentiles tick_overshoot;  // tick - nominal
+        Percentiles residual;        // tick - sum(segments)
         Percentiles tick;
         double mean_clients = 0.0;
         int64_t nominal_wait_us = 0;
@@ -251,6 +261,7 @@ public:
         snap.mean_bytes = bytes_n_ > 0 ? static_cast<double>(Sum(bytes_, bytes_n_)) / bytes_n_ : 0.0;
         for (int s = 0; s < kSegmentCount; ++s) snap.segment[s] = PercentilesOf(samples_[s], counts_[s]);
         snap.overshoot = PercentilesOf(overshoot_us_, overshoot_n_);
+        snap.tick_overshoot = PercentilesOf(tick_overshoot_us_, tick_overshoot_n_);
         snap.residual = PercentilesOf(residual_us_, residual_n_);
         snap.tick = PercentilesOf(periods_, period_n_);
         snap.mean_clients = clients_n_ > 0 ? static_cast<double>(Sum(clients_, clients_n_)) / clients_n_ : 0.0;
@@ -283,6 +294,10 @@ public:
                     static_cast<double>(cumulative_overshoot_us_) / ticks_ / 1000.0,
                     static_cast<double>(max_overshoot_us_) / 1000.0,
                     " (wait - nominal; positive = the pacing call ran long)");
+        std::printf(" tick_overshoot_mean=%.2fms tick_overshoot_max=%.2fms%s",
+                    static_cast<double>(cumulative_tick_overshoot_us_) / ticks_ / 1000.0,
+                    static_cast<double>(max_tick_overshoot_us_) / 1000.0,
+                    " (tick - nominal; the whole tick vs the pacing budget)");
         std::printf(" residual_mean=%.2fms", static_cast<double>(cumulative_residual_us_) / ticks_ / 1000.0);
         std::printf(" exposure_applies_total=%lld", static_cast<long long>(cumulative_exposure_applies_));
         // Row #163: the broadcast counters, cumulative over the run.
@@ -311,14 +326,17 @@ private:
     void Flush(const char* tag) {
         if (period_n_ == 0 && counts_[kPose] == 0) return;
         const Snapshot snap = TakeSnapshot();
-        std::printf("[perf] %s %.1fs clock=steady_clock n=%d rate=%.1f/s points=%.1f bytes=%.1f", tag,
-                    snap.window_s, snap.n, snap.rate, snap.mean_points, snap.mean_bytes);
+        std::printf("[perf] %s %.1fs clock=steady_clock unit=ms instrument=TickPerf n=%d rate=%.1f/s"
+                    " points=%.1f bytes=%.1f",
+                    tag, snap.window_s, snap.n, snap.rate, snap.mean_points, snap.mean_bytes);
         for (int s = 0; s < kSegmentCount; ++s) {
             std::printf(" | %s p50=%.2f p95=%.2f max=%.2f ms", SegmentName(s),
                         snap.segment[s].p50 / 1000.0, snap.segment[s].p95 / 1000.0, snap.segment[s].max / 1000.0);
         }
         std::printf(" | overshoot p50=%.2f p95=%.2f max=%.2f ms", snap.overshoot.p50 / 1000.0,
                     snap.overshoot.p95 / 1000.0, snap.overshoot.max / 1000.0);
+        std::printf(" | tick_overshoot p50=%.2f p95=%.2f max=%.2f ms", snap.tick_overshoot.p50 / 1000.0,
+                    snap.tick_overshoot.p95 / 1000.0, snap.tick_overshoot.max / 1000.0);
         std::printf(" | residual p50=%.2f p95=%.2f max=%.2f ms", snap.residual.p50 / 1000.0,
                     snap.residual.p95 / 1000.0, snap.residual.max / 1000.0);
         std::printf(" | tick p50=%.2f p95=%.2f max=%.2f ms | nominal=%.2f ms | clients=%.1f",
@@ -347,6 +365,7 @@ private:
         }
         period_n_ = points_n_ = bytes_n_ = 0;
         overshoot_n_ = 0;
+        tick_overshoot_n_ = 0;
         residual_n_ = 0;
         clients_n_ = 0;
         exposure_applies_ = 0;
@@ -418,6 +437,8 @@ private:
     int bytes_n_ = 0;
     int64_t overshoot_us_[kCapacity] = {};
     int overshoot_n_ = 0;
+    int64_t tick_overshoot_us_[kCapacity] = {};
+    int tick_overshoot_n_ = 0;
     int64_t residual_us_[kCapacity] = {};
     int residual_n_ = 0;
     int64_t clients_[kCapacity] = {};
@@ -433,8 +454,10 @@ private:
     int64_t cumulative_us_[kSegmentCount] = {};
     int64_t max_us_[kSegmentCount] = {};
     long long cumulative_overshoot_us_ = 0;
+    long long cumulative_tick_overshoot_us_ = 0;
     long long cumulative_residual_us_ = 0;
     int64_t max_overshoot_us_ = 0;
+    int64_t max_tick_overshoot_us_ = 0;
     bool enabled_ = true;
 };
 
