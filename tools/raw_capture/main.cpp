@@ -23,13 +23,16 @@
 // by the transport (rejected/timeout).
 #include <cstdio>
 #include <cstdlib>
+#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <thread>
 #include <string>
 #include <vector>
 
+#include "correlation.h"
 #include "descriptor_probe.h"
 #include "raw_capture.h"
 
@@ -42,6 +45,8 @@ void PrintUsage() {
         "Usage:\n"
         "  raw_capture --table\n"
         "  raw_capture --probe [--descriptor-file <blob>]\n"
+        "  raw_capture --probe --match [--descriptor-file <blob>]\n"
+        "  raw_capture --probe --watch [--seconds N] [--descriptor-file <blob>]\n"
         "  raw_capture --capture [--mock] --sink <file> [--stream ir|depth|both]\n"
         "              [--max-frames N] [--max-bytes N] [--max-seconds N]\n"
         "  raw_capture --verify <file>\n"
@@ -188,14 +193,71 @@ int RunCapture(int argc, char** argv) {
 
 int RunProbe(int argc, char** argv) {
     std::string descriptor_file;
+    bool match = false;
+    bool watch = false;
+    double watch_seconds = 10.0;
     for (int i = 2; i < argc; ++i) {
         const std::string arg = argv[i];
         if (arg == "--descriptor-file" && i + 1 < argc) {
             descriptor_file = argv[++i];
+        } else if (arg == "--match") {
+            match = true;
+        } else if (arg == "--watch") {
+            watch = true;
+        } else if (arg == "--seconds" && i + 1 < argc) {
+            watch_seconds = std::atof(argv[++i]);
         } else {
             std::fprintf(stderr, "unknown argument: %s\n", arg.c_str());
             return 1;
         }
+    }
+    if (match || watch) {
+        // The correlation path: the IORegistry read only. It works while the
+        // vendor daemon holds the device (no open, no claim), so the operator
+        // can start one RPC stream and watch which VS reacts.
+        rc::ProbeResult descriptor;
+        bool have_descriptor = false;
+        std::string error;
+        if (!descriptor_file.empty()) {
+            std::ifstream in(descriptor_file, std::ios::binary);
+            if (!in) {
+                std::fprintf(stderr, "[match] error: cannot open %s\n", descriptor_file.c_str());
+                return 2;
+            }
+            const std::vector<uint8_t> blob((std::istreambuf_iterator<char>(in)),
+                                            std::istreambuf_iterator<char>());
+            if (!rc::ParseConfigurationDescriptor(blob.data(), blob.size(), &descriptor, &error)) {
+                std::fprintf(stderr, "[match] error: %s\n", descriptor.error.c_str());
+                return 2;
+            }
+            have_descriptor = true;
+        }
+        std::vector<rc::InterfaceObservation> interfaces;
+        if (!rc::ReadScannerInterfaces(&interfaces, &error)) {
+            std::fprintf(stderr, "[match] error: %s\n", error.c_str());
+            return 2;
+        }
+        if (watch) {
+            rc::WatchTracker tracker;
+            const auto end = std::chrono::steady_clock::now() +
+                             std::chrono::milliseconds(static_cast<int64_t>(watch_seconds * 1000.0));
+            while (std::chrono::steady_clock::now() < end) {
+                std::string read_error;
+                if (rc::ReadScannerInterfaces(&interfaces, &read_error)) {
+                    for (const std::string& line : tracker.Update(interfaces)) {
+                        std::printf("[watch] %s\n", line.c_str());
+                    }
+                } else {
+                    std::fprintf(stderr, "[watch] %s\n", read_error.c_str());
+                }
+                std::fflush(stdout);
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+            }
+        }
+        const rc::CorrelationResult correlated =
+            rc::Correlate(interfaces, have_descriptor ? &descriptor : nullptr);
+        rc::PrintCorrelation(correlated, stdout);
+        return correlated.error.empty() ? 0 : 2;
     }
     rc::ProbeResult result;
     std::string error;
