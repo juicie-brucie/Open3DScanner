@@ -33,9 +33,9 @@ sudo build/tools/macos_helper/openscanner-helper --once
 
 3. **Root is not required for IOKit USB exclusive open:** With the `com.apple.security.device.usb` entitlement and proper code signing (even ad-hoc), a user-scope agent can perform IOKit USB exclusive open.
 
-## 2. What the Helper Actually Needs
+## 3. What the Helper Actually Needs
 
-### 2.1 IOKit USB Exclusive Open
+### 3.1 IOKit USB Exclusive Open
 
 The helper's core operation is claiming exclusive USB device access via IOKit:
 
@@ -59,7 +59,7 @@ IOUSBHostDevice* device = [[IOUSBHostDevice alloc]
 
 The helper code comment explicitly states: "Opening needs the privileges the launchd daemon has." However, this comment was written before we understood that user-scope entitlements are sufficient. With the `com.apple.security.device.usb` entitlement and proper code signing, a user-scope agent can perform IOKit USB exclusive open.
 
-### 2.2 XPC Service
+### 3.2 XPC Service
 
 The helper provides an XPC interface (`org.openscanner.helper`) for IPC:
 - `ping` — health check
@@ -69,7 +69,7 @@ The helper provides an XPC interface (`org.openscanner.helper`) for IPC:
 
 **Privilege requirement:** XPC services can run at any privilege level. The privilege is determined by the launchd configuration, not XPC itself.
 
-### 2.3 No UVC/HID Access (Yet)
+### 3.3 No UVC/HID Access (Yet)
 
 The current helper skeleton does **not** perform:
 - UVC streaming (no camera access)
@@ -79,7 +79,7 @@ The current helper skeleton does **not** perform:
 
 Future Phase D work (C2: replace the daemon) will need UVC/HID access, but the current skeleton only needs IOKit USB device claim.
 
-## 3. Vendor Daemon Privilege Model
+## 4. Vendor Daemon Privilege Model
 
 The vendor daemon (`/Library/Creality/RPCServer`) runs as **root** via a **user LaunchAgent** that wraps the program in `sudo`:
 
@@ -115,7 +115,7 @@ The vendor's `program=/usr/bin/sudo` wrapper is the exact anti-pattern to avoid.
 
 **Correction to earlier analysis:** I initially misidentified the vendor daemon as a system LaunchDaemon. It is actually a user LaunchAgent with a sudo-wrapped program. The privilege comes from the sudo wrapper, not from the launchd domain. This means a user-scope agent **can** perform IOKit USB operations if it has the proper entitlements and the vendor daemon is stopped.
 
-## 4. Privilege Model Options
+## 5. Privilege Model Options
 
 ### 4.1 Tier A: Unsigned/Self-Signed (Current State)
 
@@ -240,7 +240,7 @@ do {
 
 **Verdict:** ❌ **Not recommended** — this is the anti-pattern we're replacing. Requires per-run sudo, blocks non-interactive execution, and over-privileges the helper.
 
-## 5. TCC/Entitlement/Dev-Signing Requirements
+## 6. TCC/Entitlement/Dev-Signing Requirements
 
 ### 5.1 Code Signing
 
@@ -311,7 +311,7 @@ The helper does **not** require TCC approvals for:
 **Per-run approvals needed:**
 - ✅ **None** — once registered/installed, the agent runs without user interaction in both tiers
 
-## 6. Recommended Model: Two-Tier Approach
+## 7. Recommended Model: Two-Tier Approach
 
 Based on the operator's design input (2026-10-21), the app is currently **unsigned/self-signed** with no Apple Developer account. This requires a two-tier recommendation that separates the current unsigned state from the future signed state.
 
@@ -459,7 +459,7 @@ launchctl kill SIGTERM gui/$(id -u)/org.openscanner.helper
 # (This would be done programmatically, not via CLI)
 ```
 
-## 7. Four-Step No-Sudo Test
+## 8. Four-Step No-Sudo Test
 
 Once the helper is installed (Tier A: manually via `launchctl load`, or Tier B: via `SMAppService.agent`), the four operator gate steps can run **without sudo**:
 
@@ -563,7 +563,7 @@ helper: claim: releasing -> released (unplug: release complete)
 
 The helper remains running after the unplug release (no re-claim on reconnect in this row).
 
-## 8. Why the Vendor's sudo Wrapper Is the Anti-Pattern
+## 9. Why the Vendor's sudo Wrapper Is the Anti-Pattern
 
 ### 8.1 The Vendor's Approach
 
@@ -619,7 +619,7 @@ By removing the sudo wrapper and adding proper entitlements, we achieve the same
 - Compatibility with non-interactive shells
 - Minimal privilege (user, not root)
 
-## 9. Summary
+## 10. Summary
 
 | Question | Answer |
 |----------|--------|
@@ -636,7 +636,7 @@ By removing the sudo wrapper and adding proper entitlements, we achieve the same
 | Does SMAppService require signing? | **Yes** — requires Developer ID or Apple Development signature; cannot be used with unsigned/ad-hoc apps |
 | What's the migration path? | Same code/interface works for both tiers; only registration method and signing change |
 
-## 10. Open Questions
+## 11. Open Questions
 
 1. **Phase D UVC/HID access:** When Phase D adds UVC streaming and HID access, will those operations require additional entitlements or TCC approvals? (Likely yes for camera access — `com.apple.security.device.camera` and TCC camera approval.)
 
