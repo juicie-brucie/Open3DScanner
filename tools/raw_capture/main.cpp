@@ -24,9 +24,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <iterator>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "descriptor_probe.h"
 #include "raw_capture.h"
 
 namespace rc = raw_capture;
@@ -37,6 +41,7 @@ void PrintUsage() {
     std::printf(
         "Usage:\n"
         "  raw_capture --table\n"
+        "  raw_capture --probe [--descriptor-file <blob>]\n"
         "  raw_capture --capture [--mock] --sink <file> [--stream ir|depth|both]\n"
         "              [--max-frames N] [--max-bytes N] [--max-seconds N]\n"
         "  raw_capture --verify <file>\n"
@@ -147,7 +152,13 @@ int RunCapture(int argc, char** argv) {
             source = std::make_unique<rc::MockSource>(kind, 64, 48, depth ? 0x5A313620u : 0x59455247u,
                                                       0, run_limits.max_frames);
         } else {
-            source = std::make_unique<rc::UvcSource>();
+            std::string why;
+            source = rc::MakeLiveUvcSource(kind, &why);
+            if (!source) {
+                reason = rc::StopReason::kNotConfigured;
+                detail = why;
+                break;
+            }
         }
         rc::CaptureRunner runner;
         const rc::CaptureSummary summary = runner.Run(*source, sink, run_limits);
@@ -175,6 +186,39 @@ int RunCapture(int argc, char** argv) {
     return (reason == rc::StopReason::kSourceError || reason == rc::StopReason::kSinkError) ? 2 : 0;
 }
 
+int RunProbe(int argc, char** argv) {
+    std::string descriptor_file;
+    for (int i = 2; i < argc; ++i) {
+        const std::string arg = argv[i];
+        if (arg == "--descriptor-file" && i + 1 < argc) {
+            descriptor_file = argv[++i];
+        } else {
+            std::fprintf(stderr, "unknown argument: %s\n", arg.c_str());
+            return 1;
+        }
+    }
+    rc::ProbeResult result;
+    std::string error;
+    if (!descriptor_file.empty()) {
+        std::ifstream in(descriptor_file, std::ios::binary);
+        if (!in) {
+            std::fprintf(stderr, "[probe] error: cannot open %s\n", descriptor_file.c_str());
+            return 2;
+        }
+        const std::vector<uint8_t> blob((std::istreambuf_iterator<char>(in)),
+                                        std::istreambuf_iterator<char>());
+        if (!rc::ParseConfigurationDescriptor(blob.data(), blob.size(), &result, &error)) {
+            std::fprintf(stderr, "[probe] error: %s\n", result.error.c_str());
+            return 2;
+        }
+    } else if (!rc::ProbeAttachedDevice(&result)) {
+        std::fprintf(stderr, "[probe] error: %s\n", result.error.c_str());
+        return 2;
+    }
+    rc::PrintProbe(result, stdout);
+    return 0;
+}
+
 int RunVerify(const std::string& path) {
     std::vector<rc::CapturedRecord> records;
     std::string error;
@@ -200,8 +244,13 @@ int RunVerify(const std::string& path) {
 }
 
 int RunCommand(int argc, char** argv) {
-    rc::UnconfiguredHidTransport transport;
-    rc::VendorCommandPath path(&transport);
+    std::string why;
+    std::unique_ptr<rc::CommandTransport> transport = rc::MakeLiveHidTransport(&why);
+    if (!transport) {
+        std::printf("[command] %s\n", why.c_str());
+        return 2;
+    }
+    rc::VendorCommandPath path(transport.get());
     rc::CommandResult result;
     if (std::strcmp(argv[1], "--laser") == 0) {
         if (argc < 3) {
@@ -239,6 +288,7 @@ int main(int argc, char** argv) {
         PrintTable();
         return 0;
     }
+    if (command == "--probe") return RunProbe(argc, argv);
     if (command == "--capture") return RunCapture(argc, argv);
     if (command == "--verify") {
         if (argc < 3) {
