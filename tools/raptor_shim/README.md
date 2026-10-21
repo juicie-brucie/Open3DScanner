@@ -123,10 +123,22 @@ every missing piece, until three things exist:
    the detail names the fix (an unregistered service says so explicitly).
 2. **the transport's descriptor map** — `raw_capture`'s UVC source names the
    first unknown field (`docs/recon/findings/usb-descriptor-map.md`).
-3. **the frame's OB words** (`e2`, `e3`, `e10`) — the raw transport carries
-   pixels, a timestamp and a UVC format; a UVC fourcc is not the OBFormat and a
-   sequence number is not the second time word, so they are an interface, not a
-   guess.
+3. **the frame's OB words** — `HostClockObWords` (row #180) supplies them from
+   their settled sources (`docs/recon/findings/rpc-endpoint-map.md` §2.2):
+
+   | word | source |
+   |---|---|
+   | `e1` | `CLOCK_REALTIME` µs, stamped at the frame's dequeue |
+   | `e2` | `CLOCK_MONOTONIC` µs, the same dequeue |
+   | `e3` | **255**, the observed OBFormat (380/380 replies); the descriptor table has no such field |
+   | `e10` | the device's IR light type — **no source yet**, so a named refusal |
+
+   The UVC PTS is the *device* clock and is **not** written into `e1`/`e2`: the
+   RPC's two time words are host clock domains (the daemon fills them from the
+   PAL frame's timestamps), and labelling a device clock as `CLOCK_REALTIME`
+   would be a guess. `e10` varies per frame (3/4 on both interfaces), so a
+   per-stream constant would be wrong; it refuses until the transport reports
+   the device's light state or a finding binds the control path to it.
 
 Today it refuses:
 
@@ -135,13 +147,13 @@ $ raptor_shim --source live --no-depth --seconds 1
 raptor_shim: live source refused: not-configured: the device is not claimed by
 openscanner-helper (openscanner-helper is not answering on
 org.openscanner.helper (...)); not-configured: IR endpoint (...);
-not-configured: the live transport does not supply the frame's OB words
-(e2/e3/e10)
+not-configured: e10 (the IR frame's IR light type) has no source: the UVC
+transport does not report the device's light state, and no finding binds the
+laser/exposure state to it
 ```
 
-When #178's transport lands, `LiveSourceFactory::Create` builds it, a words
-provider fills `e2/e3/e10`, and the same shim serves live frames — no change
-above the `FrameSource` seam.
+When #178's transport lands and an `IrLightState` source exists, the same
+`FrameSource` seam serves live frames — no change above it.
 
 Bounds: a request larger than 1 MiB closes the connection; every send has a
 5 s socket bound and a failed write closes the connection. One poll loop

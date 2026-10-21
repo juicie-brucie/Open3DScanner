@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "ob_words.h"
 #include "raw_capture.h"
 
 namespace shim {
@@ -17,7 +18,8 @@ void AddReason(std::string* why, const std::string& reason) {
 
 }  // namespace
 
-LiveSource::LiveSource(raw_capture::FrameSource* transport, ObFrameWordsProvider* words, ClaimChannel* claim)
+LiveSource::LiveSource(raw_capture::FrameSource* transport, const ObFrameWordsProvider* words,
+                       ClaimChannel* claim)
     : transport_(transport), words_(words), claim_(claim) {}
 
 LiveSource::~LiveSource() = default;
@@ -59,10 +61,16 @@ bool LiveSource::Start(const Interface& iface, std::string* err) {
         AddReason(&why, (prefixed ? "" : "not-configured: ") + transport_why);
     }
 
-    // 3. The OB words the array carries are not on the raw frame.
+    // 3. The OB words the array carries are not on the raw frame. The
+    //    provider decides, and names the input it is missing.
     if (!words_) {
         AddReason(&why,
-                  "not-configured: the live transport does not supply the frame's OB words (e2/e3/e10)");
+                  "not-configured: the live transport does not supply the frame's OB words (e1/e2/e3/e10)");
+    } else {
+        std::string words_why;
+        if (!words_->Configured(iface, &words_why)) {
+            AddReason(&why, words_why.empty() ? "not-configured: the OB words are not supplied" : words_why);
+        }
     }
 
     if (!why.empty()) {
@@ -95,12 +103,13 @@ bool LiveSource::Next(const Interface& iface, FramePayload* out, std::string* er
         return false;
     }
     ObFrameWords words;
-    if (!words_->Words(frame.seq, frame.timestamp_us, &words)) {
-        if (err) *err = "not-configured: the live transport did not supply the frame's OB words";
+    if (!words_ || !words_->Words(iface, frame.seq, frame.timestamp_us, &words)) {
+        if (err) *err = "not-configured: the OB words could not be supplied for this frame";
         return false;
     }
     FramePayload payload;
-    payload.e1_us = frame.timestamp_us;
+    // e1/e2 are the host clock domains, not the device PTS (ob_words.h).
+    payload.e1_us = words.e1;
     payload.e2 = words.e2;
     payload.e3 = words.e3;
     payload.e10 = words.e10;
@@ -115,7 +124,11 @@ LiveSource* LiveSourceFactory::Create(ClaimChannel* claim, std::string* err) {
     // The transport is #178's. Until it lands, raw_capture's UvcSource is the
     // one that exists, and it reports the descriptor field that is missing.
     std::unique_ptr<raw_capture::UvcSource> transport(new raw_capture::UvcSource());
-    std::unique_ptr<LiveSource> source(new LiveSource(transport.get(), nullptr, claim));
+    // e1/e2 from the host clocks; e3 the observed OBFormat; e10 has no source
+    // yet, so the provider refuses it by name (ob_words.h).
+    static const UnwiredIrLightState kNoLightSource;
+    static const HostClockObWords kWords(&SystemHostClocks(), &kNoLightSource);
+    std::unique_ptr<LiveSource> source(new LiveSource(transport.get(), &kWords, claim));
     std::string why;
     if (!source->Start(IrInterface(), &why)) {
         if (err) *err = why;

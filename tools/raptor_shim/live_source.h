@@ -32,8 +32,10 @@ class FrameSource;
 namespace shim {
 
 // The producer words of the RPC array that the raw transport does not carry.
+// The semantics are rpc-endpoint-map.md §2.2 (row #183); see ob_words.h.
 struct ObFrameWords {
-    uint64_t e2 = 0;   // the frame's second time/counter word
+    uint64_t e1 = 0;   // CLOCK_REALTIME µs at dequeue
+    uint64_t e2 = 0;   // CLOCK_MONOTONIC µs at dequeue
     uint32_t e3 = 0;   // the frame's OBFormat
     int32_t e10 = -1;  // the IR light type
 };
@@ -41,9 +43,16 @@ struct ObFrameWords {
 class ObFrameWordsProvider {
 public:
     virtual ~ObFrameWordsProvider() = default;
-    // Fills the words for the frame just read. False means "not supplied",
-    // which the adapter reports instead of substituting something.
-    virtual bool Words(uint64_t seq, uint64_t timestamp_us, ObFrameWords* out) const = 0;
+
+    // True when every word can be supplied for this interface. False names
+    // the missing input in `why`; Start() refuses with it.
+    virtual bool Configured(const Interface& iface, std::string* why) const = 0;
+
+    // Fills the words for the frame just read. `timestamp_us` is the frame's
+    // device timestamp (the UVC PTS); the provider decides whether it is an
+    // OB word (it is not, for e1/e2 — see ob_words.h). False means "not
+    // supplied", which the adapter reports instead of substituting something.
+    virtual bool Words(const Interface& iface, uint64_t seq, uint64_t timestamp_us, ObFrameWords* out) const = 0;
 };
 
 // Who holds the device. The shim asks; it never claims.
@@ -57,7 +66,7 @@ public:
 class LiveSource : public FrameSource {
 public:
     // One instance per interface: a raw_capture transport reads one stream.
-    LiveSource(raw_capture::FrameSource* transport, ObFrameWordsProvider* words, ClaimChannel* claim);
+    LiveSource(raw_capture::FrameSource* transport, const ObFrameWordsProvider* words, ClaimChannel* claim);
     ~LiveSource() override;
 
     bool Start(const Interface& iface, std::string* err) override;
@@ -77,7 +86,7 @@ public:
 private:
     std::unique_ptr<raw_capture::FrameSource> owned_transport_;
     raw_capture::FrameSource* transport_ = nullptr;
-    ObFrameWordsProvider* words_ = nullptr;
+    const ObFrameWordsProvider* words_ = nullptr;
     ClaimChannel* claim_ = nullptr;
     bool started_ = false;
     std::string error_;
