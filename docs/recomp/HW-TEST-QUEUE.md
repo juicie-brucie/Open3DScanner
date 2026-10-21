@@ -183,6 +183,24 @@ defect). Record the capture bundle manifest.
 
 ---
 
+## T7 — the USB daemon bring-up (operator; #169 first)
+
+**Rows:** #169 (the descriptor map — the gate), #171 (raw capture), #170 (claim/release),
+#172 (the shim A/B). **One vendor daemon / SDK user at a time.** No product switch.
+
+1. **#169 — the USB descriptor capture.** `system_profiler SPUSBDataType` or a protocol
+   analyzer on the scanner; fill `tools/raw_capture/descriptor_table.h`: interface and
+   alternate setting, endpoint address, transfer type, max packet, UVC pixel
+   format/stride, HID control endpoint/report id. The table is `known`/`unknown` only —
+   no guesses.
+2. **#170 — claim/release.** Vendor daemon stopped; `openscanner-helper` claims; quit and
+   unplug release; `--seize` is opt-in only.
+3. **#171 — the live raw capture.** IR + depth to the sink with **no vendor process**;
+   the format/stride from the table.
+4. **#172 — the vendor A/B.** The shim with the live source vs the vendor daemon on the
+   same known scene; `raptor_client` unchanged; the frames match within the stated
+   metric. The product switch stays held (behind #126 and this A/B).
+
 ## T4 — The operator capture session (#145 + #150, one sitting)
 
 **Rows:** #145 (three modes + pause/resume + exposure slider + power-on; the mode-name →
@@ -227,5 +245,6 @@ No cross-repo edit.
 ## Order and stop rules, in one line
 
 **T0 → T1a → T1b → T2 → (T3 only after T0 and the #168 device re-run) → T4 (separate) →
-T5 (after the ground-truth read) → T6 (when the scanner is on Windows).** One interface per live run; no build mid-session; a
+T5 (after the ground-truth read) → T6 (when the scanner is on Windows) → T7 (the daemon
+bring-up, after #169's descriptor capture).** One interface per live run; no build mid-session; a
 failed IR floor cancels T3 but not T2.
