@@ -328,3 +328,167 @@ device answers. `[inferred]`
   count corrections (§2) and the 51 Hz correction (§5) are the only places
   where this pass departs from the prior session's draft.
 - No gated hardware run backs any of this: `[inferred]` throughout.
+
+## 10. Retro pass summary — what is captured and what remains (row #114 retro)
+
+*Added 2026-10-21. This section consolidates the enumeration from the prior
+sections and specifies the exact operator capture needed to close the remaining
+open questions.*
+
+### 10.1 What is captured
+
+**Per-interface profile lists (complete):**
+
+| Interface | Port | Profiles | Key 60 fps entries |
+|-----------|------|----------|-------------------|
+| RGB | 10012 | 23 | 1280×800@60 (format 5) — RGB never offers 1920×1200 |
+| IR | 10013 | 54 | 960×600@60 (fmt 9), 1280×800@60 (fmt 9,5), 1520×1200@60 (fmt 9,5), 1600×1000@60 (fmt 9) |
+| Depth | 10010 | 89 | 960×600@60 (fmt 9,5,24), 1280×800@60 (fmt 9,5), 1520×1200@60 (fmt 9,5,24), 1600×1000@60 (fmt 9), **1920×1200@60 (fmt 24)** |
+
+**60 fps profiles (complete):**
+
+- **IR**: 6 entries — `[0,9,960,600,60]`, `[0,9,1280,800,60]`, `[0,9,1520,1200,60]`, `[0,9,1600,1000,60]`, `[0,5,1280,800,60]`, `[0,5,1520,1200,60]`
+- **Depth**: 11 entries — `[0,24,1520,1200,60]`, **`[0,24,1920,1200,60]`**, `[0,9,960,600,60]`, `[0,9,1280,800,60]`, `[0,9,1520,1200,60]`, `[0,9,1600,1000,60]`, `[0,24,960,600,60]`, `[0,5,1280,800,60]`, `[0,5,1520,1200,60]`, `[0,5,1600,1000,60]`, `[0,5,960,600,60]`
+
+**`start_stream` params actually used (complete):**
+
+- IR: `[6, 9, 1920, 1200, 50]` (stream type 6, format 9, 1920×1200@50)
+- Depth: `[7, 9, 1920, 1200, 50]` (stream type 7, format 9, 1920×1200@50)
+- **60 fps start was never requested** — the vendor client chose 50 fps even though 60 fps profiles exist
+
+**Device-side mode table (structure 4035, complete):**
+
+10 tuples defining three (w, h, fps) modes across stream types/formats:
+- 1920×1200@50 (depth fmt 9, IR fmt 9, IR fmt 5)
+- 1520×1200@60 (depth fmt 9, IR fmt 9, IR fmt 5)
+- 1320×1040@60 (depth fmt 9, IR fmt 9, IR fmt 5)
+- RGB-ish row: `[2,5,1280,800,30]`
+
+**Mode names (structure 4034, decoded by row #144):**
+
+Seven named scan modes: "Laser Lines Scan", "Fastor Laser Lines Scan", "Chip Scale Speckle Scan", "Sensor Crop Speckle Scan", "Sensor Binned Speckle Scan", "Binned Fast Speckle Scan", "Factory Calibration"
+
+### 10.2 What is NOT captured
+
+**Mode-name → profile-row join:**
+
+The capture shows **one mode only** (1920×1200@50 format 9 on both IR and depth). Nothing in the RPC traffic maps a *mode name* to a *profile row*. The three scanning modes mentioned in the row's premise (22-line blue / 7-line blue / NIR) are not named on the wire, and the capture contains no mode switches.
+
+**Why this is not inferable from the existing capture:**
+
+- The session ran one mode only (1920×1200@50)
+- No mode switches occurred during the session
+- The mode names (from structure 4034) are not correlated with `start_stream` calls
+- The mode table (structure 4035) lists the *available* modes but not which one is *selected*
+
+### 10.3 Exact operator capture needed
+
+**Objective:** Map mode names to profile rows by capturing a session that switches between scan modes.
+
+**Capture setup:**
+
+1. **Tool:** `raptor_client` with `--capture` and `--dump-replies` flags (same as plan #132)
+   - Command: `./build/tools/raptor_client/raptor_client --live 127.0.0.1 <port> <duration> --frames <N> --capture ~/captures/plan114-mode-switch --capture-seconds <duration> --capture-bytes 600000000 --dump-replies`
+   - Run on both ports 10013 (IR) and 10010 (depth)
+
+2. **Alternative:** `dumpcap` / `tshark` on `lo0` with BPF filter to capture RPC traffic
+   - Filter: `tcp port 10010 or tcp port 10013`
+   - Duration: full CrealityScan session with mode switches
+
+3. **Session requirements:**
+   - Launch CrealityScan
+   - Start in one scan mode (e.g., "Laser Lines Scan")
+   - **Switch to a second mode** (e.g., "Fastor Laser Lines Scan")
+   - **Switch to a third mode** (e.g., "Chip Scale Speckle Scan")
+   - Optionally: switch back to the first mode
+   - Stop the session
+
+**What to look for in the capture:**
+
+1. **Structure reads:** `ob_rpc_send_data` with opcodes 29/30/31 (INIT/READ/FINISH_READ_STRUCT_DATA_LIST_V1_1)
+   - **Structure 4034** (mode names) — read at session start
+   - **Structure 4035** (mode table) — read **after each mode switch**
+   - Correlate the structure 4035 reads with the mode switches to determine which profile rows correspond to which mode
+
+2. **Stream starts:** `ob_rpc_start_stream` on ports 10013 (IR) and 10010 (depth)
+   - Each mode switch should re-issue `start_stream` with different `[streamtype, format, w, h, fps]` params
+   - Match the params against the mode table rows from structure 4035
+
+3. **Expected outcome:**
+   - Mode name (from 4034) → mode switch event → structure 4035 read → profile rows → `start_stream` params
+   - This gives the join: mode name → profile row
+
+**Analysis:**
+
+- Decode the structures using the same method as `small-segments-row144.md` §2.1–§2.5
+- For structure 4035: parse the 200-byte payload as 10 u32-LE tuples
+- For structure 4034: parse the GUIDs, names, and codes
+- Correlate timestamps: mode switch → structure 4035 read → `start_stream` call
+
+### 10.4 What remains open
+
+**OQ-114-1: Mode-name → profile-row join**
+
+- **Status:** Not captured
+- **Why:** The session4 capture ran one mode only; no mode switches occurred
+- **Resolution:** Operator capture specified in §10.3 (mode-switch session)
+- **Priority:** High — this is the row's headline question
+
+**OQ-114-2: Why did the vendor client ask for 50 fps when 60 fps exists**
+
+- **Status:** Not on the wire
+- **Why:** The client's mode-selection logic is host-side, not in the RPC traffic
+- **Candidates:** Host-side frame-rate budget, scan-quality choice, cap on "22-line blue" mode
+- **Resolution:** Requires host-side code analysis (CrealityScan application) or vendor documentation
+- **Priority:** Medium — does not block C2 implementation
+
+**OQ-114-3: What does the mode table's first field `2` mean (row 10)**
+
+- **Status:** Not determined
+- **Why:** The capture never streams stream type 2; RGB is plausible but unproven
+- **Resolution:** Operator capture that streams RGB (if possible), or daemon code analysis
+- **Priority:** Low — RGB is not used in the captured scanning modes
+
+**OQ-114-4: What are format 0 / 5 / 9 / 24**
+
+- **Status:** Not determined
+- **Why:** The ids are on the wire but their names are not
+- **Resolution:** Daemon code analysis or vendor documentation
+- **Priority:** Medium — needed to interpret the profile lists correctly
+
+**OQ-114-5: Pull semantics**
+
+- **Status:** Partially resolved by row #143
+- **Why:** The daemon serves at ~85–86 Hz poll requests for a 50 fps profile
+- **Resolution:** Row #143 established this is a "latest frame" model, not a queue
+- **Priority:** Low — resolved
+
+**OQ-114-6: Other structures (4024, 4026, 4027)**
+
+- **Status:** Undecoded
+- **Why:** Not in scope for row #114
+- **Resolution:** Decode as needed for other rows
+- **Priority:** Low — not blocking
+
+### 10.5 Summary
+
+**Captured (complete):**
+- Per-interface profile lists (RGB 23, IR 54, depth 89)
+- 60 fps profiles exist on IR (6 entries) and depth (11 entries, including 1920×1200@60 format 24)
+- `start_stream` params actually used (1920×1200@50 format 9 on both IR and depth)
+- 60 fps start was never requested
+- Device-side mode table (structure 4035, 10 tuples)
+- Mode names (structure 4034, 7 named modes)
+
+**Not captured (requires operator capture):**
+- Mode-name → profile-row join (which scanning mode selects which profile)
+
+**Operator capture needed:**
+- Mode-switch session (specified in §10.3)
+- Read structures 4034 and 4035 at each mode switch
+- Correlate with `start_stream` calls to determine the join
+
+**Row #114 verdict:**
+- **60 fps profiles exist:** Yes (on IR and depth)
+- **Which profile each mode uses:** Not captured — requires mode-switch session
+- **Row status:** SPEC-READY for the enumeration; the mode-profile join is an operator capture task (row #145)
