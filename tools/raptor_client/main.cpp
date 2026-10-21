@@ -37,14 +37,19 @@
 //       [--capture DIR] records every reply, byte for byte, into a directory
 //       outside the repository (the bundle is never committed): one file per
 //       port plus a manifest with the run's identity and every file's hash.
+//       [--reply-timeout-ms N] bounds the connect and every reply read
+//       (default 5000); on expiry the run names the endpoint, interface and
+//       unanswered method and exits 3 instead of hanging.
 //   raptor_client --selftest-dump              the reply-structure dump, no device
 //   raptor_client --selftest-capture           the capture round-trip, no device
 //   raptor_client --selftest-live              the live path's method names, no device
+//   raptor_client --selftest-live-timeout      the live path's bounded wait, no device
 //   raptor_client --capture-dump <dir>         read a capture bundle back
 //
 // Wall: tools/** only. Clean-room: implements the spec; no vendor binary.
 
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <poll.h>
 #include <sys/socket.h>
@@ -306,16 +311,116 @@ void GvcpDiscover(int wait_ms) {
 // ---------------------------------------------------------------------------
 // msgpack-RPC over TCP (protocol-spec §1.1)
 // ---------------------------------------------------------------------------
+
+// Row #161: how long the live path may wait on any one blocking step — the
+// TCP handshake and each reply read. A daemon that holds the connection and
+// never answers is then a named rejection, not a hang. The bound is per
+// step, not per run: a run's window (seconds / --frames) still bounds it.
+constexpr int kDefaultLiveTimeoutMs = 5000;
+
+// The live path's exit codes. A timeout is its own code so a hardware record
+// can tell "the daemon never answered" from "it answered and served no
+// frame" (1) and from a usage error (2).
+constexpr int kExitLiveFailed = 1;
+constexpr int kExitLiveTimeout = 3;
+
+// Waits for fd to become ready, up to timeout_ms. Returns 1 when ready, 0 on
+// the deadline, -1 on error. A signal-interrupted wait is resumed, so the
+// bound is a deadline and not a single poll.
+int WaitEvent(int fd, short events, int timeout_ms) {
+    const auto deadline =
+        std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms < 0 ? 0 : timeout_ms);
+    for (;;) {
+        auto now = std::chrono::steady_clock::now();
+        if (now >= deadline) return 0;
+        int remaining = (int)std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
+        if (remaining < 0) remaining = 0;
+        struct pollfd p = {fd, events, 0};
+        int pr = poll(&p, 1, remaining);
+        if (pr < 0) {
+            if (errno == EINTR) continue;
+            return -1;
+        }
+        if (pr == 0) return 0;
+        return 1;
+    }
+}
+
 class RpcClient {
 public:
+    // The two bounds the live path sets (row #161). Both default to the
+    // live timeout, so a caller that sets nothing still cannot block
+    // forever. The replay path keeps its own per-reply bound.
+    void set_timeout(int ms) {
+        timeout_ms_ = ms > 0 ? ms : kDefaultLiveTimeoutMs;
+    }
+    int timeout() const { return timeout_ms_; }
+
+    // Why the last connect() failed, and whether it failed on the deadline
+    // rather than on a refusal. The live path turns the latter into the
+    // timeout exit code.
+    const std::string& connect_error() const { return connect_error_; }
+    bool connect_timed_out() const { return connect_timed_out_; }
+
     bool connect(const std::string& host, uint16_t port) {
+        connect_error_.clear();
+        connect_timed_out_ = false;
         fd_ = socket(AF_INET, SOCK_STREAM, 0);
-        if (fd_ < 0) return false;
+        if (fd_ < 0) {
+            connect_error_ = std::string("socket: ") + std::strerror(errno);
+            return false;
+        }
         sockaddr_in a = {};
         a.sin_family = AF_INET;
         a.sin_port = htons(port);
         a.sin_addr.s_addr = inet_addr(host.c_str());
-        if (::connect(fd_, (sockaddr*)&a, sizeof(a)) != 0) { close(fd_); fd_ = -1; return false; }
+        // A non-blocking handshake: a peer that takes the SYN and never
+        // completes it must not hold the client. The same bound covers the
+        // handshake as covers a reply read.
+        int flags = fcntl(fd_, F_GETFL, 0);
+        if (flags < 0 || fcntl(fd_, F_SETFL, flags | O_NONBLOCK) != 0) {
+            connect_error_ = std::string("fcntl: ") + std::strerror(errno);
+            close(fd_);
+            fd_ = -1;
+            return false;
+        }
+        int rc = ::connect(fd_, (sockaddr*)&a, sizeof(a));
+        if (rc != 0 && errno != EINPROGRESS) {
+            connect_error_ = std::string("connect: ") + std::strerror(errno);
+            close(fd_);
+            fd_ = -1;
+            return false;
+        }
+        if (rc != 0) {
+            int pr = WaitEvent(fd_, POLLOUT, timeout_ms_);
+            if (pr == 0) {
+                connect_timed_out_ = true;
+                connect_error_ = "no TCP handshake within " + std::to_string(timeout_ms_) + " ms";
+                close(fd_);
+                fd_ = -1;
+                return false;
+            }
+            if (pr < 0) {
+                connect_error_ = std::string("poll: ") + std::strerror(errno);
+                close(fd_);
+                fd_ = -1;
+                return false;
+            }
+            int err = 0;
+            socklen_t len = sizeof(err);
+            if (getsockopt(fd_, SOL_SOCKET, SO_ERROR, &err, &len) != 0 || err != 0) {
+                connect_error_ = std::string("connect: ") + std::strerror(err ? err : errno);
+                close(fd_);
+                fd_ = -1;
+                return false;
+            }
+        }
+        fcntl(fd_, F_SETFL, flags);
+        // A send must be bounded too: a peer that stops reading fills the
+        // socket and blocks send(). SO_SNDTIMEO turns that into a failed
+        // write, which call() reports as an error value.
+        struct timeval tv = {timeout_ms_ / 1000, (timeout_ms_ % 1000) * 1000};
+        setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
         port_ = port;
         return true;
     }
@@ -323,6 +428,8 @@ public:
 
     // One rpclib request: [0, msgid, method, params]. Returns the reply
     // envelope [1, msgid, nil, result]; the caller unwraps it with Result().
+    // The read is bounded by timeout_ms_ (row #161): an unanswered call is
+    // a Timeout value, never an indefinite wait.
     Value call(const std::string& method, const Bytes& params) {
         Packer p;
         p.array(4);
@@ -331,10 +438,11 @@ public:
         p.str(method);
         p.raw(params.data(), params.size());
         if (!WriteAll(p.out)) return Error("write failed");
-        Value resp = ReadMessage();
+        Value resp = ReadMessageWithDeadline(timeout_ms_);
         // The capture records the bytes as they arrived, so it runs before
         // the shape checks: a reply that fails them is still evidence.
         RecordCapture(method, resp);
+        if (resp.kind == Value::Kind::Timeout) return resp;
         if (resp.kind != Value::Kind::Array || resp.array.size() < 4) return Error("bad response");
         if (resp.array[0].kind != Value::Kind::UInt || resp.array[0].u != 1) return Error("not a response");
         return resp;
@@ -357,8 +465,7 @@ public:
     // Bounded read for the replay path (row #117): the WHOLE reply must
     // arrive within timeout_ms, not just its first segment — a reply that
     // trickles in forever still times out. Returns a Timeout value when the
-    // deadline passes. The live path keeps the unbounded ReadMessage(): this
-    // bound belongs to the replay diagnostic only.
+    // deadline passes. The live path uses the same bound through call().
     Value readReplyWithDeadline(int timeout_ms, const std::string& method = "") {
         Value v = ReadMessageWithDeadline(timeout_ms);
         RecordCapture(method, v);
@@ -393,6 +500,9 @@ private:
     int fd_ = -1;
     uint32_t msgid_ = 0;
     uint16_t port_ = 0;
+    int timeout_ms_ = kDefaultLiveTimeoutMs;
+    std::string connect_error_;
+    bool connect_timed_out_ = false;
     Bytes last_raw_;
     bool last_read_ok_ = false;
     capture::Recorder* capture_ = nullptr;
@@ -425,8 +535,7 @@ private:
     // Bounded twin of ReadMessage(): the whole reply must arrive within
     // timeout_ms. The deadline covers the entire read, so a reply that
     // arrives in dribbles still times out. Uses poll() on the socket rather
-    // than SO_RCVTIMEO, so the socket's own options stay untouched (the
-    // live path's socket is shared with call()).
+    // than SO_RCVTIMEO, so the socket's own receive options stay untouched.
     Value ReadMessageWithDeadline(int timeout_ms) {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
         Bytes buf;
@@ -440,14 +549,8 @@ private:
             if (now >= deadline) return Timeout();
             int remaining = (int)std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
             if (remaining < 0) remaining = 0;
-            struct pollfd pfd = {};
-            pfd.fd = fd_;
-            pfd.events = POLLIN;
-            int pr = poll(&pfd, 1, remaining);
-            if (pr < 0) {
-                if (errno == EINTR) continue;
-                return Error("poll failed");
-            }
+            int pr = WaitEvent(fd_, POLLIN, remaining);
+            if (pr < 0) return Error("poll failed");
             if (pr == 0) return Timeout();
             ssize_t n = recv(fd_, tmp, sizeof(tmp), 0);
             if (n == 0) return Error("eof");
@@ -1061,7 +1164,10 @@ bool VendorAccepted(const Value& rpc_result, uint16_t* out_opcode, uint16_t* out
     return le16(8) == 0;
 }
 
-void SetProperty(RpcClient& c, const InterfaceRoute& route, uint32_t prop, int32_t value, uint16_t request_id,
+// Sends one SET_PROPERTY. Returns false when the daemon did not answer
+// within the bound (row #161): a timeout ends the run instead of being
+// retried five times per frame pull.
+bool SetProperty(RpcClient& c, const InterfaceRoute& route, uint32_t prop, int32_t value, uint16_t request_id,
                  bool log) {
     Bytes vendor = BuildVendorRequest(kOpSetProperty, request_id, SetPropertyPayload(prop, value));
     Packer p;
@@ -1081,13 +1187,20 @@ void SetProperty(RpcClient& c, const InterfaceRoute& route, uint32_t prop, int32
         } else if (r.kind == Value::Kind::Bin) {
             std::printf("[live] SET prop=%u value=%d reqid=%u -> vendor %s (opcode=%u reqid=%u err=%u, %zu B)\n",
                         prop, value, request_id, accepted ? "ACCEPT" : "REJECT", opcode, reqid, err, r.bin.size());
+        } else if (r.kind == Value::Kind::Timeout) {
+            std::printf("[live] SET prop=%u value=%d reqid=%u -> rpc TIMEOUT\n", prop, value, request_id);
         } else {
             std::printf("[live] SET prop=%u value=%d reqid=%u -> rpc kind=%d\n", prop, value, request_id,
                         (int)r.kind);
         }
         std::fflush(stdout);
     }
+    return r.kind != Value::Kind::Timeout;
 }
+
+// The number of property sets the live path sends per frame pull (the
+// laser trio and the exposure pair, protocol-spec §3.1).
+constexpr int kLivePropertySets = 5;
 
 // What a live run saw. The counters are the run's verdict: a run that
 // pulled frames is a success, whatever shape the replies had.
@@ -1098,7 +1211,24 @@ struct LiveStats {
     uint64_t errors = 0;  // error replies
     bool started = false;  // start_stream was accepted
     bool stopped = false;  // stop_stream was sent
+    bool timed_out = false;  // a bounded wait expired (row #161)
 };
+
+// Row #161: a bounded wait that expires is a named rejection, not a hang.
+// The line names the endpoint, the interface, the unanswered method and the
+// bound, so the depth retry's record says where the run stopped.
+std::string LiveTimeoutMessage(const std::string& host, uint16_t port, const InterfaceRoute& route,
+                               const std::string& method, int timeout_ms) {
+    return "[live] TIMEOUT: " + host + ":" + std::to_string(port) + " (" + route.name + ", suffix " +
+           route.suffix + ") " + method + ": no complete reply within " + std::to_string(timeout_ms) +
+           " ms - the connection was established and the daemon did not answer";
+}
+
+// The TCP handshake's own expiry, before any method can be sent.
+std::string LiveConnectTimeoutMessage(const std::string& host, uint16_t port, int timeout_ms) {
+    return "[live] TIMEOUT: " + host + ":" + std::to_string(port) + ": no TCP connection within " +
+           std::to_string(timeout_ms) + " ms";
+}
 
 // The live session: ONE interface, ONE connection.
 //
@@ -1107,23 +1237,46 @@ struct LiveStats {
 // has no method without one. The daemon serves one interface per port, so
 // a run streams the interface its port names and nothing else — a second
 // interface is a second run.
+//
+// timeout_ms bounds the connect and every reply read (row #161). A run
+// whose daemon stops answering returns kExitLiveTimeout with the method
+// named; it does not wait on the socket.
 int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, int seconds,
          const std::string& out_path, int pull_ms, int max_frames, bool log, capture::Recorder* capture,
-         LiveStats* stats) {
+         LiveStats* stats, int timeout_ms) {
     LiveStats local;
     LiveStats& st = stats ? *stats : local;
     RpcClient rpc;
+    rpc.set_timeout(timeout_ms);
     if (!rpc.connect(host, port)) {
-        std::fprintf(stderr, "[live] cannot connect to %s:%u (is RPCServer running?)\n", host.c_str(), port);
-        return 1;
+        if (rpc.connect_timed_out()) {
+            std::fprintf(stderr, "%s\n", LiveConnectTimeoutMessage(host, port, timeout_ms).c_str());
+            st.timed_out = true;
+            return kExitLiveTimeout;
+        }
+        std::fprintf(stderr, "[live] cannot connect to %s:%u (%s; is RPCServer running?)\n", host.c_str(), port,
+                     rpc.connect_error().c_str());
+        return kExitLiveFailed;
     }
     rpc.set_capture(capture);
-    std::printf("[live] connected %s:%u (%s, suffix %s, pull_ms=%d, per-call logging=%s)\n", host.c_str(), port,
-                route.name.c_str(), route.suffix.c_str(), pull_ms, log ? "on" : "off");
+    std::printf("[live] connected %s:%u (%s, suffix %s, pull_ms=%d, per-call logging=%s, timeout %d ms)\n",
+                host.c_str(), port, route.name.c_str(), route.suffix.c_str(), pull_ms, log ? "on" : "off",
+                timeout_ms);
+    // The line must reach the record before the first blocking call: if the
+    // next read stalls, the log already says where the run got to.
+    std::fflush(stdout);
+    const std::string start_method = MethodFor(route, "ob_rpc_start_stream");
+    std::printf("[live] calling %s\n", start_method.c_str());
+    std::fflush(stdout);
     Value started = StartStream(rpc, route, 1920, 1200, 50);
+    if (started.kind == Value::Kind::Timeout) {
+        std::fprintf(stderr, "%s\n", LiveTimeoutMessage(host, port, route, start_method, timeout_ms).c_str());
+        st.timed_out = true;
+        return kExitLiveTimeout;
+    }
     if (started.kind == Value::Kind::Error) {
         std::fprintf(stderr, "[live] start_stream failed: %s\n", started.error.c_str());
-        return 1;
+        return kExitLiveFailed;
     }
     st.started = true;
     std::printf("[live] start_stream -> %s\n", started.kind == Value::Kind::Bool && started.b ? "true" : "non-error");
@@ -1142,6 +1295,11 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
         // The reply is the envelope [1, msgid, nil, result]; the frame is
         // the payload at index 3, so unwrap before looking at it.
         Value envelope = rpc.call(get_frame_method, p.out);
+        if (envelope.kind == Value::Kind::Timeout) {
+            std::fprintf(stderr, "%s\n", LiveTimeoutMessage(host, port, route, get_frame_method, timeout_ms).c_str());
+            st.timed_out = true;
+            break;
+        }
         DumpReply(get_frame_method, envelope, rpc.lastRaw());
         Value frame = Result(envelope);
         // The result is the 11-element array: what it holds is the band's
@@ -1193,11 +1351,18 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
             std::fflush(stdout);
         }
         // §3.1 host-driven loops: laser trio and exposure, at the observed cadence.
-        SetProperty(rpc, route, 3, 0, ++request_id, log);
-        SetProperty(rpc, route, 152, 0, ++request_id, log);
-        SetProperty(rpc, route, 153, 1, ++request_id, log);
-        SetProperty(rpc, route, 154, 866000, ++request_id, log);
-        SetProperty(rpc, route, 155, 866000, ++request_id, log);
+        const uint32_t props[kLivePropertySets] = {3, 152, 153, 154, 155};
+        const int32_t values[kLivePropertySets] = {0, 0, 1, 866000, 866000};
+        for (int k = 0; k < kLivePropertySets; ++k) {
+            if (!SetProperty(rpc, route, props[k], values[k], ++request_id, log)) {
+                std::fprintf(stderr, "%s\n",
+                             LiveTimeoutMessage(host, port, route, MethodFor(route, "ob_rpc_send_data"), timeout_ms)
+                                 .c_str());
+                st.timed_out = true;
+                break;
+            }
+        }
+        if (st.timed_out) break;
         if (pull_ms > 0) std::this_thread::sleep_for(std::chrono::milliseconds(pull_ms));
         // The capture's bounds end the run when they are hit, so a capture
         // cannot outlive its own budget.
@@ -1207,17 +1372,31 @@ int Live(const std::string& host, uint16_t port, const InterfaceRoute& route, in
         }
     }
     // The stop is its own method, with the same parameters the start
-    // sent (protocol-spec.md §7).
-    Value stopped = StopStream(rpc, route, 1920, 1200, 50);
-    st.stopped = stopped.kind != Value::Kind::Error;
-    if (stopped.kind == Value::Kind::Error) {
-        std::fprintf(stderr, "[live] stop_stream failed: %s\n", stopped.error.c_str());
+    // sent (protocol-spec.md §7). A connection that already timed out is
+    // not asked to stop: that would spend a second bound on a daemon that
+    // has shown it is not answering.
+    if (st.timed_out) {
+        std::printf("[live] stop_stream skipped: the connection timed out\n");
+    } else {
+        Value stopped = StopStream(rpc, route, 1920, 1200, 50);
+        if (stopped.kind == Value::Kind::Timeout) {
+            std::fprintf(stderr, "%s\n",
+                         LiveTimeoutMessage(host, port, route, MethodFor(route, "ob_rpc_stop_stream"), timeout_ms)
+                             .c_str());
+            st.timed_out = true;
+        } else {
+            st.stopped = stopped.kind != Value::Kind::Error;
+            if (stopped.kind == Value::Kind::Error) {
+                std::fprintf(stderr, "[live] stop_stream failed: %s\n", stopped.error.c_str());
+            }
+        }
     }
-    std::printf("[live] done: get_frame=%llu data=%llu empty=%llu error=%llu; stream stopped\n",
+    std::printf("[live] done: get_frame=%llu data=%llu empty=%llu error=%llu; %s\n",
                 (unsigned long long)st.get_calls, (unsigned long long)st.data, (unsigned long long)st.empty,
-                (unsigned long long)st.errors);
+                (unsigned long long)st.errors, st.timed_out ? "timed out, stream not stopped" : "stream stopped");
     DumpTally(tally);
-    return st.data > 0 ? 0 : 1;
+    if (st.timed_out) return kExitLiveTimeout;
+    return st.data > 0 ? 0 : kExitLiveFailed;
 }
 
 // Prints the exact method names and bytes each call would send, so the
@@ -2069,6 +2248,11 @@ public:
 
     uint16_t port() const { return port_; }
 
+    // Row #161: answer only the first n calls, then read and never reply —
+    // the daemon that accepts the connection and stalls. The call is still
+    // recorded, so the selftest can see what the client sent.
+    void set_silent_after(size_t n) { silent_after_ = n; }
+
     void Stop() {
         stop_.store(true);
         if (thread_.joinable()) thread_.join();
@@ -2167,11 +2351,13 @@ private:
                     if (req.array[2].kind == Value::Kind::Str) method = req.array[2].s;
                     params = req.array[3];
                 }
+                size_t seq = 0;
                 {
                     std::lock_guard<std::mutex> lock(mutex_);
                     calls_.push_back(Call{method, params});
+                    seq = calls_.size();
                 }
-                if (!WriteAll(cfd, ReplyFor(method, params, msgid))) return;
+                if (seq <= silent_after_ && !WriteAll(cfd, ReplyFor(method, params, msgid))) return;
                 buf.erase(buf.begin(), buf.begin() + static_cast<long>(r.consumed()));
             }
             struct pollfd p = {cfd, POLLIN, 0};
@@ -2204,13 +2390,10 @@ private:
     mutable std::mutex mutex_;
     int lfd_ = -1;
     uint16_t port_ = 0;
+    size_t silent_after_ = static_cast<size_t>(-1);
     std::atomic<bool> stop_{false};
     std::thread thread_;
 };
-
-// The number of property sets the live path sends per frame pull (the
-// laser trio and the exposure pair, protocol-spec §3.1).
-constexpr int kLivePropertySets = 5;
 
 // Row #157: the live path's method names, its call sequence and the
 // reply unwrap — no device.
@@ -2295,7 +2478,8 @@ int LiveSuffixSelftest() {
         close(fd);
 
         LiveStats stats;
-        int rc = Live("127.0.0.1", daemon.port(), *live_route, 5, path, 0, 3, false, nullptr, &stats);
+        int rc = Live("127.0.0.1", daemon.port(), *live_route, 5, path, 0, 3, false, nullptr, &stats,
+                      kDefaultLiveTimeoutMs);
         daemon.Stop();
 
         const std::string tag = std::string(run.label) + ": ";
@@ -2391,6 +2575,218 @@ int LiveSuffixSelftest() {
     }
 
     std::printf("[live-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
+    return failures ? 1 : 0;
+}
+
+// ---------------------------------------------------------------------------
+// Row #161: the live path's bounded wait.
+//
+// The depth interface accepts the connection and then stops answering; the
+// client must stop at its bound, name the endpoint, the interface and the
+// unanswered method, and exit kExitLiveTimeout — never block on the socket.
+// The peers here are loopback; no device and no thread outlives the test.
+// ---------------------------------------------------------------------------
+
+std::string ReadWholeFile(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+}
+
+// Redirects one descriptor to a temp file for the duration of a scope, and
+// reads it back. Written() does NOT flush the C streams, so it reports only
+// bytes the client had already flushed.
+class FdRedirect {
+public:
+    ~FdRedirect() { Restore(); }
+    bool Begin(int fd, const char* path_template) {
+        // Anything already printed belongs to the real descriptor, not to
+        // the capture: flush it before the redirect moves the fd.
+        std::fflush(nullptr);
+        fd_ = fd;
+        saved_ = dup(fd);
+        if (saved_ < 0) { fd_ = -1; return false; }
+        std::string tmpl(path_template);
+        std::vector<char> buf(tmpl.begin(), tmpl.end());
+        buf.push_back('\0');
+        int tfd = mkstemp(buf.data());
+        if (tfd < 0) { Restore(); return false; }
+        path_ = buf.data();
+        if (dup2(tfd, fd_) < 0) {
+            close(tfd);
+            unlink(path_.c_str());
+            Restore();
+            return false;
+        }
+        close(tfd);
+        return true;
+    }
+    std::string Written() const { return path_.empty() ? std::string() : ReadWholeFile(path_); }
+    std::string Finish() {
+        if (fd_ < 0) return std::string();
+        std::fflush(nullptr);
+        std::string text = Written();
+        Restore();
+        unlink(path_.c_str());
+        return text;
+    }
+
+private:
+    void Restore() {
+        if (fd_ >= 0 && saved_ >= 0) dup2(saved_, fd_);
+        if (saved_ >= 0) { close(saved_); saved_ = -1; }
+        fd_ = -1;
+    }
+    int fd_ = -1;
+    int saved_ = -1;
+    std::string path_;
+};
+
+int LiveTimeoutSelftest() {
+    int failures = 0;
+    auto check = [&](const std::string& name, bool pass) {
+        std::printf("[live-timeout-selftest] %-62s %s\n", name.c_str(), pass ? "PASS" : "FAIL");
+        if (!pass) ++failures;
+    };
+    auto elapsed_ms = [](std::chrono::steady_clock::time_point a, std::chrono::steady_clock::time_point b) {
+        return (long)std::chrono::duration_cast<std::chrono::milliseconds>(b - a).count();
+    };
+
+    RouteTable routes;
+    const InterfaceRoute* depth = RouteForPort(routes, 10010);
+    if (!depth) {
+        std::printf("[live-timeout-selftest] SKIP (the depth route is missing)\n");
+        return 0;
+    }
+    const int bound = 300;
+
+    // The wait primitive: an empty pipe expires on its bound, a readable one
+    // returns at once.
+    {
+        int fds[2];
+        bool ok = pipe(fds) == 0;
+        check("a pipe for the wait test", ok);
+        if (ok) {
+            auto t0 = std::chrono::steady_clock::now();
+            int pr = WaitEvent(fds[0], POLLIN, 200);
+            auto t1 = std::chrono::steady_clock::now();
+            long ms = elapsed_ms(t0, t1);
+            check("a wait with nothing to read expires on its bound", pr == 0 && ms >= 150 && ms < 3000);
+            ssize_t ignored = write(fds[1], "x", 1);
+            (void)ignored;
+            check("a wait on readable data returns at once", WaitEvent(fds[0], POLLIN, 200) == 1);
+            close(fds[0]);
+            close(fds[1]);
+        }
+    }
+
+    // The line the run prints when its bound expires.
+    check("the timeout line names the endpoint, interface, method and bound",
+          LiveTimeoutMessage("127.0.0.1", 10010, *depth, "ob_rpc_start_stream0-2-10", 5000) ==
+              "[live] TIMEOUT: 127.0.0.1:10010 (depth, suffix 0-2-10) ob_rpc_start_stream0-2-10: "
+              "no complete reply within 5000 ms - the connection was established and the daemon did not answer");
+    check("the connect timeout line names the endpoint and the bound",
+          LiveConnectTimeoutMessage("127.0.0.1", 10010, 5000) ==
+              "[live] TIMEOUT: 127.0.0.1:10010: no TCP connection within 5000 ms");
+
+    // The two stalls: silent from the first byte (start_stream), and silent
+    // after the start is accepted (get_frame). Both are the depth hang.
+    struct Stall {
+        const char* label;
+        size_t silent_after;
+        bool expect_started;
+        const char* unanswered;
+    };
+    const Stall stalls[] = {
+        {"a daemon that never answers is rejected at start_stream", 0, false, "ob_rpc_start_stream0-2-10"},
+        {"a daemon that stops after start_stream is rejected at get_frame", 1, true, "ob_rpc_get_frame0-2-10"},
+    };
+    for (const Stall& stall : stalls) {
+        const std::string label(stall.label);
+        MockInterfaceDaemon daemon(*depth);
+        daemon.set_silent_after(stall.silent_after);
+        if (!daemon.Start()) {
+            std::printf("[live-timeout-selftest] SKIP (the loopback mock could not start)\n");
+            return 0;
+        }
+        RouteTable live_routes;
+        live_routes.SetPortByName("depth", daemon.port());
+        const InterfaceRoute* route = RouteForPort(live_routes, daemon.port());
+
+        char out_path[] = "/tmp/raptor_lt_XXXXXX";
+        int ofd = mkstemp(out_path);
+        if (ofd < 0) {
+            daemon.Stop();
+            std::printf("[live-timeout-selftest] SKIP (mkstemp failed)\n");
+            return 0;
+        }
+        close(ofd);
+
+        FdRedirect out_cap;
+        FdRedirect err_cap;
+        bool captured = out_cap.Begin(STDOUT_FILENO, "/tmp/raptor_lt_out_XXXXXX") &&
+                        err_cap.Begin(STDERR_FILENO, "/tmp/raptor_lt_err_XXXXXX");
+        LiveStats st;
+        auto t0 = std::chrono::steady_clock::now();
+        int rc = Live("127.0.0.1", daemon.port(), *route, 5, out_path, 0, 0, false, nullptr, &st, bound);
+        auto t1 = std::chrono::steady_clock::now();
+        // Read the log BEFORE flushing anything: a "connected" line that is
+        // still in the buffer would be absent, and the stall would be silent
+        // again.
+        const std::string early = out_cap.Written();
+        const std::string out_text = out_cap.Finish();
+        const std::string err_text = err_cap.Finish();
+        long ms = elapsed_ms(t0, t1);
+        daemon.Stop();
+        unlink(out_path);
+
+        check(label + ": the run exits with the timeout code", captured && rc == kExitLiveTimeout);
+        check(label + ": the run stops at its bound (not a hang)", ms >= (bound * 3) / 4 && ms < 5000);
+        check(label + ": the rejection names the unanswered method",
+              err_text.find(stall.unanswered) != std::string::npos);
+        check(label + ": the rejection names the interface and the bound",
+              err_text.find("depth") != std::string::npos &&
+                  err_text.find(std::to_string(bound) + " ms") != std::string::npos);
+        check(label + ": the connected line reached the log before the stall",
+              early.find("[live] connected") != std::string::npos);
+        check(label + ": start_stream is recorded as accepted or not", st.started == stall.expect_started);
+        check(label + ": a timed-out connection is not asked to stop_stream",
+              daemon.CountOf("ob_rpc_stop_stream0-2-10") == 0);
+        check(label + ": the run reports the timeout", st.timed_out);
+        (void)out_text;
+    }
+
+    // A refused connect is not a timeout: it is a named failure, promptly.
+    {
+        int s = socket(AF_INET, SOCK_STREAM, 0);
+        sockaddr_in a = {};
+        a.sin_family = AF_INET;
+        a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        a.sin_port = 0;
+        uint16_t closed_port = 0;
+        if (s >= 0 && bind(s, (sockaddr*)&a, sizeof(a)) == 0) {
+            socklen_t alen = sizeof(a);
+            getsockname(s, (sockaddr*)&a, &alen);
+            closed_port = ntohs(a.sin_port);
+        }
+        if (s >= 0) close(s);
+        if (closed_port) {
+            FdRedirect err_cap;
+            bool captured = err_cap.Begin(STDERR_FILENO, "/tmp/raptor_lt_err_XXXXXX");
+            LiveStats st;
+            auto t0 = std::chrono::steady_clock::now();
+            int rc = Live("127.0.0.1", closed_port, *depth, 5, "/tmp/raptor_lt_refused.raw", 0, 0, false, nullptr,
+                          &st, bound);
+            auto t1 = std::chrono::steady_clock::now();
+            const std::string err_text = err_cap.Finish();
+            long ms = elapsed_ms(t0, t1);
+            check("a refused connect is a failure (exit 1), not a timeout", captured && rc == kExitLiveFailed);
+            check("the refused-connect message names the endpoint",
+                  err_text.find("127.0.0.1:" + std::to_string(closed_port)) != std::string::npos);
+            check("a refused connect fails promptly", ms < 2000);
+        }
+    }
+
+    std::printf("[live-timeout-selftest] %s (%d failure(s))\n", failures ? "FAILED" : "ok", failures);
     return failures ? 1 : 0;
 }
 
@@ -2862,6 +3258,7 @@ int main(int argc, char** argv) {
     if (argc >= 2 && std::string(argv[1]) == "--selftest-dump") return ReplyDumpSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--selftest-capture") return CaptureSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--selftest-live") return LiveSuffixSelftest();
+    if (argc >= 2 && std::string(argv[1]) == "--selftest-live-timeout") return LiveTimeoutSelftest();
     if (argc >= 2 && std::string(argv[1]) == "--dry-run-live") return DryRunLive();
     if (argc >= 2 && std::string(argv[1]) == "--discover") { GvcpDiscover(1000); return 0; }
     if (argc >= 2 && std::string(argv[1]) == "--capture-dump") {
@@ -2935,6 +3332,7 @@ int main(int argc, char** argv) {
         std::string out = "/tmp/raptor_frame.raw";
         int pull_ms = 0;
         int max_frames = 0;
+        int timeout_ms = kDefaultLiveTimeoutMs;
         bool log = true;
         std::string capture_dir;
         int capture_seconds = kDefaultCaptureSeconds;
@@ -2948,6 +3346,7 @@ int main(int argc, char** argv) {
             if (a.rfind("--", 0) == 0) {
                 if (a == "--pull-ms" && i + 1 < argc) pull_ms = std::atoi(argv[++i]);
                 else if (a == "--quiet") log = false;
+                else if (a == "--reply-timeout-ms" && i + 1 < argc) timeout_ms = std::atoi(argv[++i]);
                 else if (a == "--dump-replies") g_dump_replies = true;
                 else if (a == "--frames" && i + 1 < argc) max_frames = std::atoi(argv[++i]);
                 else if (a == "--capture" && i + 1 < argc) capture_dir = argv[++i];
@@ -2985,6 +3384,10 @@ int main(int argc, char** argv) {
             std::fprintf(stderr, "--frames must not be negative (got %d)\n", max_frames);
             return 2;
         }
+        if (timeout_ms <= 0) {
+            std::fprintf(stderr, "--reply-timeout-ms must be positive (got %d)\n", timeout_ms);
+            return 2;
+        }
         if (capture_seconds < 0) {
             std::fprintf(stderr, "--capture-seconds must not be negative (got %d)\n", capture_seconds);
             return 2;
@@ -2999,7 +3402,8 @@ int main(int argc, char** argv) {
         }
         CaptureSession capture;
         if (!capture_dir.empty() && !capture.Start(capture_dir, capture_seconds, capture_bytes)) return 2;
-        int rc = Live(host, port, *route, seconds, out, pull_ms, max_frames, log, capture.recorder(), nullptr);
+        int rc = Live(host, port, *route, seconds, out, pull_ms, max_frames, log, capture.recorder(), nullptr,
+                      timeout_ms);
         capture.Stop();
         return rc;
     }
@@ -3012,6 +3416,7 @@ int main(int argc, char** argv) {
         "  raptor_client --selftest-dump            reply-structure dump, no device\n"
         "  raptor_client --selftest-capture         capture round-trip, no device\n"
         "  raptor_client --selftest-live            live-path method names, no device\n"
+        "  raptor_client --selftest-live-timeout    live-path bounded wait, no device\n"
         "  raptor_client --discover                 GVCP discovery only\n"
         "  raptor_client --capture-dump <dir>       read a capture bundle back\n"
         "  raptor_client --replay <file> [host] [--dry-run] [--quiet]\n"
@@ -3031,8 +3436,8 @@ int main(int argc, char** argv) {
         "      expiry the replay names the frame and its interface and exits\n"
         "      non-zero.\n"
         "  raptor_client --live <host> [port] [seconds] [out.raw] [--pull-ms N] [--quiet]\n"
-        "      [--frames N] [--dump-replies] [--capture DIR] [--capture-seconds N]\n"
-        "      [--capture-bytes N] [--ir-port N] [--depth-port N]\n"
+        "      [--frames N] [--reply-timeout-ms N] [--dump-replies] [--capture DIR]\n"
+        "      [--capture-seconds N] [--capture-bytes N] [--ir-port N] [--depth-port N]\n"
         "      ONE interface per run: the port picks the interface, and every\n"
         "      method name on that connection carries the interface's suffix,\n"
         "      because the daemon has no method without one:\n"
@@ -3049,6 +3454,12 @@ int main(int argc, char** argv) {
         "      --frames N stops the run after N frame pulls (the window ends\n"
         "      first if it is shorter); --pull-ms 0 = as fast as the daemon\n"
         "      answers.\n"
+        "      --reply-timeout-ms N (default 5000) bounds the TCP connect and\n"
+        "      every reply read. On expiry the run prints 'TIMEOUT: ...' naming\n"
+        "      the endpoint, the interface and the unanswered method, then\n"
+        "      exits 3: a daemon that accepts and stops answering is a\n"
+        "      rejection, not a hang. Exit 1 = connected but served no frame;\n"
+        "      exit 2 = usage error.\n"
         "      per-call logging is ON by default (--quiet disables it).\n"
         "\n"
         "  --dump-replies (OFF by default; the output above never changes)\n"
