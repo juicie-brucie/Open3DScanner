@@ -218,7 +218,7 @@ The retro pass cannot settle:
 - +ch1 points down (assuming standard MEMS convention)
 - The pick-up re-oriented the device by 69.94° (a tip, not a yaw)
 - The temperature field is a live, slowly-varying analog channel (not a counter)
-- The temperature unit is not settled; plausible scalings are ÷ 16, ÷ 64, ÷ 62, or ÷ 100 with offset
+- The temperature unit is not settled; three scalings are in room range (÷ 64, ÷ 62, or ÷ 100 with offset); ÷ 16 is unlikely for room temperature
 - The gyro slots are structurally present and zero in 100% of samples
 - The wire offers no knob to request a gyro
 - The header bytes 0, 1, 2, 3 are named
