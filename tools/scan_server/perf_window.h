@@ -143,6 +143,11 @@ public:
             Push(tick_overshoot_us_, tick_overshoot_n_, tick_overshoot);
             cumulative_tick_overshoot_us_ += tick_overshoot;
             if (tick_overshoot > max_tick_overshoot_us_) max_tick_overshoot_us_ = tick_overshoot;
+            // One residual and one tick_overshoot per completed period. The
+            // per-tick series (overshoot, segments) has one more sample than
+            // the period series after N EndTicks, so the summary means are
+            // divided by this count, not by ticks_.
+            ++period_samples_;
         }
         last_us_ = now_us;
         have_last_ = true;
@@ -294,11 +299,12 @@ public:
                     static_cast<double>(cumulative_overshoot_us_) / ticks_ / 1000.0,
                     static_cast<double>(max_overshoot_us_) / 1000.0,
                     " (wait - nominal; positive = the pacing call ran long)");
+        const long long periods = period_samples_ > 0 ? period_samples_ : 1;
         std::printf(" tick_overshoot_mean=%.2fms tick_overshoot_max=%.2fms%s",
-                    static_cast<double>(cumulative_tick_overshoot_us_) / ticks_ / 1000.0,
+                    static_cast<double>(cumulative_tick_overshoot_us_) / periods / 1000.0,
                     static_cast<double>(max_tick_overshoot_us_) / 1000.0,
                     " (tick - nominal; the whole tick vs the pacing budget)");
-        std::printf(" residual_mean=%.2fms", static_cast<double>(cumulative_residual_us_) / ticks_ / 1000.0);
+        std::printf(" residual_mean=%.2fms", static_cast<double>(cumulative_residual_us_) / periods / 1000.0);
         std::printf(" exposure_applies_total=%lld", static_cast<long long>(cumulative_exposure_applies_));
         // Row #163: the broadcast counters, cumulative over the run.
         const double bcast_mean_us = cumulative_bcast_sends_ > 0
@@ -449,6 +455,7 @@ private:
     int64_t last_nominal_wait_us_ = 0;
 
     long long ticks_ = 0;
+    long long period_samples_ = 0;  // one per completed period (residual/tick_overshoot)
     long long cumulative_points_ = 0;
     long long cumulative_bytes_ = 0;
     int64_t cumulative_us_[kSegmentCount] = {};
