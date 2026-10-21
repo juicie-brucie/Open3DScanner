@@ -14,6 +14,7 @@ add_library(raptor_shim_lib STATIC
     frame_source.cpp
     bundle_source.cpp
     live_source.cpp
+    ob_words.cpp
     properties.cpp
     shim_server.cpp
     discovery.cpp

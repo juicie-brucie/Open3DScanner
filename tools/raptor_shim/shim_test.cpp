@@ -34,6 +34,7 @@
 #include "discovery.h"
 #include "frame_source.h"
 #include "live_source.h"
+#include "ob_words.h"
 #include "msgpack.h"
 #include "properties.h"
 #include "shim_server.h"
@@ -512,12 +513,12 @@ struct FakeTransport : raw_capture::FrameSource {
     FakeTransport() {
         next.kind = raw_capture::StreamKind::kIr;
         next.seq = 9;
-        next.timestamp_us = 4242;
+        next.timestamp_us = 4242;  // the device PTS; deliberately not an OB word
         next.width = 1920;
         next.height = 1200;
         next.stride = 1920;
         next.format = 0x3231564e;  // a UVC fourcc, deliberately not an OBFormat
-        next.data.assign(1920, 0x5a);
+        next.data.assign(1920u * 1200u, 0x5a);  // the #174 whole frame
     }
 
     bool Next(raw_capture::Frame* frame, std::string* error) override {
@@ -534,11 +535,46 @@ struct FakeTransport : raw_capture::FrameSource {
 };
 
 struct FakeWords : shim::ObFrameWordsProvider {
+    bool configured = true;
+    std::string configured_why = "not-configured: e10 (the fake light type) has no source";
     bool supplied = true;
-    shim::ObFrameWords words{7, 255, 4};
-    bool Words(uint64_t, uint64_t, shim::ObFrameWords* out) const override {
+    shim::ObFrameWords value;
+
+    FakeWords() {
+        value.e1 = 1792552122036427ull;
+        value.e2 = 211599394ull;
+        value.e3 = 255;
+        value.e10 = 4;
+    }
+
+    bool Configured(const shim::Interface&, std::string* why) const override {
+        if (configured) return true;
+        if (why) *why = configured_why;
+        return false;
+    }
+    bool Words(const shim::Interface&, uint64_t, uint64_t, shim::ObFrameWords* out) const override {
         if (!supplied) return false;
-        if (out) *out = words;
+        if (out) *out = value;
+        return true;
+    }
+};
+
+struct FakeClocks : shim::HostClocks {
+    uint64_t realtime = 1792552122036427ull;
+    uint64_t monotonic = 211599394ull;
+    uint64_t RealtimeUs() const override { return realtime; }
+    uint64_t MonotonicUs() const override { return monotonic; }
+};
+
+struct FakeLight : shim::IrLightState {
+    bool supplied = true;
+    int32_t value = 4;
+    bool LightType(const shim::Interface&, int32_t* out, std::string* why) const override {
+        if (!supplied) {
+            if (why) *why = "not-configured: e10 (the fake light type) has no state";
+            return false;
+        }
+        if (out) *out = value;
         return true;
     }
 };
@@ -582,17 +618,47 @@ void TestLiveSeam() {
         Check("the refusal names the OB words", err.find("OB words") != std::string::npos);
     }
     {
+        words.configured = false;
+        shim::LiveSource source(&transport, &words, &claim);
+        Check("a provider that cannot supply a word is refused", !source.Start(shim::IrInterface(), &err));
+        Check("the refusal is the provider's, by name (e10)", err.find("not-configured: e10") != std::string::npos);
+        words.configured = true;
+    }
+    {
         shim::LiveSource source(&transport, &words, &claim);
         Check("the configured seam starts", source.Start(shim::IrInterface(), &err));
 
         shim::FramePayload payload;
         Check("a frame crosses the seam", source.Next(shim::IrInterface(), &payload, &err));
         Check("the payload is the frame's bytes", payload.data == transport.next.data);
-        Check("e1 is the transport's timestamp", payload.e1_us == 4242);
-        Check("e2/e3/e10 come from the words provider, not from the frame",
-              payload.e2 == 7 && payload.e3 == 255 && payload.e10 == 4);
-        Check("the UVC fourcc is not used as the OBFormat", payload.e3 != transport.next.format);
+        Check("the payload is the whole 1920x1200 frame", payload.data.size() == 2304000);
+        Check("e1/e2 come from the provider's clocks, not the device PTS",
+              payload.e1_us == words.value.e1 && payload.e2 == words.value.e2 &&
+                  payload.e1_us != transport.next.timestamp_us);
+        Check("e3 is the OBFormat, not the UVC fourcc",
+              payload.e3 == 255 && payload.e3 != transport.next.format);
+        Check("e10 is the light type the provider supplied", payload.e10 == 4);
         Check("the absent sibling planes stay empty", payload.data2.empty() && payload.data3.empty());
+
+        // The #174 array: the whole frame in e4, the provider's words beside it.
+        const shim::Bytes result = shim::FrameArrayResult(payload);
+        shim::Value value;
+        Check("the frame array parses as one value",
+              shim::ParseValue(result.data(), result.size(), &value) == result.size());
+        Check("the result is the 11-element array", value.is_array(11));
+        if (value.is_array(11)) {
+            const auto& e = value.array;
+            Check("e0 is 0", e[0].u == 0);
+            Check("e1 is CLOCK_REALTIME us", e[1].u == words.value.e1);
+            Check("e2 is CLOCK_MONOTONIC us", e[2].u == words.value.e2);
+            Check("e3 is 255", e[3].u == 255);
+            Check("e4 is the whole frame", e[4].kind == shim::Value::Kind::kBin && e[4].bin.size() == 2304000);
+            Check("e5 is e4's length", e[5].u == 2304000);
+            const int64_t e10 = e[10].kind == shim::Value::Kind::kInt
+                                    ? e[10].i
+                                    : (e[10].kind == shim::Value::Kind::kUInt ? (int64_t)e[10].u : -999);
+            Check("e10 is the light type", e10 == 4);
+        }
 
         Check("the end of the stream is a clean stop, not an error",
               !source.Next(shim::IrInterface(), &payload, &err) && err.empty());
@@ -601,13 +667,40 @@ void TestLiveSeam() {
         words.supplied = false;
         Check("a frame without OB words is refused, not filled in",
               !source.Next(shim::IrInterface(), &payload, &err) &&
-                  err.find("OB words") != std::string::npos);
+                  err.find("not-configured") != std::string::npos);
         words.supplied = true;
     }
     {
-        // The production factory: #178's transport is not landed, so it
-        // refuses with the descriptor field that is missing; with no claim
-        // it names the helper too.
+        // The settled provider (row #180): host clocks at dequeue, the observed
+        // OBFormat, and e10 from a real light source — or a refusal by name.
+        FakeClocks clocks;
+        FakeLight light;
+        shim::HostClockObWords provider(&clocks, &light);
+        shim::ObFrameWords out;
+        Check("the provider is configured with clocks and a light source",
+              provider.Configured(shim::IrInterface(), &err));
+        Check("the provider supplies every word",
+              provider.Words(shim::IrInterface(), 9, 4242, &out));
+        Check("e1 is the host realtime clock", out.e1 == clocks.realtime);
+        Check("e2 is the host monotonic clock", out.e2 == clocks.monotonic);
+        Check("e3 is the observed OBFormat 255", out.e3 == 255);
+        Check("e10 is the light source's value", out.e10 == light.value);
+        Check("the device PTS is not written into e1 or e2",
+              out.e1 != 4242 && out.e2 != 4242);
+
+        FakeLight unwired;
+        unwired.supplied = false;
+        shim::HostClockObWords refused(&clocks, &unwired);
+        Check("a missing light source refuses by name", !refused.Configured(shim::IrInterface(), &err));
+        Check("the refusal names e10", err.find("not-configured: e10") != std::string::npos);
+        shim::HostClockObWords no_light(&clocks, nullptr);
+        Check("no light source at all refuses by name", !no_light.Configured(shim::IrInterface(), &err));
+        Check("the no-source refusal names e10", err.find("not-configured: e10") != std::string::npos);
+    }
+    {
+        // The production factory: #178's transport is not landed and e10 has
+        // no source, so it refuses with every missing input named; with no
+        // claim it names the helper too.
         FakeClaim unclaimed;
         unclaimed.state = FakeClaim::State::kNotClaimed;
         unclaimed.detail = "openscanner-helper reports released";
@@ -616,6 +709,7 @@ void TestLiveSeam() {
         Check("the production live source refuses for now", source == nullptr);
         Check("the refusal names the descriptor map", why.find("usb-descriptor-map.md") != std::string::npos);
         Check("the refusal names the helper claim", why.find("openscanner-helper") != std::string::npos);
+        Check("the refusal names e10's missing source", why.find("not-configured: e10") != std::string::npos);
     }
 }
 
