@@ -12,13 +12,7 @@
 namespace openscanner::helper {
 namespace {
 
-std::string DescribeError(xpc_object_t error) {
-    if (xpc_get_type(error) == XPC_TYPE_ERROR) {
-        const char* description = xpc_dictionary_get_string(error, XPC_ERROR_KEY_DESCRIPTION);
-        if (description) return description;
-    }
-    return "unknown XPC error";
-}
+std::string DescribeError(xpc_object_t error) { return DescribeXpcError(error); }
 
 // One serial queue for the listener and its peers, alive for the process. It
 // is deliberately never released: cancelling the listener does not drain an
@@ -110,6 +104,21 @@ std::unique_ptr<Listener> MakeListener(xpc_connection_t connection, dispatch_que
 }
 
 }  // namespace
+
+std::string DescribeXpcError(xpc_object_t error) {
+    if (xpc_get_type(error) != XPC_TYPE_ERROR) return "unknown XPC error";
+    if (error == XPC_ERROR_CONNECTION_INVALID) {
+        // The exact #179 failure: the name has no listener because no launchd
+        // job registered it. Name the fix rather than the XPC constant.
+        return "no Mach service is registered under that name in this session "
+               "(install/start the openscanner-helper user LaunchAgent: "
+               "tools/macos_helper/install_user_agent.sh install)";
+    }
+    if (error == XPC_ERROR_CONNECTION_INTERRUPTED) return "the helper connection was interrupted";
+    const char* description = xpc_dictionary_get_string(error, XPC_ERROR_KEY_DESCRIPTION);
+    if (description) return description;
+    return "unknown XPC error";
+}
 
 Listener::~Listener() {
     if (endpoint) xpc_release(endpoint);

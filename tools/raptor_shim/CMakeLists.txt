@@ -35,6 +35,14 @@ if(APPLE)
     target_sources(raptor_shim_lib PRIVATE helper_claim.mm)
     target_link_libraries(raptor_shim_lib PUBLIC openscanner_helper_xpc)
     target_compile_definitions(raptor_shim_lib PUBLIC OS_OBJECT_USE_OBJC=0)
+
+    # Row #181: the shim's own claim channel against a fake helper over a real
+    # XPC round trip. The helper is an anonymous listener (the real
+    # HelperService), so no launchd, entitlement, device or root is involved.
+    add_executable(helper_claim_test helper_claim_test.mm)
+    target_link_libraries(helper_claim_test PRIVATE raptor_shim_lib openscanner_helper_xpc)
+    target_compile_definitions(helper_claim_test PRIVATE OS_OBJECT_USE_OBJC=0)
+    add_test(NAME helper_claim_test COMMAND helper_claim_test)
 else()
     target_sources(raptor_shim_lib PRIVATE helper_claim_unwired.cpp)
 endif()

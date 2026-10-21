@@ -41,6 +41,11 @@ std::unique_ptr<Listener> MakeMachServiceListener(const char* mach_service_name,
 // No launchd. The returned Listener owns the endpoint a client connects to.
 std::unique_ptr<Listener> MakeAnonymousListener(HelperService* service, std::string* err);
 
+// The human text for an XPC transport error (row #181). Exported so the
+// unregistered-Mach-service case can be asserted without opening a doomed
+// connection; the helper and the shim both log through it.
+std::string DescribeXpcError(xpc_object_t error);
+
 // The app side. Not called by the product in this row; ConnectMachService is
 // what a later row wires into the app.
 class Client {

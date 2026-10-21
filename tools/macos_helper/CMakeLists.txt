@@ -55,3 +55,9 @@ target_link_libraries(helper_xpc_test PRIVATE
     "-framework CoreFoundation"
 )
 add_test(NAME helper_xpc_test COMMAND helper_xpc_test)
+
+# Row #181: the user LaunchAgent artifact — rendered and linted device-free
+# (no signing, no launchctl, no ~/Library write).
+add_test(NAME helper_agent_plist_test
+         COMMAND ${CMAKE_SOURCE_DIR}/tools/macos_helper/helper_agent_plist_test.sh
+                 $<TARGET_FILE:openscanner-helper>)
