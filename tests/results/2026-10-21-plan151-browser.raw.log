@@ -1,0 +1,3343 @@
+# Extract of 2026-10-21-plan151-93-153-session.raw.log lines 2363–5700
+# Contains: server perf windows with clients=1.0, bcast_send, and broadcast counter evidence
+# Companion to: 2026-10-21-plan151-browser.md
+# Full session log: 2026-10-21-plan151-93-153-session.raw.log (32466 lines)
+
+[perf] window 5.0s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.8/s points=171.3 bytes=2298.4 | pose p50=0.00 p95=0.02 max=0.03 ms | getter p50=0.00 p95=0.01 max=0.03 ms | post p50=0.01 p95=0.03 max=0.04 ms | bcast p50=0.00 p95=0.06 max=0.30 ms | wait p50=101.99 p95=104.97 max=105.10 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=1.99 p95=4.97 max=5.10 ms | tick_overshoot p50=2.06 p95=5.01 max=5.13 ms | residual p50=0.01 p95=0.06 max=0.14 ms | tick p50=102.06 p95=105.01 max=105.13 ms | nominal=100.00 ms | clients=0.1 | exposure n=0 | bcast_send n=13 mean=38.46us max=280 us | bcast_queue max=1 | bcast_drops=0 timeouts=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.712
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.942
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker] tick 200/3000: color_cloud num_points=188 (max seen so far: 188), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.08
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.56
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.479
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.788
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 214.78
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.58
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.042
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[10/21 14:23:50.811628][warning][3517704][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.583
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.229
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[10/21 14:23:51.713720][warning][3517696][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2181240, expected=2304000 @OB_SENSOR_IR_RIGHT [**19 logs in 12215ms**]
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[10/21 14:23:51.734900][warning][3517693][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=2119860, expected=2304000 @OB_SENSOR_IR_LEFT [**17 logs in 12237ms**]
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=28 change_rate=5.6/s run_ticks p50=2 p95=2 max=4
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.173
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] window 5.0s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.7/s points=192.9 bytes=2557.2 | pose p50=0.00 p95=0.02 max=0.06 ms | getter p50=0.00 p95=0.02 max=0.03 ms | post p50=0.01 p95=0.04 max=0.05 ms | bcast p50=0.05 p95=0.25 max=0.46 ms | wait p50=102.85 p95=104.82 max=105.03 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=2.85 p95=4.82 max=5.03 ms | tick_overshoot p50=2.94 p95=4.95 max=5.07 ms | residual p50=0.01 p95=0.06 max=0.08 ms | tick p50=102.94 p95=104.95 max=105.07 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=103 mean=33.25us max=368 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.938
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker] tick 250/3000: color_cloud num_points=197 (max seen so far: 198), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 219.854
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.98
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.292
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.577
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[10/21 14:23:54.108777][warning][3518425][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100 [**1 logs in 3297ms, last: 14:23:51.106509**]
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 219.543
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 214.148
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 220
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.3
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.396
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.48
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 220.978
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=29 change_rate=5.8/s run_ticks p50=2 p95=2 max=2
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] window 5.0s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.8/s points=601.2 bytes=7457.9 | pose p50=0.00 p95=0.02 max=0.02 ms | getter p50=0.00 p95=0.01 max=0.13 ms | post p50=0.01 p95=0.05 max=0.16 ms | bcast p50=0.05 p95=0.29 max=0.31 ms | wait p50=102.18 p95=104.50 max=105.19 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=2.18 p95=4.50 max=5.19 ms | tick_overshoot p50=2.38 p95=4.73 max=5.35 ms | residual p50=0.02 p95=0.07 max=0.09 ms | tick p50=102.39 p95=104.73 max=105.35 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=103 mean=35.82us max=0 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.083
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.667
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker] tick 300/3000: color_cloud num_points=1195 (max seen so far: 1195), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.58
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.708
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.04
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.62
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.792
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.22
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.98
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.6
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.292
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=27 change_rate=5.4/s run_ticks p50=2 p95=2 max=3
+中心亮度: 217.229
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] window 5.0s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.7/s points=1244.8 bytes=15180.3 | pose p50=0.01 p95=0.02 max=0.04 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.02 p95=0.07 max=0.09 ms | bcast p50=0.06 p95=0.29 max=0.94 ms | wait p50=102.98 p95=104.88 max=104.97 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=2.98 p95=4.88 max=4.97 ms | tick_overshoot p50=3.15 p95=5.02 max=5.24 ms | residual p50=0.02 p95=0.20 max=0.35 ms | tick p50=103.15 p95=105.02 max=105.23 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=103 mean=50.71us max=852 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.32
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.62
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker] tick 350/3000: color_cloud num_points=1316 (max seen so far: 1316), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 221.022
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.4
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.24
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.125
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.34
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 220.542
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.62
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 220.717
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.66
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=7 change_rate=1.4/s run_ticks p50=6 p95=7 max=7
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.92
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] window 5.0s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.8/s points=1329.2 bytes=16193.7 | pose p50=0.00 p95=0.01 max=0.02 ms | getter p50=0.00 p95=0.00 max=0.00 ms | post p50=0.02 p95=0.07 max=0.10 ms | bcast p50=0.05 p95=0.18 max=0.18 ms | wait p50=102.25 p95=104.86 max=105.08 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=2.25 p95=4.86 max=5.08 ms | tick_overshoot p50=2.08 p95=5.13 max=5.20 ms | residual p50=0.02 p95=0.09 max=0.19 ms | tick p50=102.08 p95=105.13 max=105.20 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=103 mean=32.78us max=0 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.04
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 219.522
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker] tick 400/3000: color_cloud num_points=1377 (max seen so far: 1377), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.083
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[10/21 14:24:08.565608][info][3518127][GVCPClient.cpp:457] 2,1, 30:30:34:30:35:30,7, 5,3075, 127.0.0.1, 0.0.0.0, 0.0.0.0, Orbbec, Creality Raptor Pro, , Orbbec, CR0886100SN, #10010#USB3.0 [**48 logs in 24043ms, last: 14:24:06.626561**]
+[10/21 14:24:08.565618][info][3518126][GVCPClient.cpp:421] 0, 3, 248, 1 [**48 logs in 24039ms, last: 14:24:06.626556**]
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 221.652
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[10/21 14:24:08.628601][error][3518806][GVCPClient.cpp:355] sendto failed with error:49 [**12 logs in 24069ms**]
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dce0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.562
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.78
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[10/21 14:24:09.634377][info][3517594][GVCPClient.cpp:102] 	- mac:30:30:34:30:35:30, ip:127.0.0.1, sn:CR0886100SN, pid:0x0c03 [**12 logs in 24068ms**]
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 220.739
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.875
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.34
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.625
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.833
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=7 change_rate=1.4/s run_ticks p50=7 p95=7 max=7
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] window 5.0s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.7/s points=1380.6 bytes=16801.0 | pose p50=0.00 p95=0.02 max=0.06 ms | getter p50=0.00 p95=0.00 max=0.01 ms | post p50=0.02 p95=0.04 max=0.06 ms | bcast p50=0.05 p95=0.23 max=0.82 ms | wait p50=102.31 p95=104.71 max=105.01 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.00 ms | overshoot p50=2.31 p95=4.71 max=5.01 ms | tick_overshoot p50=2.73 p95=4.81 max=5.06 ms | residual p50=0.02 p95=0.11 max=0.19 ms | tick p50=102.73 p95=104.81 max=105.06 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=102 mean=43.23us max=0 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+中心亮度: 216.02
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.04
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.22
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker] tick 450/3000: color_cloud num_points=1410 (max seen so far: 1410), clients=1, paused=0
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.82
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.98
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.312
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.06
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.562
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.82
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 217.92
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 216.44
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 215.74
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e160 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[10/21 14:24:16.750644][warning][3517693][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1632708, expected=2304000 @OB_SENSOR_IR_LEFT [**11 logs in 25015ms**]
+[10/21 14:24:16.750880][warning][3517696][VideoSensor.cpp:455] This frame will be dropped because the data size does not match the expectation! size=1644984, expected=2304000 @OB_SENSOR_IR_RIGHT [**12 logs in 25037ms**]
+[10/21 14:24:16.780926][warning][3517704][Pipeline.cpp:310] Wait for frame timeout, you can try to increase the wait time! current timeout=100
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] cloud window 5.0s clock=steady_clock ticks=49 changes=7 change_rate=1.4/s run_ticks p50=7 p95=8 max=8
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[perf] window 5.0s clock=steady_clock unit=ms instrument=TickPerf n=49 rate=9.7/s points=1410.2 bytes=17165.2 | pose p50=0.00 p95=0.01 max=0.02 ms | getter p50=0.00 p95=0.00 max=0.04 ms | post p50=0.02 p95=0.09 max=0.17 ms | bcast p50=0.07 p95=0.26 max=0.60 ms | wait p50=102.29 p95=104.93 max=106.50 ms | exposure p50=0.00 p95=0.00 max=0.00 ms | release p50=0.00 p95=0.00 max=0.02 ms | overshoot p50=2.29 p95=4.93 max=6.50 ms | tick_overshoot p50=2.44 p95=5.22 max=6.70 ms | residual p50=0.02 p95=0.04 max=0.10 ms | tick p50=102.44 p95=105.22 max=106.70 ms | nominal=100.00 ms | clients=1.0 | exposure n=0 | bcast_send n=103 mean=48.50us max=0 us | bcast_queue max=0 | bcast_drops=0 timeouts=0
+中心亮度: 217.583
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
+input_gain 1000
+Min_Exposure_Time 500
+Max_Exposure_Time 3000
+Min_Gain 1000
+Max_Gain 3000
+rate_expo 0.035
+============ 输出参数 =============
+exposure_time: 500
+ir_gain: 1000
+laser1_current: 110000
+laser2_current: 1360000
+laser3_current: 1360000
+laser4_current: 150000
+rgb_white_electric: 48
+ir_white_electric: 48
+ir_blue_electric: 43
+===================================
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dbc0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e2e0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dc20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e340 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e0a0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dfe0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e280 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105e220 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dda0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105df20 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+[worker][data] msg_id=325189890 (FRAME_READY) data=0x77d105dec0 thread=10325715550402697319
+[worker][data] FRAME_READY tracking_status=0 (SUCCESS)
+中心亮度: 218.125
+Circle Points Slightly Dark
+adjust_expo 0
+input_expo 500
