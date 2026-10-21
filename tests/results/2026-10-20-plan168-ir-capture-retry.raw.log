@@ -1,0 +1,8 @@
+[capture] recording every reply into /Users/brucemackay/captures/plan168-ir-retry (bounds: 20 s, 500000000 B)
+[live] connected 127.0.0.1:10013 (IR, suffix 0-2-12, pull_ms=0, per-call logging=on, timeout 5000 ms)
+[live] calling ob_rpc_start_stream0-2-12
+[capture] FAILED: no complete reply on port 10013 for ob_rpc_start_stream0-2-12 within 5000 ms; the capture stopped answering
+[live] TIMEOUT: 127.0.0.1:10013 (IR, suffix 0-2-12) ob_rpc_start_stream0-2-12: no complete reply within 5000 ms - the connection was established and the daemon did not answer
+[capture] 0 record(s), 0 byte(s) written
+[capture] manifest: /Users/brucemackay/captures/plan168-ir-retry/manifest.json
+[capture] the bundle is incomplete: no complete reply on port 10013 for ob_rpc_start_stream0-2-12 within 5000 ms; the capture stopped answering
