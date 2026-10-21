@@ -99,7 +99,28 @@ distribution could not be extracted with the available parsing approach.
 **What this means:** We know frame events are occurring (thousands per run), but we cannot
 determine the device-side cadence distribution, jitter, or gaps from the existing log format.
 
-## 4. Spikes and outliers
+## 4. Tracking status histogram
+
+The logs carry `tracking_status` data for each FRAME_READY event. The tracking status values are defined in `scan-quality-gate.md`:
+- 0: `OB_SCAN_TRACKING_SUCCESS`
+- 1: `OB_SCAN_TRACKING_LOST`
+- 2: `OB_SCAN_TRACKING_AMBIGUOUS_PLANE`
+- 3: `OB_SCAN_TRACKING_FAILURE_INSUFF_VALID_POINTS`
+- 4: `OB_SCAN_TRACKING_FAILURE_TEXTURELESS`
+- 5: `OB_SCAN_TRACKING_FAILURE_MARKERLESS`
+- 6: `OB_SCAN_TRACKING_FAILURE_MOVING_TOO_FAST`
+
+**Extracted histograms:**
+
+- **plan141 (live-tick-split):** 3837 frames, all tracking_status=0 (SUCCESS) — 100% success rate
+- **plan153 (live-run):** 4154 frames, all tracking_status=0 (SUCCESS) — 100% success rate
+- **plan76 (coverage-frozen):** 2921 frames, all tracking_status=0 (SUCCESS) — 100% success rate
+
+All three runs show perfect tracking with no failures, lost frames, or markerless failures. The scanner remained stationary during these runs, which explains the consistent tracking success.
+
+**#93 attribution:** Row #93 attempted a server-side markerless run with the histogram 5615 SUCCESS / 31 LOST / 1343 FAILURE_MARKERLESS (total 7089 frames). This represents a mixed tracking outcome with ~80% success, ~0.4% lost, and ~19% markerless failures, consistent with the intended markerless test scenario where the lens was occluded to trigger markerless failures.
+
+## 5. Spikes and outliers
 
 ### 4.1 Large spikes (tick_max > 200ms)
 - **plan141:** tick_max=701.34ms, tick_p95 max=490.43ms ← **severe instability**
