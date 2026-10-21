@@ -228,14 +228,25 @@ pgrep -x RPCServer || echo "RPCServer stopped"
    it prints the exact table fields (interfaces/alt settings, endpoints, UVC VS, HID) and
    a copy-paste block. Paste that into `tools/raw_capture/descriptor_table.h`. A field it
    prints `unknown` still needs the `system_profiler SPUSBDataType`/analyzer read; the
-   table is `known`/`unknown` only — no guesses.
-2. **#170 — claim/release.** Vendor daemon stopped; `openscanner-helper` claims; quit and
+   table is `known`/`unknown` only — no guesses. The probe alone leaves the IR/depth
+   assignment open (OQ-169e): run the correlation mode (#182) with the vendor daemon
+   streaming, or resolve #183.
+2. **#170 — claim/release.** Register the helper as the **user LaunchAgent** (#181) so
+   the shim's XPC `status` answers — no per-run sudo. Vendor daemon stopped;
+   `openscanner-helper` claims; quit and
    unplug release; `--seize` is opt-in only.
 3. **#171 — the live raw capture.** IR + depth to the sink with **no vendor process**;
    the format/stride from the table.
 4. **#172 — the vendor A/B.** The shim with the live source vs the vendor daemon on the
    same known scene; `raptor_client` unchanged; the frames match within the stated
    metric. The product switch stays held (behind #126 and this A/B).
+
+### Depth after IR (the #175 stall)
+
+After an IR `raptor_client` session, the RPCServer does not answer the depth port's
+`start_stream0-2-10` (a 5 s timeout; the 2026-10-21 depth addendum). **Run depth first,
+or restart the vendor agent between the IR and depth sessions** (the same bootout path as
+above), before recording a depth run.
 
 ## T4 — The operator capture session (#145 + #150, one sitting)
 
