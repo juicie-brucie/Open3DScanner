@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  User LaunchAgent form of the helper (row #181, per the #177 model).
+
+  This is the development/unsigned (Tier A) registration: a plist in
+  ~/Library/LaunchAgents/ bootstrapped in the user's GUI domain, with no sudo
+  and no system daemon. The MachServices key is what registers
+  org.openscanner.helper with launchd for the session; the helper's
+  MakeMachServiceListener attaches to it.
+
+  tools/macos_helper/install_user_agent.sh substitutes the helper path, the
+  Mach service name and the log path at the top of this file, then bootstraps
+  the plist with `launchctl bootstrap gui/$(id -u)`. The SMAppService form
+  (smappservice-org.openscanner.helper.plist.in) is the signed-tier path and is
+  not used here.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>@MACH_SERVICE@</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>@HELPER_PROGRAM@</string>
+    <string>--claim</string>
+    <string>iokit</string>
+    <string>--service-name</string>
+    <string>@MACH_SERVICE@</string>
+  </array>
+
+  <key>MachServices</key>
+  <dict>
+    <key>@MACH_SERVICE@</key>
+    <true/>
+  </dict>
+
+  <!-- Start in the user's GUI session at login/bootstrap. A claim refusal is a
+       state to read, not a loop to spin, so KeepAlive is off. -->
+  <key>LimitLoadToSessionType</key>
+  <string>Aqua</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>@HELPER_LOG@</string>
+  <key>StandardErrorPath</key>
+  <string>@HELPER_LOG@</string>
+</dict>
+</plist>

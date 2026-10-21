@@ -77,8 +77,8 @@ frame, which is a 100% data share; the vendor daemon's ~50 fps / empty-poll
 behaviour is #144's measurement, not something the shim imitates.
 
 Flags: `--host`, `--ir-port`, `--depth-port`, `--ir-bundle`, `--depth-bundle`,
-`--source none|bundle|live`, `--helper-service NAME`, `--no-ir`, `--no-depth`,
-`--seconds N`, `--discovery-bind IP:PORT`, `--verbose`.
+`--source none|bundle|live`, `--helper-service NAME`, `--helper-status`,
+`--no-ir`, `--no-depth`, `--seconds N`, `--discovery-bind IP:PORT`, `--verbose`.
 
 ## The daemon switch (row #179)
 
@@ -109,7 +109,18 @@ every missing piece, until three things exist:
 
 1. **the helper's claim** — the shim never claims the USB device (row #170 owns
    it). `HelperClaimChannel` asks the helper's XPC `status`; without a claiming
-   helper the source is refused.
+   helper the source is refused. The helper must be registered with launchd for
+   the session: the **user LaunchAgent** (`org.openscanner.helper`, row #181,
+   installed by `tools/macos_helper/install_user_agent.sh install` — no sudo).
+   Check it without starting the shim:
+
+   ```sh
+   build/tools/raptor_shim/raptor_shim --helper-status
+   # [shim] helper status on org.openscanner.helper: claimed-by-helper
+   ```
+
+   Exit 0 means the service answered (claimed or not); 1 means it did not, and
+   the detail names the fix (an unregistered service says so explicitly).
 2. **the transport's descriptor map** — `raw_capture`'s UVC source names the
    first unknown field (`docs/recon/findings/usb-descriptor-map.md`).
 3. **the frame's OB words** (`e2`, `e3`, `e10`) — the raw transport carries
@@ -122,8 +133,10 @@ Today it refuses:
 ```
 $ raptor_shim --source live --no-depth --seconds 1
 raptor_shim: live source refused: not-configured: the device is not claimed by
-openscanner-helper (...); not-configured: IR endpoint (...); not-configured:
-the live transport does not supply the frame's OB words (e2/e3/e10)
+openscanner-helper (openscanner-helper is not answering on
+org.openscanner.helper (...)); not-configured: IR endpoint (...);
+not-configured: the live transport does not supply the frame's OB words
+(e2/e3/e10)
 ```
 
 When #178's transport lands, `LiveSourceFactory::Create` builds it, a words

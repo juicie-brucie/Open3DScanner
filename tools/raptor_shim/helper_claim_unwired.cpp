@@ -10,6 +10,8 @@ namespace shim {
 
 HelperClaimChannel::HelperClaimChannel(std::string service) : service_(std::move(service)) {}
 
+HelperClaimChannel::~HelperClaimChannel() = default;
+
 ClaimChannel::State HelperClaimChannel::Query(std::string* detail) {
     if (detail) {
         *detail = "the privileged helper (row #170) is macOS-only, so no helper can hold the claim here";

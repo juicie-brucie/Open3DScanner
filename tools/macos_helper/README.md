@@ -22,8 +22,14 @@ Built:
   the termination interest handler that becomes the unplug event.
 - `helper_state_test`, `helper_service_test`, `helper_xpc_test` — the
   device-free tests (`ctest -LE hardware`).
-- `launchd/*.plist.in` — the LaunchDaemon and `SMAppService` service
-  definitions. Nothing installs them.
+- `launchd/org.openscanner.helper-agent.plist.in` — the **user LaunchAgent**
+  (row #181), the development registration: user scope, no sudo.
+- `launchd/org.openscanner.helper.plist.in` and
+  `launchd/smappservice-org.openscanner.helper.plist.in` — the LaunchDaemon and
+  `SMAppService` definitions (the system/signed-tier alternatives; not the
+  development path).
+- `install_user_agent.sh` — renders, dev-signs and bootstraps the user agent
+  (and `uninstall`/`status`/`--dry-run`).
 
 Not here, by design:
 
@@ -73,27 +79,65 @@ tools/macos_helper/dev_sign.sh build/tools/macos_helper/openscanner-helper
 or pass a Keychain self-signed identity as the second argument. launchd
 refuses to run an unsigned daemon on current macOS.
 
-## Registering it (a later row's decision — shown for completeness)
+## Registering it: the user LaunchAgent (row #181)
 
-- **LaunchDaemon:** substitute `@HELPER_PROGRAM@` and `@MACH_SERVICE@` in
-  `launchd/org.openscanner.helper.plist.in`, place it under
-  `/Library/LaunchDaemons/`, `launchctl bootstrap system <plist>`.
-- **`SMAppService`:** put the helper in the app bundle and the
-  `smappservice-…` plist at `Contents/Library/LaunchDaemons/`, then register
-  it with `SMAppService.daemon(plistName:).register()` from the app.
+The development model is a **user LaunchAgent** (the #177 Tier A path): no
+sudo, no system daemon, no per-run password. The plist is
+`launchd/org.openscanner.helper-agent.plist.in`; its `MachServices` key is what
+registers `org.openscanner.helper` with launchd for the session, and the
+helper's `MakeMachServiceListener` attaches to it.
 
-Neither is wired in this row.
+```sh
+# Build, dev-sign, install and bootstrap in gui/$(id -u). No sudo.
+cmake --build build --target openscanner-helper raptor_shim
+tools/macos_helper/install_user_agent.sh install
 
-## The operator gate: live claim and release
+# Verify the registration and the service's state.
+tools/macos_helper/install_user_agent.sh status
+launchctl print gui/$(id -u)/org.openscanner.helper
 
-Run as root (the helper is a daemon, so this is the privilege it will have),
-with the device connected. **Do not stop the vendor daemon for step 1** — the
+# Ask the helper over XPC with the shim's own claim channel.
+build/tools/raptor_shim/raptor_shim --helper-status
+```
+
+`install` runs `tools/macos_helper/dev_sign.sh` (ad-hoc by default; pass
+`--identity "OpenScanner Dev"` for a stable self-signed identity), writes
+`~/Library/LaunchAgents/org.openscanner.helper.plist`, and bootstraps it. Use
+`--dry-run` to render and lint the plist without registering anything, and
+`uninstall` to boot it out and remove the plist.
+
+The helper claims the scanner on start. A vendor daemon that still holds the
+device gives the non-seizing refusal, and the service keeps answering
+`status` (the claim state) — stop the vendor daemon for the claim itself (the
+HW-queue sequence). The `status` exit code is 0 when the service answered and
+1 when it did not; a helper that is not registered answers with the text
+"no Mach service is registered under that name..." naming this installer.
+
+**LaunchDaemon / `SMAppService`** remain the system/signed-tier alternatives:
+substitute `@HELPER_PROGRAM@` and `@MACH_SERVICE@` in
+`launchd/org.openscanner.helper.plist.in` under `/Library/LaunchDaemons/`, or
+put the helper in the app bundle and register
+`smappservice-org.openscanner.helper.plist.in` with `SMAppService.daemon`.
+Neither is used by the development flow.
+
+## The operator gate: live claim and release (no sudo, row #181)
+
+Run in the **user session** — no sudo, no per-run password. This is the #177
+Tier A model: a user LaunchAgent with the helper dev-signed by `dev_sign.sh`.
+Only one process can hold the claim, so **boot the agent out while running the
+four foreground steps**, then install it again for the XPC check:
+
+```sh
+launchctl bootout gui/$(id -u)/org.openscanner.helper 2>/dev/null || true
+```
+
+With the device connected. **Do not stop the vendor daemon for step 1** — the
 refusal is the evidence that the default is non-seizing.
 
 1. **A running vendor daemon is refused, not killed.**
 
    ```sh
-   sudo build/tools/macos_helper/openscanner-helper --once
+   build/tools/macos_helper/openscanner-helper --once
    ```
 
    Expect `once: claim: ok=false state=released (the USB device open was
@@ -105,7 +149,7 @@ refusal is the evidence that the default is non-seizing.
    point; how the daemon is stopped is the operator's call, once:
 
    ```sh
-   sudo build/tools/macos_helper/openscanner-helper --once
+   build/tools/macos_helper/openscanner-helper --once
    ```
 
    Expect `ok=true state=claimed`, then `releasing -> released`, exit 0.
@@ -113,7 +157,7 @@ refusal is the evidence that the default is non-seizing.
 3. **Claim and hold, then release on quit.** Foreground daemon, no install:
 
    ```sh
-   sudo build/tools/macos_helper/openscanner-helper --claim iokit
+   build/tools/macos_helper/openscanner-helper --claim iokit
    ```
 
    Expect `claiming -> claimed`, then `start: serving`. Press Ctrl-C:
@@ -126,13 +170,24 @@ refusal is the evidence that the default is non-seizing.
    **not** re-claim on its own in this row (claim-on-connect is later work) —
    send an explicit `claim` over XPC or restart it.
 
-5. **XPC against the real daemon** (optional, needs the plist loaded): a
-   `status` request must report `backend=iokit-usb`. The in-process test
-   already exercises the same path over a real XPC connection.
+5. **XPC against the registered service** (row #181): install the user agent,
+   then ask it with the shim's own channel. No sudo.
 
-What the gate needs from the dispatcher: a self-signed (ad-hoc is fine)
-helper binary on the operator's machine, the vendor daemon stopped for steps
-2–4, and the device attached. No install, no plist, no app change.
+   ```sh
+   tools/macos_helper/install_user_agent.sh install
+   build/tools/raptor_shim/raptor_shim --helper-status
+   # [shim] helper status on org.openscanner.helper: claimed-by-helper
+   ```
+
+   A refusal and an unregistered service are both readable: the detail line
+   names the claim state, or names this installer when launchd has no such
+   Mach service.
+
+What the gate needs: an ad-hoc/self-signed helper (the installer calls
+`dev_sign.sh`), the vendor daemon stopped for steps 2–4, the device attached,
+and the user agent booted out for the foreground steps. No sudo, no system
+install, no app change. If the user-scope claim is refused, the #177 falsifier
+applies: the signed `SMAppService.daemon` route is the fallback.
 
 ## Tests
 

@@ -45,6 +45,8 @@ void Usage() {
                  "                   live is refused cleanly until the #178 transport and the\n"
                  "                   helper's claim exist; nothing is guessed\n"
                  "  --helper-service NAME  the helper's Mach service for the claim query\n"
+                 "  --helper-status  ask that service for its claim status and exit\n"
+                 "                   (the no-sudo check: 0 = the service answered)\n"
                  "  --no-ir/--no-depth  do not listen on that interface\n"
                  "  --seconds N      run for N seconds (0 = until SIGINT/SIGTERM)\n"
                  "  --discovery-bind bind UDP for GVCP DISCOVERY_CMD logging (off by default:\n"
@@ -69,6 +71,7 @@ int main(int argc, char** argv) {
     std::string discovery_bind;
     std::string source_kind;
     std::string helper_service = "org.openscanner.helper";
+    bool helper_status = false;
     int seconds = 0;
 
     for (int i = 1; i < argc; ++i) {
@@ -90,6 +93,8 @@ int main(int argc, char** argv) {
             source_kind = argv[++i];
         } else if (arg == "--helper-service" && i + 1 < argc) {
             helper_service = argv[++i];
+        } else if (arg == "--helper-status") {
+            helper_status = true;
         } else if (arg == "--no-ir") {
             config.serve_ir = false;
         } else if (arg == "--no-depth") {
@@ -111,6 +116,22 @@ int main(int argc, char** argv) {
         std::printf("%s\n", line.c_str());
         std::fflush(stdout);
     };
+
+    if (helper_status) {
+        // Row #181: the operator's no-sudo XPC check, using the same channel
+        // the live source uses. Exit 0 means the service answered (claimed or
+        // not); 1 means it did not, and the detail says why.
+        shim::HelperClaimChannel channel(helper_service);
+        std::string detail;
+        const shim::ClaimChannel::State state = channel.Query(&detail);
+        const char* name = state == shim::ClaimChannel::State::kClaimedByHelper
+                               ? "claimed-by-helper"
+                               : (state == shim::ClaimChannel::State::kNotClaimed ? "not-claimed" : "unknown");
+        std::string line = "[shim] helper status on " + helper_service + ": " + name;
+        if (!detail.empty()) line += " (" + detail + ")";
+        std::printf("%s\n", line.c_str());
+        return state == shim::ClaimChannel::State::kUnknown ? 1 : 0;
+    }
 
     if (!source_kind.empty() && source_kind != "none" && source_kind != "bundle" && source_kind != "live") {
         std::fprintf(stderr, "raptor_shim: --source wants none|bundle|live (got '%s')\n", source_kind.c_str());
