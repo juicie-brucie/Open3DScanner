@@ -22,6 +22,12 @@ add_executable(bounded_watchdog_test bounded_watchdog_test.cpp)
 target_link_libraries(bounded_watchdog_test PRIVATE openscanner_engine)
 add_test(NAME bounded_watchdog_test COMMAND bounded_watchdog_test)
 
+# Hardware-free test for the live start's bounded device-enumeration wait
+# (row #167): the transient count=0 recovery, the backoff and the budget.
+add_executable(device_probe_test device_probe_test.cpp)
+target_link_libraries(device_probe_test PRIVATE openscanner_engine)
+add_test(NAME device_probe_test COMMAND device_probe_test)
+
 # Hardware-free smoke test for the HUD's frame-age arithmetic (row #142): it
 # pins the arithmetic and, when the built server is available, takes a real age
 # off the synthetic server. The UI is plain JS with no build step, so node is

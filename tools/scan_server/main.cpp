@@ -89,6 +89,7 @@
 #include "plane_toggle.h"    // the runtime plane-removal command (row #158)
 #include "tracking_status.h"  // the vendor's per-frame verdict, by pinned name (row #91)
 #include "bounded_watchdog.h"  // the per-call bound that survives a stuck caller (row #89)
+#include "device_probe.h"      // the bounded device-enumeration wait (row #167)
 #include "perf_window.h"       // per-tick latency instrumentation (row #111)
 #include "exposure_apply.h"    // when the exposure/laser config is pushed (row #153)
 
@@ -956,14 +957,47 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
 #endif
     }
 
-    int32_t device_num = 0;
-    status = lib.obscan_device_management_get_device_num(device_mgmt, &device_num);
-    std::printf("[worker] obscan_device_management_get_device_num -> %s, count=%d\n", StatusName(status),
-                device_num);
-    std::fflush(stdout);
-    if (device_num == 0) {
-        std::printf("[worker] No device detected — nothing to stream.\n");
-        return 2;
+    // Row #167: a transient count=0 here used to fall straight into the
+    // no-device exit, and the vendor's teardown crashed on that path. The
+    // bounded wait (policy in device_probe.h) gives the enumerator time to
+    // settle; the documented exit 2 is kept for a real no-device.
+    const openscanner::scan_server::DeviceProbePolicy probe_policy;
+    const openscanner::scan_server::DeviceProbeOutcome probe =
+        openscanner::scan_server::WaitForDevice(
+            [&]() {
+                int32_t count = 0;
+                const ObScanStatus probe_status = lib.obscan_device_management_get_device_num(device_mgmt, &count);
+                std::printf("[worker] obscan_device_management_get_device_num -> %s, count=%d\n",
+                            StatusName(probe_status), count);
+                std::fflush(stdout);
+                return openscanner::scan_server::DeviceProbeSample{
+                    static_cast<int32_t>(probe_status), count};
+            },
+            [](int interval_ms) {
+                // Keep servicing the device-manager run loop while waiting:
+                // the enumeration callbacks arrive on it.
+#if defined(__APPLE__)
+                CFRunLoopRunInMode(kCFRunLoopDefaultMode, interval_ms / 1000.0, false);
+#else
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval_ms));
+#endif
+            },
+            probe_policy);
+    if (probe.attempts > 1) {
+        std::printf("[worker] device enumeration settled after %d probe(s), %d ms of backoff.\n",
+                    probe.attempts, probe.waited_ms);
+        std::fflush(stdout);
+    }
+    if (!probe.present()) {
+        const int budget_ms = openscanner::scan_server::DeviceProbeBudgetMs(probe_policy);
+        std::printf("[worker] No device detected after %d probe(s) over %d ms (budget %d ms) — "
+                    "nothing to stream.\n", probe.attempts, probe.waited_ms, budget_ms);
+        std::fflush(stdout);
+        // The vendor's global teardown segfaults when no device was opened
+        // (row #167's crash stacks), which would replace the documented exit
+        // code with SIGSEGV. Skip it and keep exit 2. std::_Exit is C++11 and
+        // skips static destructors on every platform; stdout is flushed above.
+        std::_Exit(2);
     }
 
     ObScanSessionConfig session_config = {};
@@ -1707,7 +1741,8 @@ int RunLiveMode(int argc, char** argv) {
     std::fflush(stdout);
     int worker_exit_code = -1;
     std::string crash_reason;
-    // Budget: device-connect (<=6s) + frame-ready wait (<=20s) +
+    // Budget: device-connect (<=6s + the row #167 enumeration retry, <=4.75s)
+    // + frame-ready wait (<=20s) +
     // session_seconds of streaming + pause/mesh/stop settle + the SDK's
     // out-of-core serialization tail (is_block=false, polled above; can
     // run for minutes on a large scan). Generous margin past that.
