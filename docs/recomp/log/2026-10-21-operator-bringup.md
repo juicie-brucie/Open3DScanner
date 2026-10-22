@@ -56,3 +56,10 @@ runner. The deflake is with build2.
 recon1: `ses_ea764fc29ffeH68CjSl6fUFMKU` -> `ses_e9f05ac28ffeFYYElodMwgCDq1`. The prior
 session hit its tool-step limit in a loop at 92M context; the fresh one delivered #474 (the
 #187 finding).
+
+## The takeover's remaining three (T8)
+
+- **#187 (the depth)** — the T8 card (fresh daemon, depth first, the ack bytes); the finding
+  (#474) is in verify3.
+- **#189 (the HID report read)** — build1 in flight; the probe run follows.
+- **#71** — the T8 two-sided/geometric card.

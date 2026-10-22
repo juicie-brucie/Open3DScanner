@@ -295,3 +295,46 @@ No cross-repo edit.
 T5 (after the ground-truth read) → T6 (when the scanner is on Windows) → T7 (the daemon
 bring-up, after #169's descriptor capture).** One interface per live run; no build mid-session; a
 failed IR floor cancels T3 but not T2.
+
+## T8 — the daemon takeover's remaining three
+
+Three **separate** device sessions: the depth test wants the vendor RPCServer alone and fresh;
+the HID read wants it stopped; the #71 test wants our `scan_server`.
+
+### A. The depth/ack test (#187 — the finding is #474)
+
+Precondition: the vendor daemon **alone and fresh** — quit the vendor app and any other
+device holder, stop the vendor agent (the T7 stop sequence), confirm `pgrep -x RPCServer`,
+then bring the daemon up fresh.
+
+Run (depth first):
+
+    build/tools/raptor_client/raptor_client --live 127.0.0.1 10010 8 --frames 10 --dump-replies
+
+Capture: each SET's result (a `Str(64)` with the `'RB'` header vs `0 B`), the
+`done: get_frame=… data=… empty=…`, `first_frame`. Then the IR control on 10013 with the same
+command (the 0-B ack, frames flow).
+
+Settles: the 64-B depth ack + frames → the live depth exists; 0-B/no frames → the vendor
+depth pipeline (a finding, not our client).
+
+### B. The HID report-descriptor read (#189)
+
+After #189 lands, with the vendor daemon stopped:
+
+    build/tools/raw_capture/raw_capture --probe --hid-report
+
+(the flag name is the one #189 adds). Capture the 25-byte parse — the report IDs, input vs
+output, fields — and the `--table` control section.
+
+Settles: the control report map, or that the HID is input-only (the control stays the vendor
+RPC props).
+
+### C. The #71 two-sided / geometric observable
+
+One **stationary** scene (a flat wall at a fixed distance, the device fixed): toggle the plane
+removal **on → off → on** and capture the point count at each plus the model/HUD. Or skip the
+count: export the model/point cloud at each stage and check whether the plane's points vanish.
+
+Settles: a drop at enable and the return at disable, or the plane's absence in the geometry —
+the evidence the one-sided count lacks.
