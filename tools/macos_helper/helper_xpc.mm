@@ -14,6 +14,10 @@ namespace {
 
 std::string DescribeError(xpc_object_t error) { return DescribeXpcError(error); }
 
+// Marks the listener queue so the destructor can tell whether it is already
+// running on it (a dispatch_sync from the queue itself would deadlock).
+const void* const kServiceQueueKey = &kServiceQueueKey;
+
 // One serial queue for the listener and its peers, alive for the process. It
 // is deliberately never released: cancelling the listener does not drain an
 // invoke already in flight on this queue, and releasing it under that invoke
@@ -21,8 +25,11 @@ std::string DescribeError(xpc_object_t error) { return DescribeXpcError(error); 
 // _dispatch_set_priority_and_voucher_slow). The daemon has one listener and
 // the test one process, so a process-lifetime queue costs nothing.
 dispatch_queue_t ServiceQueue() {
-    static dispatch_queue_t queue =
-        dispatch_queue_create("org.openscanner.helper.xpc", DISPATCH_QUEUE_SERIAL);
+    static dispatch_queue_t queue = [] {
+        dispatch_queue_t q = dispatch_queue_create("org.openscanner.helper.xpc", DISPATCH_QUEUE_SERIAL);
+        dispatch_queue_set_specific(q, kServiceQueueKey, const_cast<void*>(kServiceQueueKey), nullptr);
+        return q;
+    }();
     return queue;
 }
 
@@ -57,18 +64,25 @@ void DispatchRequest(xpc_connection_t peer, xpc_object_t message, HelperService*
     xpc_release(out);
 }
 
-void InstallPeerHandler(xpc_connection_t peer, HelperService* service) {
+// The handler owns one retain of the peer (taken here) and releases it on the
+// terminal event. The HandlerState is captured by value: a block copy keeps it
+// alive even if the Listener is gone, and Get() returns null after teardown,
+// so a late event never touches a destroyed HelperService.
+void InstallPeerHandler(xpc_connection_t peer, std::shared_ptr<HandlerState> state) {
     xpc_retain(peer);
     xpc_connection_set_event_handler(peer, ^(xpc_object_t event) {
         const xpc_type_t type = xpc_get_type(event);
         if (type == XPC_TYPE_ERROR) {
-            Log(service, std::string("xpc: peer error: ") + DescribeError(event));
+            HelperService* service = state->Get();
+            if (service) Log(service, std::string("xpc: peer error: ") + DescribeError(event));
             // The handler owns the retain taken above. Release only on the
             // terminal event: an interrupted connection can still deliver a
             // later invalid event, and two releases would be one too many.
             if (event == XPC_ERROR_CONNECTION_INVALID) xpc_release(peer);
             return;
         }
+        HelperService* service = state->Get();
+        if (!service) return;  // torn down; the peer is being cancelled
         if (type != XPC_TYPE_DICTIONARY) {
             Log(service, "xpc: non-dictionary message ignored");
             return;
@@ -78,8 +92,12 @@ void InstallPeerHandler(xpc_connection_t peer, HelperService* service) {
     xpc_connection_resume(peer);
 }
 
-void InstallListenerHandler(Listener* listener, HelperService* service) {
+void InstallListenerHandler(Listener* listener) {
+    std::shared_ptr<HandlerState> state = listener->state;
+    dispatch_queue_t queue = listener->queue;
     xpc_connection_set_event_handler(listener->connection, ^(xpc_object_t event) {
+        HelperService* service = state->Get();
+        if (!service) return;  // torn down; the listener is being cancelled
         const xpc_type_t type = xpc_get_type(event);
         if (type == XPC_TYPE_ERROR) {
             Log(service, std::string("xpc: listener error: ") + DescribeError(event) +
@@ -88,8 +106,8 @@ void InstallListenerHandler(Listener* listener, HelperService* service) {
             return;
         }
         if (type != XPC_TYPE_CONNECTION) return;
-        xpc_connection_set_target_queue((xpc_connection_t)event, listener->queue);
-        InstallPeerHandler((xpc_connection_t)event, service);
+        xpc_connection_set_target_queue((xpc_connection_t)event, queue);
+        InstallPeerHandler((xpc_connection_t)event, state);
     });
 }
 
@@ -98,7 +116,9 @@ std::unique_ptr<Listener> MakeListener(xpc_connection_t connection, dispatch_que
     auto listener = std::make_unique<Listener>();
     listener->connection = connection;
     listener->queue = queue;
-    InstallListenerHandler(listener.get(), service);
+    listener->state = std::make_shared<HandlerState>();
+    listener->state->service = service;
+    InstallListenerHandler(listener.get());
     xpc_connection_resume(connection);
     return listener;
 }
@@ -121,10 +141,27 @@ std::string DescribeXpcError(xpc_object_t error) {
 }
 
 Listener::~Listener() {
-    if (endpoint) xpc_release(endpoint);
+    // 1. Make every handler inert. A cancellation event is delivered
+    //    asynchronously; without this, it can run after the caller has
+    //    destroyed the HelperService and dereference it through log_sink()
+    //    (row #188's intermittent SIGSEGV, in _dispatch_mach_cancel_invoke ->
+    //    Log -> log_sink()).
+    if (state) state->Stop();
+    // 2. Cancel the listener and wait for the handlers already queued on the
+    //    serial queue to run. Skip the wait when the destructor is itself
+    //    running on that queue (a sync there would deadlock).
+    if (connection) xpc_connection_cancel(connection);
+    const bool on_queue = dispatch_get_specific(kServiceQueueKey) != nullptr;
+    if (queue && !on_queue) dispatch_sync(queue, ^{});
+    // 3. Release our references. The connection must not go before the queued
+    //    cancellation invoke has run, which is what step 2 waits for.
+    if (endpoint) {
+        xpc_release(endpoint);
+        endpoint = nullptr;
+    }
     if (connection) {
-        xpc_connection_cancel(connection);
         xpc_release(connection);
+        connection = nullptr;
     }
     // No dispatch_release(queue): see ServiceQueue().
 }

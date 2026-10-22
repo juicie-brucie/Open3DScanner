@@ -6,6 +6,12 @@
 // protocol ops travel as XPC dictionaries and are answered by the same
 // HelperService the daemon uses, over a fake device backend.
 //
+// Row #188: the listener's cancellation event is delivered asynchronously. A
+// teardown that destroys the HelperService immediately after the Listener used
+// to leave that event to run against freed memory (the intermittent SIGSEGV in
+// _dispatch_mach_cancel_invoke -> Log -> log_sink()). TestTeardownRepeat
+// exercises that order repeatedly.
+//
 // What this does not cover: launchd registration, code signing, and the
 // device's own behaviour. Those are the operator gate.
 
@@ -113,6 +119,41 @@ void TestHandshake() {
     }
 }
 
+// Row #188: the exact order that crashed. Each scope ends the client, then
+// the listener, then the service; the cancellation event is delivered on the
+// listener queue after the listener is cancelled, so the handler must not
+// touch the service once teardown has begun.
+void TestTeardownRepeat() {
+    std::printf("teardown repeat\n");
+    int completed = 0;
+    for (int i = 0; i < 50; ++i) {
+        int acquires = 0;
+        int releases = 0;
+        std::vector<std::string> log;
+        HelperService service(std::make_unique<FakeClaim>(&acquires, &releases),
+                              [&log](const std::string& line) { log.push_back(line); });
+        std::string error;
+        std::unique_ptr<Listener> listener = MakeAnonymousListener(&service, &error);
+        if (!listener) {
+            Check(false, "a listener starts in the teardown loop");
+            return;
+        }
+        Client client = Client::ConnectEndpoint(listener->endpoint);
+        if (!client.valid()) {
+            Check(false, "a client connects in the teardown loop");
+            return;
+        }
+        const Reply ping = client.Send(Op::kPing, &error);
+        if (!ping.ok) {
+            Check(false, "ping crosses XPC in the teardown loop");
+            return;
+        }
+        ++completed;
+        // client -> listener -> service -> log, at the closing brace.
+    }
+    Check(completed == 50, "50 client/listener/service teardowns complete");
+}
+
 void TestUnconnectedClient() {
     std::printf("unconnected client\n");
     // No connection at all: the bounded send reports instead of attempting
@@ -135,6 +176,7 @@ void TestUnconnectedClient() {
 
 int main() {
     TestHandshake();
+    TestTeardownRepeat();
     TestUnconnectedClient();
     std::printf("helper_xpc_test: %d check(s), %d failure(s)\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
