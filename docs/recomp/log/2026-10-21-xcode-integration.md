@@ -45,3 +45,10 @@ development tooling; no vendor code or header change. Not landable as-is:
 
 The source's branch has no commits beyond main; the integration branches are cut from
 `origin/main`. `build-xcode/` is not committed.
+
+## Row A landed (#481)
+
+The Xcode signing/entitlements + the one-line port default: the Xcode generator build and the
+ad-hoc codesign with the entitlements pass. The optional development team and the signed build
+are the operator's card. B/C/D remain: #191 (density/renderers), #192 (camera), #193 (deferred
+full-mesh).
