@@ -1,0 +1,13 @@
+[capture] recording every reply into /Users/brucemackay/captures/floor-replay (bounds: 30 s, 67108864 B)
+[capture] FAILED: no complete reply on port 10013 for ob_set_ir_frame_light_type0-2-12 within 2000 ms; the capture stopped answering
+[replay] 36 frame(s) from docs/recon/findings/streaming-replay-payloads.hex
+[replay] cadence: 36 frame(s), capture span 256 ms, mean gap 10.74 ms, first-frame wait 250 ms (backward stamps clamped to 0)
+[replay] interfaces: IR 13 (span 256 ms) / depth 23 (span 211 ms)
+[replay] connected 127.0.0.1:10013 for interface IR (0-2-12)
+[replay] connected 127.0.0.1:10010 for interface depth (0-2-10)
+[replay] sending unchanged request frames (reply timeout 2000 ms)
+[dump] reply method=ob_set_ir_frame_light_type0-2-12 kind=Timeout msgid=- envelope=Timeout result=Timeout lat=1999256us wire=42B
+[replay] frame 1 (0-2-12): no reply within 2000 ms
+[capture] 0 record(s), 0 byte(s) written
+[capture] manifest: /Users/brucemackay/captures/floor-replay/manifest.json
+[capture] the bundle is incomplete: no complete reply on port 10013 for ob_set_ir_frame_light_type0-2-12 within 2000 ms; the capture stopped answering

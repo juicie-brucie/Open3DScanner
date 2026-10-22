@@ -1,0 +1,460 @@
+[capture] recording every reply into /Users/brucemackay/captures/floor-ir (bounds: 30 s, 67108864 B)
+[live] connected 127.0.0.1:10013 (IR, suffix 0-2-12, pull_ms=0, per-call logging=on, timeout 5000 ms)
+[live] calling ob_rpc_start_stream0-2-12
+[dump] reply method=ob_rpc_start_stream0-2-12 kind=Bool msgid=1 envelope=Array result=Bool(true)
+[live] start_stream -> true
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=2 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(0) head=[] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(2155872280) [10]=Int(-1) lat=162us wire=51B
+[dump] get_frame raw len=24 head=[94 01 02 c0 9b 00 00 00 cc ff c4 00 00 c4 00 00 c4 00 ce 80 80 00 18 ff]
+[dump] GET_FRAME -> empty
+[live] GET_FRAME #1 -> empty (kind=7)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=3 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=1 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=4 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=2 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=5 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=3 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=6 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=4 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=7 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=5 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=8 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(0) head=[] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(2155872280) [10]=Int(-1) lat=177us wire=51B
+[dump] get_frame raw len=24 head=[94 01 08 c0 9b 00 00 00 cc ff c4 00 00 c4 00 00 c4 00 ce 80 80 00 18 ff]
+[dump] GET_FRAME -> empty
+[live] GET_FRAME #2 -> empty (kind=7)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=9 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=6 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=10 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=7 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=11 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=8 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=12 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=9 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=13 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=10 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=14 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(0) [2]=UInt(0) [3]=UInt(255) [4]=Bin(0) head=[] [5]=UInt(0) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(0) head=[] [9]=UInt(2155872280) [10]=Int(-1) lat=183us wire=51B
+[dump] get_frame raw len=24 head=[94 01 0e c0 9b 00 00 00 cc ff c4 00 00 c4 00 00 c4 00 ce 80 80 00 18 ff]
+[dump] GET_FRAME -> empty
+[live] GET_FRAME #3 -> empty (kind=7)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=15 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=11 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=16 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=12 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=17 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=13 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=18 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=14 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=19 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=15 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=20 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633050630732) [2]=UInt(1681346363) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 0f 10 10 10 10 10 10 10 10 11 10 10 10 10 10 11 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 21 03] [9]=UInt(6) [10]=UInt(3) lat=144503us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 14 c0 9b 00 cf 00 06 5e 63 e8 32 0a 4c ce 64 37 4f 3b cc ff c6 00 23 28 00 10 10 10 10 11 10 10 10 10 10 10 10 0f 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] saved first frame: /tmp/raptor_frame.raw (2304000 bytes)
+[live] GET_FRAME #4 -> band(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 0f 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=21 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=16 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=22 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=17 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=23 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=18 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=24 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=19 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=25 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=20 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=26 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633050650037) [2]=UInt(1681366368) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 21 03] [9]=UInt(6) [10]=UInt(3) lat=121794us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 1a c0 9b 00 cf 00 06 5e 63 e8 32 55 b5 ce 64 37 9d 60 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=27 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=21 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=28 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=22 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=29 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=23 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=30 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=24 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=31 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=25 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=32 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633050769979) [2]=UInt(1681486398) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 21 03] [9]=UInt(6) [10]=UInt(3) lat=117231us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 20 c0 9b 00 cf 00 06 5e 63 e8 34 2a 3b ce 64 39 72 3e cc ff c6 00 23 28 00 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #6 -> band(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=33 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=26 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=34 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=27 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=35 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=28 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=36 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=29 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=37 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=30 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=38 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633050930055) [2]=UInt(1681646438) [3]=UInt(255) [4]=Bin(2304000) head=[10 11 10 10 10 11 10 11 10 0f 10 10 10 10 10 10 10 10 10 11 11 10 11 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 21 03] [9]=UInt(6) [10]=UInt(3) lat=117117us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 26 c0 9b 00 cf 00 06 5e 63 e8 36 9b 87 ce 64 3b e3 66 cc ff c6 00 23 28 00 10 11 10 10 10 11 10 11 10 0f 10 10 10 10 10 10 10 10 10 11 11 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=39 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=31 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=40 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=32 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=41 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=33 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=42 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=34 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=43 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=35 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=44 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633051070061) [2]=UInt(1681786472) [3]=UInt(255) [4]=Bin(2304000) head=[10 11 10 11 10 10 10 10 10 10 10 10 0f 11 10 10 10 10 10 10 10 10 11 10 10 10 10 11 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 21 03] [9]=UInt(6) [10]=UInt(3) lat=116119us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 2c c0 9b 00 cf 00 06 5e 63 e8 38 be 6d ce 64 3e 06 68 cc ff c6 00 23 28 00 10 11 10 11 10 10 10 10 10 10 10 10 0f 11 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #8 -> band(2304000) head=[10 11 10 11 10 10 10 10 10 10 10 10 0f 11 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=45 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=36 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=46 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=37 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=47 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=38 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=48 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=39 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=49 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=40 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=50 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633051230102) [2]=UInt(1681946512) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=116399us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 32 c0 9b 00 cf 00 06 5e 63 e8 3b 2f 96 ce 64 40 77 90 cc ff c6 00 23 28 00 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=51 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=41 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=52 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=42 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=53 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=43 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=54 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=44 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=55 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=45 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=56 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633051370143) [2]=UInt(1682086547) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=116948us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 38 c0 9b 00 cf 00 06 5e 63 e8 3d 52 9f ce 64 42 9a 93 cc ff c6 00 23 28 00 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #10 -> band(2304000) head=[10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=57 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=46 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=58 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=47 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=59 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=48 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=60 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=49 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=61 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=50 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=62 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633051510174) [2]=UInt(1682226581) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=116463us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 3e c0 9b 00 cf 00 06 5e 63 e8 3f 75 9e ce 64 44 bd 95 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=63 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=51 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=64 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=52 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=65 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=53 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=66 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=54 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=67 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=55 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=68 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633051670222) [2]=UInt(1682386621) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=117590us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 44 c0 9b 00 cf 00 06 5e 63 e8 41 e6 ce ce 64 47 2e bd cc ff c6 00 23 28 00 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #12 -> band(2304000) head=[10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=69 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=56 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=70 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=57 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=71 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=58 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=72 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=59 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=73 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=60 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=74 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633051810256) [2]=UInt(1682526656) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 11 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 11 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=123579us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 4a c0 9b 00 cf 00 06 5e 63 e8 44 09 d0 ce 64 49 51 c0 cc ff c6 00 23 28 00 10 10 10 10 11 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=75 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=61 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=76 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=62 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=77 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=63 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=78 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=64 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=79 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=65 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=80 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633051970446) [2]=UInt(1682686695) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 11 10 11 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 11 10 10 10 11 10 11 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=124993us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 50 c0 9b 00 cf 00 06 5e 63 e8 46 7b 8e ce 64 4b c2 e7 cc ff c6 00 23 28 00 10 10 11 10 11 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #14 -> band(2304000) head=[10 10 11 10 11 10 10 11 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=81 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=66 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=82 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=67 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=83 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=68 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=84 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=69 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=85 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=70 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=86 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633052130488) [2]=UInt(1682846735) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 11 10 10 11 11 10 11 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=117653us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 56 c0 9b 00 cf 00 06 5e 63 e8 48 ec b8 ce 64 4e 34 0f cc ff c6 00 23 28 00 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=87 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=71 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=88 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=72 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=89 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=73 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=90 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=74 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=91 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=75 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=92 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633052270402) [2]=UInt(1682986770) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 11 10 10 11 10 0f 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=119873us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 5c c0 9b 00 cf 00 06 5e 63 e8 4b 0f 42 ce 64 50 57 12 cc ff c6 00 23 28 00 10 10 10 10 11 10 10 11 10 0f 10 10 10 10 10 10 10 10 10 11 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #16 -> band(2304000) head=[10 10 10 10 11 10 10 11 10 0f 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=93 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=76 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=94 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=77 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=95 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=78 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=96 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=79 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=97 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=80 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=98 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633052430435) [2]=UInt(1683146809) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 11 10 11 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=117418us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 62 c0 9b 00 cf 00 06 5e 63 e8 4d 80 63 ce 64 52 c8 39 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 11 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=99 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=81 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=100 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=82 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=101 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=83 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=102 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=84 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=103 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=85 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=104 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633052570474) [2]=UInt(1683286844) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 11 11 10 10 10 11 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=116849us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 68 c0 9b 00 cf 00 06 5e 63 e8 4f a3 6a ce 64 54 eb 3c cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 11 11 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #18 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=105 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=86 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=106 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=87 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=107 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=88 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=108 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=89 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=109 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=90 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=110 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633052730521) [2]=UInt(1683446884) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 11 11 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 11 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=117233us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 6e c0 9b 00 cf 00 06 5e 63 e8 52 14 99 ce 64 57 5c 64 cc ff c6 00 23 28 00 10 10 10 10 11 11 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=111 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=91 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=112 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=92 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=113 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=93 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=114 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=94 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=115 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=95 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=116 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633052870548) [2]=UInt(1683586919) [3]=UInt(255) [4]=Bin(2304000) head=[10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 11 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=117413us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 74 c0 9b 00 cf 00 06 5e 63 e8 54 37 94 ce 64 59 7f 67 cc ff c6 00 23 28 00 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #20 -> band(2304000) head=[10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=117 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=96 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=118 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=97 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=119 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=98 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=120 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=99 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=121 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=100 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=122 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633053010614) [2]=UInt(1683726953) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=118223us wire=2304072B
+[dump] get_frame raw len=2304045 head=[94 01 7a c0 9b 00 cf 00 06 5e 63 e8 56 5a b6 ce 64 5b a2 69 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=123 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=101 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=124 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=102 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=125 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=103 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=126 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=104 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=127 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=105 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=128 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633053170607) [2]=UInt(1683886993) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 22 03] [9]=UInt(6) [10]=UInt(3) lat=117570us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc 80 c0 9b 00 cf 00 06 5e 63 e8 58 cb af ce 64 5e 13 91 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #22 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=129 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=106 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=130 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=107 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=131 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=108 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=132 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=109 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=133 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=110 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=134 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633053310685) [2]=UInt(1684027028) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=117006us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc 86 c0 9b 00 cf 00 06 5e 63 e8 5a ee dd ce 64 60 36 94 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=135 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=111 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=136 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=112 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=137 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=113 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=138 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=114 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=139 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=115 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=140 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633053470729) [2]=UInt(1684187067) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 11 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=116633us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc 8c c0 9b 00 cf 00 06 5e 63 e8 5d 60 09 ce 64 62 a7 bb cc ff c6 00 23 28 00 10 10 11 10 11 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #24 -> band(2304000) head=[10 10 11 10 11 10 10 10 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=141 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=116 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=142 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=117 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=143 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=118 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=144 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=119 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=145 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=120 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=146 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633053610760) [2]=UInt(1684327102) [3]=UInt(255) [4]=Bin(2304000) head=[11 10 11 10 10 10 10 10 10 10 10 0f 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 11 10 11 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=116231us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc 92 c0 9b 00 cf 00 06 5e 63 e8 5f 83 08 ce 64 64 ca be cc ff c6 00 23 28 00 11 10 11 10 10 10 10 10 10 10 10 0f 10 10 10 10 10 10 10 11 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=147 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=121 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=148 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=122 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=149 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=123 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=150 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=124 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=151 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=125 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=152 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633053770789) [2]=UInt(1684487142) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 11 10 10 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=116717us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc 98 c0 9b 00 cf 00 06 5e 63 e8 61 f4 25 ce 64 67 3b e6 cc ff c6 00 23 28 00 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #26 -> band(2304000) head=[10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=153 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=126 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=154 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=127 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=155 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=128 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=156 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=129 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=157 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=130 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=158 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633053910829) [2]=UInt(1684627176) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=115544us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc 9e c0 9b 00 cf 00 06 5e 63 e8 64 17 2d ce 64 69 5e e8 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=159 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=131 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=160 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=132 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=161 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=133 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=162 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=134 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=163 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=135 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=164 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633054050877) [2]=UInt(1684767211) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=115875us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc a4 c0 9b 00 cf 00 06 5e 63 e8 66 3a 3d ce 64 6b 81 eb cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #28 -> band(2304000) head=[10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=165 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=136 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=166 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=137 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=167 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=138 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=168 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=139 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=169 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=140 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=170 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633054190907) [2]=UInt(1684907246) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=119677us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc aa c0 9b 00 cf 00 06 5e 63 e8 68 5d 3b ce 64 6d a4 ee cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=171 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=141 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=172 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=142 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=173 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=143 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=174 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=144 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=175 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=145 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=176 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633054350921) [2]=UInt(1685067286) [3]=UInt(255) [4]=Bin(2304000) head=[10 11 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 11 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=117382us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc b0 c0 9b 00 cf 00 06 5e 63 e8 6a ce 49 ce 64 70 16 16 cc ff c6 00 23 28 00 10 11 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #30 -> band(2304000) head=[10 11 10 10 10 10 10 11 10 10 10 10 10 10 10 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=177 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=146 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=178 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=147 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=179 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=148 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=180 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=149 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=181 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=150 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=182 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633054491015) [2]=UInt(1685207320) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=116987us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc b6 c0 9b 00 cf 00 06 5e 63 e8 6c f1 87 ce 64 72 39 18 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=183 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=151 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=184 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=152 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=185 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=153 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=186 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=154 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=187 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=155 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=188 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633054651058) [2]=UInt(1685367360) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=117009us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc bc c0 9b 00 cf 00 06 5e 63 e8 6f 62 b2 ce 64 74 aa 40 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 ...]
+[dump] GET_FRAME -> band(2304000)
+[live] GET_FRAME #32 -> band(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 …]
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=189 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=156 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=190 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=157 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=191 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=158 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=192 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=159 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=193 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=160 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_get_frame0-2-12 kind=Array msgid=194 envelope=Array result=array(11) [0]=UInt(0) [1]=UInt(1792633054791080) [2]=UInt(1685507395) [3]=UInt(255) [4]=Bin(2304000) head=[10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 10 10 10 10 10 10 11 10 10 10 10 10 ...] [5]=UInt(2304000) [6]=Bin(0) head=[] [7]=UInt(0) [8]=Bin(6) head=[b2 1b 00 c5 23 03] [9]=UInt(6) [10]=UInt(3) lat=116395us wire=2304074B
+[dump] get_frame raw len=2304046 head=[94 01 cc c2 c0 9b 00 cf 00 06 5e 63 e8 71 85 a8 ce 64 76 cd 43 cc ff c6 00 23 28 00 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 11 ...]
+[dump] GET_FRAME -> band(2304000)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=195 envelope=Array result=Str(0) head=[]
+[live] SET prop=3 value=0 reqid=161 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=196 envelope=Array result=Str(0) head=[]
+[live] SET prop=152 value=0 reqid=162 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=197 envelope=Array result=Str(0) head=[]
+[live] SET prop=153 value=1 reqid=163 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=198 envelope=Array result=Str(0) head=[]
+[live] SET prop=154 value=866000 reqid=164 -> vendor no ack (0 B)
+[dump] reply method=ob_rpc_send_data0-2-12 kind=Str msgid=199 envelope=Array result=Str(0) head=[]
+[live] SET prop=155 value=866000 reqid=165 -> vendor no ack (0 B)
+[live] the capture's bound was reached; stopping
+[dump] reply method=ob_rpc_stop_stream0-2-12 kind=Bool msgid=200 envelope=Array result=Bool(true)
+[live] done: get_frame=33 data=30 empty=3 error=0; stream stopped
+[timing] IR: n=33 clock=steady_clock p50=117009us p95=124993us max=144503us mean=107907us; payload=15063746B/s wire=15066116B/s; first_frame=248417us; timeouts=0; window=4588500us
+[dump] tally: port 10013 data=30 empty=3 other=0 (data share 90.9%)
+[capture] 193 record(s), 66828673 byte(s) written
+[capture] manifest: /Users/brucemackay/captures/floor-ir/manifest.json
