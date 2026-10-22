@@ -4,6 +4,7 @@ add_library(raw_capture_core STATIC
     descriptor_probe.cpp
     uvc_frames.cpp
     hid_report.cpp
+    hid_report_descriptor.cpp
     live_source.cpp
 )
 target_include_directories(raw_capture_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -40,3 +41,9 @@ add_test(NAME raw_capture_probe_test COMMAND raw_capture_probe_test)
 add_executable(raw_capture_correlation_test correlation_test.cpp)
 target_link_libraries(raw_capture_correlation_test PRIVATE raw_capture_core)
 add_test(NAME raw_capture_correlation_test COMMAND raw_capture_correlation_test)
+
+# Row #189's coverage: the HID report-descriptor parser (fields, report ids,
+# the output-report verdict) and the named fetch/file failure paths.
+add_executable(raw_capture_hid_report_test hid_report_descriptor_test.cpp)
+target_link_libraries(raw_capture_hid_report_test PRIVATE raw_capture_core)
+add_test(NAME raw_capture_hid_report_test COMMAND raw_capture_hid_report_test)
