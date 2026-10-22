@@ -83,3 +83,12 @@ HID probe); the depth stream/format; the privilege tier (the no-sudo test); the 
 
 The UVC live capture; the HID probe (daemon stopped); the fresh-RPCServer depth/ack test; the
 #71 two-sided/geometric observable; the no-sudo claim; the vendor A/B.
+
+## The #71 prerequisite (operator, 2026-10-21)
+
+The flat-plane removal test is **not ready**. The vendor's plane identification needs the
+scene **orientation** and the scanner's **motion across the plane**; a stationary toggle
+cannot identify the plane, and the a12's one-sided count is consistent with exactly that. The
+T8 card C is withdrawn; a redesigned oriented, moving scan is the prerequisite. The rest of
+the T8 round (the UVC capture, the no-sudo claim, the HID probe, the vendor depth/ack, the
+browser/HUD) is unaffected.
