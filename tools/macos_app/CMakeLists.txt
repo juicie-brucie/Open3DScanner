@@ -45,6 +45,31 @@ add_custom_command(TARGET OpenScanner POST_BUILD
 target_compile_options(OpenScanner PRIVATE "-fobjc-arc")
 target_link_libraries(OpenScanner PRIVATE "-framework Cocoa" "-framework WebKit")
 
+# Code signing (Xcode generator only).
+# Set OPENSCANNER_DEVELOPMENT_TEAM to your 10-char Apple Team ID, or leave
+# empty to let Xcode prompt / pick the only account signed in.
+# Example: cmake -DOPENSCANNER_DEVELOPMENT_TEAM=ABCDE12345 -G Xcode ...
+set(OPENSCANNER_DEVELOPMENT_TEAM "" CACHE STRING "Apple Developer Team ID (10 chars)")
+
+if(OPENSCANNER_DEVELOPMENT_TEAM STREQUAL "")
+    # No team ID: ad-hoc signing. Works on the machine that built it; no
+    # Apple Developer account needed. Pass -DOPENSCANNER_DEVELOPMENT_TEAM=XXXX
+    # to switch to Automatic/Apple Development for distribution.
+    set(_sign_style    "Manual")
+    set(_sign_identity "-")
+else()
+    set(_sign_style    "Automatic")
+    set(_sign_identity "Apple Development")
+endif()
+
+set_target_properties(OpenScanner PROPERTIES
+    XCODE_ATTRIBUTE_CODE_SIGN_STYLE              "${_sign_style}"
+    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY           "${_sign_identity}"
+    XCODE_ATTRIBUTE_DEVELOPMENT_TEAM             "${OPENSCANNER_DEVELOPMENT_TEAM}"
+    XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS       "${CMAKE_CURRENT_SOURCE_DIR}/OpenScanner.entitlements"
+    XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME      "NO"
+)
+
 # Bundle our own capture worker (not the vendor dylib) so the app owns it.
 # scan_server goes in Contents/MacOS (so its exe-relative ui/ lookup finds
 # Contents/Resources/ui); the UI directory is copied alongside.
