@@ -330,11 +330,13 @@ output, fields — and the `--table` control section.
 Settles: the control report map, or that the HID is input-only (the control stays the vendor
 RPC props).
 
-### C. The #71 two-sided / geometric observable
+### C. The #71 — deferred: the motion/orientation prerequisite
 
-One **stationary** scene (a flat wall at a fixed distance, the device fixed): toggle the plane
-removal **on → off → on** and capture the point count at each plus the model/HUD. Or skip the
-count: export the model/point cloud at each stage and check whether the plane's points vanish.
+The operator's constraint: the vendor's flat-plane identification needs the **scene
+orientation** and the scanner's **motion** across the plane. A stationary toggle cannot
+identify the plane — the a12's one-sided count is consistent with that. Do **not** run the
+stationary variant.
 
-Settles: a drop at enable and the return at disable, or the plane's absence in the geometry —
-the evidence the one-sided count lacks.
+Redesign (not this round): an oriented scan with the device moving across the flat plane (the
+plane visible and crossed); then toggle on → off → on and record the model/point-cloud
+geometry at each stage — a two-sided or geometric observable, not the count alone.
