@@ -121,8 +121,10 @@ bool LiveSource::Next(const Interface& iface, FramePayload* out, std::string* er
 }
 
 LiveSource* LiveSourceFactory::Create(ClaimChannel* claim, std::string* err) {
-    // The transport is #178's. Until it lands, raw_capture's UvcSource is the
-    // one that exists, and it reports the descriptor field that is missing.
+    // The shim does not link the live macOS backend yet: raw_capture's
+    // UvcSource is a refusing placeholder that names the live factory, so this
+    // path fails closed rather than looking live. Wiring MakeLiveUvcSource
+    // into the shim is row #179's transport step.
     std::unique_ptr<raw_capture::UvcSource> transport(new raw_capture::UvcSource());
     // e1/e2 from the host clocks; e3 the observed OBFormat; e10 has no source
     // yet, so the provider refuses it by name (ob_words.h).

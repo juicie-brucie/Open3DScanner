@@ -60,7 +60,7 @@ struct CaptureSummary {
     StopReason reason = StopReason::kSourceEnded;
     uint64_t frames = 0;
     uint64_t bytes = 0;                 // record bytes written (the 16-byte file header is not counted)
-    uint64_t per_stream[kStreamCount] = {0, 0};
+    uint64_t per_stream[kStreamCount] = {};
     uint64_t duration_ms = 0;
     std::string detail;                 // names the failure, when there is one
     bool ok() const { return reason != StopReason::kSourceError && reason != StopReason::kSinkError &&
@@ -138,21 +138,6 @@ private:
     uint64_t emitted_ = 0;
 };
 
-// The production source until the descriptor capture lands. It names the
-// first missing field and never fabricates an endpoint.
-class UvcSource : public FrameSource {
-public:
-    bool Next(Frame*, std::string* error) override {
-        *error = configuration_error();
-        return false;
-    }
-    bool configured() const override {
-        const DescriptorTable& table = Table();
-        return StreamConfigured(table.ir) && StreamConfigured(table.depth);
-    }
-    std::string configuration_error() const override;
-};
-
 // --- the command side ------------------------------------------------------
 
 // #101's property map (docs/recon/findings/property-semantics-row101.md §4).
@@ -225,6 +210,24 @@ public:
     bool configured() const override { return false; }
     std::string configuration_error() const override {
         return std::string("not-configured: ") + Table().control.missing;
+    }
+};
+
+// A source that always refuses, for a consumer that has not wired the live
+// backend yet (the raptor_shim's transport, row #179). The live source is
+// MakeLiveUvcSource(); this one cannot produce frames and says so, so a
+// consumer that forgets to wire it fails closed rather than looking live.
+class UvcSource : public FrameSource {
+public:
+    bool Next(Frame*, std::string* error) override {
+        *error = configuration_error();
+        return false;
+    }
+    bool configured() const override { return false; }
+    std::string configuration_error() const override {
+        return "not-configured: this refusing source has no live backend; wire MakeLiveUvcSource "
+               "(raw_capture --capture) with descriptor_table.h configured (its facts come from "
+               "docs/recon/findings/usb-descriptor-map.md and the probe record)";
     }
 };
 

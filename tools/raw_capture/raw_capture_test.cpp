@@ -96,7 +96,7 @@ private:
 }  // namespace
 
 int main() {
-    // --- the table: known identity/ports, unknown USB side ----------------
+    // --- the table: filled from the probe record (row #186) ---------------
     {
         const rc::DescriptorTable& table = rc::Table();
         Check(table.identity_knowledge == rc::Knowledge::kKnown, "identity is known (VID/PID)");
@@ -104,34 +104,72 @@ int main() {
               "IR's logical RPC port is known (10013)");
         Check(table.depth.rpc_port == 10010 && table.depth.rpc_port_knowledge == rc::Knowledge::kKnown,
               "depth's logical RPC port is known (10010)");
-        Check(table.ir.endpoint.knowledge == rc::Knowledge::kUnknown, "IR's USB endpoint is unknown");
-        Check(table.depth.endpoint.knowledge == rc::Knowledge::kUnknown, "depth's USB endpoint is unknown");
-        Check(table.ir.pixel_format == 0 && table.depth.pixel_format == 0,
-              "the UVC formats are unknown (not guessed)");
-        Check(!rc::StreamConfigured(table.ir) && !rc::StreamConfigured(table.depth),
-              "neither stream is configured yet");
+
+        Check(table.ir.endpoint.knowledge == rc::Knowledge::kKnown, "IR's USB endpoint is filled");
+        Check(table.ir.endpoint.interface_number == 3 && table.ir.endpoint.alternate_setting == 0 &&
+                  table.ir.endpoint.endpoint_address == 0x82 &&
+                  table.ir.endpoint.transfer == rc::TransferType::kBulk &&
+                  table.ir.endpoint.max_packet_size == 1024,
+              "IR: interface 3 alt 0 endpoint 0x82 bulk 1024");
+        Check(table.ir.pixel_format == 0x20203859 && table.ir.bytes_per_line == 960 &&
+                  table.ir.width == 960 && table.ir.height == 600,
+              "IR: Y8 960x600 stride 960");
+
+        Check(table.depth.endpoint.interface_number == 1 && table.depth.endpoint.endpoint_address == 0x81 &&
+                  table.depth.endpoint.transfer == rc::TransferType::kBulk,
+              "depth: interface 1 endpoint 0x81 bulk");
+        Check(table.depth.pixel_format == 0x20203859 && table.depth.bytes_per_line == 840 &&
+                  table.depth.width == 480 && table.depth.height == 300,
+              "depth: Y8 480x300 stride 840");
+
+        Check(table.rgb.endpoint.interface_number == 5 && table.rgb.endpoint.endpoint_address == 0x83 &&
+                  table.rgb.endpoint.transfer == rc::TransferType::kBulk,
+              "RGB: interface 5 endpoint 0x83 bulk");
+        Check(table.rgb.pixel_format == 0x32595559 && table.rgb.bytes_per_line == 2560 &&
+                  table.rgb.width == 1280 && table.rgb.height == 800,
+              "RGB: YUY2 1280x800 stride 2560");
+
+        Check(rc::StreamConfigured(table.ir) && rc::StreamConfigured(table.depth) &&
+                  rc::StreamConfigured(table.rgb),
+              "all three streams are configured");
+
+        Check(table.control.endpoint.knowledge == rc::Knowledge::kKnown &&
+                  table.control.endpoint.interface_number == 6 &&
+                  table.control.endpoint.endpoint_address == 0x85 &&
+                  table.control.endpoint.transfer == rc::TransferType::kInterrupt &&
+                  table.control.endpoint.max_packet_size == 248,
+              "control: the IMU HID interface 6 endpoint 0x85 interrupt 248");
+        Check(table.control.report_descriptor_length == 25, "the HID report descriptor length is 25");
+        Check(table.control.report_id == rc::kUnset && table.control.report_length == 0,
+              "the report id/length are still unknown");
+        Check(table.control.knowledge == rc::Knowledge::kUnknown && !rc::ControlConfigured(table.control),
+              "the control map is not configured (no guessed report field)");
         Check(table.rgb_rpc_port_knowledge == rc::Knowledge::kKnown &&
                   table.imu_rpc_port_knowledge == rc::Knowledge::kKnown,
               "the RGB/IMU logical ports are marked known");
-        Check(table.control.knowledge == rc::Knowledge::kUnknown, "the HID/vendor control map is unknown");
     }
 
-    // --- the production UVC source refuses, naming what is missing --------
+    // --- an unconfigured source still fails closed -----------------------
     {
         const fs::path path = TempFile("unconfigured");
         rc::FileSink sink;
         std::string error;
         Check(sink.Open(path.string(), &error), "the sink opens");
-        rc::UvcSource source;
+        struct UnconfiguredSource : rc::FrameSource {
+            bool Next(rc::Frame*, std::string* error) override {
+                *error = "not-configured: test source";
+                return false;
+            }
+            bool configured() const override { return false; }
+            std::string configuration_error() const override { return "not-configured: test source"; }
+        } source;
         rc::CaptureRunner runner;
         rc::Limits limits;
         const rc::CaptureSummary summary = runner.Run(source, sink, limits);
         sink.Close();
-        Check(summary.reason == rc::StopReason::kNotConfigured, "an unconfigured UVC source stops as not-configured");
+        Check(summary.reason == rc::StopReason::kNotConfigured, "an unconfigured source stops as not-configured");
         Check(summary.frames == 0, "it writes no frames");
         Check(summary.detail.find("not-configured") == 0, "the detail starts with not-configured");
-        Check(summary.detail.find("bEndpointAddress") != std::string::npos,
-              "the detail names a missing endpoint field");
     }
 
     // --- a mock IR capture, read back -------------------------------------
@@ -192,6 +230,26 @@ int main() {
             }
         }
         Check(ir_count == 3 && depth_count == 3, "the reader separates the streams");
+    }
+
+    // --- an RGB capture: the third stream and its 2-byte stride ----------
+    {
+        const fs::path path = TempFile("rgb");
+        rc::FileSink sink;
+        std::string error;
+        Check(sink.Open(path.string(), &error), "the RGB sink opens");
+        rc::MockSource source(rc::StreamKind::kRgb, 8, 4, 0x32595559u, 0, 2);
+        rc::CaptureRunner runner;
+        rc::Limits limits;
+        limits.max_frames = 2;
+        const rc::CaptureSummary summary = runner.Run(source, sink, limits);
+        sink.Close();
+        Check(summary.frames == 2 && summary.per_stream[2] == 2, "two RGB frames written");
+        std::vector<rc::CapturedRecord> records;
+        Check(rc::ReadCaptureFile(path.string(), &records, &error), "the RGB capture reads back");
+        Check(records.size() == 2 && records[0].frame.kind == rc::StreamKind::kRgb &&
+                  records[0].frame.stride == 16 && records[0].frame.data.size() == 16 * 4,
+              "an RGB record keeps its 2-byte stride and size");
     }
 
     // --- the byte bound: a partial record is never written ----------------
