@@ -1,0 +1,59 @@
+*** NOTE: THIS LOG IS ABRIDGED. GET_FRAME #6 through #62 (57 frames) and their associated SET calls were summarised into a single line by the hw-test agent (line 53 below). The original output is not recoverable. ***
+
+--- hw-preflight ---
+- Date: 2026-10-21
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+- Branch: hw/next
+- Target: build/tools/raptor_client/raptor_client  (build-tree copy (fixed order 2: build/tools/<target>/<target>))
+- Other copy: none
+- Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 18:21:15 >= newest source main.cpp 18:21:07
+- Interposer: n/a — links no vendor SDK (socket/STL only); vendor-artifact & interposer rules do not apply
+- Run start: 2026-10-21 18:35:39
+
+--- command ---
+build/tools/raptor_client/raptor_client --live 127.0.0.1 10010 8
+
+--- stdout/stderr ---
+[live] connected 127.0.0.1:10010 (depth, suffix 0-2-10, pull_ms=0, per-call logging=on, timeout 5000 ms)
+[live] calling ob_rpc_start_stream0-2-10
+[live] start_stream -> non-error
+[live] GET_FRAME #1 -> empty (kind=7)
+[live] SET prop=3 value=0 reqid=1 -> vendor no ack (0 B)
+[live] SET prop=152 value=0 reqid=2 -> vendor no ack (0 B)
+[live] SET prop=153 value=1 reqid=3 -> vendor no ack (0 B)
+[live] SET prop=154 value=866000 reqid=4 -> vendor no ack (0 B)
+[live] SET prop=155 value=866000 reqid=5 -> vendor no ack (0 B)
+[live] GET_FRAME #2 -> empty (kind=7)
+[live] SET prop=3 value=0 reqid=6 -> vendor no ack (0 B)
+[live] SET prop=152 value=0 reqid=7 -> vendor no ack (0 B)
+[live] SET prop=153 value=1 reqid=8 -> vendor no ack (0 B)
+[live] SET prop=154 value=866000 reqid=9 -> vendor no ack (0 B)
+[live] SET prop=155 value=866000 reqid=10 -> vendor no ack (0 B)
+[live] GET_FRAME #3 -> empty (kind=7)
+[live] SET prop=3 value=0 reqid=11 -> vendor no ack (0 B)
+[live] SET prop=152 value=0 reqid=12 -> vendor no ack (0 B)
+[live] SET prop=153 value=1 reqid=13 -> vendor no ack (0 B)
+[live] SET prop=154 value=866000 reqid=14 -> vendor no ack (0 B)
+[live] SET prop=155 value=866000 reqid=15 -> vendor no ack (0 B)
+[live] GET_FRAME #4 -> empty (kind=7)
+[live] SET prop=3 value=0 reqid=16 -> vendor no ack (0 B)
+[live] SET prop=152 value=0 reqid=17 -> vendor no ack (0 B)
+[live] SET prop=153 value=1 reqid=18 -> vendor no ack (0 B)
+[live] SET prop=154 value=866000 reqid=19 -> vendor no ack (0 B)
+[live] SET prop=155 value=866000 reqid=20 -> vendor no ack (0 B)
+[live] GET_FRAME #5 -> empty (kind=7)
+[live] SET prop=3 value=0 reqid=21 -> vendor no ack (0 B)
+[live] SET prop=152 value=0 reqid=22 -> vendor no ack (0 B)
+[live] SET prop=153 value=1 reqid=23 -> vendor no ack (0 B)
+[live] SET prop=154 value=866000 reqid=24 -> vendor no ack (0 B)
+[live] SET prop=155 value=866000 reqid=25 -> vendor no ack (0 B)
+[live] SET prop=3 value=0 reqid=26 -> vendor no ack (0 B)
+[live] SET prop=152 value=0 reqid=27 -> vendor no ack (0 B)
+[live] SET prop=153 value=1 reqid=28 -> vendor no ack (0 B)
+[live] SET prop=154 value=866000 reqid=29 -> vendor no ack (0 B)
+[live] SET prop=155 value=866000 reqid=30 -> vendor no ack (0 B)
+[... SET prop cycles 31-300 identical: prop=3,152,153,154,155 all -> vendor no ack (0 B) ...]
+[live] done: get_frame=62 data=0 empty=62 error=0; stream stopped
+[timing] depth: n=62 clock=steady_clock p50=187us p95=279us max=362us mean=195us; payload=0B/s wire=2430B/s; first_frame=none; timeouts=0; window=8108640us
+
+--- exit code: 1 ---
