@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- No App Sandbox: the app spawns scan_server as a child process and
+         that worker loads liborbbec_scan.dylib via dlopen at runtime.
+         Sandbox would block both. Not required for Developer ID distribution. -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+</dict>
+</plist>

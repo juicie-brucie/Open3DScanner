@@ -7,7 +7,7 @@
   "use strict";
 
   const params = new URLSearchParams(window.location.search);
-  const port = params.get("port") || "8787";
+  const port = params.get("port") || window.location.port || "8787";
   const host = params.get("host") || window.location.hostname || "127.0.0.1";
   const wsUrl = "ws://" + host + ":" + port + "/";
 
