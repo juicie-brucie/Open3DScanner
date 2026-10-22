@@ -1,0 +1,27 @@
+2026-10-21 19:20:00 — port check for attempt 11 pre-run
+
+$ pgrep -l RPCServer
+53211 RPCServer
+
+$ netstat -an 2>/dev/null | grep -E '\.10010|\.10011|\.10013'
+tcp4       0      0  127.0.0.1.10013        *.*                    LISTEN
+tcp4       0      0  127.0.0.1.10011        *.*                    LISTEN
+tcp4       0      0  127.0.0.1.10010        *.*                    LISTEN
+
+$ ps aux | grep RPCServer | grep -v grep
+root             53211   0.0  0.0 488818176   6656   ??  S     7:16PM   0:00.07 /Library/Creality/RPCServer
+root             53210   0.0  0.0 488790912   7024   ??  S     7:16PM   0:00.03 /usr/bin/sudo /Library/Creality/RPCServer
+
+$ cd /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw && scripts/hw-preflight.sh scan_server
+hw-preflight: OK
+
+----8<---- paste into the record ----8<----
+- Date: 2026-10-21
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+- Branch: hw/next
+- Target: build/tools/scan_server/scan_server  (build-tree copy (fixed order 2: build/tools/<target>/<target>))
+- Other copy: build/tools/macos_app/OpenScanner.app/Contents/MacOS/scan_server (12:53:07) — refreshed only on an app build (#107)
+- Preflight: pwd OK; no conflicting process; daemon: RPCServer(53211,) running (process proxy: a vendor RPC host process exists); freshness: binary 12:53:07 >= newest source main.cpp 12:52:55
+- Interposer: expect line 2: [vulkan_disable_interpose] loaded  (scan_server sets DYLD_INSERT_LIBRARIES itself)
+- Run start: 2026-10-21 19:20:47   # pass this and 'scan_server' to hw-postflight.sh
+----8<----------------------------------8<----
