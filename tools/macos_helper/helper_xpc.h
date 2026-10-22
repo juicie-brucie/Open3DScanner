@@ -16,6 +16,7 @@
 #include <xpc/xpc.h>
 
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "helper_protocol.h"
@@ -24,11 +25,35 @@ namespace openscanner::helper {
 
 class HelperService;
 
-// A resumed listener. Destroying it cancels the listener and drops the queue.
+// What the event handlers are allowed to touch. The handlers run on the
+// listener's serial queue, after the Listener object may have begun tearing
+// down (a cancellation event is delivered asynchronously). They hold a shared
+// reference to this state and ask it for the service on every event; teardown
+// nulls the service under the mutex first, so a late event cannot dereference
+// a destroyed HelperService (row #188: that was the intermittent SEGV).
+struct HandlerState {
+    std::mutex mutex;
+    HelperService* service = nullptr;
+
+    HelperService* Get() {
+        std::lock_guard<std::mutex> lock(mutex);
+        return service;
+    }
+    void Stop() {
+        std::lock_guard<std::mutex> lock(mutex);
+        service = nullptr;
+    }
+};
+
+// A resumed listener. Destroying it cancels the listener, drains its queue and
+// drops the endpoint. The HelperService must outlive the Listener (it is
+// nulled out of the handlers before the drain, but the normal order is
+// listener first).
 struct Listener {
     xpc_connection_t connection = nullptr;
     xpc_endpoint_t endpoint = nullptr;  // non-null only when anonymous
     dispatch_queue_t queue = nullptr;
+    std::shared_ptr<HandlerState> state;
     ~Listener();
 };
 
