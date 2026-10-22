@@ -61,8 +61,11 @@ struct ProbeResult {
     int configuration_value = kUnset;
     std::vector<ProbeInterface> interfaces;
     // Filled when a HID report descriptor is supplied (the probe fetches it
-    // when it can; the test synthesises it).
+    // when it can; the test synthesises it). Row #189: the bytes and the named
+    // fetch failure are kept apart from the parsed ids.
     std::vector<int> hid_report_ids;
+    std::vector<uint8_t> hid_report;      // the report descriptor bytes
+    std::string hid_report_error;         // why they are absent, when they are
 
     bool ok() const { return error.empty(); }
     std::string error;

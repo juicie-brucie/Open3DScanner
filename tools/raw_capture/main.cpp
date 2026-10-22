@@ -34,6 +34,7 @@
 
 #include "correlation.h"
 #include "descriptor_probe.h"
+#include "hid_report_descriptor.h"
 #include "raw_capture.h"
 
 namespace rc = raw_capture;
@@ -47,6 +48,7 @@ void PrintUsage() {
         "  raw_capture --probe [--descriptor-file <blob>]\n"
         "  raw_capture --probe --match [--descriptor-file <blob>]\n"
         "  raw_capture --probe --watch [--seconds N] [--descriptor-file <blob>]\n"
+        "  raw_capture --hid-report <saved-report-descriptor>\n"
         "  raw_capture --capture [--mock] --sink <file> [--stream ir|depth|rgb|both]\n"
         "              [--max-frames N] [--max-bytes N] [--max-seconds N]\n"
         "  raw_capture --verify <file>\n"
@@ -299,7 +301,27 @@ int RunProbe(int argc, char** argv) {
         return 2;
     }
     rc::PrintProbe(result, stdout);
+    // Row #189: the HID report descriptor, always in the probe section.
+    if (!result.hid_report.empty()) {
+        const rc::HidReportDescriptor hid =
+            rc::ParseHidReportDescriptor(result.hid_report.data(), result.hid_report.size());
+        rc::PrintHidReportDescriptor(hid, "", stdout);
+    } else {
+        rc::PrintHidReportDescriptor(rc::HidReportDescriptor{}, result.hid_report_error, stdout);
+    }
     return 0;
+}
+
+int RunHidReportFile(const std::string& path) {
+    std::vector<uint8_t> bytes;
+    std::string error;
+    if (!rc::ReadHidReportFile(path, &bytes, &error)) {
+        std::fprintf(stderr, "[hid] error: %s\n", error.c_str());
+        return 2;
+    }
+    const rc::HidReportDescriptor parsed = rc::ParseHidReportDescriptor(bytes.data(), bytes.size());
+    rc::PrintHidReportDescriptor(parsed, "", stdout);
+    return parsed.ok() ? 0 : 2;
 }
 
 int RunVerify(const std::string& path) {
@@ -376,6 +398,13 @@ int main(int argc, char** argv) {
         return 0;
     }
     if (command == "--probe") return RunProbe(argc, argv);
+    if (command == "--hid-report") {
+        if (argc < 3) {
+            std::fprintf(stderr, "--hid-report needs a saved report-descriptor file\n");
+            return 1;
+        }
+        return RunHidReportFile(argv[2]);
+    }
     if (command == "--capture") return RunCapture(argc, argv);
     if (command == "--verify") {
         if (argc < 3) {
