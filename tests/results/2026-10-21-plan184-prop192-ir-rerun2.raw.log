@@ -1,0 +1,26 @@
+hw-preflight output:
+hw-preflight: OK
+
+----8<---- paste into the record ----8<----
+- Date: 2026-10-21
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+- Branch: hw/next
+- Target: build/tools/raptor_client/raptor_client  (build-tree copy (fixed order 2: build/tools/<target>/<target>))
+- Other copy: none
+- Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 18:21:15 >= newest source main.cpp 18:21:07
+- Interposer: n/a — links no vendor SDK (socket/STL only); vendor-artifact & interposer rules do not apply
+- Run start: 2026-10-21 18:55:46   # pass this and 'raptor_client' to hw-postflight.sh
+----8<----------------------------------8<----
+
+---
+
+command: build/tools/raptor_client/raptor_client --live 127.0.0.1 10013 8 2>&1
+exit code: 1
+
+stdout/stderr:
+[live] cannot connect to 127.0.0.1:10013 (connect: Connection refused; is RPCServer running?)
+
+---
+
+hw-postflight output:
+hw-postflight: no crash report for 'raptor_client' at/after 2026-10-21 18:55:46 — safe to record 'no crash report (checked DiagnosticReports for raptor_client at/after the run start)'.

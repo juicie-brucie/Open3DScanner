@@ -1,0 +1,11 @@
+Run: 2026-10-21 19:10:00
+Target: scan_server
+Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+
+--- PREFLIGHT ---
+Command: scripts/hw-preflight.sh scan_server
+Exit code: 1
+Stdout/stderr:
+hw-preflight: FAIL — the CrealityScan RPC daemon host is not running (no 'CrealityScan' or 'RPCServer' process) — fix: start CrealityScan (macOS: the 'com.creality.RPCServer' LaunchAgent; the CrealityScan app counts as the RPC host too).
+
+--- RUN DID NOT PROCEED ---

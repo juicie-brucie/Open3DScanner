@@ -1,0 +1,31 @@
+hw-preflight output:
+hw-preflight: OK
+
+----8<---- paste into the record ----8<----
+- Date: 2026-10-21
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+- Branch: hw/next
+- Target: build/tools/raptor_client/raptor_client  (explicit argument (the binary this run will execute))
+- Other copy: none
+- Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 18:21:15 >= newest source main.cpp 18:21:07
+- Interposer: n/a — links no vendor SDK (socket/STL only); vendor-artifact & interposer rules do not apply
+- Run start: 2026-10-21 19:32:14   # pass this and 'raptor_client' to hw-postflight.sh
+----8<----------------------------------8<----
+
+--- pre-check ---
+command: lsof -iTCP -sTCP:LISTEN -nP | grep 10013
+exit code: 1 (no matches)
+stdout: (empty)
+stderr: (empty)
+
+--- follow-up port check ---
+command: lsof -iTCP -sTCP:LISTEN -nP | grep -E "10010|10011|10013"
+exit code: 1 (no matches)
+stdout: (empty)
+stderr: (empty)
+
+--- test command ---
+NOT RUN — pre-check gate failed (port 10013 not listening)
+
+--- postflight ---
+hw-postflight: no crash report for 'raptor_client' at/after 2026-10-21 19:32:14 — safe to record 'no crash report (checked DiagnosticReports for raptor_client at/after the run start)'.
