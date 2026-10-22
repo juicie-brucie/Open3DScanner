@@ -63,3 +63,23 @@ session hit its tool-step limit in a loop at 92M context; the fresh one delivere
   (#474) is in verify3.
 - **#189 (the HID report read)** — build1 in flight; the probe run follows.
 - **#71** — the T8 two-sided/geometric card.
+
+## The last code landed (21:16)
+
+- **#474 (#187)** — the live-ack/depth finding (the capture's 64-B `'RB'` vs the live 0-B;
+  the corrected RPCServer next test; the provenance).
+- **#477 (#189)** — the HID report-descriptor read in the probe: the 25 bytes, the parse, and
+  the explicit output-report-vs-input-only conclusion.
+- **#478 (#188)** — the `helper_xpc_test` SEGFAULT: a helper use-after-free (a raw service
+  pointer in the XPC handler; the async cancel after teardown), fixed with a `HandlerState`
+  shared_ptr and a deterministic drain; 0/1000 vs 10/500; `ctest` 32/32.
+
+## The open design gates
+
+The e10 source; the frame profile/resolution; the control transport (pending the operator's
+HID probe); the depth stream/format; the privilege tier (the no-sudo test); the switch/A-B/#126.
+
+## The operator runs (T8)
+
+The UVC live capture; the HID probe (daemon stopped); the fresh-RPCServer depth/ack test; the
+#71 two-sided/geometric observable; the no-sudo claim; the vendor A/B.
