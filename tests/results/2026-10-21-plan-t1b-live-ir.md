@@ -85,4 +85,4 @@ hw-postflight: no crash report for 'raptor_client' at/after 2026-10-21 21:37:27 
 
 ## Raw log sha256
 
-`8a29159803c8b4c4182c55edb8d0fe926a15c16a6d6773c937f965509125613d`  2026-10-21-plan-t1b-live-ir.raw.log
+- Raw log: [`2026-10-21-plan-t1b-live-ir.raw.log`](./2026-10-21-plan-t1b-live-ir.raw.log), sha256 `8a29159803c8b4c4182c55edb8d0fe926a15c16a6d6773c937f965509125613d`
