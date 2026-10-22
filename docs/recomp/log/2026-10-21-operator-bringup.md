@@ -36,3 +36,23 @@ HEAD/sha256 backfill (the P12-lite).
 
 - **#186** (build1) — fill `descriptor_table.h` from the probe + the mapping.
 - **#187** (recon1) — the live ack's identity and the depth pipeline.
+
+## Landed (20:27)
+
+- **#472 (#186)** — the descriptor table filled from the probe and the #182 names (IR=3/0x82/Y8
+  960x600/960; depth=1/0x81/Y8 480x300/840; RGB=5/0x83/YUY2 1280x800/2560; HID=6/0x85/248/25).
+  The control report id/field map stays unknown; the report-descriptor read is the last field.
+- **#473** — the four held records landed with their declared abridgements and the aligned
+  sha256 citations (the tester's values predated the raw headers; the correction is mechanical).
+
+## The CI flake, named (#188)
+
+The #466 checker showed the recurring `ctest exit 8` is **one intermittent test**:
+`helper_xpc_test (SEGFAULT)` — the XPC test from the helper service, crashing on the headless
+runner. The deflake is with build2.
+
+## Session swap
+
+recon1: `ses_ea764fc29ffeH68CjSl6fUFMKU` -> `ses_e9f05ac28ffeFYYElodMwgCDq1`. The prior
+session hit its tool-step limit in a loop at 92M context; the fresh one delivered #474 (the
+#187 finding).
