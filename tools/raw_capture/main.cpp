@@ -47,7 +47,7 @@ void PrintUsage() {
         "  raw_capture --probe [--descriptor-file <blob>]\n"
         "  raw_capture --probe --match [--descriptor-file <blob>]\n"
         "  raw_capture --probe --watch [--seconds N] [--descriptor-file <blob>]\n"
-        "  raw_capture --capture [--mock] --sink <file> [--stream ir|depth|both]\n"
+        "  raw_capture --capture [--mock] --sink <file> [--stream ir|depth|rgb|both]\n"
         "              [--max-frames N] [--max-bytes N] [--max-seconds N]\n"
         "  raw_capture --verify <file>\n"
         "  raw_capture --laser on|off\n"
@@ -58,35 +58,53 @@ void PrintTable() {
     const rc::DescriptorTable& table = rc::Table();
     std::printf("[table] identity: VID 0x%04X PID 0x%04X (%s)\n", table.vendor_id, table.product_id,
                 rc::KnowledgeName(table.identity_knowledge));
-    const rc::StreamSpec streams[2] = {table.ir, table.depth};
+    const rc::StreamSpec streams[rc::kStreamCount] = {table.ir, table.depth, table.rgb};
     for (const rc::StreamSpec& spec : streams) {
         std::printf("[table] stream %-5s rpc port %u (%s, suffix %s)\n", spec.name, spec.rpc_port,
                     rc::KnowledgeName(spec.rpc_port_knowledge), spec.rpc_suffix);
         std::printf("[table]   usb endpoint: %s", rc::KnowledgeName(spec.endpoint.knowledge));
         if (spec.endpoint.knowledge == rc::Knowledge::kKnown) {
-            std::printf(" interface %d alt %d address 0x%02X %s max_packet %d", spec.endpoint.interface_number,
-                        spec.endpoint.alternate_setting, spec.endpoint.endpoint_address,
-                        rc::TransferTypeName(spec.endpoint.transfer), spec.endpoint.max_packet_size);
+            std::printf(" interface_number=%d alternate_setting=%d endpoint_address=0x%02X transfer=%s "
+                        "max_packet_size=%d",
+                        spec.endpoint.interface_number, spec.endpoint.alternate_setting,
+                        spec.endpoint.endpoint_address, rc::TransferTypeName(spec.endpoint.transfer),
+                        spec.endpoint.max_packet_size);
         }
         std::printf("\n");
         std::printf("[table]   format/stride: %s", spec.pixel_format != 0 ? "known" : "unknown");
         if (spec.pixel_format != 0) {
-            std::printf(" format 0x%08X stride %u %ux%u", spec.pixel_format, spec.bytes_per_line, spec.width,
-                        spec.height);
+            std::printf(" pixel_format=0x%08X bytes_per_line=%u width=%u height=%u", spec.pixel_format,
+                        spec.bytes_per_line, spec.width, spec.height);
         }
         std::printf("\n");
     }
-    std::printf("[table] rpc ports: rgb %u (%s), imu %u (%s) — not captured here\n", table.rgb_rpc_port,
+    std::printf("[table] rpc ports: rgb %u (%s), imu %u (%s)\n", table.rgb_rpc_port,
                 rc::KnowledgeName(table.rgb_rpc_port_knowledge), table.imu_rpc_port,
                 rc::KnowledgeName(table.imu_rpc_port_knowledge));
-    std::printf("[table] control (laser/exposure): %s — %s\n",
-                rc::KnowledgeName(table.control.knowledge), table.control.missing);
+    std::printf("[table] control (laser/exposure): endpoint %s",
+                rc::KnowledgeName(table.control.endpoint.knowledge));
+    if (table.control.endpoint.knowledge == rc::Knowledge::kKnown) {
+        std::printf(" interface_number=%d alternate_setting=%d endpoint_address=0x%02X transfer=%s "
+                    "max_packet_size=%d",
+                    table.control.endpoint.interface_number, table.control.endpoint.alternate_setting,
+                    table.control.endpoint.endpoint_address,
+                    rc::TransferTypeName(table.control.endpoint.transfer),
+                    table.control.endpoint.max_packet_size);
+    }
+    std::printf("\n");
+    std::printf("[table] control report: descriptor_length=%d report_id=%s report_length=%d (%s)\n",
+                table.control.report_descriptor_length,
+                table.control.report_id == rc::kUnset ? "unknown" : "known", table.control.report_length,
+                table.control.missing);
+    std::printf("[table] note: IR/depth/RGB are assigned by the #182 interface-name mapping "
+                "(IR=3, depth=1, RGB=5)\n");
 }
 
 rc::StreamKind ParseKind(const std::string& name, bool* ok) {
     *ok = true;
     if (name == "ir") return rc::StreamKind::kIr;
     if (name == "depth") return rc::StreamKind::kDepth;
+    if (name == "rgb") return rc::StreamKind::kRgb;
     *ok = false;
     return rc::StreamKind::kIr;
 }
@@ -134,7 +152,7 @@ int RunCapture(int argc, char** argv) {
     } else {
         kinds = {ParseKind(stream_name, &ok)};
         if (!ok) {
-            std::fprintf(stderr, "--stream takes ir, depth or both\n");
+            std::fprintf(stderr, "--stream takes ir, depth, rgb or both\n");
             return 1;
         }
     }
@@ -143,7 +161,7 @@ int RunCapture(int argc, char** argv) {
     uint64_t remaining_bytes = limits.max_bytes;
     uint64_t total_frames = 0;
     uint64_t total_bytes = 0;
-    uint64_t per_stream[rc::kStreamCount] = {0, 0};
+    uint64_t per_stream[rc::kStreamCount] = {};
     rc::StopReason reason = rc::StopReason::kSourceEnded;
     std::string detail;
 
@@ -153,9 +171,11 @@ int RunCapture(int argc, char** argv) {
         std::unique_ptr<rc::FrameSource> source;
         if (mock) {
             const bool depth = kind == rc::StreamKind::kDepth;
-            // Fixed format/stride for the mock: 8-bit grey IR, 16-bit depth.
-            source = std::make_unique<rc::MockSource>(kind, 64, 48, depth ? 0x5A313620u : 0x59455247u,
-                                                      0, run_limits.max_frames);
+            const bool rgb = kind == rc::StreamKind::kRgb;
+            // Fixed format/stride for the mock: 8-bit grey IR, 16-bit depth, YUY2-sized RGB.
+            source = std::make_unique<rc::MockSource>(
+                kind, 64, 48, rgb ? 0x32595559u : (depth ? 0x5A313620u : 0x59455247u), 0,
+                run_limits.max_frames);
         } else {
             std::string why;
             source = rc::MakeLiveUvcSource(kind, &why);
@@ -182,10 +202,11 @@ int RunCapture(int argc, char** argv) {
                 static_cast<unsigned long long>(sink.bytes_written()));
     std::printf("[capture] stop: %s\n", rc::StopReasonName(reason));
     if (!detail.empty()) std::printf("[capture] detail: %s\n", detail.c_str());
-    std::printf("[capture] frames: %llu (ir %llu, depth %llu), %llu record bytes\n",
+    std::printf("[capture] frames: %llu (ir %llu, depth %llu, rgb %llu), %llu record bytes\n",
                 static_cast<unsigned long long>(total_frames),
                 static_cast<unsigned long long>(per_stream[0]),
                 static_cast<unsigned long long>(per_stream[1]),
+                static_cast<unsigned long long>(per_stream[2]),
                 static_cast<unsigned long long>(total_bytes));
     if (reason == rc::StopReason::kNotConfigured) return 2;
     return (reason == rc::StopReason::kSourceError || reason == rc::StopReason::kSinkError) ? 2 : 0;
@@ -288,17 +309,21 @@ int RunVerify(const std::string& path) {
         std::fprintf(stderr, "[verify] error: %s\n", error.c_str());
         return 2;
     }
-    uint64_t per_stream[rc::kStreamCount] = {0, 0};
+    uint64_t per_stream[rc::kStreamCount] = {};
     for (const rc::CapturedRecord& record : records) {
         per_stream[static_cast<int>(record.frame.kind)]++;
     }
-    std::printf("[verify] %s: %zu record(s) (ir %llu, depth %llu)\n", path.c_str(), records.size(),
+    std::printf("[verify] %s: %zu record(s) (ir %llu, depth %llu, rgb %llu)\n", path.c_str(), records.size(),
                 static_cast<unsigned long long>(per_stream[0]),
-                static_cast<unsigned long long>(per_stream[1]));
+                static_cast<unsigned long long>(per_stream[1]),
+                static_cast<unsigned long long>(per_stream[2]));
     for (const rc::CapturedRecord& record : records) {
         std::printf("[verify] seq %llu kind %s format 0x%08X %ux%u stride %u bytes %zu\n",
                     static_cast<unsigned long long>(record.frame.seq),
-                    record.frame.kind == rc::StreamKind::kIr ? "ir" : "depth", record.frame.format,
+                    record.frame.kind == rc::StreamKind::kIr     ? "ir"
+                    : record.frame.kind == rc::StreamKind::kDepth ? "depth"
+                                                                  : "rgb",
+                    record.frame.format,
                     record.frame.width, record.frame.height, record.frame.stride,
                     record.frame.data.size());
     }

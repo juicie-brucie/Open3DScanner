@@ -182,7 +182,7 @@ bool ReadCaptureFile(const std::string& path, std::vector<CapturedRecord>* recor
             *error = "truncated record header";
             return false;
         }
-        if (kind > 1) {
+        if (kind >= static_cast<uint32_t>(kStreamCount)) {
             *error = "unknown stream kind " + std::to_string(kind);
             return false;
         }
@@ -278,22 +278,26 @@ bool MockSource::Next(Frame* frame, std::string* error) {
     if (emitted_ >= frame_limit_) return false;
     if (gap_ms_ > 0) std::this_thread::sleep_for(std::chrono::milliseconds(gap_ms_));
     const bool depth = kind_ == StreamKind::kDepth;
+    const bool rgb = kind_ == StreamKind::kRgb;
     frame->kind = kind_;
     frame->seq = emitted_;
     frame->timestamp_us = NowUs();
     frame->width = width_;
     frame->height = height_;
-    frame->stride = width_ * (depth ? 2u : 1u);
+    frame->stride = width_ * (depth || rgb ? 2u : 1u);
     frame->format = format_;
     frame->data.resize(static_cast<size_t>(frame->stride) * height_);
     for (uint32_t y = 0; y < height_; ++y) {
         for (uint32_t x = 0; x < width_; ++x) {
-            const size_t at = static_cast<size_t>(y) * frame->stride + x * (depth ? 2u : 1u);
+            const size_t at = static_cast<size_t>(y) * frame->stride + x * (depth || rgb ? 2u : 1u);
             if (depth) {
                 // A ramp that changes with the frame, so a still image is visible in a diff.
                 const uint16_t value = static_cast<uint16_t>(((x + y + emitted_ * 7) * 64) & 0xffff);
                 frame->data[at] = static_cast<uint8_t>(value & 0xff);
                 frame->data[at + 1] = static_cast<uint8_t>(value >> 8);
+            } else if (rgb) {
+                frame->data[at] = static_cast<uint8_t>((x + emitted_) & 0xff);
+                frame->data[at + 1] = static_cast<uint8_t>((y + emitted_) & 0xff);
             } else {
                 frame->data[at] = static_cast<uint8_t>(((x / 8 + y / 8 + emitted_) % 2) ? 0xff : 0x00);
             }
@@ -301,21 +305,6 @@ bool MockSource::Next(Frame* frame, std::string* error) {
     }
     ++emitted_;
     return true;
-}
-
-std::string UvcSource::configuration_error() const {
-    const DescriptorTable& table = Table();
-    std::string error = "not-configured: ";
-    const std::string ir_missing = MissingFields(table.ir);
-    const std::string depth_missing = MissingFields(table.depth);
-    if (!ir_missing.empty()) error += "IR " + ir_missing;
-    if (!depth_missing.empty()) {
-        if (!ir_missing.empty()) error += "; ";
-        error += "depth " + depth_missing;
-    }
-    if (ir_missing.empty() && depth_missing.empty()) error += "the UVC backend is not built";
-    error += " (docs/recon/findings/usb-descriptor-map.md §2.1)";
-    return error;
 }
 
 // --- the command path ------------------------------------------------------
