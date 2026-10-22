@@ -22,6 +22,7 @@ From `2026-10-20-plan132-gapfree-captures.raw.log` (depth section, port 10010, a
 ```
 
 - **Every** `send_data` reply on port 10010 (depth) is a 64-byte `Str` starting with `0x52 0x42` = "RB" in ASCII (the GM/RB vendor response frame, `protocol-spec.md` §2.1).
+- **Count**: 1000 such replies (msgid 3 → 1201, incrementing by 6 per poll cycle: 5 SET + 1 GET_FRAME).
 - The header is the standard 10-byte RespHeader (little-endian): `u16 magic | u16 sizeInHalfWords | u16 opcode | u16 requestId | u16 errorCode`.
 - The first 10 bytes: `52 42 01 00 02 00 01 00 00 00` → magic="RB" | sizeInHalfWords=1 (2 bytes payload) | opcode=2 (SET_PROPERTY) | requestId=1 | errorCode=0 (success).
 - The requestId field increments per call (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...), matching the request's seq.
@@ -41,7 +42,9 @@ From `2026-10-21-plan175-depth-telemetry-final.raw.log` (port 10010, no power-cy
 ```
 
 - Every `send_data` call returned `vendor no ack (0 B)` — the reply body is empty.
+- **The 0-B ack's identity**: it is an **empty `str` result** (msgpack kind=Str, size=0), not a different reply op. The raptor_client source (`tools/raptor_client/main.cpp` line 1343-1346) confirms: when response size == 0, it prints "vendor no ack (0 B)" with the comment "The IR interface answers a SET with an empty str: no ack bytes to parse, and not a rejection either."
 - **No frames flow**: `done: get_frame=62 data=0 empty=62 error=0; first_frame=none`.
+- **Count**: 300 SET calls (62 polls × 5 props per poll, reqid 1–300), all returning 0 B.
 
 ### 1.3 The IR contrast
 
@@ -56,6 +59,7 @@ From `2026-10-21-plan184-prop192-ir-attempt5.raw.log` (port 10013, same daemon s
 ```
 
 - Every `send_data` call returned `vendor no ack (0 B)` — same as depth.
+- **Count**: 280 SET calls (56 polls × 5 props per poll), all returning 0 B.
 - **Frames flow**: `done: get_frame=56 data=52 empty=4 error=0` — the IR interface delivered data despite the 0-B acks.
 
 From `2026-10-20-plan132-gapfree-captures.raw.log` (IR section, port 10013, after power-cycle):
@@ -66,6 +70,7 @@ From `2026-10-20-plan132-gapfree-captures.raw.log` (IR section, port 10013, afte
 ```
 
 - The IR `send_data` replies are `Str(0)` (empty string, 0 bytes) — different from the depth's `Str(64)`.
+- **Count**: 900 such replies (msgid 3 → 1078, incrementing by 6 per poll cycle).
 - **Frames flow**: `data=180 empty=0 error=0`.
 
 ## 2. The correlation
