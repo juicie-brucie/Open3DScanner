@@ -24,8 +24,10 @@
 #include <string>
 #include <vector>
 
+#include "descriptor_probe.h"
 #include "hid_report.h"
 #include "uvc_frames.h"
+#include "uvc_selection.h"
 
 namespace raw_capture {
 namespace {
@@ -117,11 +119,58 @@ public:
             *why = "interface " + std::to_string(spec.interface_number) + " is not on the device";
             return false;
         }
-        if (![interface_ selectAlternateSetting:static_cast<NSUInteger>(spec.alternate_setting)
-                                          error:&error]) {
-            *why = "alternate setting " + std::to_string(spec.alternate_setting) +
-                   " could not be selected: " + NsErrorText(error);
-            return false;
+        // Row #197: pick the alternate setting that carries the endpoint from
+        // the configuration descriptor, and never send SET_INTERFACE when the
+        // interface is already there (the device refuses a redundant alt-0
+        // selection: "Unable to select alternate setting.").
+        const IOUSBInterfaceDescriptor* current_descriptor = interface_.interfaceDescriptor;
+        const int current_alternate =
+            current_descriptor != nullptr ? current_descriptor->bAlternateSetting : spec.alternate_setting;
+        std::vector<ProbeInterface> alternates;
+        const IOUSBConfigurationDescriptor* configuration = interface_.configurationDescriptor;
+        if (configuration != nullptr && configuration->wTotalLength >= 9) {
+            const uint8_t* begin = reinterpret_cast<const uint8_t*>(configuration);
+            const std::vector<uint8_t> blob(begin, begin + configuration->wTotalLength);
+            ProbeResult parsed;
+            std::string detail;
+            if (ParseConfigurationDescriptor(blob.data(), blob.size(), &parsed, &detail)) {
+                alternates = std::move(parsed.interfaces);
+            }
+        }
+        AlternateSelection selection;
+        if (!alternates.empty()) {
+            selection = ChooseStreamingAlternate(alternates, spec.interface_number, spec.endpoint_address,
+                                                 current_alternate, spec.alternate_setting);
+            if (!selection.ok()) {
+                *why = selection.error;
+                return false;
+            }
+        } else {
+            // No descriptor to choose from: trust the table, but still avoid a
+            // redundant SET_INTERFACE when the alt already matches.
+            selection.alternate_setting = spec.alternate_setting;
+            selection.needs_select = spec.alternate_setting != current_alternate;
+            selection.current_carries_endpoint = true;
+        }
+        if (selection.needs_select) {
+            NSError* select_error = nil;
+            if (![interface_ selectAlternateSetting:static_cast<NSUInteger>(selection.alternate_setting)
+                                              error:&select_error]) {
+                if (selection.current_carries_endpoint) {
+                    std::fprintf(stderr,
+                                 "[capture] note: alternate setting %d could not be selected (%s); the "
+                                 "interface stays at alt %d, which carries endpoint 0x%02X\n",
+                                 selection.alternate_setting, NsErrorText(select_error).c_str(),
+                                 current_alternate, spec.endpoint_address);
+                } else {
+                    *why = "alternate setting " + std::to_string(selection.alternate_setting) +
+                           " could not be selected: " + NsErrorText(select_error) +
+                           (selection.note.empty() ? "" : " (" + selection.note + ")");
+                    return false;
+                }
+            }
+        } else if (!selection.note.empty() && selection.alternate_setting != spec.alternate_setting) {
+            std::fprintf(stderr, "[capture] note: %s\n", selection.note.c_str());
         }
         pipe_ = [interface_ copyPipeWithAddress:static_cast<NSUInteger>(spec.endpoint_address) error:&error];
         if (pipe_ == nil) {

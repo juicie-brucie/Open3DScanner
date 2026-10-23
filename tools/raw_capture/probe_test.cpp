@@ -212,6 +212,56 @@ int main() {
               "the printout lists every interface");
     }
 
+    // --- every alternate setting is printed (row #197) --------------------
+    {
+        // VS interface 1: alt 0 has no endpoint, alt 1 carries 0x81 — the
+        // usual UVC shape, and the shape the probe must show.
+        std::vector<uint8_t> body;
+        const uint8_t vc[] = {9, 0x04, 0, 0, 0, 0x0E, 0x01, 0, 0};
+        body.insert(body.end(), vc, vc + sizeof(vc));
+        const uint8_t vs0[] = {9, 0x04, 1, 0, 0, 0x0E, 0x02, 0, 0};
+        body.insert(body.end(), vs0, vs0 + sizeof(vs0));
+        const uint8_t vs1[] = {9, 0x04, 1, 1, 1, 0x0E, 0x02, 0, 0};
+        body.insert(body.end(), vs1, vs1 + sizeof(vs1));
+        uint8_t vs_header[14] = {14, 0x24, 0x01, 1, 0, 0, 0x81, 0, 0, 0, 0, 0, 0, 0};
+        body.insert(body.end(), vs_header, vs_header + sizeof(vs_header));
+        uint8_t format[28] = {0};
+        format[0] = 28; format[1] = 0x24; format[2] = 0x04; format[3] = 1; format[4] = 1;
+        const char grey[4] = {'G', 'R', 'E', 'Y'};
+        std::memcpy(format + 5, grey, 4);
+        format[21] = 8;
+        body.insert(body.end(), format, format + sizeof(format));
+        uint8_t frame[30] = {0};
+        frame[0] = 30; frame[1] = 0x24; frame[2] = 0x05; frame[3] = 1;
+        frame[5] = 640 & 0xff; frame[6] = 640 >> 8; frame[7] = 480 & 0xff; frame[8] = 480 >> 8;
+        frame[17] = 307200 & 0xff; frame[18] = (307200 >> 8) & 0xff;
+        frame[19] = (307200 >> 16) & 0xff; frame[20] = (307200 >> 24) & 0xff;
+        body.insert(body.end(), frame, frame + sizeof(frame));
+        AddEndpoint(&body, 0x81, 0x02, 1024, 0);
+        std::vector<uint8_t> blob;
+        const size_t total = 9 + body.size();
+        blob.push_back(9); blob.push_back(0x02);
+        Put16(&blob, static_cast<uint16_t>(total));
+        blob.push_back(2); blob.push_back(1); blob.push_back(0); blob.push_back(0x80); blob.push_back(50);
+        blob.insert(blob.end(), body.begin(), body.end());
+
+        rc::ProbeResult alts;
+        std::string error;
+        Check(rc::ParseConfigurationDescriptor(blob.data(), blob.size(), &alts, &error),
+              "the two-alt VS descriptor parses");
+        const std::string printed = rc::FormatProbe(alts);
+        Check(printed.find("interface 1 alternates: 2") != std::string::npos,
+              "the probe prints both alternate settings");
+        Check(printed.find("[alt 0: no endpoints]") != std::string::npos,
+              "alt 0 is printed with no endpoints");
+        Check(printed.find("[alt 1: 0x81 bulk 1024]") != std::string::npos,
+              "alt 1 is printed with its endpoint");
+        Check(printed.find("alt 0 carries no endpoint") != std::string::npos,
+              "the no-endpoint alternate is explained");
+        Check(printed.find("stream[0].endpoint.alternate_setting=1") != std::string::npos,
+              "the paste block uses the streaming alt (1)");
+    }
+
     // --- malformed descriptors -------------------------------------------
     {
         const uint8_t not_config[] = {9, 0x04, 0, 0, 0, 0, 0, 0, 0};

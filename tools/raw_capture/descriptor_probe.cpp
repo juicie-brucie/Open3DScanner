@@ -231,6 +231,36 @@ std::string FormatProbe(const ProbeResult& result) {
     std::string text;
     Append(&text, "[probe] vid=0x%04X pid=0x%04X configuration=%d interfaces=%zu\n", result.vendor_id,
                  result.product_id, result.configuration_value, result.interfaces.size());
+    // Row #197: every alternate setting per interface, so the streaming alt
+    // (the one with the endpoint) is visible even when alt 0 has none.
+    std::vector<int> interface_numbers;
+    for (const ProbeInterface& interface : result.interfaces) {
+        if (std::find(interface_numbers.begin(), interface_numbers.end(), interface.number) ==
+            interface_numbers.end()) {
+            interface_numbers.push_back(interface.number);
+        }
+    }
+    for (int number : interface_numbers) {
+        int count = 0;
+        for (const ProbeInterface& interface : result.interfaces) {
+            if (interface.number == number) ++count;
+        }
+        Append(&text, "[probe] interface %d alternates: %d", number, count);
+        for (const ProbeInterface& interface : result.interfaces) {
+            if (interface.number != number) continue;
+            Append(&text, " [alt %d:", interface.alternate_setting);
+            if (interface.endpoints.empty()) {
+                Append(&text, " no endpoints");
+            } else {
+                for (const ProbeEndpoint& endpoint : interface.endpoints) {
+                    Append(&text, " 0x%02X %s %d", endpoint.address,
+                           TransferTypeName(endpoint.transfer), endpoint.max_packet_size);
+                }
+            }
+            Append(&text, "]");
+        }
+        Append(&text, "\n");
+    }
     int streaming_index = 0;
     int control_printed = 0;
     for (const ProbeInterface& interface : result.interfaces) {
@@ -282,7 +312,19 @@ std::string FormatProbe(const ProbeResult& result) {
 
             // The copy-paste block. The IR/depth assignment is the operator's:
             // the RPC->endpoint map (OQ-169e) is what says which streaming
-            // interface is which.
+            // interface is which. An alternate with no endpoint (the usual
+            // UVC alt 0) gets no block: the streaming alt is the one with it.
+            const int declared_address = interface.streaming_endpoint_address != kUnset
+                                             ? interface.streaming_endpoint_address
+                                             : (interface.endpoints.empty()
+                                                    ? kUnset
+                                                    : interface.endpoints[0].address);
+            if (declared_address == kUnset) {
+                Append(&text, "[probe] note: interface %d alt %d carries no endpoint; the streaming "
+                              "alternate is a different alt\n",
+                       interface.number, interface.alternate_setting);
+                continue;
+            }
             Append(&text, "[probe] stream[%d].endpoint.interface_number=%d\n", streaming_index,
                          interface.number);
             Append(&text, "[probe] stream[%d].endpoint.alternate_setting=%d\n", streaming_index,
