@@ -46,6 +46,11 @@ public:
     // Whether any stored point lies within `radius` of q.
     bool AnyWithin(const Point3& q, double radius) const;
 
+    // Every stored point within `radius` of q, as indices into the point set
+    // (appended to *out, which is cleared first). Used for local
+    // neighbourhoods, e.g. PCA normal estimation.
+    void Within(const Point3& q, double radius, std::vector<int>* out) const;
+
 private:
     std::int64_t CellKeyOf(const Point3& p) const;
 

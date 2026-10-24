@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Surface Demo</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #0e1116; color: #d7dbe0;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow: hidden; }
+  #gl { display: block; width: 100vw; height: 100vh; }
+  #hud { position: fixed; top: 12px; left: 14px; padding: 8px 11px; border-radius: 8px;
+    background: rgba(18,22,30,0.72); border: 1px solid #28303c; white-space: pre; }
+  #hud b { color: #6cc6ff; }
+  #tag { position: fixed; bottom: 10px; left: 14px; color: #5a6675; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="hud">connecting…</div>
+<div id="tag">growing sphere → LiveReconPipeline → FastSurface → OMSH → ws</div>
+<script>
+const canvas = document.getElementById("gl");
+const hud = document.getElementById("hud");
+const gl = canvas.getContext("webgl2", { antialias: true });
+if (!gl) { hud.textContent = "WebGL2 unavailable"; throw new Error("no webgl2"); }
+
+// --- shaders: flat shading via screen-space derivatives (no normals needed) --
+const VS = `#version 300 es
+precision highp float;
+layout(location=0) in vec3 a_pos;
+uniform mat4 u_mvp;
+uniform mat4 u_mv;
+out vec3 v_view;
+void main() {
+  v_view = (u_mv * vec4(a_pos, 1.0)).xyz;
+  gl_Position = u_mvp * vec4(a_pos, 1.0);
+}`;
+const FS = `#version 300 es
+precision highp float;
+in vec3 v_view;
+out vec4 frag;
+void main() {
+  vec3 n = normalize(cross(dFdx(v_view), dFdy(v_view)));
+  vec3 L = normalize(vec3(0.4, 0.7, 0.8));
+  float d = clamp(abs(dot(n, L)), 0.0, 1.0);
+  vec3 base = vec3(0.26, 0.55, 0.95);
+  vec3 col = base * (0.25 + 0.75 * d);
+  frag = vec4(col, 1.0);
+}`;
+function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+const prog = gl.createProgram();
+gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+const u_mvp = gl.getUniformLocation(prog, "u_mvp");
+const u_mv = gl.getUniformLocation(prog, "u_mv");
+
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+const vbo = gl.createBuffer(), ibo = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+let indexCount = 0;
+let center = [0, 0, 0], radius = 1.5;
+
+// --- tiny mat4 helpers (column-major) ---------------------------------------
+function perspective(fovy, aspect, near, far) {
+  const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+  return [f/aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0];
+}
+function mul(a, b) { const o = new Array(16);
+  for (let c=0;c<4;c++) for (let r=0;r<4;r++) o[c*4+r] = a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+  return o; }
+function translate(x,y,z){ return [1,0,0,0, 0,1,0,0, 0,0,1,0, x,y,z,1]; }
+function rotateY(a){ const c=Math.cos(a),s=Math.sin(a); return [c,0,-s,0, 0,1,0,0, s,0,c,0, 0,0,0,1]; }
+function rotateX(a){ const c=Math.cos(a),s=Math.sin(a); return [1,0,0,0, 0,c,s,0, 0,-s,c,0, 0,0,0,1]; }
+
+// --- OMSH decode -------------------------------------------------------------
+function decodeMesh(buf) {
+  const dv = new DataView(buf);
+  if (dv.byteLength < 16) return null;
+  if (dv.getUint8(0)!==79||dv.getUint8(1)!==77||dv.getUint8(2)!==83||dv.getUint8(3)!==72) return null; // 'OMSH'
+  const nv = dv.getUint32(8, true), nt = dv.getUint32(12, true);
+  const need = 16 + nv*12 + nt*12;
+  if (dv.byteLength < need) return null;
+  const pos = new Float32Array(buf, 16, nv*3);
+  const idx = new Uint32Array(buf.slice(16 + nv*12, 16 + nv*12 + nt*12));
+  return { pos, idx, nv, nt };
+}
+function fit(pos, nv) {
+  let lo=[1e9,1e9,1e9], hi=[-1e9,-1e9,-1e9];
+  for (let i=0;i<nv;i++) for (let k=0;k<3;k++){ const v=pos[i*3+k]; if(v<lo[k])lo[k]=v; if(v>hi[k])hi[k]=v; }
+  center = [(lo[0]+hi[0])/2,(lo[1]+hi[1])/2,(lo[2]+hi[2])/2];
+  radius = 0.5*Math.max(hi[0]-lo[0],hi[1]-lo[1],hi[2]-lo[2]) || 1;
+}
+function upload(m) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.bufferData(gl.ARRAY_BUFFER, m.pos, gl.DYNAMIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, m.idx, gl.DYNAMIC_DRAW);
+  indexCount = m.nt * 3;
+  if (m.nv) fit(m.pos, m.nv);
+}
+
+// --- websocket ---------------------------------------------------------------
+let status = { frames: 0, total: 0, tris: 0, points: 0 };
+function connect() {
+  const ws = new WebSocket("ws://" + location.host);
+  ws.binaryType = "arraybuffer";
+  ws.onopen = () => { hud.textContent = "connected"; };
+  ws.onclose = () => { hud.textContent = "disconnected — retrying"; setTimeout(connect, 800); };
+  ws.onmessage = (e) => {
+    if (typeof e.data === "string") { try { status = JSON.parse(e.data); } catch(_){} return; }
+    const m = decodeMesh(e.data);
+    if (m) upload(m);
+  };
+}
+connect();
+
+// --- render loop -------------------------------------------------------------
+let angle = 0;
+function frame(t) {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  gl.viewport(0,0,canvas.width,canvas.height);
+  gl.clearColor(0.055,0.067,0.086,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+
+  angle += 0.008;
+  const dist = radius * 3.2;
+  const model = mul(rotateY(angle), mul(rotateX(0.35), translate(-center[0],-center[1],-center[2])));
+  const view = translate(0,0,-dist);
+  const mv = mul(view, model);
+  const proj = perspective(45*Math.PI/180, canvas.width/Math.max(1,canvas.height), 0.01, 100);
+  const mvp = mul(proj, mv);
+
+  gl.useProgram(prog);
+  gl.uniformMatrix4fv(u_mvp, false, new Float32Array(mvp));
+  gl.uniformMatrix4fv(u_mv, false, new Float32Array(mv));
+  gl.bindVertexArray(vao);
+  if (indexCount) gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_INT, 0);
+
+  hud.innerHTML = "live surface  <b>" + (status.frames||0) + "/" + (status.total||0) + "</b> frames\n" +
+    "triangles  <b>" + (status.tris||0).toLocaleString() + "</b>\n" +
+    "points     <b>" + (status.points||0).toLocaleString() + "</b>";
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

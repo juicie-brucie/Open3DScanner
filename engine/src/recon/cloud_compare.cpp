@@ -137,6 +137,28 @@ bool NearestNeighborIndex::AnyWithin(const Point3& q, double radius) const {
     return false;
 }
 
+void NearestNeighborIndex::Within(const Point3& q, double radius, std::vector<int>* out) const {
+    out->clear();
+    if (points_.empty()) return;
+    const int cx = static_cast<int>(std::floor((q.x - ox_) / cell_));
+    const int cy = static_cast<int>(std::floor((q.y - oy_) / cell_));
+    const int cz = static_cast<int>(std::floor((q.z - oz_) / cell_));
+    const double radius_sq = radius * radius;
+    const int rmax = static_cast<int>(radius / cell_) + 2;
+    for (int r = 0; r <= rmax; ++r) {
+        if (r >= 1 && static_cast<double>(r - 1) * cell_ > radius) break;
+        for (int dx = -r; dx <= r; ++dx)
+            for (int dy = -r; dy <= r; ++dy)
+                for (int dz = -r; dz <= r; ++dz) {
+                    if (std::max({std::abs(dx), std::abs(dy), std::abs(dz)}) != r) continue;
+                    const auto it = cells_.find(PackCell(cx + dx, cy + dy, cz + dz));
+                    if (it == cells_.end()) continue;
+                    for (int idx : it->second)
+                        if (DistSq(q, points_[idx]) <= radius_sq) out->push_back(idx);
+                }
+    }
+}
+
 std::vector<Point3> Positions(const std::vector<CloudPoint>& cloud) {
     std::vector<Point3> out;
     out.reserve(cloud.size());
