@@ -30,8 +30,11 @@ Why does `--probe` see seven interfaces but `--capture` cannot `Open` interface
 already matched by Apple's in-kernel UVC driver.** `--probe` only reads
 descriptors (no `Open`), so it always works; `--capture` calls `USBInterfaceOpen`
 on a class-14 video interface that the OS has already bound to its UVC driver,
-so the open is refused with `kIOReturnExclusiveAccess`. The vendor daemon wins
-by running as **root** and seizing the interface from that driver.
+so the open is refused — the refusal is **expected** to surface as
+`kIOReturnExclusiveAccess`, but that specific code is **inferred, not yet
+observed** (the capture runs so far fail at earlier stages; see §3.2 for the
+codes actually seen). The vendor daemon wins by running as **root** and seizing
+the interface from that driver.
 
 ## 3. Evidence
 
@@ -66,9 +69,21 @@ by running as **root** and seizing the interface from that driver.
   class-14 nub carries `CameraAssistantConfiguration = {"UVCCameraHideControls"
   …}` and is `matched`; `UVCAssistant` (CoreMediaIO system extension, pid 603)
   and `appleh13camerad` are the always-on camera daemons. A plain userspace
-  `USBInterfaceOpen` on such an interface is refused with
-  `kIOReturnExclusiveAccess` because it already has a matched driver — **not**
-  because another app holds it.
+  `USBInterfaceOpen` on such an interface is **expected** to be refused because
+  it already has a matched driver (**not** because another app holds it). The
+  expected code is `kIOReturnExclusiveAccess` (`0xe00002c5`), but **this is
+  inferred, not yet observed** — the capture attempts so far fail at earlier
+  stages and never reach a clean interface-`Open` that would return it. A
+  runtime test that gets to the interface-`Open` is what would confirm or refute
+  it.
+- **Error codes actually observed (none is the exclusive-access code):**
+  - **#181** — non-root device open: `Failed to create IOUSBHostObject` (fails at
+    the device-open stage, before any interface work).
+  - **#198** — root + `OPENSCANNER_UVC_IOUSBHOST=1`: `interface 1 is not on the
+    device` (the interface *lookup*, before any seize); the `ioreg`
+    `UsbExclusiveOwner` stayed `pid 603, UVCAssistant`, unchanged by the root run.
+  - **#496** — classic device plug-in: `kIOReturnNoResources` (`0xe00002be`) —
+    **not** the exclusive-access `0xe00002c5`.
 - **The IMU (HID) is owned by DriverKit** (`AppleUserUSBHostHIDDevice`).
 
 ### 3.3 Verified-idle re-sample (2026-10-24 ~08:01) + a contamination correction
@@ -102,9 +117,11 @@ hw-test/SDK/WT-HW process, no Raptor log events after 07:55:45, and a 5 s
    path). **Which one the vendor uses is the open item** (§6).
 3. **Contend with the kernel UVC driver, not a peer app.** At rest no process
    holds the interfaces; the blocker is the in-kernel UVC/CameraAssistant match
-   (hence `kIOReturnExclusiveAccess`). A capture session must seize from that
-   driver. A camera app opening the Raptor as a webcam would additionally
-   contend, but that is transient, not the resting state.
+   (expected to refuse an interface-`Open` with `kIOReturnExclusiveAccess` —
+   inferred, pending a runtime test; see §3.2 for the codes observed so far).
+   A capture session must seize from that driver. A camera app opening the
+   Raptor as a webcam would additionally contend, but that is transient, not the
+   resting state.
 4. The **IMU** interface is HID/DriverKit — a separate owner from the video path.
 
 ## 5. Reconciliation with the helper privilege model (#177)
