@@ -30,6 +30,7 @@ artifact: the only thing both sides agree on, and the thing a human reviews.
 | `openscanner/verifier` | all | PR comments (verdicts); no edits | agent file |
 | `openscanner/intake` | subagent | read-only: quotes and returns; the `pr-rebase.py` sweep is its only write | agent file |
 | hardware tester | external | `tests/results/**` | Claude Code, driven by hand |
+| **Claude workstream owner** | external, attended | `wt-xcode` (product branch), `wt-xcode-recon` (read-only analysis/drafts), `wt-xcode-verify` (read-only verification); `wt-hw` unchanged | Claude subscription (Claude Code / claude.ai) |
 
 The model for each agent is the model in its agent file
 (`~/.config/opencode/agents/openscanner/<agent>.md`); this table does not restate
@@ -225,19 +226,67 @@ Claude Pro is therefore a human-attended, out-of-band resource:
 | Contract review (the human checkpoint) | claude.ai |
 | Periodic cross-family verification | claude.ai |
 | Off-loop strategy and spec synthesis | claude.ai |
+| **Large discrete workstreams** — UVC/daemon, Xcode/UI, merge dossier, spec/contract review | Claude Code or claude.ai, in the workstream's own worktree |
 
 In-loop planning and sequencing belong to `openscanner/planner` (see **Where things
 live**); claude.ai is for strategy that is deliberately kept out of the loop.
 
 **The rule that keeps it clean-room:** Claude Pro may sit on the **recon side** of
-the wall, never the **builder side**. Analyzing decompiled output, reviewing a spec,
-or verifying spec-vs-code is fine. Showing it decompiled output and asking it to
-write implementation code is not — the defensibility of `engine/src/` rests on it
-being written from the header alone.
+the wall for analysis, review and spec-vs-code verification. As the **Claude
+workstream owner** it may also write product code — but only in `wt-xcode`, from our
+code, specs and observations, never from vendor decompilation → implementation. The
+ABI header stays recon-owned. The defensibility of `engine/src/` rests on it being
+written from the header alone.
 
 Because Anthropic offers no subscription path, the ways to get paid-tier models into
 OpenCode are: **OpenCode Go**, an **OpenAI (ChatGPT) OAuth** login, a **GitHub
 Copilot** OAuth login, or **OpenRouter** credits.
+
+## Claude workstreams
+
+Claude is **not** an OpenCode agent. It is a contracted workstream owner: it owns one
+large, bounded project at a time, in its own worktree, and returns a branch/records +
+a report. It never edits `PLAN.md`, merges, moves rows, or shares a worktree with
+dispatch/builder.
+
+### The four Claude channels
+
+| WT | Branch | Purpose | Write rule |
+| --- | --- | --- | --- |
+| `Open3DScanner-wt-xcode` | `xcode/user-test` (or a workstream branch) | **main Claude build channel** — product code, UVC prototype, UI | Claude writes product code here; PRs only |
+| `Open3DScanner-wt-hw` | `hw/next` | hardware room, **unchanged** | Claude Code writes `tests/results/**` only |
+| `Open3DScanner-wt-xcode-recon` | `xcode-recon/next` | read-only analysis: descriptors, UVC/IOKit, frame geometry, control path; drafts | **no product code**; drafts/reports for recon to adopt |
+| `Open3DScanner-wt-xcode-verify` | `xcode-verify/next` | independent verification of a candidate commit | **read-only**; detached candidate; a report, not a SHA-pinned verdict |
+
+Created 2026-10-24 from `origin/main` `ca2dee5`. One writer per worktree. Dispatch
+owns the integration/merge worktree; Claude never shares it.
+
+### The workstream WO contract
+
+A workstream WO (not a task row) carries: an **objective** (one sentence, one
+deliverable); **scope** (in / explicitly out); **base + worktree** (a named
+`origin/main` commit and the worktree); **deliverables** (a branch/PR, or a records
+bundle + a short report — not a half-edited tree); **acceptance** (the checks that
+make it done; a named negative result is allowed); **walls** (clean-room, no
+header/`PLAN.md` edits, no board edits); a **checkpoint** (~50%: one page + the
+current diff/record; dispatch may redirect); a **time box**; **priorities**,
+**gates**, **references** and where the existing data lives; and the **report
+format** (branch/records + what works, the exact blocker, the next decision).
+Dispatch assigns, checks the checkpoint, integrates the handoff, and keeps the rest
+of the loop running in parallel. The workstream is a board row family; dispatch is
+the single writer. The immediate PR merge is a separate dispatch, not part of the
+workstream.
+
+### Clean-room and cost
+
+- Claude may write product code **only in `wt-xcode`**, from our code/specs and
+  observations; never vendor decompilation → implementation. The ABI header stays
+  recon-owned.
+- `wt-xcode-recon` output is a draft/report; the recon agent adopts it into findings.
+  `wt-xcode-verify` output is a report; the loop's verifier posts the SHA-pinned
+  verdict.
+- Claude for the large/long-context work; dispatch for the board, dossier,
+  integration and merge; builder/verifier for the gated tasks.
 
 ## Running it
 
