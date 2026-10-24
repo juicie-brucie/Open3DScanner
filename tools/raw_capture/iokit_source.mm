@@ -22,6 +22,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "hid_report.h"
@@ -183,36 +184,51 @@ public:
             return false;
         }
         // Find the interface service below the device and match its number.
-        io_iterator_t iterator = 0;
-        if (IORegistryEntryGetChildIterator(service, kIOServicePlane, &iterator) != KERN_SUCCESS) {
-            *why = "cannot enumerate the device's interfaces";
-            return false;
-        }
-        io_service_t child = 0;
-        while ((child = IOIteratorNext(iterator)) != 0) {
-            if (!IOObjectConformsTo(child, "IOUSBHostInterface")) {
+        // Claiming the top-level device (above) can leave its child
+        // interface services briefly unpublished in the IOKit registry —
+        // hw-test observed `--probe` (read-only, no device claim) see this
+        // same interface fine, then the very next `--capture` process's
+        // Open() fail to find it moments later
+        // (2026-10-24-plan-uvc-getcur-baseline.md). Retry the child lookup
+        // for up to ~500ms before giving up; a genuinely absent interface
+        // still fails the same way, just after the retries are spent.
+        constexpr int kInterfaceLookupAttempts = 10;
+        constexpr auto kInterfaceLookupRetryDelay = std::chrono::milliseconds(50);
+        for (int attempt = 0; attempt < kInterfaceLookupAttempts && interface_ == nil; ++attempt) {
+            if (attempt > 0) std::this_thread::sleep_for(kInterfaceLookupRetryDelay);
+            io_iterator_t iterator = 0;
+            if (IORegistryEntryGetChildIterator(service, kIOServicePlane, &iterator) != KERN_SUCCESS) {
+                *why = "cannot enumerate the device's interfaces";
+                return false;
+            }
+            io_service_t child = 0;
+            while ((child = IOIteratorNext(iterator)) != 0) {
+                if (!IOObjectConformsTo(child, "IOUSBHostInterface")) {
+                    IOObjectRelease(child);
+                    continue;
+                }
+                IOUSBHostInterface* candidate = [[IOUSBHostInterface alloc]
+                    initWithIOService:child
+                              options:IOUSBHostObjectInitOptionsNone
+                                queue:nil
+                                error:&error
+                      interestHandler:nil];
                 IOObjectRelease(child);
-                continue;
+                if (candidate == nil) continue;
+                const IOUSBInterfaceDescriptor* descriptor = candidate.interfaceDescriptor;
+                if (descriptor == nullptr || descriptor->bInterfaceNumber != spec.interface_number) {
+                    [candidate release];
+                    continue;
+                }
+                interface_ = candidate;
+                break;
             }
-            IOUSBHostInterface* candidate = [[IOUSBHostInterface alloc]
-                initWithIOService:child
-                          options:IOUSBHostObjectInitOptionsNone
-                            queue:nil
-                            error:&error
-                  interestHandler:nil];
-            IOObjectRelease(child);
-            if (candidate == nil) continue;
-            const IOUSBInterfaceDescriptor* descriptor = candidate.interfaceDescriptor;
-            if (descriptor == nullptr || descriptor->bInterfaceNumber != spec.interface_number) {
-                [candidate release];
-                continue;
-            }
-            interface_ = candidate;
-            break;
+            IOObjectRelease(iterator);
         }
-        IOObjectRelease(iterator);
         if (interface_ == nil) {
-            *why = "interface " + std::to_string(spec.interface_number) + " is not on the device";
+            *why = "interface " + std::to_string(spec.interface_number) + " is not on the device (retried " +
+                   std::to_string(kInterfaceLookupAttempts) + " times over ~" +
+                   std::to_string(kInterfaceLookupAttempts * kInterfaceLookupRetryDelay.count()) + "ms)";
             return false;
         }
         // Claiming an interface leaves it at its current alternate setting
