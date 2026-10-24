@@ -14,8 +14,10 @@
 #include <IOKit/IOKitLib.h>
 #include <IOKit/usb/IOUSBLib.h>
 
+#include <chrono>
 #include <cstring>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace raw_capture {
@@ -127,21 +129,40 @@ void FetchHidReport(io_service_t device_service, IOUSBHostDevice* device, int in
         return true;
     };
 
-    if (!try_request(device)) {
+    // Row #197: the same request that succeeded on an earlier run has failed
+    // with "Unable to send device request." on a later one, so the read is
+    // robust: two device attempts (a short gap), a fresh device object, then
+    // the interface's own user client. The failure still names the reason.
+    bool ok = try_request(device);
+    if (!ok) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        ok = try_request(device);
+    }
+    if (!ok) {
+        NSError* reopen_error = nil;
+        IOUSBHostDevice* fresh = [[IOUSBHostDevice alloc] initWithIOService:device_service
+                                                                   options:IOUSBHostObjectInitOptionsNone
+                                                                     queue:nil
+                                                                     error:&reopen_error
+                                                           interestHandler:nil];
+        if (fresh != nil) {
+            ok = try_request(fresh);
+            [fresh release];
+        } else {
+            last_error = reopen_error;
+        }
+    }
+    if (!ok) {
         IOUSBHostInterface* interface = FindInterface(device_service, interface_number);
         if (interface != nil) {
-            const bool ok = try_request(interface);
+            ok = try_request(interface);
             [interface release];
-            if (!ok && last_error == nil) {
-                result->hid_report_error =
-                    "not-configured: the HID report descriptor read returned no bytes";
-                return;
-            }
         }
     }
     if (result->hid_report.empty()) {
         result->hid_report_error =
-            "not-configured: the HID report descriptor read was refused: " + NsErrorText(last_error);
+            "not-configured: the HID report descriptor read was refused after 3 device attempt(s) and "
+            "the interface fallback: " + NsErrorText(last_error);
         return;
     }
     std::string detail;
