@@ -14,6 +14,7 @@
 #import <IOUSBHost/IOUSBHost.h>
 
 #include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOCFPlugIn.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/usb/IOUSBLib.h>
 
@@ -21,6 +22,7 @@
 #include <chrono>
 #include <cstdarg>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -623,10 +625,319 @@ private:
     std::string detail_;
 };
 
+// ---------------------------------------------------------------------------
+// Classic IOUSBLib acquisition path (the libusb / vendor mechanism).
+//
+// The modern IOUSBHost path above cannot even find the scanner's interface
+// services: IOServiceGetMatchingService returns nothing for them, because
+// Apple's UVCAssistant (a DriverKit extension) owns them and their registry
+// nodes are not matchable by an unprivileged IOUSBHost client (dossier §2).
+//
+// The classic IOUSBLib C API takes a different route the modern framework
+// does not offer: IOUSBDeviceInterface::CreateInterfaceIterator asks the
+// *device's own user client* for its interfaces ("the device does not have
+// to be open" — IOUSBLib.h:1251), not the global registry; and
+// IOUSBInterfaceInterface::USBInterfaceOpenSeize opens an interface for
+// exclusive access, "if another client has the device open, an attempt is
+// made to get that client to close it" (IOUSBLib.h:2854) — i.e. ask
+// UVCAssistant to release it. This is the mechanism libusb uses, and the
+// vendor RPCServer drives this device through libusb. All symbols here were
+// checked against the installed SDK headers before writing.
+// ---------------------------------------------------------------------------
+class ClassicUsbInterfaceHandle {
+public:
+    ~ClassicUsbInterfaceHandle() { Close(); }
+
+    bool Open(const EndpointSpec& spec, std::string* why) {
+        Close();
+        io_service_t device_service = FindScannerService();
+        if (device_service == 0) {
+            *why = "no scanner USB device found (plugged in? powered?)";
+            return false;
+        }
+        // Device user client → IOUSBDeviceInterface187 (has
+        // CreateInterfaceIterator + USBDeviceOpenSeize).
+        IOCFPlugInInterface** device_plugin = nullptr;
+        SInt32 score = 0;
+        kern_return_t kr = IOCreatePlugInInterfaceForService(
+            device_service, kIOUSBDeviceUserClientTypeID, kIOCFPlugInInterfaceID,
+            &device_plugin, &score);
+        IOObjectRelease(device_service);
+        if (kr != KERN_SUCCESS || device_plugin == nullptr) {
+            *why = "classic: could not create the device plug-in: " + IOReturnHex(kr);
+            return false;
+        }
+        HRESULT hr = (*device_plugin)->QueryInterface(
+            device_plugin, CFUUIDGetUUIDBytes(kIOUSBDeviceInterfaceID187),
+            reinterpret_cast<LPVOID*>(&device_));
+        (*device_plugin)->Release(device_plugin);
+        if (hr != S_OK || device_ == nullptr) {
+            *why = "classic: QueryInterface(IOUSBDeviceInterface187) failed";
+            return false;
+        }
+        // Open+seize the device, so exclusive interface access is permitted.
+        // A failure here is recorded but not fatal: CreateInterfaceIterator
+        // works without the device open, and the interface-level seize is
+        // what actually matters.
+        device_open_result_ = (*device_)->USBDeviceOpenSeize(device_);
+
+        // Ask the DEVICE OBJECT for its interfaces (not the global registry).
+        IOUSBFindInterfaceRequest request;
+        request.bInterfaceClass = kIOUSBFindInterfaceDontCare;
+        request.bInterfaceSubClass = kIOUSBFindInterfaceDontCare;
+        request.bInterfaceProtocol = kIOUSBFindInterfaceDontCare;
+        request.bAlternateSetting = kIOUSBFindInterfaceDontCare;
+        io_iterator_t iter = 0;
+        kr = (*device_)->CreateInterfaceIterator(device_, &request, &iter);
+        if (kr != KERN_SUCCESS) {
+            *why = "classic: CreateInterfaceIterator failed: " + IOReturnHex(kr);
+            return false;
+        }
+        io_service_t iface_service = 0;
+        int seen = 0;
+        while ((iface_service = IOIteratorNext(iter)) != 0) {
+            IOCFPlugInInterface** iface_plugin = nullptr;
+            SInt32 iscore = 0;
+            kern_return_t ikr = IOCreatePlugInInterfaceForService(
+                iface_service, kIOUSBInterfaceUserClientTypeID, kIOCFPlugInInterfaceID,
+                &iface_plugin, &iscore);
+            IOObjectRelease(iface_service);
+            if (ikr != KERN_SUCCESS || iface_plugin == nullptr) continue;
+            IOUSBInterfaceInterface190** candidate = nullptr;
+            HRESULT ihr = (*iface_plugin)->QueryInterface(
+                iface_plugin, CFUUIDGetUUIDBytes(kIOUSBInterfaceInterfaceID190),
+                reinterpret_cast<LPVOID*>(&candidate));
+            (*iface_plugin)->Release(iface_plugin);
+            if (ihr != S_OK || candidate == nullptr) continue;
+            ++seen;
+            UInt8 number = 0xFF;
+            (*candidate)->GetInterfaceNumber(candidate, &number);
+            if (number == spec.interface_number) {
+                interface_ = candidate;
+                break;
+            }
+            (*candidate)->Release(candidate);
+        }
+        IOObjectRelease(iter);
+        if (interface_ == nullptr) {
+            *why = "classic: interface " + std::to_string(spec.interface_number) +
+                   " not found via CreateInterfaceIterator (" + std::to_string(seen) +
+                   " interface(s) enumerated)";
+            return false;
+        }
+        // The actual seize from UVCAssistant.
+        IOReturn open_kr = (*interface_)->USBInterfaceOpenSeize(interface_);
+        if (open_kr != kIOReturnSuccess) {
+            *why = "classic: USBInterfaceOpenSeize refused by the current owner (UVCAssistant): " +
+                   IOReturnHex(open_kr);
+            return false;
+        }
+        interface_open_ = true;
+
+        // Find the bulk IN pipe matching the endpoint address.
+        const int want_number = spec.endpoint_address & 0x0F;
+        UInt8 num_endpoints = 0;
+        (*interface_)->GetNumEndpoints(interface_, &num_endpoints);
+        for (UInt8 pipe = 1; pipe <= num_endpoints; ++pipe) {
+            UInt8 direction = 0, number = 0, transfer_type = 0, interval = 0;
+            UInt16 max_packet = 0;
+            if ((*interface_)->GetPipeProperties(interface_, pipe, &direction, &number,
+                                                 &transfer_type, &max_packet, &interval) != kIOReturnSuccess) {
+                continue;
+            }
+            if (direction == kUSBIn && number == want_number && transfer_type == kUSBBulk) {
+                pipe_ref_ = pipe;
+                break;
+            }
+        }
+        if (pipe_ref_ == 0) {
+            *why = "classic: no bulk IN pipe for endpoint 0x" + std::to_string(spec.endpoint_address) +
+                   " on interface " + std::to_string(spec.interface_number);
+            return false;
+        }
+        return true;
+    }
+
+    // UVC VS_PROBE_CONTROL/VS_COMMIT_CONTROL via the classic control pipe.
+    // Same sequence as the IOUSBHost NegotiateUvcFormat; timeouts here are
+    // milliseconds (UInt32), not seconds.
+    bool NegotiateUvcFormat(int interface_number, int format_index, int frame_index,
+                            uint32_t frame_interval_100ns, int probe_commit_control_length,
+                            std::string* why) {
+        const int length = probe_commit_control_length;
+        auto control = [&](uint8_t request, uint16_t selector, uint8_t* data, std::string* step) -> bool {
+            IOUSBDevRequestTO req;
+            std::memset(&req, 0, sizeof(req));
+            req.bmRequestType = static_cast<uint8_t>(
+                (request == kUvcRequestGetCur ? kIOUSBDeviceRequestDirectionIn
+                                               : kIOUSBDeviceRequestDirectionOut) |
+                kIOUSBDeviceRequestTypeClass | kIOUSBDeviceRequestRecipientInterface);
+            req.bRequest = request;
+            req.wValue = static_cast<uint16_t>(selector << 8);
+            req.wIndex = static_cast<uint16_t>(interface_number);
+            req.wLength = static_cast<uint16_t>(length);
+            req.pData = data;
+            req.noDataTimeout = 1000;
+            req.completionTimeout = 1000;
+            IOReturn kr = (*interface_)->ControlRequestTO(interface_, 0, &req);
+            if (kr != kIOReturnSuccess) { *step = IOReturnHex(kr); return false; }
+            return true;
+        };
+        std::vector<uint8_t> buffer(length, 0);
+        std::string step;
+        if (!control(kUvcRequestGetCur, kUvcVsProbeControl, buffer.data(), &step)) {
+            *why = "classic: GET_CUR(VS_PROBE_CONTROL) failed: " + step;
+            return false;
+        }
+        VideoProbeCommitControl proposed = DeserializeProbeCommit(buffer.data(), buffer.size());
+        proposed.format_index = static_cast<uint8_t>(format_index);
+        proposed.frame_index = static_cast<uint8_t>(frame_index);
+        proposed.frame_interval = frame_interval_100ns;
+        proposed.bm_hint = 0x01;
+        SerializeProbeCommit(proposed, buffer.data());
+        if (!control(kUvcRequestSetCur, kUvcVsProbeControl, buffer.data(), &step)) {
+            *why = "classic: SET_CUR(VS_PROBE_CONTROL) failed: " + step;
+            return false;
+        }
+        if (!control(kUvcRequestGetCur, kUvcVsProbeControl, buffer.data(), &step)) {
+            *why = "classic: GET_CUR(VS_PROBE_CONTROL) read-back failed: " + step;
+            return false;
+        }
+        if (!control(kUvcRequestSetCur, kUvcVsCommitControl, buffer.data(), &step)) {
+            *why = "classic: SET_CUR(VS_COMMIT_CONTROL) failed: " + step;
+            return false;
+        }
+        return true;
+    }
+
+    bool Read(std::vector<uint8_t>* bytes, size_t capacity, std::string* why) {
+        bytes->resize(capacity);
+        UInt32 size = static_cast<UInt32>(capacity);
+        IOReturn kr = (*interface_)->ReadPipeTO(interface_, pipe_ref_, bytes->data(), &size,
+                                                1000, 1000);
+        if (kr != kIOReturnSuccess) {
+            *why = "classic: the endpoint read failed: " + IOReturnHex(kr);
+            return false;
+        }
+        bytes->resize(static_cast<size_t>(size));
+        return true;
+    }
+
+    void Close() {
+        if (interface_ != nullptr) {
+            if (interface_open_) (*interface_)->USBInterfaceClose(interface_);
+            (*interface_)->Release(interface_);
+            interface_ = nullptr;
+            interface_open_ = false;
+        }
+        if (device_ != nullptr) {
+            if (device_open_result_ == kIOReturnSuccess) (*device_)->USBDeviceClose(device_);
+            (*device_)->Release(device_);
+            device_ = nullptr;
+        }
+        pipe_ref_ = 0;
+    }
+
+private:
+    static std::string IOReturnHex(IOReturn r) {
+        char buf[16];
+        std::snprintf(buf, sizeof(buf), "0x%08x", r);
+        return buf;
+    }
+
+    IOUSBDeviceInterface187** device_ = nullptr;
+    IOUSBInterfaceInterface190** interface_ = nullptr;
+    IOReturn device_open_result_ = kIOReturnError;
+    bool interface_open_ = false;
+    UInt8 pipe_ref_ = 0;
+};
+
+// FrameSource using the classic acquisition path. Mirrors IokitUvcSource's
+// frame loop; only the handle differs.
+class ClassicUvcSource : public FrameSource {
+public:
+    explicit ClassicUvcSource(StreamKind kind) : kind_(kind) {}
+
+    bool configured() const override { return StreamConfigured(Table().stream(kind_)); }
+
+    std::string configuration_error() const override {
+        const StreamSpec& spec = Table().stream(kind_);
+        const std::string missing = MissingStreamFields(spec);
+        if (!missing.empty()) {
+            return std::string("not-configured: ") + spec.name + " " + missing +
+                   " (run raw_capture --probe and fill descriptor_table.h)";
+        }
+        if (spec.endpoint.transfer == TransferType::kIsochronous) {
+            return "not-configured: the endpoint is isochronous; this build reads bulk/interrupt only";
+        }
+        return "";
+    }
+
+    bool Next(Frame* frame, std::string* error) override {
+        error->clear();
+        if (!configured()) { *error = configuration_error(); return false; }
+        const StreamSpec& spec = Table().stream(kind_);
+        if (spec.endpoint.transfer == TransferType::kIsochronous) {
+            *error = configuration_error();
+            return false;
+        }
+        if (assembler_ == nullptr) {
+            assembler_ = std::make_unique<UvcAssembler>(spec.bytes_per_line * spec.height);
+            if (!handle_.Open(spec.endpoint, error)) return false;
+            if (!handle_.NegotiateUvcFormat(spec.endpoint.interface_number, spec.format_index,
+                                            spec.frame_index, spec.frame_interval_100ns,
+                                            Table().probe_commit_control_length, error)) {
+                return false;
+            }
+            capacity_ = std::min<size_t>(static_cast<size_t>(spec.bytes_per_line) * spec.height, 4u << 20);
+            capacity_ = std::max<size_t>(capacity_, 64u << 10);
+        }
+        for (int attempt = 0; attempt < 64; ++attempt) {
+            std::vector<uint8_t> transfer;
+            if (!handle_.Read(&transfer, capacity_, error)) return false;
+            if (transfer.empty()) continue;
+            UvcFrame assembled;
+            std::string uvc_error;
+            if (!assembler_->Feed(transfer.data(), transfer.size(), &assembled, &uvc_error)) continue;
+            frame->kind = kind_;
+            frame->seq = frame_seq_++;
+            frame->timestamp_us = static_cast<uint64_t>(
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::steady_clock::now().time_since_epoch()).count());
+            frame->width = spec.width;
+            frame->height = spec.height;
+            frame->stride = spec.bytes_per_line;
+            frame->format = spec.pixel_format;
+            frame->data = std::move(assembled.data);
+            return true;
+        }
+        *error = "classic: no complete frame assembled within the transfer budget";
+        return false;
+    }
+
+private:
+    StreamKind kind_;
+    ClassicUsbInterfaceHandle handle_;
+    std::unique_ptr<UvcAssembler> assembler_;
+    size_t capacity_ = 0;
+    uint64_t frame_seq_ = 0;
+};
+
 }  // namespace
 
 std::unique_ptr<FrameSource> MakeLiveUvcSource(StreamKind kind, std::string* why) {
-    auto source = std::make_unique<IokitUvcSource>(kind);
+    // Default to the classic IOUSBLib acquisition path: the modern IOUSBHost
+    // path cannot even find these UVCAssistant-owned interfaces (dossier §2),
+    // while the classic CreateInterfaceIterator + USBInterfaceOpenSeize route
+    // is the mechanism libusb (and thus the vendor) uses. Set
+    // OPENSCANNER_UVC_IOUSBHOST=1 to force the old path for an A/B comparison.
+    const char* force_host = std::getenv("OPENSCANNER_UVC_IOUSBHOST");
+    std::unique_ptr<FrameSource> source;
+    if (force_host != nullptr && force_host[0] == '1') {
+        source = std::make_unique<IokitUvcSource>(kind);
+    } else {
+        source = std::make_unique<ClassicUvcSource>(kind);
+    }
     if (!source->configured()) {
         if (why) *why = source->configuration_error();
         return nullptr;
