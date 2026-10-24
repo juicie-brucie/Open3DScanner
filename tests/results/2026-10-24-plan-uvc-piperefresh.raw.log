@@ -1,0 +1,51 @@
+--- PREFLIGHT ---
+hw-preflight: OK
+
+- Date: 2026-10-24
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+- Branch: hw/next
+- Target: build/tools/raw_capture/raw_capture  (build-tree copy (fixed order 2: build/tools/<target>/<target>))
+- Other copy: none
+- Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 01:15:07 >= newest source iokit_source.mm 01:15:01
+- Interposer: expect first line: [launcher] DYLD_INSERT_LIBRARIES=...libMoltenVK.dylib:...libvulkan_disable_interpose.dylib
+- Run start: 2026-10-24 01:16:35
+
+--- VENDOR STOP ---
+$ launchctl bootout gui/501/com.creality.RPCServer
+Boot-out failed: 3: No such process
+rc=3
+
+$ pgrep -x RPCServer
+(no output)
+pgrep rc=1
+
+--- BUILD ---
+$ cmake --build build --target raw_capture
+[ 66%] Built target raw_capture_core
+[100%] Built target raw_capture
+build_rc=0
+
+binary mtime post-rebuild: 2026-10-24 01:15:07
+
+--- PART A: IR FIRST ---
+$ build/tools/raw_capture/raw_capture --capture --stream ir --max-seconds 5 --sink tests/results/2026-10-24-plan-uvc-piperefresh/ir-first.bin
+[capture] sink: tests/results/2026-10-24-plan-uvc-piperefresh/ir-first.bin (16 bytes)
+[capture] stop: source-error
+[capture] detail: GET_CUR(VS_PROBE_CONTROL) failed: Unable to send device request.
+[capture] frames: 0 (ir 0, depth 0, rgb 0), 0 record bytes
+ir_rc=2
+
+sink ir-first.bin: 16 bytes
+
+--- PART B: DEPTH ---
+$ build/tools/raw_capture/raw_capture --capture --stream depth --max-seconds 5 --sink tests/results/2026-10-24-plan-uvc-piperefresh/depth.bin
+[capture] sink: tests/results/2026-10-24-plan-uvc-piperefresh/depth.bin (16 bytes)
+[capture] stop: source-error
+[capture] detail: GET_CUR(VS_PROBE_CONTROL) failed: Unable to send device request.
+[capture] frames: 0 (ir 0, depth 0, rgb 0), 0 record bytes
+depth_rc=2
+
+sink depth.bin: 16 bytes
+
+--- CRASH SWEEP ---
+hw-postflight: no crash report for 'raw_capture' at/after 2026-10-24 01:16:35 — safe to record 'no crash report (checked DiagnosticReports for raw_capture at/after the run start)'.
