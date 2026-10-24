@@ -223,6 +223,12 @@ Reads are contiguous 768-B windows over 0x200000..0x206000 and
 this order (position → type → source offset in `device::DeviceParameters`);
 anchored semantics in bold:
 
+> **Erratum (#211, 2026-10-24):** the `offset` column below is the **source
+> offset inside the live `DeviceParameters` struct**, i.e. where `to_buffer`
+> *reads* each field — **not** an offset into the serialized `camera_intrin.bat`
+> file. That file is a length-prefixed container whose 177-byte body does not
+> parse as these fields from the recorded bytes; see §4's intrinsics erratum.
+
 | # | type | offset | semantic |
 | --- | --- | --- | --- |
 | 1 | i32 | (stack local) | computed at pack time — not a struct field [open] |
@@ -269,9 +275,43 @@ fields are not needed to use the intrinsics.
 
 ## 4. What a consumer needs to reproduce each SDK-free
 
-- **Intrinsics — settled.** Read `<session>/resources.obscan` (SQLite), row
-  `files.name='camera_intrin.bat'` (210 B), parse the 41-field big-endian
-  record with §3's map. No device, no SDK.
+- **Intrinsics — transport settled; file byte-layout OPEN (erratum, #211,
+  2026-10-24).** What is settled: the **transport** — the record is
+  `<session>/resources.obscan` (SQLite), row `files.name='camera_intrin.bat'`,
+  **209 B** (not 210), and it is **device-stable** (byte-identical across three
+  independent sessions, #207). What is **NOT** settled: that you can "parse the
+  41-field big-endian record with §3's map." §3's `offset` column is the
+  **source offset inside the live `DeviceParameters` struct** (what
+  `to_buffer` reads), **not** an offset into this file. The file's own bytes are
+  a **length-prefixed container**, not a plain field record:
+  - header (32 B): three big-endian u64 `{0xDB tag, 0x20 = 32 (header size),
+    0xB1 = 177 (payload length)}` then an 8-byte `0xAF` pad to offset 32;
+    `32 + 177 = 209`.
+  - payload (177 B): dense/encoded — entropy ≈ 6.75 bits/byte (90% of the
+    7.47-bit max for 177 bytes), a single zero byte, and **no fx/fy/cx/cy
+    recoverable** at any 4- or 8-byte-aligned offset as f32/f64 (LE or BE).
+  - **Named negative — transforms tested, all fail (2026-10-24).** Decoding was
+    attempted on the recorded bytes and none yields plaintext floats, the known
+    resolutions (480×300 depth, 640×480/1280×720/1920×1080, etc. as adjacent
+    i32), or a drop in entropy: single-byte XOR (all 256 keys), 2-byte repeating
+    XOR (all 65 536), XOR with the device serial `CR0886100SN`, 4-byte
+    byte-swap, raw-deflate / zlib / gzip (payload and whole file), and a
+    nested-length-container reading of the body. So fx/fy/cx/cy are **not
+    recoverable from this file as-is** — the body uses a multi-byte/stream
+    transform or packing only the serializer defines. The `0xDB` tag is `[open]`.
+  - **This file is NOT the §3 serializer's output.** The payload is **177 B**;
+    `SerializableDeviceParams::to_buffer` @`0x6e3874` is a **0x554 (1364) B**
+    region. `camera_intrin.bat` is therefore a *different, compacter*
+    serialization — §3's 41-field map does not describe it on either count
+    (wrong format **and** wrong size).
+  - **Exact next probe (recon1, REA — not for hw-test or this agent):** identify
+    the SDK function that *writes* `camera_intrin.bat` emitting the 32-B
+    `{0xDB, 0x20, 0xB1, 0xAF-pad}` header + 177-B body (it is **not**
+    `to_buffer`), and what transform/encoding it applies to the body. That
+    answers whether the intrinsics are recoverable SDK-free at all.
+  So the SDK-free intrinsics path is **not** currently achievable from this file;
+  the §3 map remains valid as the *source-struct* layout (a live
+  `DeviceParameters` hexdump would validate it), not as this file's format.
 - **Laser planes — gap.** No C getter; device-flash-authoritative. To
   reproduce SDK-free: (a) a **runtime capture** — dump the session dir for a
   plane record (record-name inventory not established) and/or the device-cache
