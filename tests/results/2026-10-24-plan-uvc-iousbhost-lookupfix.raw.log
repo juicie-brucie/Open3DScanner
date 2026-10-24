@@ -1,0 +1,224 @@
+hw-preflight (first attempt, pre-build):
+hw-preflight: FAIL — newest source 'tools/raw_capture/descriptor_probe.cpp' is NEWER than binary 'build/tools/raw_capture/raw_capture' — rebuild (a header change counts; #107: a worker-only rebuild can leave a stale bundle copy).
+
+--- Step 1: fetch + verify #501 ---
+git fetch origin  # (up to date)
+git rev-parse origin/main
+2758c3e52cdb59e08775c4e1c83295d41b340bc6
+
+git log --oneline origin/main | grep -E "95307e2|#501|IOUSBHost":
+64dd939 board: #198 lookup fix landed (#501); next gate is the hardware run
+b7aa4b7 Merge pull request #501 from juicie-brucie/uvc/198-modern-interface-lookup
+95307e2 raw_capture: fix the modern IOUSBHost interface lookup (#198)
+7aab714 records: land the modern IOUSBHost run on main (FAIL) + correction
+
+git stash push --include-untracked -m "hw room before #198 retry"
+Saved working directory and index state On hw/next: hw room before #198 retry
+
+git stash list | head -1
+stash@{0}: On hw/next: hw room before #198 retry
+
+--- Step 2: checkout main + build ---
+git checkout --detach origin/main
+HEAD is now at 2758c3e Merge pull request #502 from juicie-brucie/dispatch/board-2026-10-24-198-lookup
+
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+[... cmake output ...]
+-- Configuring done (1.2s)
+-- Generating done (0.2s)
+-- Build files have been written to: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build
+
+cmake --build build --target raw_capture -j8
+[  0%] Building CXX object tools/raw_capture/CMakeFiles/raw_capture_core.dir/uvc_selection.cpp.o
+[  0%] Building CXX object tools/raw_capture/CMakeFiles/raw_capture_core.dir/descriptor_probe.cpp.o
+[ 10%] Linking CXX static library libraw_capture_core.a
+[ 70%] Built target raw_capture_core
+[ 70%] Building CXX object tools/raw_capture/CMakeFiles/raw_capture.dir/iokit_probe.mm.o
+[ 80%] Building CXX object tools/raw_capture/CMakeFiles/raw_capture.dir/iokit_source.mm.o
+[ 80%] Linking CXX executable raw_capture
+[100%] Built target raw_capture
+
+shasum -a 256 build/tools/raw_capture/raw_capture
+c203a92d8b49411225b2cf813b9079aa69365153b11943f02686bc9a245e100e  build/tools/raw_capture/raw_capture
+
+hw-preflight (post-build):
+hw-preflight: OK
+- Date: 2026-10-24
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+- Branch:
+- Target: build/tools/raw_capture/raw_capture  (explicit argument (the binary this run will execute))
+- Other copy: none
+- Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 06:05:32 >= newest source descriptor_probe.cpp 06:05:22
+- Interposer: expect first line: [launcher] DYLD_INSERT_LIBRARIES=...libMoltenVK.dylib:...libvulkan_disable_interpose.dylib
+- Run start: 2026-10-24 06:05:36
+
+--- Step 3: preconditions ---
+osascript -e 'quit app "CrealityScan"'
+osascript rc=0
+
+launchctl bootout gui/<uid>/com.creality.RPCServer
+bootout rc=3
+
+pgrep -x RPCServer
+(empty)
+pgrep rc=1
+
+ioreg -p IOService -n "Creality Raptor Pro" -l -r | grep -E 'UsbExclusiveOwner|bInterfaceNumber|IOClass':
+|     "IOClass" = "AppleUSBHostCompositeDevice"
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 0
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 1
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 2
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 3
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 4
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 5
+    |   "UsbExclusiveOwner" = "AppleUserUSBHostHIDDevice"
+    |   "bInterfaceNumber" = 6
+      |   "IOMatchedPersonality" = {"IOClass"="AppleUserHIDDevice","CFBundleIdentifier"="com.apple.AppleUserHIDDrivers","IOProviderClass"="IOUSBHostInterface","IOUserServerCDHash"="c1f9f34e045f400acaeb6a4fce11f184ac894e22","IOProbeScore"=1,"bInterfaceSubClass"=0,"IOUserServerName"="com.apple.driverkit.AppleUserHIDDrivers","HIDDefaultBehavior"="","kOSBundleDextUniqueIdentifier"=<b796d15d9354eae826f370c78da5a69a0107352f2c064353231d0efec890df26>,"CFBundleIdentifierKernel"="com.apple.iokit.IOHIDFamily","IOUserServerOneProcess"=Yes,"bInterfaceClass"=3,"IOUserClass"="AppleUserUSBHostHIDDevice"}
+      |   "IOClass" = "AppleUserHIDDevice"
+
+--- Step 4: --probe ---
+build/tools/raw_capture/raw_capture --probe
+[probe] vid=0x2BC5 pid=0x0C03 configuration=1 interfaces=7
+[probe] interface 0 alternates: 1 [alt 0: no endpoints]
+[probe] interface 1 alternates: 1 [alt 0: 0x81 bulk 1024]
+[probe] interface 2 alternates: 1 [alt 0: no endpoints]
+[probe] interface 3 alternates: 1 [alt 0: 0x82 bulk 1024]
+[probe] interface 4 alternates: 1 [alt 0: no endpoints]
+[probe] interface 5 alternates: 1 [alt 0: 0x83 bulk 1024]
+[probe] interface 6 alternates: 1 [alt 0: 0x85 interrupt 248]
+[probe] interface number=0 alternate_setting=0 class=0x0E subclass=0x01 protocol=0x00 kind=video-control
+[probe] extension_units=4
+[probe] video_control bcd_uvc=0x0110 (probe_commit_control_length=34)
+[probe] interface number=1 alternate_setting=0 class=0x0E subclass=0x02 protocol=0x00 kind=video-streaming
+[probe] endpoint interface=1 alternate_setting=0 address=0x81 transfer=bulk max_packet_size=1024 interval=0
+[probe] video_streaming format_index=1 frame_index=7
+[probe] video_streaming format_guid=0x719B3800AA0000800010000020203859 fourcc=Y8   bits_per_pixel=8 width=480 height=300 max_frame_bytes=252000 bytes_per_line=840 (derived) frame_interval_100ns=333333
+[probe] video_streaming streaming_endpoint_address=0x81
+[probe] stream[0].endpoint.interface_number=1
+[probe] stream[0].endpoint.alternate_setting=0
+[probe] stream[0].endpoint.endpoint_address=0x81
+[probe] stream[0].endpoint.transfer=bulk
+[probe] stream[0].endpoint.max_packet_size=1024
+[probe] stream[0].pixel_format=0x20203859
+[probe] stream[0].width=480
+[probe] stream[0].height=300
+[probe] stream[0].bytes_per_line=840 (derived from max_frame_bytes/height)
+[probe] interface number=2 alternate_setting=0 class=0x0E subclass=0x01 protocol=0x00 kind=video-control
+[probe] extension_units=8
+[probe] video_control bcd_uvc=0x0110 (probe_commit_control_length=34)
+[probe] interface number=3 alternate_setting=0 class=0x0E subclass=0x02 protocol=0x00 kind=video-streaming
+[probe] endpoint interface=3 alternate_setting=0 address=0x82 transfer=bulk max_packet_size=1024 interval=0
+[probe] video_streaming format_index=2 frame_index=1
+[probe] video_streaming format_guid=0x719B3800AA0000800010000020203859 fourcc=Y8   bits_per_pixel=8 width=960 height=600 max_frame_bytes=576000 bytes_per_line=960 (derived) frame_interval_100ns=333333
+[probe] video_streaming streaming_endpoint_address=0x82
+[probe] stream[1].endpoint.interface_number=3
+[probe] stream[1].endpoint.alternate_setting=0
+[probe] stream[1].endpoint.endpoint_address=0x82
+[probe] stream[1].endpoint.transfer=bulk
+[probe] stream[1].endpoint.max_packet_size=1024
+[probe] stream[1].pixel_format=0x20203859
+[probe] stream[1].width=960
+[probe] stream[1].height=600
+[probe] stream[1].bytes_per_line=960 (derived from max_frame_bytes/height)
+[probe] interface number=4 alternate_setting=0 class=0x0E subclass=0x01 protocol=0x00 kind=video-control
+[probe] extension_units=12
+[probe] video_control bcd_uvc=0x0110 (probe_commit_control_length=34)
+[probe] interface number=5 alternate_setting=0 class=0x0E subclass=0x02 protocol=0x00 kind=video-streaming
+[probe] endpoint interface=5 alternate_setting=0 address=0x83 transfer=bulk max_packet_size=1024 interval=0
+[probe] video_streaming format_index=1 frame_index=2
+[probe] video_streaming format_guid=0x719B3800AA0000800010000032595559 fourcc=YUY2 bits_per_pixel=16 width=1280 height=800 max_frame_bytes=2048000 bytes_per_line=2560 (derived) frame_interval_100ns=333333
+[probe] video_streaming streaming_endpoint_address=0x83
+[probe] stream[2].endpoint.interface_number=5
+[probe] stream[2].endpoint.alternate_setting=0
+[probe] stream[2].endpoint.endpoint_address=0x83
+[probe] stream[2].endpoint.transfer=bulk
+[probe] stream[2].endpoint.max_packet_size=1024
+[probe] stream[2].pixel_format=0x32595559
+[probe] stream[2].width=1280
+[probe] stream[2].height=800
+[probe] stream[2].bytes_per_line=2560 (derived from max_frame_bytes/height)
+[probe] interface number=6 alternate_setting=0 class=0x03 subclass=0x00 protocol=0x00 kind=hid
+[probe] endpoint interface=6 alternate_setting=0 address=0x85 transfer=interrupt max_packet_size=248 interval=1
+[probe] control.endpoint.interface_number=6
+[probe] control.endpoint.alternate_setting=0
+[probe] control.endpoint.endpoint_address=0x85
+[probe] control.endpoint.transfer=interrupt
+[probe] control.report_descriptor_length=25
+[probe] control.report_id=unknown (needs the report descriptor)
+[probe] note: the fields printed above are the table's names; the IR/depth assignment needs the RPC->endpoint map (OQ-169e).
+[hid] descriptor: 25 bytes: 05 8C 09 01 A1 01 09 03 17 00 00 00 00 27 FF FF FF FF 75 20 95 3E 81 02 C0
+[hid] report ids: 0
+[hid] field report_id=0 type=input usage_page=0x008C usages=0x0003 bit_offset=0 bit_size=32 count=62 logical=0..-1 variable=yes constant=no
+[hid] report id=0 type=input 1984 bit(s) = 248 byte(s)
+[hid] output: none — every field is input/feature; this HID interface cannot carry the laser/exposure control, which stays the vendor RPC properties (#101)
+
+--- Step 4: --diag-interfaces ---
+build/tools/raw_capture/raw_capture --diag-interfaces
+[diag] enumerating every IOUSBHostInterface visible to this process (no filter); scanner is vid=0x2BC5 pid=0x0C03
+[diag]  vid=0x05AC pid=0x029F interface=2 owner="AppleUserUSBHostHIDDevice" name="Magic Keyboard with Touch ID and Numeric Keypad"
+[diag]  vid=0x05AC pid=0x029F interface=1 owner="AppleUserUSBHostHIDDevice" name="Magic Keyboard with Touch ID and Numeric Keypad"
+[diag]  vid=0x05AC pid=0x029F interface=0 owner="AppleUserUSBHostHIDDevice" name="Magic Keyboard with Touch ID and Numeric Keypad"
+[diag]  vid=0x05AC pid=0x0265 interface=1 owner="AppleUSBTopCaseHIDDriver" name="Magic Trackpad"
+[diag]  vid=0x05AC pid=0x0265 interface=0 owner="AppleUSBTopCaseHIDDriver" name="Magic Trackpad"
+[diag]  vid=0x05AC pid=0x0265 interface=2 owner="AppleUSBTopCaseHIDDriver" name="Magic Trackpad"
+[diag]  vid=0x05AC pid=0x0265 interface=3 owner="AppleUSBTopCaseHIDDriver" name="Magic Trackpad"
+[diag]  vid=0x2BC5 pid=0x0C03 interface=1 owner="pid 603, UVCAssistant" name="Creality Raptor Pro"  <-- SCANNER
+[diag]  vid=0x2BC5 pid=0x0C03 interface=5 owner="pid 603, UVCAssistant" name="Creality Raptor Pro"  <-- SCANNER
+[diag]  vid=0x2BC5 pid=0x0C03 interface=4 owner="pid 603, UVCAssistant" name="Creality Raptor Pro"  <-- SCANNER
+[diag]  vid=0x2BC5 pid=0x0C03 interface=6 owner="AppleUserUSBHostHIDDevice" name="Creality Raptor Pro"  <-- SCANNER
+[diag]  vid=0x2BC5 pid=0x0C03 interface=3 owner="pid 603, UVCAssistant" name="Creality Raptor Pro"  <-- SCANNER
+[diag]  vid=0x2BC5 pid=0x0C03 interface=0 owner="pid 603, UVCAssistant" name="Creality Raptor Pro"  <-- SCANNER
+[diag]  vid=0x2BC5 pid=0x0C03 interface=2 owner="pid 603, UVCAssistant" name="Creality Raptor Pro"  <-- SCANNER
+[diag] total IOUSBHostInterface nodes visible: 14; of those, scanner's: 7
+[diag] VERDICT: the scanner's interfaces ARE visible to this process (7 found) — the blocker is in the matching filter or the seize, not raw visibility.
+
+--- Step 4: depth capture ---
+OPENSCANNER_UVC_IOUSBHOST=1 build/tools/raw_capture/raw_capture \
+    --capture --stream depth --sink /tmp/uvc-depth-host2.rcap --max-frames 30 --max-seconds 10
+[uvc] interface lookup: want vid=0x2BC5 pid=0x0C03 interface=1; 14 IOUSBHostInterface node(s) enumerated:
+[uvc]   [0] vid=0x05AC pid=0x029F interface=2
+[uvc]   [1] vid=0x05AC pid=0x029F interface=1
+[uvc]   [2] vid=0x05AC pid=0x029F interface=0
+[uvc]   [3] vid=0x05AC pid=0x0265 interface=1
+[uvc]   [4] vid=0x05AC pid=0x0265 interface=0
+[uvc]   [5] vid=0x05AC pid=0x0265 interface=2
+[uvc]   [6] vid=0x05AC pid=0x0265 interface=3
+[uvc]   [7] vid=0x2BC5 pid=0x0C03 interface=1  <-- match
+[uvc]   [8] vid=0x2BC5 pid=0x0C03 interface=5
+[uvc]   [9] vid=0x2BC5 pid=0x0C03 interface=4
+[uvc]   [10] vid=0x2BC5 pid=0x0C03 interface=6
+[uvc]   [11] vid=0x2BC5 pid=0x0C03 interface=3
+[uvc]   [12] vid=0x2BC5 pid=0x0C03 interface=0
+[uvc]   [13] vid=0x2BC5 pid=0x0C03 interface=2
+[capture] sink: /tmp/uvc-depth-host2.rcap (16 bytes)
+[capture] stop: source-error
+[capture] detail: interface 1 could not be seized from its current owner: Failed to create IOUSBHostInterface. (retried 15 times over ~1500ms)
+[capture] frames: 0 (ir 0, depth 0, rgb 0), 0 record bytes
+EXIT=2
+
+Sink file: /tmp/uvc-depth-host2.rcap = 16 bytes (header only)
+
+IR capture: NOT ATTEMPTED (depth prerequisite not met)
+
+--- Step 5: restore ---
+git checkout hw/next
+Previous HEAD position was 2758c3e Merge pull request #502 from juicie-brucie/dispatch/board-2026-10-24-198-lookup
+Switched to branch 'hw/next'
+Your branch is ahead of 'origin/hw/next' by 255 commits.
+
+git stash pop
+Already up to date.
+On branch hw/next
+Dropped refs/stash@{0} (1db9346dbc129fdf76c8df8d2cd964fe1a0f0734)
+
+git status --short | head (untracked only, no modifications)
+
+--- postflight ---
+scripts/hw-postflight.sh 2026-10-24-plan-uvc-iousbhost-lookupfix '2026-10-24 06:05:36' raw_capture
+hw-postflight: no crash report for 'raw_capture' at/after 2026-10-24 06:05:36 — safe to record 'no crash report (checked DiagnosticReports for raw_capture at/after the run start)'.
