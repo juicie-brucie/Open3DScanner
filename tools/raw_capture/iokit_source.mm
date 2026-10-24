@@ -53,34 +53,36 @@ io_service_t FindScannerService() {
 }
 
 // Finds a specific interface's own IOKit service directly, by vendor/product
-// ID and interface number — the matching-dictionary API IOUSBHostInterface
-// itself provides for exactly this (its header: "to be passed into
-// IOServiceGetMatchingService"), the same pattern FindScannerService() uses
-// for the top-level device. Replaces walking the device's child services and
-// checking each one's bInterfaceNumber by hand: that approach depends on
-// macOS having already published a distinct IOUSBHostInterface registry node
-// for this interface, which hw-test found does not reliably happen for this
-// device's custom-class (0x0E/0x02) interfaces within 500ms of claiming the
-// top-level device, if at all by that path
-// (2026-10-24-plan-uvc-getcur-baseline.md, -iface-retry.md) — even though
-// the interface's descriptor bytes are always readable directly from the
-// device object (which is exactly how --probe finds them; see
-// iokit_probe.mm's ProbeAttachedDevice, which never walks child services).
+// ID and interface number. Built with the exact same low-level
+// IOServiceMatching + CFDictionarySetValue pattern as FindScannerService()
+// above — not IOUSBHostInterface's own
+// createMatchingDictionaryWithVendorID:...interfaceNumber:... convenience
+// method, which hw-test found returns no match (interface_service == 0) 15
+// retries running, even though `ioreg -p IOService` independently confirmed
+// a fully "registered, matched, active" IOUSBHostInterface node with those
+// exact idVendor/idProduct/bInterfaceNumber property values
+// (2026-10-24-plan-uvc-findseize.md, -devicecapture.md). Whatever that
+// convenience method builds differs from this in some way that keeps it
+// from matching; this uses the identical shape already proven to work for
+// the device-level lookup, with the class name and the interface-number key
+// string both taken from IOKit's own headers
+// (kIOUSBHostInterfaceClassName="IOUSBHostInterface",
+// kUSBInterfaceNumber="bInterfaceNumber" via
+// IOUSBHostFamilyDefinitions.h/USBSpec.h) rather than assumed.
 io_service_t FindInterfaceService(int interface_number) {
+    CFMutableDictionaryRef matching = IOServiceMatching(kIOUSBHostInterfaceClassName);
+    if (matching == nullptr) return 0;
     int vendor = Table().vendor_id;
     int product = Table().product_id;
-    CFMutableDictionaryRef matching = [IOUSBHostInterface
-        createMatchingDictionaryWithVendorID:@(vendor)
-                                    productID:@(product)
-                                    bcdDevice:nil
-                              interfaceNumber:@(interface_number)
-                           configurationValue:nil
-                               interfaceClass:nil
-                            interfaceSubclass:nil
-                            interfaceProtocol:nil
-                                        speed:nil
-                               productIDArray:nil];
-    if (matching == nullptr) return 0;
+    CFNumberRef vendor_ref = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &vendor);
+    CFNumberRef product_ref = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &product);
+    CFNumberRef interface_ref = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &interface_number);
+    if (vendor_ref) CFDictionarySetValue(matching, CFSTR(kUSBVendorID), vendor_ref);
+    if (product_ref) CFDictionarySetValue(matching, CFSTR(kUSBProductID), product_ref);
+    if (interface_ref) CFDictionarySetValue(matching, CFSTR(kUSBInterfaceNumber), interface_ref);
+    if (vendor_ref) CFRelease(vendor_ref);
+    if (product_ref) CFRelease(product_ref);
+    if (interface_ref) CFRelease(interface_ref);
     return IOServiceGetMatchingService(MainPort(), matching);
 }
 
