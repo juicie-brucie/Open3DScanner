@@ -19,3 +19,8 @@ GPPLog.txt
 /.recon-cache/
 __pycache__/
 *.pyc
+
+# Root Claude Code notes are now a local, per-worktree file (machine-specific
+# paths, per-session workstream guidance) — kept on disk, not tracked. Each
+# worktree/operator seeds its own, like .claude/agents/CLAUDE.local.md.
+/CLAUDE.md
