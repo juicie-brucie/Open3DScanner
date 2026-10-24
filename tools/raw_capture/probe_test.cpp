@@ -128,6 +128,68 @@ std::vector<uint8_t> SyntheticTree() {
     return blob;
 }
 
+// A VideoStreaming interface declaring TWO formats, each with its own frame,
+// in the UVC-standard nested order (VS_FORMAT, VS_FRAME, VS_FORMAT, VS_FRAME).
+// Regression for the bug where format_index was overwritten by the LAST
+// format descriptor seen while frame_index/width/height stayed locked to the
+// FIRST — pairing a later format's index with an earlier format's frame.
+std::vector<uint8_t> SyntheticTreeMultiFormat() {
+    std::vector<uint8_t> body;
+
+    const uint8_t vc[] = {9, 0x04, 0, 0, 0, 0x0E, 0x01, 0x00, 0};
+    body.insert(body.end(), vc, vc + sizeof(vc));
+    const uint8_t vc_header[] = {13, 0x24, 0x01, 0x10, 0x01, 12, 0, 0, 0, 0, 1, 1, 0};
+    body.insert(body.end(), vc_header, vc_header + sizeof(vc_header));
+
+    const uint8_t vs[] = {9, 0x04, 1, 1, 1, 0x0E, 0x02, 0x00, 0};
+    body.insert(body.end(), vs, vs + sizeof(vs));
+    uint8_t vs_header[14] = {14, 0x24, 0x01, 2, 0, 0, 0x81, 0, 0, 0, 0, 0, 0, 0};
+    body.insert(body.end(), vs_header, vs_header + sizeof(vs_header));
+
+    // First format (index 1) + its frame (index 1): 640x480, 307200 bytes —
+    // this is the pair the parser must keep (the first frame it sees).
+    uint8_t format1[28] = {0};
+    format1[0] = 28; format1[1] = 0x24; format1[2] = 0x04; format1[3] = 1; format1[4] = 1;
+    const char grey[4] = {'G', 'R', 'E', 'Y'};
+    std::memcpy(format1 + 5, grey, 4);
+    format1[21] = 8;
+    body.insert(body.end(), format1, format1 + sizeof(format1));
+    uint8_t frame1[30] = {0};
+    frame1[0] = 30; frame1[1] = 0x24; frame1[2] = 0x05; frame1[3] = 1;
+    frame1[5] = 640 & 0xff; frame1[6] = 640 >> 8; frame1[7] = 480 & 0xff; frame1[8] = 480 >> 8;
+    frame1[17] = 307200 & 0xff; frame1[18] = (307200 >> 8) & 0xff;
+    frame1[19] = (307200 >> 16) & 0xff; frame1[20] = (307200 >> 24) & 0xff;
+    body.insert(body.end(), frame1, frame1 + sizeof(frame1));
+
+    // Second format (index 5) + its frame (index 9): a different resolution.
+    // Before the fix, format_index ended up 5 (overwritten here) while
+    // frame_index/width/height stayed at the first pair — a mismatched pair.
+    uint8_t format2[28] = {0};
+    format2[0] = 28; format2[1] = 0x24; format2[2] = 0x04; format2[3] = 5; format2[4] = 1;
+    std::memcpy(format2 + 5, grey, 4);
+    format2[21] = 8;
+    body.insert(body.end(), format2, format2 + sizeof(format2));
+    uint8_t frame2[30] = {0};
+    frame2[0] = 30; frame2[1] = 0x24; frame2[2] = 0x05; frame2[3] = 9;
+    frame2[5] = 1920 & 0xff; frame2[6] = 1920 >> 8; frame2[7] = 1080 & 0xff; frame2[8] = 1080 >> 8;
+    body.insert(body.end(), frame2, frame2 + sizeof(frame2));
+
+    AddEndpoint(&body, 0x81, 0x02, 1024, 0);
+
+    std::vector<uint8_t> blob;
+    const size_t total = 9 + body.size();
+    blob.push_back(9);
+    blob.push_back(0x02);
+    Put16(&blob, static_cast<uint16_t>(total));
+    blob.push_back(2);
+    blob.push_back(1);
+    blob.push_back(0);
+    blob.push_back(0x80);
+    blob.push_back(50);
+    blob.insert(blob.end(), body.begin(), body.end());
+    return blob;
+}
+
 const rc::ProbeInterface* FindInterface(const rc::ProbeResult& result, int number) {
     for (const auto& interface : result.interfaces) {
         if (interface.number == number) return &interface;
@@ -171,12 +233,15 @@ int main() {
         Check(vc != nullptr && vc->video_control, "interface 0 is VideoControl");
         Check(vc != nullptr && vc->extension_units.size() == 1 && vc->extension_units[0] == 7,
               "the VC extension unit id is read");
+        Check(vc != nullptr && vc->bcd_uvc == 0x0100, "the VC header's bcdUVC is read");
 
         const rc::ProbeInterface* vs = FindInterface(result, 1);
         Check(vs != nullptr && vs->video_streaming, "interface 1 is VideoStreaming");
         Check(vs != nullptr && vs->streaming_endpoint_address == 0x81, "the VS endpoint address is read");
         Check(vs != nullptr && vs->format_fourcc == 0x59455247u, "the format fourcc is GREY");
         Check(vs != nullptr && vs->bits_per_pixel == 8, "the format's bits per pixel is read");
+        Check(vs != nullptr && vs->format_index == 1, "the format's bFormatIndex is read");
+        Check(vs != nullptr && vs->frame_index == 1, "the frame's bFrameIndex is read");
         Check(vs != nullptr && vs->width == 640 && vs->height == 480, "the frame size is read");
         Check(vs != nullptr && vs->max_frame_bytes == 307200, "the max frame bytes are read");
         Check(vs != nullptr && vs->bytes_per_line == 640, "the stride is derived (307200/480)");
@@ -210,6 +275,23 @@ int main() {
               "the printout names control.report_descriptor_length");
         Check(printed.find("interface number=2 alternate_setting=0") != std::string::npos,
               "the printout lists every interface");
+    }
+
+    // --- format_index/frame_index pairing across multiple formats ---------
+    {
+        const std::vector<uint8_t> blob = SyntheticTreeMultiFormat();
+        rc::ProbeResult result;
+        std::string error;
+        const bool ok = rc::ParseConfigurationDescriptor(blob.data(), blob.size(), &result, &error);
+        Check(ok, "the multi-format synthetic descriptor parses");
+        if (!ok) std::printf("  error: %s\n", error.c_str());
+
+        const rc::ProbeInterface* vs = FindInterface(result, 1);
+        Check(vs != nullptr && vs->format_index == 1,
+              "format_index stays paired with the kept (first) frame, not the later format");
+        Check(vs != nullptr && vs->frame_index == 1, "frame_index is the first frame's, not the second's");
+        Check(vs != nullptr && vs->width == 640 && vs->height == 480,
+              "the kept frame's dimensions are the first format's, not the second's");
     }
 
     // --- malformed descriptors -------------------------------------------

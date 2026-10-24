@@ -117,11 +117,25 @@ public:
             *why = "interface " + std::to_string(spec.interface_number) + " is not on the device";
             return false;
         }
-        if (![interface_ selectAlternateSetting:static_cast<NSUInteger>(spec.alternate_setting)
-                                          error:&error]) {
-            *why = "alternate setting " + std::to_string(spec.alternate_setting) +
-                   " could not be selected: " + NsErrorText(error);
-            return false;
+        // Claiming an interface leaves it at its current alternate setting
+        // (USB 2.0 §9.4.10: SetConfiguration defaults every interface to
+        // alt 0, and nothing here has switched it since). This device's
+        // streaming/HID interfaces carry exactly one alternate-setting
+        // descriptor (alt 0; confirmed by the descriptor probe, every
+        // interface prints alternate_setting=0 with no sibling altsetting
+        // entries) and its firmware does not accept an explicit
+        // SET_INTERFACE for that already-active setting — the call fails
+        // with "could not be selected" even for alt 0 == alt 0. Skip the
+        // request when the interface is already at the target setting;
+        // only issue SET_INTERFACE for an actual switch.
+        const IOUSBInterfaceDescriptor* active = interface_.interfaceDescriptor;
+        if (active == nullptr || active->bAlternateSetting != spec.alternate_setting) {
+            if (![interface_ selectAlternateSetting:static_cast<NSUInteger>(spec.alternate_setting)
+                                              error:&error]) {
+                *why = "alternate setting " + std::to_string(spec.alternate_setting) +
+                       " could not be selected: " + NsErrorText(error);
+                return false;
+            }
         }
         pipe_ = [interface_ copyPipeWithAddress:static_cast<NSUInteger>(spec.endpoint_address) error:&error];
         if (pipe_ == nil) {
@@ -129,6 +143,17 @@ public:
                    NsErrorText(error);
             return false;
         }
+        // The vendor daemon (if it was holding this device) was stopped by
+        // `launchctl bootout`, not a clean close — its in-flight bulk/interrupt
+        // transfer, if any, can leave the endpoint halted at the controller.
+        // A halted endpoint refuses further IO until explicitly cleared (Apple's
+        // own IOUSBHostPipe docs: "any IO error other than a timeout" halts a
+        // bulk/interrupt endpoint, and clearStall resets it, including the data
+        // toggle). Attempt it unconditionally and ignore failure here: a pipe
+        // that was never stalled may reject the request, which is not an error
+        // for our purposes — only the read that follows tells us whether IO
+        // actually works now.
+        [pipe_ clearStallWithError:nil];
         return true;
     }
 
