@@ -4,6 +4,8 @@ add_library(openscanner_engine STATIC
     src/worker_process.cpp
     src/ws_broadcast_server.cpp
     src/recon/laser_line.cpp
+    src/recon/triangulate.cpp
+    src/recon/cloud_compare.cpp
 )
 
 # Row #200: the laser-line extraction seed. Device-free; the recorded-frame
@@ -12,6 +14,19 @@ add_executable(laser_line_test src/recon/laser_line_test.cpp)
 target_link_libraries(laser_line_test PRIVATE openscanner_engine)
 target_include_directories(laser_line_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME laser_line_test COMMAND laser_line_test)
+
+# WO-2: triangulation and the A/B cloud-compare harness. Both are device-free;
+# the synthetic ground-truth tests run under ctest, and the quantitative vendor
+# A/B is gated on a paired recording (see tools/point_cloud).
+add_executable(triangulate_test src/recon/triangulate_test.cpp)
+target_link_libraries(triangulate_test PRIVATE openscanner_engine)
+target_include_directories(triangulate_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME triangulate_test COMMAND triangulate_test)
+
+add_executable(cloud_compare_test src/recon/cloud_compare_test.cpp)
+target_link_libraries(cloud_compare_test PRIVATE openscanner_engine)
+target_include_directories(cloud_compare_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME cloud_compare_test COMMAND cloud_compare_test)
 
 target_include_directories(openscanner_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
