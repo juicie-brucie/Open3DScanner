@@ -24,3 +24,11 @@ __pycache__/
 # paths, per-session workstream guidance) — kept on disk, not tracked. Each
 # worktree/operator seeds its own, like .claude/agents/CLAUDE.local.md.
 /CLAUDE.md
+
+# Local Claude Code / agent configs are per-worktree and machine-specific:
+# kept on disk, never tracked or posted. (The root /CLAUDE.md above is the
+# same rule; these cover the .local variants and editor state.)
+CLAUDE.local.md
+.claude/agents/CLAUDE.local.md
+.claude/.idea/
+build-xcode/
