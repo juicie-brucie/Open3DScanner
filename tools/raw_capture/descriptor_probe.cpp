@@ -90,6 +90,11 @@ bool ParseConfigurationDescriptor(const uint8_t* data, size_t size, ProbeResult*
     out->configuration_value = data[5] == 0 ? kUnset : data[5];
 
     ProbeInterface* current = nullptr;
+    // The format a VS_FRAME descriptor belongs to is whichever VS_FORMAT
+    // descriptor most recently preceded it (UVC nests each format's frames
+    // directly after it) — never the interface's last format. Reset on every
+    // new interface so a later interface cannot inherit an earlier one's value.
+    int pending_format_index = kUnset;
     size_t at = 0;
     while (at + 2 <= total) {
         const uint8_t length = data[at];
@@ -106,6 +111,7 @@ bool ParseConfigurationDescriptor(const uint8_t* data, size_t size, ProbeResult*
                 *error = out->error;
                 return false;
             }
+            pending_format_index = kUnset;
             ProbeInterface interface;
             interface.number = data[at + 2];
             interface.alternate_setting = data[at + 3];
@@ -149,7 +155,12 @@ bool ParseConfigurationDescriptor(const uint8_t* data, size_t size, ProbeResult*
             }
         } else if (type == kDescriptorCsInterface && current != nullptr && length >= 3) {
             const int subtype = data[at + 2];
-            if (current->video_control && subtype == 0x06 && length >= 4) {
+            if (current->video_control && subtype == 0x01 && length >= 5) {
+                // VC_HEADER (UVC 1.1 §3.7.2): bcdUVC at +3 (2 bytes, BCD —
+                // 0x0100/0x0110/0x0150 for UVC 1.0/1.1/1.5). Determines the
+                // Video Probe/Commit Control struct length; read, never assumed.
+                current->bcd_uvc = static_cast<int>(U16(data + at + 3));
+            } else if (current->video_control && subtype == 0x06 && length >= 4) {
                 current->extension_units.push_back(data[at + 3]);
             } else if (current->video_streaming) {
                 if (subtype == 0x01 && length >= 7) {
@@ -157,23 +168,35 @@ bool ParseConfigurationDescriptor(const uint8_t* data, size_t size, ProbeResult*
                     // wTotalLength +4, bEndpointAddress at +6.
                     current->streaming_endpoint_address = data[at + 6];
                 } else if (subtype == 0x04 && length >= 22) {
-                    // VS format uncompressed (UVC 1.1 §3.9.2.4): the 16-byte
-                    // guidFormat at +5 and bBitsPerPixel at +21. A compressed
-                    // format (e.g. MJPEG, 11 bytes) carries no GUID; its
-                    // format stays unknown rather than being misread.
+                    // VS format uncompressed (UVC 1.1 §3.9.2.4): bFormatIndex
+                    // at +3, the 16-byte guidFormat at +5, bBitsPerPixel at
+                    // +21. A compressed format (e.g. MJPEG, 11 bytes) carries
+                    // no GUID; its format stays unknown rather than misread.
+                    // Tracked as "pending", not written to current->format_index
+                    // directly — an interface can declare several formats, and
+                    // the one that matters is whichever one's frame we keep
+                    // below, never just the last format descriptor seen.
+                    pending_format_index = data[at + 3];
                     for (int i = 0; i < 4; ++i) current->format_guid[i] = U32(data + at + 5 + i * 4);
                     const uint32_t fourcc = U32(data + at + 5);
                     current->format_fourcc = PrintableFourcc(fourcc) ? fourcc : 0;
                     current->bits_per_pixel = data[at + 21];
                 } else if (subtype == 0x05 && length >= 26) {
-                    // VS frame (UVC 1.1 §3.9.2.5): wWidth +5, wHeight +7,
-                    // dwMaxVideoFrameBufferSize +17, dwDefaultFrameInterval +21.
+                    // VS frame (UVC 1.1 §3.9.2.5): bFrameIndex at +3,
+                    // wWidth +5, wHeight +7, dwMaxVideoFrameBufferSize +17,
+                    // dwDefaultFrameInterval +21.
+                    const int frame_index = data[at + 3];
                     const int width = U16(data + at + 5);
                     const int height = U16(data + at + 7);
                     const uint32_t frame_bytes = U32(data + at + 17);
-                    // Keep the first frame; a more detailed probe could pick
-                    // the format's bDefaultFrameIndex.
+                    // Keep the first frame, paired with the format descriptor
+                    // that immediately preceded it (UVC nests each format's
+                    // frames directly after it) — never a later format's
+                    // index. A more detailed probe could pick the format's
+                    // bDefaultFrameIndex instead of the first frame seen.
                     if (current->width == 0 && current->height == 0) {
+                        current->format_index = pending_format_index;
+                        current->frame_index = frame_index;
                         current->width = width;
                         current->height = height;
                         current->max_frame_bytes = frame_bytes;
@@ -287,7 +310,26 @@ std::string FormatProbe(const ProbeResult& result) {
             }
             Append(&text, "\n");
         }
+        if (interface.video_control) {
+            Append(&text, "[probe] video_control bcd_uvc=");
+            if (interface.bcd_uvc == kUnset) {
+                Append(&text, "unknown\n");
+            } else {
+                // UVC 1.0/1.1/1.5 fix the Video Probe/Commit Control struct
+                // length at 26/34/48 bytes respectively (Table 4-47/4-76/4-75
+                // across the three spec revisions) — named here so the
+                // control-transfer code is built from evidence, not a guess.
+                const int probe_commit_len = interface.bcd_uvc >= 0x0150 ? 48
+                                            : interface.bcd_uvc >= 0x0110 ? 34
+                                                                          : 26;
+                Append(&text, "0x%04X (probe_commit_control_length=%d)\n", interface.bcd_uvc,
+                             probe_commit_len);
+            }
+        }
         if (interface.video_streaming) {
+            Append(&text, "[probe] video_streaming format_index=%s frame_index=%s\n",
+                         interface.format_index == kUnset ? "unknown" : std::to_string(interface.format_index).c_str(),
+                         interface.frame_index == kUnset ? "unknown" : std::to_string(interface.frame_index).c_str());
             if (interface.format_fourcc != 0) {
                 Append(&text, "[probe] video_streaming format_guid=0x%08X%08X%08X%08X fourcc=%s "
                                   "bits_per_pixel=%d width=%d height=%d max_frame_bytes=%u "

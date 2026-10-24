@@ -43,6 +43,16 @@ struct StreamSpec {
     uint32_t bytes_per_line = 0;        // stride; 0 = unknown
     uint32_t width = 0;                 // 0 = unknown
     uint32_t height = 0;                // 0 = unknown
+    // UVC VS_PROBE_CONTROL/VS_COMMIT_CONTROL negotiation (UVC 1.1 §4.3.1.1):
+    // the device refuses bulk reads on a streaming endpoint until the host
+    // completes this handshake (hw-test: "the endpoint read failed: Unable
+    // to send IO" on every read attempt before it, both alt-setting and
+    // clear-stall fixes applied — see 2026-10-24-plan-uvc-retest.md and
+    // -clearstall.md). bFormatIndex/bFrameIndex/dwDefaultFrameInterval are
+    // from the device's own descriptors (raw_capture --probe), never guessed.
+    int format_index = kUnset;          // bFormatIndex
+    int frame_index = kUnset;           // bFrameIndex
+    uint32_t frame_interval_100ns = 0;  // dwDefaultFrameInterval; 0 = unknown
 };
 
 // The vendor-command transport (laser/exposure, #101's property map).
@@ -90,6 +100,14 @@ struct DescriptorTable {
     uint16_t imu_rpc_port = 10011;
     Knowledge imu_rpc_port_knowledge = Knowledge::kKnown;
 
+    // bcdUVC from each VideoControl interface's VC_HEADER, confirmed
+    // identical (0x0110, UVC 1.1) across all three on this device
+    // (2026-10-24-plan-uvc-probe-bcduvc.md). Fixes the Video Probe/Commit
+    // Control struct's length: 26/34/48 bytes for UVC 1.0/1.1/1.5.
+    int bcd_uvc = 0x0110;
+    Knowledge bcd_uvc_knowledge = Knowledge::kKnown;
+    int probe_commit_control_length = 34;
+
     ControlSpec control;
 
     const StreamSpec& stream(StreamKind kind) const {
@@ -117,6 +135,13 @@ inline const DescriptorTable& Table() {
         t.ir.bytes_per_line = 960;
         t.ir.width = 960;
         t.ir.height = 600;
+        // From 2026-10-24-plan-uvc-probe-indexfix.md (the format/frame index
+        // pairing fix's confirmed re-probe): format_index=2, frame_index=1,
+        // frame_interval_100ns=333333. Unchanged by the pairing fix (this
+        // interface's first format descriptor already carried index 2).
+        t.ir.format_index = 2;
+        t.ir.frame_index = 1;
+        t.ir.frame_interval_100ns = 333333;
 
         // Depth: interface 1, endpoint 0x81, Y8 480x300, stride 840.
         t.depth.kind = StreamKind::kDepth;
@@ -129,6 +154,14 @@ inline const DescriptorTable& Table() {
         t.depth.bytes_per_line = 840;
         t.depth.width = 480;
         t.depth.height = 300;
+        // From 2026-10-24-plan-uvc-probe-indexfix.md: format_index=1 (the
+        // pairing fix corrected this from the first probe's 3 — depth's
+        // interface declares multiple formats, and 3 was the LAST one, not
+        // the one 480x300/frame_index=7 actually belongs to), frame_index=7,
+        // frame_interval_100ns=333333.
+        t.depth.format_index = 1;
+        t.depth.frame_index = 7;
+        t.depth.frame_interval_100ns = 333333;
 
         // RGB: interface 5, endpoint 0x83, YUY2 1280x800, stride 2560.
         t.rgb.kind = StreamKind::kRgb;
@@ -141,6 +174,13 @@ inline const DescriptorTable& Table() {
         t.rgb.bytes_per_line = 2560;
         t.rgb.width = 1280;
         t.rgb.height = 800;
+        // From 2026-10-24-plan-uvc-probe-indexfix.md: format_index=1,
+        // frame_index=2, frame_interval_100ns=333333. Unchanged by the
+        // pairing fix (this interface's first format descriptor already
+        // carried index 1).
+        t.rgb.format_index = 1;
+        t.rgb.frame_index = 2;
+        t.rgb.frame_interval_100ns = 333333;
 
         // HID/IMU: interface 6, endpoint 0x85, interrupt, 248-byte packets, a
         // 25-byte report descriptor. The report id and the property field map
@@ -152,14 +192,16 @@ inline const DescriptorTable& Table() {
     return table;
 }
 
-// True when the stream's USB endpoint, format and stride are all known.
-// Until then the UVC source refuses with the missing field named.
+// True when the stream's USB endpoint, format, stride and UVC Probe/Commit
+// negotiation fields are all known. Until then the UVC source refuses with
+// the missing field named.
 inline bool StreamConfigured(const StreamSpec& spec) {
     return spec.endpoint.knowledge == Knowledge::kKnown &&
            spec.endpoint.interface_number != kUnset && spec.endpoint.alternate_setting != kUnset &&
            spec.endpoint.endpoint_address != kUnset &&
            spec.endpoint.transfer != TransferType::kUnknown && spec.pixel_format != 0 &&
-           spec.bytes_per_line != 0 && spec.width != 0 && spec.height != 0;
+           spec.bytes_per_line != 0 && spec.width != 0 && spec.height != 0 &&
+           spec.format_index != kUnset && spec.frame_index != kUnset && spec.frame_interval_100ns != 0;
 }
 
 inline bool ControlConfigured(const ControlSpec& spec) {

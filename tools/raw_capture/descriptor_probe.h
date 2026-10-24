@@ -40,11 +40,19 @@ struct ProbeInterface {
     bool vendor_specific = false;       // class 0xFF
     std::vector<int> extension_units;   // UVC XU ids, when declared
 
+    // VideoControl details (from the VC_HEADER class-specific descriptor,
+    // UVC 1.1 §3.7.2). Determines the Video Probe/Commit Control struct's
+    // length (26 B for UVC 1.0, 34 B for 1.1, 48 B for 1.5) — needed before
+    // any probe/commit control transfer is attempted, never assumed.
+    int bcd_uvc = kUnset;                      // bcdUVC, e.g. 0x0110 = UVC 1.10
+
     // VideoStreaming details (from the class-specific descriptors).
     int streaming_endpoint_address = kUnset;  // from the VS input header
     uint32_t format_guid[4] = {0, 0, 0, 0};    // 16-byte GUID, as four LE words
     uint32_t format_fourcc = 0;                // the GUID's first four bytes, when printable
     int bits_per_pixel = 0;
+    int format_index = kUnset;                 // bFormatIndex (VS_FORMAT_UNCOMPRESSED +3)
+    int frame_index = kUnset;                  // bFrameIndex (VS_FRAME_UNCOMPRESSED +3)
     int width = 0;
     int height = 0;
     uint32_t max_frame_bytes = 0;              // dwMaxVideoFrameBufferSize
