@@ -3,9 +3,13 @@
 //
 // A frame's pose is a rigid transform placing that frame's triangulated points
 // into a common model frame. This first stage estimates it from 3-D point
-// correspondences (shared markers/features across frames) with the closed-form
-// least-squares rigid solve (Kabsch/Umeyama): the optimal R,t for 3-D->3-D
-// correspondences under Gaussian noise, via a 3x3 SVD.
+// correspondences (shared markers/features across frames) by solving the
+// least-squares absolute-orientation problem (the Kabsch/Umeyama problem): the
+// optimal R,t for 3-D->3-D correspondences under Gaussian noise. It is solved
+// here by Horn's unit-quaternion method (the top eigenvector of a 4x4 matrix
+// built from the cross-covariance) rather than the SVD route — the quaternion
+// is a proper rotation by construction, so there is no reflection case to
+// detect and fix up.
 //
 // Design for "adaptability" — two seams keep the pipeline open to change:
 //   * POSE SOURCE — fusion consumes a Pose, whoever produced it, so a pose from
@@ -69,11 +73,14 @@ public:
     virtual const char* name() const = 0;
 };
 
-// The closed-form least-squares rigid solve (Kabsch/Umeyama) via a 3x3 SVD:
-// the optimal R,t under Gaussian noise, O(n) with a tiny fixed-size
-// decomposition. Needs >= 3 non-collinear pairs; collinear or coincident
-// inputs are reported as not-ok. The returned R is always a proper rotation
-// (reflections are corrected), so a planar correspondence set is fine.
+// The closed-form least-squares rigid solve (the Kabsch/Umeyama problem),
+// implemented by Horn's unit-quaternion method: the optimal R,t under Gaussian
+// noise, O(n) to form the cross-covariance plus a fixed 4x4 eigensolve. Needs
+// >= 3 non-collinear pairs; collinear or coincident inputs are reported as
+// not-ok. The returned R is a proper rotation by construction (a unit
+// quaternion has no reflection case), so a planar correspondence set is fine.
+// (The class is named for the problem; the quaternion route avoids the
+// det-sign fix-up that an SVD solve needs.)
 class KabschEstimator : public PoseEstimator {
 public:
     PoseEstimate Estimate(const std::vector<Correspondence>& pairs) const override;
