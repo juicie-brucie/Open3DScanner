@@ -40,13 +40,15 @@ Total: 1920 × 1200 = 2,304,000 bytes
 
 ## 3. The UVC Descriptors — Confirmed
 
-**Evidence** (from rpc-endpoint-map.md §3.1, T7 probe):
+**Evidence** (from UVC probe: `2026-10-21-plan-uvc-probe.raw.log`):
 
-| Endpoint | Format | Dimensions | Bytes |
-|----------|--------|------------|-------|
-| 0x81 | Y8 | 480×300 | 144,000 |
-| 0x82 | Y8 | 960×600 | 576,000 |
-| 0x83 | YUY2 | 1280×800 | 2,048,000 |
+| Endpoint | Format | Dimensions | Stride | max_frame_bytes |
+|----------|--------|------------|--------|-----------------|
+| 0x81 (depth) | Y8 | 480×300 | 840 | 252,000 |
+| 0x82 (IR) | Y8 | 960×600 | 960 | 576,000 |
+| 0x83 (RGB) | YUY2 | 1280×800 | 2560 | 2,048,000 |
+
+The depth frame has **stride-padded rows**: 480 pixels × 1 byte = 480 bytes of pixel data, padded to 840 bytes per line. Total: 840 × 300 = 252,000 bytes.
 
 **Interface mapping** (from #182 correlation mode):
 - IR: interface 3 → UVC VS (name: "Creality Raptor Pro IR Camera")
@@ -57,8 +59,8 @@ Total: 1920 × 1200 = 2,304,000 bytes
 
 **Observation**:
 - RPC frame: 1920×1200 = 2,304,000 bytes
-- UVC IR: 960×600 = 576,000 bytes (factor of 4 smaller)
-- UVC depth: 480×300 = 144,000 bytes (factor of 16 smaller)
+- UVC IR: 960×600 = 576,000 bytes (stride 960, no padding)
+- UVC depth: 480×300 stride-padded = 252,000 bytes (840 × 300, stride 840, factor of ~9.14 smaller)
 
 **Reconciliation**:
 
@@ -88,19 +90,21 @@ The RPC protocol does not use the UVC endpoints for the 1920×1200 stream. The U
 
 If the live source captures UVC frames directly (bypassing RPC), the dimensions would be:
 
-| Interface | UVC Dimensions | e4 (payload) | e5 (length) |
-|-----------|----------------|--------------|-------------|
-| IR | 960×600 | Bin(576000) | 576000 |
-| Depth | 480×300 | Bin(144000) | 144000 |
+| Interface | UVC Dimensions | Stride | e4 (payload) | e5 (length) |
+|-----------|----------------|--------|--------------|-------------|
+| IR | 960×600 | 960 | Bin(576000) | 576000 |
+| Depth | 480×300 | 840 | Bin(252000) | 252000 |
+
+The depth frame is stride-padded: 480 bytes of pixel data per row, padded to 840 bytes (from `2026-10-21-plan-uvc-probe.raw.log` line 6: `bytes_per_line=840`, `max_frame_bytes=252000`).
 
 **Shim's #172 reply**:
 
-The shim must advertise the **UVC dimensions** (960×600 for IR, 480×300 for depth), not the RPC dimensions (1920×1200). The descriptor table should reflect the UVC descriptor formats:
+The shim must advertise the **UVC dimensions and strides** (960×600 stride-960 for IR, 480×300 stride-840 for depth), not the RPC dimensions (1920×1200). The descriptor table should reflect the UVC descriptor formats:
 
 ```c
 // Example (requires opening descriptor probe to confirm):
-{"ir", INTERFACE_3, Y8, 960, 600, 960},  // stride = 960
-{"depth", INTERFACE_1, Y8, 480, 300, 480},  // stride = 480
+{"ir", INTERFACE_3, Y8, 960, 600, 960},   // stride = 960
+{"depth", INTERFACE_1, Y8, 480, 300, 840}, // stride = 840 (stride-padded)
 ```
 
 **Consistency requirement**:
@@ -154,8 +158,8 @@ The shim's `start_stream` profile must match the UVC dimensions, not the RPC dim
 | What is the row stride? | **1920 bytes** | hw-confirmed |
 | What is the pixel format? | **Y8** (8-bit single-channel, format id 9) | hw-confirmed |
 | How does the RPC frame relate to UVC descriptors? | **Different sensor modes** — RPC uses 1920×1200, UVC exposes 960×600/480×300 for preview | inferred |
-| What are the e4/e5 values from UVC frames? | IR: Bin(576000)/576000, Depth: Bin(144000)/144000 | inferred |
-| What must the shim's #172 reply advertise? | **UVC dimensions** (960×600 for IR, 480×300 for depth) | inferred |
+| What are the e4/e5 values from UVC frames? | IR: Bin(576000)/576000 stride 960, Depth: Bin(252000)/252000 stride 840 (padded) | inferred |
+| What must the shim's #172 reply advertise? | **UVC dimensions and strides** (960×600 stride 960 for IR, 480×300 stride 840 for depth) | inferred |
 | Is the dimension mismatch statically settleable? | **No** — requires UVC capture with `raw_capture` | inferred |
 
 ## 8. Corrections to Existing Findings
