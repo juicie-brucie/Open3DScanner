@@ -104,9 +104,15 @@ image made of **named 4096-B files** uploaded per entry via
   of **40-byte entries (10 × float32)**, not 8-float rows:
   `{f0..f3 coeffs, unit normal n @+0x10 (f4/f5/f6), offset d @+0x1c (f7),
   f8/f9 = 0}`, giving the plane `n·X = d` (|n|=1, d∈[76,90] mm, camera frame).
-  **29 populated planes in 3 groups** (payload +0x140..+0x2d0 ×11,
-  +0x3e8..+0x578 ×11, +0x690..+0x780 ×7) separated by zero entries — the three
-  groups are the three laser-line projectors (the "three tables"
+  **PRIMARY 0x211000 = 29 planes in 3 groups** — group 1 entries +0x140..+0x2d0
+  (end-excl +0x2f8) ×11, group 2 +0x3e8..+0x578 (end +0x5a0) ×11, group 3
+  +0x690..+0x780 (end +0x7a8) ×7; offsets payload-relative, start-inclusive /
+  end-exclusive, 0x28 B/entry; counts verified by the unit-normal test on every
+  slot (11/11/7, not 10/10/6). The **BACKUP 0x213000 = 22 (11/11/0)**: its
+  group-3 region +0x690..+0x7a8 is all-zero (280/280 B captured, CRC validates
+  over the zeros), so it carries only the first two laser-line groups. Groups
+  are separated by zero entries — the three groups are the three laser-line
+  projectors (the "three tables"
   `ConvertScannerCalibParams2LineLaserParams` @`0xd11b74` builds; the write side
   zero-fills `LineLaserParams` 5488 B and column-walks the calib tables). Full
   per-field map in `calibration-store-row95.md` §5. The f0–f3 coefficient
@@ -150,7 +156,8 @@ Reads are contiguous 768-B windows over 0x200000..0x206000 and
 ### 1.5 What is not settled
 
 - ~~The flash record layout and which table is "the plane"~~ — SETTLED (WO-4):
-  the flash payload is 29 planes × 40 B {coeffs, unit normal, offset d}, §1.3 /
+  the flash payload is 40-B plane entries {coeffs, unit normal, offset d} —
+  29 in the primary 0x211000 (11/11/7), 22 in the backup 0x213000 (11/11/0); §1.3 /
   row95 §5. What remains: the f0–f3 coefficient names/units, and exactly which
   44 B the 5120-B live cache drops vs the 5164-B flash payload (its producer
   was not traced; needs a runtime hexdump).
@@ -306,7 +313,8 @@ application points; the score export's shape.
 (0x215000 is empty); the plane record at 0x211000 + the 0x213000 backup;
 `length` = total record size (5180 incl 16-B header); **the checksum coverage,
 validated 8/8 (WO-4)**; **the plane struct layout + geometry — 40-B entries,
-unit normal + offset d, 29 planes / 3 groups (WO-4)**; the type field = primary
+unit normal + offset d, 29 planes / 3 groups (primary; backup 22, no group 3)
+(WO-4)**; the type field = primary
 address (WO-4).
 
 **Needs a run:** the f0–f3 plane-coefficient names/units and the unmapped
@@ -318,7 +326,8 @@ backup blob's schema; the remaining records' identities (0x08/0x11/0x12/0x13).
 
 - **OQ-S15a** — ✅ layout + geometry SETTLED (WO-4, 2026-10-24): 40-B/10-float
   plane entries, unit normal @+0x10 + offset d @+0x1c, 29 planes / 3 groups
-  (§1.3, row95 §5). The real flash-vs-live gap is 44 B (5164 payload vs 5120
+  (primary 0x211000; backup 0x213000 has 22, no group 3) (§1.3, row95 §5). The
+  real flash-vs-live gap is 44 B (5164 payload vs 5120
   live), not 60. *Still open:* the f0–f3 coefficient names/units and which 44 B
   the cache drops (a runtime hexdump of the 5120-B cache struct).
 - **OQ-S15b** — packed positions 1–3, 29–34, 35–41 semantics (a
