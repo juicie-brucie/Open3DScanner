@@ -205,14 +205,36 @@ public:
             return false;
         }
         NSError* error = nil;
+        // IOUSBHostObjectInitOptionsDeviceCapture, not None: `ioreg -p IOUSB
+        // -n "Creality Raptor Pro" -l -r` shows this device publishes ZERO
+        // child IOKit services at all (no interfaces, not even the
+        // vendor/HID ones) — its own node carries
+        // IOServiceDEXTEntitlements=(com.apple.developer.driverkit.
+        // transport.usb), consistent with interface-level matching being
+        // gated behind DriverKit on this macOS version for a plain
+        // user-space client. Every prior fix (child-walk, direct
+        // IOServiceGetMatchingService matching, both retried) failed
+        // identically with "interface N is not on the device" because
+        // there was never an io_service_t for any interface to find
+        // (2026-10-24-plan-uvc-direct-match.md). DeviceCapture's own header
+        // comment: "terminate[s] all clients and drivers of the
+        // IOUSBHostDevice and associated IOUSBHostInterface clients
+        // besides the caller" — which is the documented way to make
+        // interface-level access available when nothing else is
+        // publishing it. Requires either the com.apple.vm.device-access
+        // entitlement or root ("If the caller has root privileges the
+        // entitlement and authorization is not needed"); this process
+        // must run under sudo until/unless that entitlement is pursued.
+        // Reversible: "[on] destroy... the device will be reset and
+        // drivers will be re-registered for matching."
         device_ = [[IOUSBHostDevice alloc] initWithIOService:service
-                                                    options:IOUSBHostObjectInitOptionsNone
+                                                    options:IOUSBHostObjectInitOptionsDeviceCapture
                                                       queue:nil
                                                       error:&error
                                             interestHandler:nil];
         if (device_ == nil) {
-            *why = "the USB device could not be opened: " + NsErrorText(error) +
-                   " (stop the vendor daemon: it holds the device)";
+            *why = "the USB device could not be captured: " + NsErrorText(error) +
+                   " (DeviceCapture needs root or com.apple.vm.device-access; run under sudo)";
             return false;
         }
         // Find the interface's own IOKit service directly by vendor/product/
