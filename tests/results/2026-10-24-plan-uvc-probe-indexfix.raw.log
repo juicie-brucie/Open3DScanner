@@ -1,0 +1,14 @@
+--- hw-preflight.sh output ---
+hw-preflight: FAIL — newest source 'tools/raw_capture/probe_test.cpp' is NEWER than binary 'build/tools/raw_capture/raw_capture' — rebuild (a header change counts; #107: a worker-only rebuild can leave a stale bundle copy).
+
+--- exit code: 1 ---
+
+--- command not executed ---
+
+--- file timestamps ---
+build/tools/raw_capture/raw_capture  mtime: 2026-10-24 00:50:50
+tools/raw_capture/probe_test.cpp     mtime: 2026-10-24 00:51:33
+tools/raw_capture/descriptor_probe.cpp mtime: 2026-10-24 00:50:06
+
+--- hw-postflight.sh output ---
+hw-postflight: no crash report for 'raw_capture' at/after 2026-10-24 00:54:19 — safe to record 'no crash report (checked DiagnosticReports for raw_capture at/after the run start)'.
