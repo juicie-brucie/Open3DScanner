@@ -52,6 +52,38 @@ io_service_t FindScannerService() {
     return IOServiceGetMatchingService(MainPort(), matching);
 }
 
+// Finds a specific interface's own IOKit service directly, by vendor/product
+// ID and interface number — the matching-dictionary API IOUSBHostInterface
+// itself provides for exactly this (its header: "to be passed into
+// IOServiceGetMatchingService"), the same pattern FindScannerService() uses
+// for the top-level device. Replaces walking the device's child services and
+// checking each one's bInterfaceNumber by hand: that approach depends on
+// macOS having already published a distinct IOUSBHostInterface registry node
+// for this interface, which hw-test found does not reliably happen for this
+// device's custom-class (0x0E/0x02) interfaces within 500ms of claiming the
+// top-level device, if at all by that path
+// (2026-10-24-plan-uvc-getcur-baseline.md, -iface-retry.md) — even though
+// the interface's descriptor bytes are always readable directly from the
+// device object (which is exactly how --probe finds them; see
+// iokit_probe.mm's ProbeAttachedDevice, which never walks child services).
+io_service_t FindInterfaceService(int interface_number) {
+    int vendor = Table().vendor_id;
+    int product = Table().product_id;
+    CFMutableDictionaryRef matching = [IOUSBHostInterface
+        createMatchingDictionaryWithVendorID:@(vendor)
+                                    productID:@(product)
+                                    bcdDevice:nil
+                              interfaceNumber:@(interface_number)
+                           configurationValue:nil
+                               interfaceClass:nil
+                            interfaceSubclass:nil
+                            interfaceProtocol:nil
+                                        speed:nil
+                               productIDArray:nil];
+    if (matching == nullptr) return 0;
+    return IOServiceGetMatchingService(MainPort(), matching);
+}
+
 std::string NsErrorText(NSError* error) {
     if (error == nil) return "unknown error";
     return std::string([[error localizedDescription] UTF8String]);
@@ -183,52 +215,39 @@ public:
                    " (stop the vendor daemon: it holds the device)";
             return false;
         }
-        // Find the interface service below the device and match its number.
-        // Claiming the top-level device (above) can leave its child
-        // interface services briefly unpublished in the IOKit registry —
-        // hw-test observed `--probe` (read-only, no device claim) see this
-        // same interface fine, then the very next `--capture` process's
-        // Open() fail to find it moments later
-        // (2026-10-24-plan-uvc-getcur-baseline.md). Retry the child lookup
-        // for up to ~500ms before giving up; a genuinely absent interface
-        // still fails the same way, just after the retries are spent.
+        // Find the interface's own IOKit service directly by vendor/product/
+        // interface-number matching (FindInterfaceService — see its own
+        // comment for why this replaces walking the device's child services:
+        // hw-test found the child-walk approach fails to find this
+        // interface's registry node at all, even after a bounded retry,
+        // while --probe reads the same interface's descriptor bytes
+        // directly from the device object every time —
+        // 2026-10-24-plan-uvc-getcur-baseline.md, -iface-retry.md). Still
+        // retried, bounded, in case this correct API has its own brief
+        // publish delay right after claiming the top-level device.
         constexpr int kInterfaceLookupAttempts = 10;
         constexpr auto kInterfaceLookupRetryDelay = std::chrono::milliseconds(50);
-        for (int attempt = 0; attempt < kInterfaceLookupAttempts && interface_ == nil; ++attempt) {
+        io_service_t interface_service = 0;
+        for (int attempt = 0; attempt < kInterfaceLookupAttempts; ++attempt) {
             if (attempt > 0) std::this_thread::sleep_for(kInterfaceLookupRetryDelay);
-            io_iterator_t iterator = 0;
-            if (IORegistryEntryGetChildIterator(service, kIOServicePlane, &iterator) != KERN_SUCCESS) {
-                *why = "cannot enumerate the device's interfaces";
-                return false;
-            }
-            io_service_t child = 0;
-            while ((child = IOIteratorNext(iterator)) != 0) {
-                if (!IOObjectConformsTo(child, "IOUSBHostInterface")) {
-                    IOObjectRelease(child);
-                    continue;
-                }
-                IOUSBHostInterface* candidate = [[IOUSBHostInterface alloc]
-                    initWithIOService:child
-                              options:IOUSBHostObjectInitOptionsNone
-                                queue:nil
-                                error:&error
-                      interestHandler:nil];
-                IOObjectRelease(child);
-                if (candidate == nil) continue;
-                const IOUSBInterfaceDescriptor* descriptor = candidate.interfaceDescriptor;
-                if (descriptor == nullptr || descriptor->bInterfaceNumber != spec.interface_number) {
-                    [candidate release];
-                    continue;
-                }
-                interface_ = candidate;
-                break;
-            }
-            IOObjectRelease(iterator);
+            interface_service = FindInterfaceService(spec.interface_number);
+            if (interface_service != 0) break;
         }
-        if (interface_ == nil) {
+        if (interface_service == 0) {
             *why = "interface " + std::to_string(spec.interface_number) + " is not on the device (retried " +
                    std::to_string(kInterfaceLookupAttempts) + " times over ~" +
                    std::to_string(kInterfaceLookupAttempts * kInterfaceLookupRetryDelay.count()) + "ms)";
+            return false;
+        }
+        interface_ = [[IOUSBHostInterface alloc] initWithIOService:interface_service
+                                                            options:IOUSBHostObjectInitOptionsNone
+                                                              queue:nil
+                                                              error:&error
+                                                    interestHandler:nil];
+        IOObjectRelease(interface_service);
+        if (interface_ == nil) {
+            *why = "interface " + std::to_string(spec.interface_number) + " could not be opened: " +
+                   NsErrorText(error);
             return false;
         }
         // Claiming an interface leaves it at its current alternate setting
