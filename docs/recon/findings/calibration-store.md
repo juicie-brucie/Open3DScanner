@@ -45,8 +45,13 @@ gated run record.*
   whole record from its start for `length` bytes, with the checksum word
   (bytes 4..7) zeroed (`str wzr,[x19,#0x4]` on the copy @`0x23f394`). The
   wire's brute-force did not reproduce it because the coverage/zeroing was
-  guessed; the write-side validator above is the definition. Validation against
-  the nine captured records is pending their bytes (outside the repo).
+  guessed; the write-side validator above is the definition.
+  **Validation SETTLED (WO-4, 2026-10-24)**: reassembling the nine captured
+  opcode-25 reads and running this recipe validates **8/8 populated records**
+  (CRC == `zlib.crc32`). The decisive point: `length` (+0x08) is the **TOTAL
+  record size incl the 16-byte header** — CRC covers `record[0:length]` with
+  bytes 4..7 zeroed, not `payload[16:16+len]`. Table in
+  `calibration-store-row95.md` §2 `[inferred, wire-observed 2026-10-18]`.
 - **The backup record.** `DeviceParamAccessor::getBackupLineLaserLightPlaneParams()`
   @`0x24211c` reads 8192 B (`readFlashData(key, 0x2000, vector)` @`0x315a8c`)
   with the flash key from a **per-device-type table** @`0x2cebeb0` (types
@@ -94,20 +99,25 @@ image made of **named 4096-B files** uploaded per entry via
   `0x464473<kind>`, CRC-32, length, address} + payload; length and address
   validated on write (the address doubles as the header's type field); CRC-32
   table at `0x2ceb980`.
-- The **payload shape** is per-line coefficient rows:
-  `ConvertScannerCalibParams2LineLaserParams` @`0xd11b74` zero-fills
-  `LineLaserParams` (5488 B = 0x1570) and fills a header (+0x0..+0x14: four
-  floats + two int→float counts), then **repeated 8-float groups read with a
-  row stride from the calib struct's per-line tables** (+0x18..+0x34,
-  +0x50..+0x6c, +0x88..+0xa4 — column walks `[base + n·k]`, k∈{1,2,3,4,5,6,8}),
-  then sparse groups at +0xa8..+0xe0 and +0x1508..+0x1530. So the struct is
-  **N laser lines × 8 coefficients** (three such tables) plus scalars. The
-  per-coefficient **units are not determinable from the conversion** [open].
-- Sizes to keep straight: flash read window 8192 B; flash record payload
-  **5180 B (0x143c)** `[inferred, wire-observed 2026-10-18]`; `LineLaserParams`
-  5488 B; the live user copy 5120 B; the SoC files 4096 B. The 60-byte
-  flash-vs-live difference (5180 vs 5120) is unaccounted for — header/trailer
-  vs struct body, or flash-only fields (OQ-S15a).
+- The **payload shape is DECODED (WO-4, 2026-10-24)** from the reassembled
+  0x211000 bytes `[inferred, wire-observed 2026-10-18]`. The record is an array
+  of **40-byte entries (10 × float32)**, not 8-float rows:
+  `{f0..f3 coeffs, unit normal n @+0x10 (f4/f5/f6), offset d @+0x1c (f7),
+  f8/f9 = 0}`, giving the plane `n·X = d` (|n|=1, d∈[76,90] mm, camera frame).
+  **29 populated planes in 3 groups** (payload +0x140..+0x2d0 ×11,
+  +0x3e8..+0x578 ×11, +0x690..+0x780 ×7) separated by zero entries — the three
+  groups are the three laser-line projectors (the "three tables"
+  `ConvertScannerCalibParams2LineLaserParams` @`0xd11b74` builds; the write side
+  zero-fills `LineLaserParams` 5488 B and column-walks the calib tables). Full
+  per-field map in `calibration-store-row95.md` §5. The f0–f3 coefficient
+  **names/units remain [open]** (ranges suggest extent/center, [inferred]).
+- Sizes to keep straight (corrected WO-4): the header `length` field **5180
+  (0x143c) is the TOTAL record size incl the 16-B header**, so the payload is
+  **5164 B**; flash read window 8192 B; `LineLaserParams` 5488 B; the live user
+  copy 5120 B; the SoC files 4096 B. The flash-payload-vs-live gap is therefore
+  **5164 − 5120 = 44 B** (not 60; the 60 came from reading 5180 as the
+  payload) — the live cache drops most of the +0x000..+0x13f preamble. Exact
+  elided bytes still [open] (OQ-S15a; needs a runtime cache hexdump).
 
 ### 1.4 The flash map as read at startup / project-open
 
@@ -123,25 +133,32 @@ the 16-byte header (the header's type field = the record's own address):
 | 0x20e000 | 0x13 | 12066 (0x2f22) | startup |
 | 0x211000 | 0x14 | 5180 (0x143c) | startup — **laser planes** |
 | 0x213000 | 0x14 | 5180 | startup — plane backup copy |
-| 0x215000 | 0x15 | 12066 (0x2f22) | startup — same size as 0x20e000 |
+| 0x215000 | — | — | startup — **reads back ALL ZERO (WO-4); no record here** |
 | 0x0b0000 | 0x08 | 3916 (0xf4c) | project-open (t≈25 s) |
 
 Reads are contiguous 768-B windows over 0x200000..0x206000 and
 0x20a000..0x218000 at startup, plus 0x0b0000..0x0b2000 at project-open.
-0x20e000 (kind 0x13) and 0x215000 (kind 0x15) — same length, adjacent — look
-like another primary/backup pair (OQ-S15f).
+**WO-4 corrections (2026-10-24, from reassembling these reads):**
+- The header's **type/address field (+0x0C) is the PRIMARY record's address**,
+  not always the record's own — backups carry the primary's address:
+  0x202000→0x200000, 0x213000→0x211000, 0x204000→0x0b0000. (Refines C2 of the
+  2026-10-18 hand-back: "type == own address" holds for primaries only.)
+- **0x215000 is empty** (the covering 0x214f00 window returns zeros; header all
+  zero). So the proposed 0x20e000/0x215000 primary/backup pairing is
+  **withdrawn** (OQ-S15f) — no 0x15 record in this capture.
 
 ### 1.5 What is not settled
 
-- The 5120-B user struct's internal layout (a wholesale cache copy; its
-  producer was not traced).
-- Which of the three 8-float tables is "the plane" (vs distortion/exposure
-  rows) and the per-coefficient units.
+- ~~The flash record layout and which table is "the plane"~~ — SETTLED (WO-4):
+  the flash payload is 29 planes × 40 B {coeffs, unit normal, offset d}, §1.3 /
+  row95 §5. What remains: the f0–f3 coefficient names/units, and exactly which
+  44 B the 5120-B live cache drops vs the 5164-B flash payload (its producer
+  was not traced; needs a runtime hexdump).
 - Whether any of this reaches the session cache (the record-name inventory
   shows `camera_intrin.bat` only; a plane record, if any, needs a session-dir
   listing).
-- The identity of the other flash records (kinds 0x08/0x11/0x12/0x13/0x15) and
-  the 0x20e000/0x215000 pairing (OQ-S15f).
+- The identity of the other flash records (kinds 0x08/0x11/0x12/0x13); 0x215000
+  is now known empty (OQ-S15f).
 
 ## 2. The thermal model
 
@@ -285,20 +302,25 @@ core; the thermal compensator's coefficients/algorithm/threshold and its
 application points; the score export's shape.
 
 **Settled (wire-observed, not a gated run):** the flash-read transport
-(opcode 25 / `ob_rpc_send_data`, 768-B reads); the nine-record flash map; the
-plane record at 0x211000 + the 0x213000 backup; the 5180-B payload length.
+(opcode 25 / `ob_rpc_send_data`, 768-B reads); the eight-record flash map
+(0x215000 is empty); the plane record at 0x211000 + the 0x213000 backup;
+`length` = total record size (5180 incl 16-B header); **the checksum coverage,
+validated 8/8 (WO-4)**; **the plane struct layout + geometry — 40-B entries,
+unit normal + offset d, 29 planes / 3 groups (WO-4)**; the type field = primary
+address (WO-4).
 
-**Needs a run:** the payload semantics/units (plane coefficients, the unmapped
-packed fields); the user struct's internal layout; whether the planes reach
-the session dir; the compensator's numeric effect; the backup blob's schema;
-the nine records' identities; checksum validation against the captured
-bytes.
+**Needs a run:** the f0–f3 plane-coefficient names/units and the unmapped
+intrinsics packed fields (OQ-S15b); the 44-B flash-vs-live cache elision;
+whether the planes reach the session dir; the compensator's numeric effect; the
+backup blob's schema; the remaining records' identities (0x08/0x11/0x12/0x13).
 
 ## OPEN QUESTIONS
 
-- **OQ-S15a** — the 5120-B user plane struct's layout, the per-coefficient
-  units, and the 60-byte flash-vs-live difference (5180 vs 5120) (a runtime
-  hexdump of the cache struct, or a deeper consumer read).
+- **OQ-S15a** — ✅ layout + geometry SETTLED (WO-4, 2026-10-24): 40-B/10-float
+  plane entries, unit normal @+0x10 + offset d @+0x1c, 29 planes / 3 groups
+  (§1.3, row95 §5). The real flash-vs-live gap is 44 B (5164 payload vs 5120
+  live), not 60. *Still open:* the f0–f3 coefficient names/units and which 44 B
+  the cache drops (a runtime hexdump of the 5120-B cache struct).
 - **OQ-S15b** — packed positions 1–3, 29–34, 35–41 semantics (a
   device-params hexdump alongside a session record).
 - **OQ-S15c** — does the session dir carry a plane record (a session-dir
@@ -310,4 +332,6 @@ bytes.
   (a temperature-step capture).
   *[ERRATUM 2026-10-19: superseded — threshold is 0.2°C; settled in `calibration-store-row95.md`]*
 - **OQ-S15f** — the identities of the other flash record kinds
-  (0x08/0x11/0x12/0x13/0x15) and the 0x20e000/0x215000 pairing.
+  (0x08/0x11/0x12/0x13). The 0x20e000/0x215000 pairing is **withdrawn** (WO-4):
+  0x215000 reads back all-zero, so there is no 0x15 record there in this
+  capture.
