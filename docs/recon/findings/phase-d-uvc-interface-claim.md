@@ -1,7 +1,7 @@
 # Phase-D UVC Interface Claim Mechanism — OQ-UVC1
 
 **Row**: OQ-UVC1 (Recon)
-**Status**: Settled via REA static analysis
+**Status**: Static analysis complete; runtime behavior **untested**
 **Target**: `libOrbbecSDK.1.7.1.dylib` (arm64 thin slice)
 **SHA256**: `5134a211296484473eaa7e4801788943a6ccb6b4a8660465b0a2c042d9dd925b`
 
@@ -48,24 +48,40 @@ The SDK uses **standard IOKit plugin interface** pattern:
 
 This is the same mechanism used by standard USB applications and does NOT require exclusive access to the device.
 
+## Empirical Gap
+
+The static chain and negative results are correct, but they do not prove runtime claim behavior. Two critical observations:
+
+1. **Our capture tools use seize, not non-exclusive open**: The `raw_capture` helper (#181) uses `USBInterfaceOpenSeize` and `USBDeviceOpenSeize`. The SDK's static analysis shows it uses non-exclusive `USBInterfaceOpen`. Our code will not succeed at runtime by copying the SDK's path — the seize call is the blocker, not the claim mechanism.
+
+2. **#198 root run still failed**: When `raw_capture` runs as root (which bypasses the device-level claim that fails at user scope), the ioreg interface owners for interfaces 0–5 **never move** from `pid 603, UVCAssistant`. The capture then fails with `interface 1 is not on the device`. Root privilege alone does not displace UVCAssistant's interface-level ownership.
+
+The static analysis tells us **what the SDK does**, but not **why it succeeds where our seize-based tools fail**. That requires a runtime test.
+
+## Decisive Runtime Test
+
+The test is the **classic non-exclusive `USBInterfaceOpen`** as both user and root, with UVCAssistant owning interfaces 0–5.
+
+| Outcome | Meaning |
+|---------|---------|
+| `USBInterfaceOpen` succeeds (user and root) | This is the SDK's claim path — non-exclusive open coexists with UVCAssistant. The seize call in our tools is the blocker, not the USB subsystem. |
+| Fails `kIOReturnExclusiveAccess` | UVCAssistant has exclusive ownership. The vendor's success at runtime depends on another factor (e.g. the RPCServer's root privilege, process ordering, or a different claim path not visible in this SDK slice). |
+
+Until this test runs, the claim path is **hypothesized, not proven**.
+
 ## User vs Root vs dext/Entitlement
 
 ### User Process
-✅ **CAN claim the interfaces**
-The SDK uses standard `USBInterfaceOpen`, which works for any user process with appropriate USB permissions. No special privileges required beyond standard USB device access.
+⚠️ **UNTESTED — static analysis only**
+The SDK uses standard `USBInterfaceOpen`, which in principle works for any user process with appropriate USB permissions. However, this has not been verified at runtime against a live device with UVCAssistant active. See Decisive Runtime Test above.
 
 ### Root Process
-✅ **Same mechanism**
-Root doesn't change the claim mechanism. The SDK uses the same standard IOKit plugin interface path regardless of privilege level.
+⚠️ **UNTESTED — static analysis only**
+Root doesn't change the SDK's claim mechanism, but #198 shows root alone does not displace UVCAssistant's interface-level ownership when the tool uses seize calls. The non-exclusive open path at root has not been tested.
 
 ### dext/Entitlement
-❌ **NOT required**
-The standard IOKit plugin interface pattern does not require:
-- DriverKit extension (dext)
-- Special entitlements
-- Exclusive device access
-
-Any process with USB device access can use this mechanism.
+⚠️ **UNTESTED — static analysis only**
+The standard IOKit plugin interface pattern does not require DriverKit or entitlements in principle. This has not been verified at runtime.
 
 ## Evidence Summary
 
@@ -87,19 +103,23 @@ Any process with USB device access can use this mechanism.
 
 ## Implications for Phase-D
 
-1. **User-space capture is feasible**: The standard claim mechanism works without exclusive access, so our `raw_capture` tool can claim the same interfaces without conflicting with the SDK.
+These implications are **conditional on the runtime test passing**. Until the decisive test runs, these remain hypotheses:
 
-2. **No driver required**: We don't need to implement a dext or obtain special entitlements to access the UVC interfaces.
+1. **User-space capture may be feasible**: If the non-exclusive open works at runtime, our `raw_capture` tool can claim the same interfaces by switching from `USBInterfaceOpenSeize` to `USBInterfaceOpen`.
 
-3. **Coexistence possible**: Since the SDK doesn't use exclusive access, our capture tool can potentially coexist with the vendor SDK (though simultaneous access may have other implications).
+2. **No driver may be required**: If the non-exclusive open works, we don't need a dext or special entitlements to access the UVC interfaces.
 
-4. **Standard IOKit pattern**: Our implementation should follow the same IOKit plugin interface pattern: `IOCreatePlugInInterfaceForService` → `QueryInterface` → `USBInterfaceOpen`.
+3. **Coexistence may be possible**: If the SDK's non-exclusive open coexists with UVCAssistant at runtime, our capture tool could potentially do the same.
+
+4. **Standard IOKit pattern is the target**: Our implementation should follow the same IOKit plugin interface pattern: `IOCreatePlugInInterfaceForService` → `QueryInterface` → `USBInterfaceOpen` — **but only after the runtime test confirms this path works**.
 
 ## Open Questions
 
-None for this specific question. The claim mechanism is fully settled via static analysis.
+1. **Does the SDK's non-exclusive `USBInterfaceOpen` actually succeed at runtime?** The static analysis shows this is the path, but it has not been verified against a live device with UVCAssistant active. This is the **decisive question** that blocks all downstream implementation.
 
-**Next actionable**: Implement the claim mechanism in `raw_capture` following the same IOKit plugin interface pattern identified here.
+2. **If it fails, what is the vendor's actual success factor?** If the non-exclusive open fails with `kIOReturnExclusiveAccess`, then the vendor's success depends on another factor (RPCServer's root privilege, process ordering, or a different claim path not visible in this SDK slice).
+
+**No further static analysis can answer these questions.** The runtime test described in "Decisive Runtime Test" is the only way to settle this.
 
 ## References
 
