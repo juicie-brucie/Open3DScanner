@@ -1,0 +1,90 @@
+gui/501/org.openscanner.helper = {
+	active count = 2
+	path = /Users/brucemackay/Library/LaunchAgents/org.openscanner.helper.plist
+	type = LaunchAgent
+	state = running
+
+	program = /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_helper/openscanner-helper
+	arguments = {
+		/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_helper/openscanner-helper
+		--claim
+		iokit
+		--service-name
+		org.openscanner.helper
+	}
+
+	stdout path = /Users/brucemackay/Library/Logs/openscanner-helper.log
+	stderr path = /Users/brucemackay/Library/Logs/openscanner-helper.log
+	inherited environment = {
+		SSH_AUTH_SOCK => /var/run/com.apple.launchd.fk5ZUbivlM/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		OSLogRateLimit => 64
+		XPC_SERVICE_NAME => org.openscanner.helper
+	}
+
+	domain = gui/501 [100020]
+	asid = 100020
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 2
+	pid = 8338
+	immediate reason = non-ipc demand
+	forks = 0
+	execs = 1
+	initialized = 1
+	trampolined = 1
+	started suspended = 0
+	proxy started suspended = 0
+	checked allocations = 0 (queried = 1)
+	checked allocations reason = no host
+	checked allocations flags = 0x0
+	last terminating signal = Terminated: 15
+
+	endpoints = {
+		"org.openscanner.helper" = {
+			port = 0xec5cb
+			active = 1
+			managed = 1
+			reset = 0
+			hide = 0
+			watching = 0
+		}
+	}
+
+	resource coalition = {
+		ID = 56496
+		type = resource
+		state = active
+		active count = 1
+		name = org.openscanner.helper
+	}
+
+	jetsam coalition = {
+		ID = 56497
+		type = jetsam
+		state = active
+		active count = 1
+		name = org.openscanner.helper
+	}
+
+	spawn type = daemon (3)
+	jetsam priority = 40
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	jetsam thread limit = 32
+	cpumon = default
+	sanitizer flags = 0x0
+
+	properties = runatload | inferred program
+}
+
+XPC status (the shim's own claim query):
+  "/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/raptor_shim/raptor_shim" --helper-status
+exit=0

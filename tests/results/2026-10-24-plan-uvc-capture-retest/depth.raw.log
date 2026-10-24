@@ -1,0 +1,4 @@
+[capture] sink: tests/results/2026-10-24-plan-uvc-capture-retest/depth.bin (16 bytes)
+[capture] stop: source-error
+[capture] detail: the endpoint read failed: Unable to send IO.
+[capture] frames: 0 (ir 0, depth 0, rgb 0), 0 record bytes
