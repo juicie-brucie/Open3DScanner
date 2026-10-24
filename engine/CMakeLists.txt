@@ -8,6 +8,8 @@ add_library(openscanner_engine STATIC
     src/recon/cloud_compare.cpp
     src/recon/pose.cpp
     src/recon/fuse.cpp
+    src/recon/mesh_surface.cpp
+    src/recon/mesh_compare.cpp
 )
 
 # Row #200: the laser-line extraction seed. Device-free; the recorded-frame
@@ -45,6 +47,20 @@ add_executable(fuse_test src/recon/fuse_test.cpp)
 target_link_libraries(fuse_test PRIVATE openscanner_engine)
 target_include_directories(fuse_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME fuse_test COMMAND fuse_test)
+
+# WO-B1: surface reconstruction (FastSurface live + QualitySurface post-scan
+# behind the SurfaceReconstructor seam) and the mesh A/B. Host-side (libigl
+# marching cubes + Manifold); device-free synthetic tests under ctest. The
+# quantitative vendor-mesh A/B is gated on the #207 paired recording.
+add_executable(mesh_surface_test src/recon/mesh_surface_test.cpp)
+target_link_libraries(mesh_surface_test PRIVATE openscanner_engine)
+target_include_directories(mesh_surface_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME mesh_surface_test COMMAND mesh_surface_test)
+
+add_executable(mesh_compare_test src/recon/mesh_compare_test.cpp)
+target_link_libraries(mesh_compare_test PRIVATE openscanner_engine)
+target_include_directories(mesh_compare_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME mesh_compare_test COMMAND mesh_compare_test)
 
 target_include_directories(openscanner_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
