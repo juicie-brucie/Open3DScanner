@@ -3,12 +3,13 @@
 - Date: 2026-10-24
 - Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
 - Branch: hw/next
-- Target: build/tools/raw_capture/raw_capture (build-tree copy (fixed order 2: build/tools/<target>/<target>)); sha256 `62b96301f8852694af7e54d48ccab54113eaf311a0d3b41eb025fe1e04ff5af8`
+- Target: build/tools/raw_capture/raw_capture (build-tree copy (fixed order 2: build/tools/<target>/<target>)); binary sha-256 62b96301f8852694af7e54d48ccab54113eaf311a0d3b41eb025fe1e04ff5af8
 - Other copy: none
 - Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 00:30:34 >= newest source iokit_source.mm 00:30:26
 - Interposer: n/a — `raw_capture` links no vendor SDK; vendor-artifact/interposer rules do not apply
 - Run start: 2026-10-24 00:31:52
 - Peer: our raw_capture (UVC), vendor RPCServer stopped for this run
+- Raw logs: `depth.raw.log`, `ir.raw.log`, `probe.raw.log` (in the record's own directory)
 - Fix under retest: `tools/raw_capture/iokit_source.mm`, `UsbInterfaceHandle::Open` — skip `selectAlternateSetting:` when the interface is already at the target `bAlternateSetting` (built via `cmake --build build --target raw_capture`; device-free `raw_capture_test` 81/81 passes but does not exercise this IOKit path)
 
 ## Preconditions (vendor stop)

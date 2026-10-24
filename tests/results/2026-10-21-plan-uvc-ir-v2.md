@@ -4,7 +4,7 @@
 - Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
 - Branch: hw/next
 - HEAD: e7e1ad200b4ff10a86008ec723bd53ff78503e62 (matches `main`)
-- Target: build/tools/raw_capture/raw_capture (build-tree copy (fixed order 2: build/tools/<target>/<target>)); sha256 `b13a9c764c5bbff338e6d159a71c10bd7d90813c331f011a4cda941fca22345f`
+- Target: build/tools/raw_capture/raw_capture (build-tree copy (fixed order 2: build/tools/<target>/<target>)); binary sha-256 b13a9c764c5bbff338e6d159a71c10bd7d90813c331f011a4cda941fca22345f
 - Other copy: none
 - Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 21:10:52 >= newest source descriptor_probe.h 21:10:47
 - Interposer: n/a — `raw_capture` links no vendor SDK; vendor-artifact/interposer rules do not apply
