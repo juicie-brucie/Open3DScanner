@@ -6,6 +6,7 @@ add_library(openscanner_engine STATIC
     src/recon/laser_line.cpp
     src/recon/triangulate.cpp
     src/recon/cloud_compare.cpp
+    src/recon/pose.cpp
 )
 
 # Row #200: the laser-line extraction seed. Device-free; the recorded-frame
@@ -27,6 +28,14 @@ add_executable(cloud_compare_test src/recon/cloud_compare_test.cpp)
 target_link_libraries(cloud_compare_test PRIVATE openscanner_engine)
 target_include_directories(cloud_compare_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME cloud_compare_test COMMAND cloud_compare_test)
+
+# WO-A1: per-frame pose estimation (the "track" seam). Device-free; the
+# closed-form Kabsch solve behind the PoseEstimator strategy (see pose.h on the
+# "adaptability" rationale).
+add_executable(pose_test src/recon/pose_test.cpp)
+target_link_libraries(pose_test PRIVATE openscanner_engine)
+target_include_directories(pose_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME pose_test COMMAND pose_test)
 
 target_include_directories(openscanner_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
