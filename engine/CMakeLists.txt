@@ -3,11 +3,20 @@ add_library(openscanner_engine STATIC
     src/obscan_mesh_bridge.cpp
     src/worker_process.cpp
     src/ws_broadcast_server.cpp
+    src/recon/laser_line.cpp
 )
+
+# Row #200: the laser-line extraction seed. Device-free; the recorded-frame
+# pass is opt-in (`--report`), so ctest runs the synthetic ground truth only.
+add_executable(laser_line_test src/recon/laser_line_test.cpp)
+target_link_libraries(laser_line_test PRIVATE openscanner_engine)
+target_include_directories(laser_line_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME laser_line_test COMMAND laser_line_test)
 
 target_include_directories(openscanner_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+target_include_directories(openscanner_engine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 find_package(Threads REQUIRED)
 target_link_libraries(openscanner_engine PUBLIC Threads::Threads openscanner_mesh)
