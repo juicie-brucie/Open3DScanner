@@ -478,9 +478,25 @@ struct WsBroadcastServer::Impl {
 
     bool PerformHandshake(socket_t client) {
         char buf[4096];
+        // Bound the wait for the request line. The accept loop is single
+        // threaded, and some clients (notably WKWebView/CFNetwork, which
+        // backs the macOS app's WebView) open a speculative second TCP
+        // connection and send nothing on it. Without a receive timeout, the
+        // blocking recv() below would wait forever on that idle connection and
+        // starve the real GET waiting in the accept backlog — the page then
+        // never loads. A short timeout drops the idle connection and lets the
+        // loop move on to the one carrying the request. On localhost the real
+        // request arrives in well under a millisecond, so this never clips a
+        // genuine client.
 #if defined(_WIN32)
+        DWORD rcv_timeout = 750;  // ms
+        setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&rcv_timeout), sizeof(rcv_timeout));
         int n = recv(client, buf, sizeof(buf) - 1, 0);
 #else
+        struct timeval rcv_timeout;
+        rcv_timeout.tv_sec = 0;
+        rcv_timeout.tv_usec = 750000;  // 750 ms
+        setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&rcv_timeout), sizeof(rcv_timeout));
         ssize_t n = recv(client, buf, sizeof(buf) - 1, 0);
 #endif
         if (n <= 0) return false;
@@ -490,6 +506,19 @@ struct WsBroadcastServer::Impl {
         if (!FindHeaderValue(request, "Sec-WebSocket-Key", &client_key)) {
             return ServeStaticRequest(client, request);
         }
+
+        // This is a long-lived WebSocket now; clear the handshake receive
+        // timeout so ClientReadLoop's blocking reads are not mistaken for a
+        // disconnect every time an idle client sends nothing.
+#if defined(_WIN32)
+        DWORD no_timeout = 0;
+        setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&no_timeout), sizeof(no_timeout));
+#else
+        struct timeval no_timeout;
+        no_timeout.tv_sec = 0;
+        no_timeout.tv_usec = 0;
+        setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&no_timeout), sizeof(no_timeout));
+#endif
 
         std::string accept_key = ComputeAcceptKey(client_key);
         std::string response = "HTTP/1.1 101 Switching Protocols\r\n"

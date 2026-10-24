@@ -76,6 +76,7 @@
 #include <iterator>
 #include <limits.h>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -102,6 +103,7 @@
 #include "bounded_watchdog.h"  // the per-call bound that survives a stuck caller (row #89)
 #include "device_probe.h"      // the bounded device-enumeration wait (row #167)
 #include "model_ply.h"         // the vendor's model.ply, read back (row #149)
+#include "project_save.h"       // local-first multi-object project archive + network upload
 #include "perf_window.h"       // per-tick latency instrumentation (row #111)
 #include "exposure_apply.h"    // when the exposure/laser config is pushed (row #153)
 #include "fast_encode.h"       // the allocation-free cloud-snapshot encoder (row #164)
@@ -320,6 +322,47 @@ uint64_t g_recorded_frame_count = 0;
 constexpr int kPointGridSize = 48;        // kPointGridSize^2 points on a sphere.
 constexpr double kFrameIntervalMs = 1000.0 / 30.0;  // ~30 Hz.
 
+// --- Shared project/scan state (row: UI project save + network upload) ------
+// The latest model cloud the server has broadcast, plus the operator's chosen
+// project, local cache root and network destination. Written by whichever
+// thread owns the scan loop (every published frame mirrors its xyz here) and
+// read by the WS reader thread when the UI asks to save/upload a project, so
+// all of it lives behind one mutex. Nothing here touches the vendor SDK.
+struct ServerState {
+    std::mutex mutex;
+    std::vector<float> latest_xyz;   // interleaved x,y,z of the last broadcast cloud
+    uint32_t latest_count = 0;
+    std::string projects_root = openscanner::scan_server::DefaultProjectsRoot();
+    std::string current_project;     // "" until the operator names/saves one
+    std::string network_dest;        // a mounted share path, or "" when unset
+    std::string last_action;         // short human-readable result of the last save/upload
+    bool last_action_ok = true;
+};
+ServerState g_server_state;
+
+// device connection, surfaced to every client in the status JSON so the UI's
+// "Connect / Refresh" button can show what the capture source actually is.
+// 0 = unknown, 1 = synthetic, 2 = searching for a device, 3 = connected.
+std::atomic<int> g_device_state{0};
+const char* DeviceStateName(int s) {
+    switch (s) {
+        case 1: return "synthetic";
+        case 2: return "searching";
+        case 3: return "connected";
+        default: return "unknown";
+    }
+}
+
+// Mirror the just-broadcast cloud into the shared state so a later save picks
+// up whatever is currently on screen. Cheap copy; called once per published
+// frame. A null/empty cloud (status-only ticks) leaves the last one intact.
+void RememberCloud(const float* xyz, uint32_t count) {
+    if (xyz == nullptr || count == 0) return;
+    std::lock_guard<std::mutex> lock(g_server_state.mutex);
+    g_server_state.latest_xyz.assign(xyz, xyz + static_cast<size_t>(count) * 3);
+    g_server_state.latest_count = count;
+}
+
 struct Vec3 {
     float x, y, z;
 };
@@ -425,6 +468,37 @@ using openscanner::control::kExposureMin;
 // scan has actually started, since the real SDK has no call to change FOV
 // mid-scan (see ControlState's comment above) — the UI uses it to decide
 // whether to let the operator touch that control at all.
+// The project/device tail of the status message: the capture source, the
+// local cache root, the current project and object count, the network
+// destination, and a one-line result of the last save/upload. Every client
+// (including a phone or laptop viewing over the network) renders from this.
+void AppendProjectStatusJson(std::string* json) {
+    namespace ps = openscanner::scan_server;
+    std::lock_guard<std::mutex> lock(g_server_state.mutex);
+    uint32_t object_count = 0;
+    if (!g_server_state.current_project.empty()) {
+        object_count = static_cast<uint32_t>(
+            ps::EnumerateObjects(std::filesystem::path(g_server_state.projects_root) /
+                                 ps::SanitizeName(g_server_state.current_project, "")).size());
+    }
+    *json += ",\"device\":\"";
+    *json += DeviceStateName(g_device_state.load());
+    *json += "\",\"projectsRoot\":\"";
+    *json += ps::JsonEscape(g_server_state.projects_root);
+    *json += "\",\"project\":\"";
+    *json += ps::JsonEscape(g_server_state.current_project);
+    *json += "\",\"projectObjects\":";
+    *json += std::to_string(object_count);
+    *json += ",\"networkDest\":\"";
+    *json += ps::JsonEscape(g_server_state.network_dest);
+    *json += "\",\"savedPoints\":";
+    *json += std::to_string(g_server_state.latest_count);
+    *json += ",\"lastAction\":\"";
+    *json += ps::JsonEscape(g_server_state.last_action);
+    *json += "\",\"lastActionOk\":";
+    *json += g_server_state.last_action_ok ? "true" : "false";
+}
+
 std::string BuildStatusJson(const char* mode, const ControlState& state, bool fov_controllable) {
     const char* scan_state = !state.scanning.load() ? "idle" : (state.paused.load() ? "paused" : "scanning");
     std::string json = "{\"type\":\"status\",\"mode\":\"";
@@ -453,6 +527,7 @@ std::string BuildStatusJson(const char* mode, const ControlState& state, bool fo
     // can show what the toggles are set to without reading the log.
     json += ",\"planeRemoval\":";
     openscanner::plane::AppendPlaneStateJson(state.plane.Desired(), &json);
+    AppendProjectStatusJson(&json);
     json += openscanner::tracking::TrackingStatusJsonTail(g_last_tracking_status.load());
     uint64_t tracking_counts[openscanner::tracking::kTrackingStatusCount];
     for (int32_t i = 0; i < openscanner::tracking::kTrackingStatusCount; ++i) {
@@ -462,6 +537,108 @@ std::string BuildStatusJson(const char* mode, const ControlState& state, bool fo
                                                           openscanner::tracking::kTrackingStatusCount);
     json += "}";
     return json;
+}
+
+// Handles the project/network control commands the UI sends over the same
+// WebSocket as start/pause/finish. Returns true if `json` was one of them
+// (so the caller re-broadcasts status afterward). Device-free and
+// cross-platform: saving is a local file write; uploading is a recursive copy
+// into a mounted share. Each result is broadcast as its own message so a
+// phone/laptop client sees the outcome, and the one-line summary is also kept
+// in the status for late joiners.
+bool HandleProjectCommand(const std::string& json, openscanner::WsBroadcastServer& server) {
+    namespace ps = openscanner::scan_server;
+    std::string cmd;
+    if (!openscanner::controljson::FindJsonValue(json, "cmd", &cmd)) return false;
+
+    if (cmd == "set_project") {
+        std::string name;
+        openscanner::controljson::FindJsonValue(json, "project", &name);
+        std::lock_guard<std::mutex> lock(g_server_state.mutex);
+        g_server_state.current_project = ps::SanitizeName(name, g_server_state.current_project);
+        return true;
+    }
+    if (cmd == "set_network_dest") {
+        std::string dest;
+        openscanner::controljson::FindJsonValue(json, "dest", &dest);
+        std::lock_guard<std::mutex> lock(g_server_state.mutex);
+        g_server_state.network_dest = dest;  // a path; kept verbatim
+        return true;
+    }
+    if (cmd == "save_project") {
+        std::string project, object, root;
+        openscanner::controljson::FindJsonValue(json, "project", &project);
+        openscanner::controljson::FindJsonValue(json, "object", &object);
+        // Snapshot the cloud and the configured root/current project together.
+        std::vector<float> xyz;
+        uint32_t count = 0;
+        {
+            std::lock_guard<std::mutex> lock(g_server_state.mutex);
+            xyz = g_server_state.latest_xyz;
+            count = g_server_state.latest_count;
+            root = g_server_state.projects_root;
+            if (project.empty()) project = g_server_state.current_project;
+        }
+        ps::SaveResult r = ps::SaveObjectToProject(root, project, object, xyz.data(), count);
+        std::string msg = "{\"type\":\"project_result\",\"action\":\"save\",\"ok\":";
+        msg += r.ok ? "true" : "false";
+        if (r.ok) {
+            msg += ",\"project\":\"" + ps::JsonEscape(r.project) + "\"";
+            msg += ",\"object\":\"" + ps::JsonEscape(r.object) + "\"";
+            msg += ",\"points\":" + std::to_string(r.points);
+            msg += ",\"dir\":\"" + ps::JsonEscape(r.project_dir) + "\"";
+            msg += ",\"objects\":[";
+            for (size_t i = 0; i < r.objects.size(); ++i) {
+                msg += (i ? ",\"" : "\"") + ps::JsonEscape(r.objects[i]) + "\"";
+            }
+            msg += "]";
+        } else {
+            msg += ",\"message\":\"" + ps::JsonEscape(r.error) + "\"";
+        }
+        msg += "}";
+        {
+            std::lock_guard<std::mutex> lock(g_server_state.mutex);
+            if (r.ok) {
+                g_server_state.current_project = r.project;
+                g_server_state.last_action = "Saved object \"" + r.object + "\" to " + r.project +
+                                             " (" + std::to_string(r.points) + " pts)";
+            } else {
+                g_server_state.last_action = "Save failed: " + r.error;
+            }
+            g_server_state.last_action_ok = r.ok;
+        }
+        server.BroadcastText(msg);
+        return true;
+    }
+    if (cmd == "upload_project") {
+        std::string project, root, dest;
+        {
+            std::lock_guard<std::mutex> lock(g_server_state.mutex);
+            root = g_server_state.projects_root;
+            dest = g_server_state.network_dest;
+            project = g_server_state.current_project;
+        }
+        std::string override_project;
+        if (openscanner::controljson::FindJsonValue(json, "project", &override_project) &&
+            !override_project.empty()) {
+            project = override_project;
+        }
+        ps::UploadResult u = ps::UploadProjectToNetwork(root, dest, project);
+        std::string msg = "{\"type\":\"project_result\",\"action\":\"upload\",\"ok\":";
+        msg += u.ok ? "true" : "false";
+        if (u.ok) msg += ",\"dest\":\"" + ps::JsonEscape(u.dest_dir) + "\"";
+        else msg += ",\"message\":\"" + ps::JsonEscape(u.error) + "\"";
+        msg += "}";
+        {
+            std::lock_guard<std::mutex> lock(g_server_state.mutex);
+            g_server_state.last_action = u.ok ? ("Uploaded " + project + " to " + u.dest_dir)
+                                              : ("Upload failed: " + u.error);
+            g_server_state.last_action_ok = u.ok;
+        }
+        server.BroadcastText(msg);
+        return true;
+    }
+    return false;
 }
 
 // Wire format shared with ui/app.js: u32 frame_id, f64 capture_timestamp_ms,
@@ -541,8 +718,12 @@ void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0, bo
     // it); there is nothing to apply.
     control.plane.SetLogger(&openscanner::plane::WritePlaneLogLine, nullptr);
 
+    g_device_state = 1;  // synthetic source — never "searches" for hardware.
     server.SetTextMessageHandler([&control, &server](const std::string& msg) {
         HandleControlMessage(msg, &control);
+        // Project save/upload/set commands share this socket; reconnect is a
+        // no-op for the synthetic source beyond re-announcing status.
+        HandleProjectCommand(msg, server);
         // FOV always "controllable" here — the synthetic sphere has no
         // hardware FOV constraint, it's purely a render-side parameter
         // ui/app.js reads back out of this same status message.
@@ -613,6 +794,7 @@ void RunSyntheticServer(uint16_t port, double hz = 30.0, uint32_t points = 0, bo
                 cloud_tracker.Observe(CloudHash(frame_points.data(), sizeof(Vec3), frame_points_count));
                 buf = &BuildFrame(frame_id++, now_ms, reinterpret_cast<const float*>(frame_points.data()),
                                   frame_points_count);
+                RememberCloud(reinterpret_cast<const float*>(frame_points.data()), frame_points_count);
             }
             {
                 perf::SegTimer t(&s_bcast_us);
@@ -945,6 +1127,7 @@ struct LivePlaneSink : openscanner::plane::VendorSink {
 
 int RunLiveServer(const std::string& library_path, uint16_t port, const std::string& record_path = "") {
     g_record_path = record_path;
+    g_device_state = 2;  // searching: SDK/device bring-up is about to run.
     QuitTraceInit();
     QuitTrace("RunLiveServer: installing signal handlers");
     std::signal(SIGINT, &OnStopSignal);
@@ -1144,6 +1327,13 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     server.SetTextMessageHandler([&control, &server](const std::string& msg) {
         HandleControlMessage(msg, &control);
         if (control.finish_requested.load()) g_stop_requested = 1;
+        // Project save/upload/set commands share this socket. A full device
+        // re-open on "reconnect" belongs on the supervising app (it restarts
+        // the worker, re-running bring-up) rather than re-entering the fragile
+        // SDK session here, so reconnect only re-announces status from the
+        // worker — see the macOS app's Reconnect menu item for the real
+        // re-open. Deferred live re-acquisition is a hw-test-backed change.
+        HandleProjectCommand(msg, server);
         server.BroadcastText(BuildStatusJson("live", control, /*fov_controllable=*/false));
     });
     if (!server.Start(port)) {
@@ -1163,7 +1353,13 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     std::fflush(stdout);
 
     uint32_t frame_id = 0;
-    const int total_ticks = (g_live_session_seconds * 1000) / kLiveTickIntervalMs;
+    // The live scan now runs for the whole app-open cycle: it streams until
+    // the operator finishes or the app quits (SIGTERM -> g_stop_requested ->
+    // graceful teardown below). A positive g_live_session_seconds still caps
+    // the run for CLI/test use (scan_server --live <port> <lib> <seconds>);
+    // the app passes 0, meaning unbounded.
+    const bool unbounded_session = (g_live_session_seconds <= 0);
+    const int total_ticks = unbounded_session ? 0 : (g_live_session_seconds * 1000) / kLiveTickIntervalMs;
     // Row #111: measurement only — the cadence and call order below are unchanged.
     perf::TickPerf tick_perf;
     if (!tick_perf.enabled()) std::printf("[perf] per-tick timing disabled by OPENSCANNER_TICK_PERF=0\n");
@@ -1191,7 +1387,8 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
     // than lingering as a second SDK user.
     const pid_t original_parent = getppid();
 #endif
-    for (int tick = 0; tick < total_ticks; ++tick) {
+    g_device_state = 3;  // connected: the scan is live and about to stream.
+    for (int tick = 0; unbounded_session || tick < total_ticks; ++tick) {
         tick_perf.BeginTick();
         int64_t s_pose_us = 0, s_getter_us = 0, s_post_us = 0, s_bcast_us = 0, s_wait_us = 0;
         int64_t s_exposure_us = 0, s_release_us = 0;
@@ -1413,6 +1610,7 @@ int RunLiveServer(const std::string& library_path, uint16_t port, const std::str
                     }
                     uint32_t broadcast_count = static_cast<uint32_t>(xyz.size() / 3);
                     const std::vector<uint8_t>& buf = BuildFrame(frame_id++, NowMs(), xyz.data(), broadcast_count);
+                    RememberCloud(xyz.data(), broadcast_count);
                     post_timer.Stop();
                     {
                         perf::SegTimer bcast_timer(&s_bcast_us);
@@ -1803,7 +2001,11 @@ int RunLiveMode(int argc, char** argv) {
     // session_seconds of streaming + pause/mesh/stop settle + the SDK's
     // out-of-core serialization tail (is_block=false, polled above; can
     // run for minutes on a large scan). Generous margin past that.
-    const int timeout_seconds = session_seconds + 300;
+    // A positive session length keeps its old generous margin. session_seconds
+    // <= 0 means "run for the whole app-open cycle" (the worker loop is
+    // unbounded); the supervisor's force-kill is then only a last resort, so
+    // give it a day rather than killing a legitimately long scan.
+    const int timeout_seconds = session_seconds <= 0 ? 86400 : session_seconds + 300;
     std::vector<std::string> worker_args = {kWorkerFlag, std::to_string(port), library_path, std::to_string(session_seconds)};
     if (!record_path.empty()) worker_args.push_back(record_path);
     bool worker_ok = openscanner::RunSelfAsWorker(

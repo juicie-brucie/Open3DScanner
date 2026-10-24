@@ -24,5 +24,20 @@
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <!-- The UI is served by the local capture worker over plain HTTP on the
+         loopback (http://127.0.0.1:<port>/). App Transport Security blocks
+         cleartext loads to IP literals by default, which leaves the WKWebView
+         blank/white; NSAllowsLocalNetworking permits loopback/.local loads
+         without weakening ATS for anything else. -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+    <!-- macOS 15+ gates access to the local network; the WebView reaches the
+         capture worker over the loopback, and remote viewers connect over the
+         LAN, so declare the use. -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>OpenScanner connects to the local capture server and streams the live scan to viewers on your network.</string>
 </dict>
 </plist>

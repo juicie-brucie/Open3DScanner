@@ -67,6 +67,50 @@
   #controls input[type="range"] { flex: 1; }
   #controls .exposure-value { color: #fff; width: 3em; text-align: right; }
   #controls .note { color: #888; font-size: 11px; margin-top: 2px; }
+
+  /* Axis legend chips (match the renderer's X/Y/Z colours). */
+  .axis-legend { display: flex; gap: 10px; font-size: 11px; color: #bbb; }
+  .axis-legend b { font-weight: 700; }
+  .axis-legend .ax { color: #f2433a; }
+  .axis-legend .ay { color: #4ccc66; }
+  .axis-legend .az { color: #548cf2; }
+
+  /* Project panel, bottom-right. Same visual language as #controls. */
+  #project {
+    position: absolute;
+    bottom: 0; right: 0;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    background: rgba(0, 0, 0, 0.45);
+    border-top-left-radius: 6px;
+    min-width: 260px;
+    max-width: 320px;
+  }
+  #project h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #fff; }
+  #project .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  #project .row:last-child { margin-bottom: 0; }
+  #project label { color: #ccc; min-width: 64px; }
+  #project input[type="text"] {
+    flex: 1; min-width: 0;
+    background: #1c1c20; color: #eee;
+    border: 1px solid #444; border-radius: 4px;
+    padding: 4px 6px; font-size: 12px;
+  }
+  #project button {
+    background: #2a2a2e; color: #eee;
+    border: 1px solid #444; border-radius: 4px;
+    padding: 5px 10px; font-size: 13px; cursor: pointer;
+  }
+  #project button:hover:not(:disabled) { background: #3a3a3e; }
+  #project button:disabled { opacity: 0.4; cursor: default; }
+  #project button.primary { background: #3d6fd1; border-color: #3d6fd1; }
+  #project .meta { color: #9aa; font-size: 11px; }
+  #project .objects { color: #ccc; font-size: 11px; max-height: 92px; overflow-y: auto; }
+  #project .objects .obj { padding: 1px 0; }
+  #project .result { font-size: 11px; margin-top: 2px; min-height: 14px; }
+  #project .result.ok { color: #4caf7d; }
+  #project .result.err { color: #e05d44; }
 </style>
 </head>
 <body>
@@ -77,6 +121,14 @@
     <button id="btn-start-pause" disabled>Start</button>
     <button id="btn-finish" disabled>Finish</button>
     <button id="btn-camera-mode">Camera: orbit</button>
+    <button id="btn-reset-view" title="Reset the view (R)">Reset view</button>
+  </div>
+  <div class="row">
+    <label><input type="checkbox" id="show-axes" checked /> Axes</label>
+    <span class="axis-legend">
+      <span class="ax"><b>X</b></span><span class="ay"><b>Y</b></span><span class="az"><b>Z</b></span>
+    </span>
+    <span class="note">left-drag orbit · right-drag pan · wheel zoom</span>
   </div>
   <div class="row">
     <label><input type="checkbox" id="auto-exposure" checked disabled /> Auto exposure</label>
@@ -94,6 +146,34 @@
     <button id="fov-wide" data-fov="wide" disabled>Wide</button>
   </div>
   <div class="note" id="fov-note"></div>
+</div>
+<div id="project">
+  <h3>Project</h3>
+  <div class="row">
+    <span class="meta" id="project-current">No project yet</span>
+  </div>
+  <div class="row">
+    <label for="project-name">Project</label>
+    <input type="text" id="project-name" placeholder="(timestamp)" />
+  </div>
+  <div class="row">
+    <label for="object-name">Object</label>
+    <input type="text" id="object-name" placeholder="(timestamp)" />
+  </div>
+  <div class="row">
+    <button id="btn-save-object" class="primary">Save object</button>
+    <button id="btn-reconnect" title="Re-probe / reconnect the scanner">Reconnect</button>
+  </div>
+  <div class="objects" id="project-objects"></div>
+  <div class="row">
+    <label for="network-dest">Network</label>
+    <input type="text" id="network-dest" placeholder="/Volumes/share or \\server\share" />
+  </div>
+  <div class="row">
+    <button id="btn-upload">Upload project to network</button>
+  </div>
+  <div class="result" id="project-result"></div>
+  <div class="meta" id="project-root"></div>
 </div>
 <script>
   // Plain "app.js" got stuck in the browser's disk cache during
