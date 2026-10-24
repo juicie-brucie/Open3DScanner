@@ -43,6 +43,9 @@ float RowNoise(const float* values, int width) {
             break;
         }
     }
+    // 1.4826 * median(|d|) is a true MAD only when median(d) ~= 0. Here the
+    // background is the raw-row median while d uses the smoothed row, so this
+    // is a slight (conservative) over-estimate of the noise; kept deliberately.
     return 1.4826f * static_cast<float>(mad);
 }
 

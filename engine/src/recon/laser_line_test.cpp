@@ -313,6 +313,9 @@ bool ReadBundle(const std::string& path, std::vector<BundleRecord>* out, std::st
 // The get_frame reply's 11-element array carries a Bin(2304000) at element 4.
 // The envelope is our own client's; the first bin32 of that exact length is
 // the frame (the marker sits in the 49-byte prefix seen in every record).
+// 2,304,000 is the known full-frame size of the gap-free #132 capture
+// (1920x1200 Y8, stride 1920); a live/band source would need a size-agnostic
+// path, which this recorded-frame test deliberately does not implement.
 const uint8_t* FindFrameBin(const std::vector<uint8_t>& reply, uint32_t* len) {
     for (size_t i = 0; i + 5 <= reply.size(); ++i) {
         if (reply[i] != 0xc6) continue;  // bin32
