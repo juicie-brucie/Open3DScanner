@@ -1,0 +1,117 @@
+$ cd /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+$ pwd
+/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+$ git rev-parse --abbrev-ref HEAD
+hw/next
+
+$ pgrep -ifl "orbbec|obscan|UVCAssistant|scan_server"
+(no output, exit 1 — no matching process by this pre-check's own pattern)
+
+$ cmake --build build --target raw_capture
+[...cmake configure output omitted...]
+[ 11%] Building CXX object tools/raw_capture/CMakeFiles/raw_capture_core.dir/descriptor_probe.cpp.o
+[ 11%] Linking CXX static library libraw_capture_core.a
+[ 66%] Built target raw_capture_core
+[ 77%] Building CXX object tools/raw_capture/CMakeFiles/raw_capture.dir/iokit_probe.mm.o
+[ 88%] Building CXX object tools/raw_capture/CMakeFiles/raw_capture.dir/iokit_source.mm.o
+[ 88%] Linking CXX executable raw_capture
+[100%] Built target raw_capture
+
+$ scripts/hw-preflight.sh raw_capture
+hw-preflight: OK
+- Date: 2026-10-24
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+- Branch: hw/next
+- Target: build/tools/raw_capture/raw_capture  (build-tree copy (fixed order 2: build/tools/<target>/<target>))
+- Other copy: none
+- Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 06:19:44 >= newest source descriptor_probe.cpp 06:06:04
+- Interposer: expect first line: [launcher] DYLD_INSERT_LIBRARIES=...libMoltenVK.dylib:...libvulkan_disable_interpose.dylib
+- Run start: 2026-10-24 06:19:48
+exit code: 0
+
+$ tools/macos_helper/install_user_agent.sh install
+/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_helper/openscanner-helper: replacing existing signature
+signed with identity: -
+designated requirement:
+# designated => cdhash H"3fc0bedf9f57699218751b8a42828706afb408a1"
+48100
+install_user_agent: registered org.openscanner.helper in gui/501
+  plist:  /Users/brucemackay/Library/LaunchAgents/org.openscanner.helper.plist
+  log:    /Users/brucemackay/Library/Logs/openscanner-helper.log
+  verify: tools/macos_helper/install_user_agent.sh status
+exit code: 0
+
+$ tools/macos_helper/install_user_agent.sh status
+gui/501/org.openscanner.helper = {
+	active count = 2
+	path = /Users/brucemackay/Library/LaunchAgents/org.openscanner.helper.plist
+	type = LaunchAgent
+	state = running
+	program = /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_helper/openscanner-helper
+	arguments = {
+		/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_helper/openscanner-helper
+		--claim iokit --service-name org.openscanner.helper
+	}
+	pid = 48100
+	last terminating signal = Terminated: 15
+	endpoints = { "org.openscanner.helper" = { port = 0xbd5c3; active = 1 } }
+}
+XPC status (the shim's own claim query):
+  "/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/raptor_shim/raptor_shim" --helper-status
+exit code: 0
+
+$ build/tools/raptor_shim/raptor_shim --helper-status
+[shim] helper status on org.openscanner.helper: claimed-by-helper
+exit code: 0
+
+$ ioreg -p IOService -n "Creality Raptor Pro" -l -r | grep -E 'UsbExclusiveOwner|bInterfaceNumber'
+  |   "UsbExclusiveOwner" = "pid 48100, openscanner-help"
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 0
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 1
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 2
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 3
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 4
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 5
+  | |   "UsbExclusiveOwner" = "AppleUserUSBHostHIDDevice"
+  | |   "bInterfaceNumber" = 6
+exit code: 0
+
+$ OPENSCANNER_UVC_IOUSBHOST=1 build/tools/raw_capture/raw_capture --capture --stream depth --sink /tmp/uvc-depth-helper.rcap --max-frames 30 --max-seconds 10
+[capture] sink: /tmp/uvc-depth-helper.rcap (16 bytes)
+[capture] stop: source-error
+[capture] detail: the USB device could not be opened: Failed to create IOUSBHostObject. (stop the vendor daemon: it holds the device)
+[capture] frames: 0 (ir 0, depth 0, rgb 0), 0 record bytes
+exit code: 2
+
+$ tools/macos_helper/install_user_agent.sh uninstall
+install_user_agent: removed org.openscanner.helper from gui/501 and /Users/brucemackay/Library/LaunchAgents/org.openscanner.helper.plist
+exit code: 0
+
+$ ioreg -p IOService -n "Creality Raptor Pro" -l -r | grep -E 'UsbExclusiveOwner|bInterfaceNumber'
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 0
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 1
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 2
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 3
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 4
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 5
+    |   "UsbExclusiveOwner" = "AppleUserUSBHostHIDDevice"
+    |   "bInterfaceNumber" = 6
+exit code: 0
+(device-level pid 48100 owner line is gone after uninstall; the per-interface
+UVCAssistant lines are unchanged throughout the whole run)
+
+$ scripts/hw-postflight.sh 2026-10-24-plan181-helper-claim-capture '2026-10-24 06:19:48' raw_capture
+hw-postflight: no crash report for 'raw_capture' at/after 2026-10-24 06:19:48 — safe to record 'no crash report (checked DiagnosticReports for raw_capture at/after the run start)'.
+exit code: 0
