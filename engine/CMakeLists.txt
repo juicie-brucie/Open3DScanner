@@ -11,6 +11,7 @@ add_library(openscanner_engine STATIC
     src/recon/mesh_surface.cpp
     src/recon/mesh_compare.cpp
     src/recon/recon_pipeline.cpp
+    src/recon/mesh_wire.cpp
 )
 
 # Row #200: the laser-line extraction seed. Device-free; the recorded-frame
@@ -70,6 +71,12 @@ add_executable(recon_pipeline_test src/recon/recon_pipeline_test.cpp)
 target_link_libraries(recon_pipeline_test PRIVATE openscanner_engine)
 target_include_directories(recon_pipeline_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME recon_pipeline_test COMMAND recon_pipeline_test)
+
+# WO-B2: the mesh wire format — the live-surface streaming bridge to the UI.
+add_executable(mesh_wire_test src/recon/mesh_wire_test.cpp)
+target_link_libraries(mesh_wire_test PRIVATE openscanner_engine)
+target_include_directories(mesh_wire_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME mesh_wire_test COMMAND mesh_wire_test)
 
 target_include_directories(openscanner_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
