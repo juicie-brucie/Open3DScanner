@@ -1,0 +1,77 @@
+$ cd /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+$ pgrep -ifl "orbbec|obscan|UVCAssistant|scan_server|openscanner-helper"
+603 /System/Library/Frameworks/CoreMediaIO.framework/Versions/A/Resources/UVCAssistant.systemextension/Contents/MacOS/UVCAssistant
+exit code: 0 (only the standing macOS UVCAssistant system extension; no vendor/Orbbec daemon, no helper)
+
+$ tools/macos_helper/install_user_agent.sh status
+install_user_agent: org.openscanner.helper is not registered in gui/501
+exit code: 1 (not registered — as expected, uninstalled by the prior card)
+
+$ sudo -n true
+sudo: a password is required
+exit code: 1 (no passwordless sudo grant for this command; ran in an interactive
+terminal tab instead so the operator could enter their password there)
+
+$ scripts/hw-preflight.sh raw_capture
+hw-preflight: OK
+- Date: 2026-10-24
+- Worktree: /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+- Branch: hw/next
+- Target: build/tools/raw_capture/raw_capture  (build-tree copy (fixed order 2: build/tools/<target>/<target>))
+- Other copy: none
+- Preflight: pwd OK; no conflicting process; daemon: n/a — the target does not create an OBScan context; freshness: binary 06:19:44 >= newest source descriptor_probe.cpp 06:06:04
+- Interposer: expect first line: [launcher] DYLD_INSERT_LIBRARIES=...libMoltenVK.dylib:...libvulkan_disable_interpose.dylib
+- Run start: 2026-10-24 07:31:14
+exit code: 0
+
+$ ioreg -p IOService -n "Creality Raptor Pro" -l -r | grep -E 'UsbExclusiveOwner|bInterfaceNumber'
+(BEFORE)
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 0
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 1
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 2
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 3
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 4
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 5
+  | |   "UsbExclusiveOwner" = "AppleUserUSBHostHIDDevice"
+  | |   "bInterfaceNumber" = 6
+exit code: 0
+
+--- ran in an interactive terminal tab (operator entered sudo password) ---
+$ sudo OPENSCANNER_UVC_IOUSBHOST=1 build/tools/raw_capture/raw_capture --capture --stream depth --sink /tmp/uvc-depth-root.rcap --max-frames 30 --max-seconds 10
+Password:
+[capture] sink: /tmp/uvc-depth-root.rcap (16 bytes)
+[capture] stop: source-error
+[capture] detail: interface 1 is not on the device (retried 15 times over ~1500ms)
+[capture] frames: 0 (ir 0, depth 0, rgb 0), 0 record bytes
+(exit code not independently captured from this interactive tab — see record's
+Result section for why)
+-----------------------------------------------------------------------------
+
+$ ioreg -p IOService -n "Creality Raptor Pro" -l -r | grep -E 'UsbExclusiveOwner|bInterfaceNumber'
+(AFTER)
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 0
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 1
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 2
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 3
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 4
+  | |   "UsbExclusiveOwner" = "pid 603, UVCAssistant"
+  | |   "bInterfaceNumber" = 5
+  | |   "UsbExclusiveOwner" = "AppleUserUSBHostHIDDevice"
+  | |   "bInterfaceNumber" = 6
+exit code: 0
+(identical to BEFORE — root's run did not change any UsbExclusiveOwner line)
+
+$ scripts/hw-postflight.sh 2026-10-24-plan198-root-interface-claim '2026-10-24 07:31:14' raw_capture
+hw-postflight: no crash report for 'raw_capture' at/after 2026-10-24 07:31:14 — safe to record 'no crash report (checked DiagnosticReports for raw_capture at/after the run start)'.
+exit code: 0
