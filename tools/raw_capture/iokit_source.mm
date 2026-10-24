@@ -205,71 +205,67 @@ public:
             return false;
         }
         NSError* error = nil;
-        // IOUSBHostObjectInitOptionsDeviceCapture, not None: `ioreg -p IOUSB
-        // -n "Creality Raptor Pro" -l -r` shows this device publishes ZERO
-        // child IOKit services at all (no interfaces, not even the
-        // vendor/HID ones) — its own node carries
-        // IOServiceDEXTEntitlements=(com.apple.developer.driverkit.
-        // transport.usb), consistent with interface-level matching being
-        // gated behind DriverKit on this macOS version for a plain
-        // user-space client. Every prior fix (child-walk, direct
-        // IOServiceGetMatchingService matching, both retried) failed
-        // identically with "interface N is not on the device" because
-        // there was never an io_service_t for any interface to find
-        // (2026-10-24-plan-uvc-direct-match.md). DeviceCapture's own header
-        // comment: "terminate[s] all clients and drivers of the
-        // IOUSBHostDevice and associated IOUSBHostInterface clients
-        // besides the caller" — which is the documented way to make
-        // interface-level access available when nothing else is
-        // publishing it. Requires either the com.apple.vm.device-access
-        // entitlement or root ("If the caller has root privileges the
-        // entitlement and authorization is not needed"); this process
-        // must run under sudo until/unless that entitlement is pursued.
-        // Reversible: "[on] destroy... the device will be reset and
-        // drivers will be re-registered for matching."
+        // Plain open (no DeviceCapture) — the device object itself has no
+        // competing claimant; ioreg -p IOService (not -p IOUSB, which
+        // doesn't show these nodes at all) confirms that. The exclusive
+        // owner is at the INTERFACE level: Apple's own UVCAssistant
+        // (com.apple.cmio.uvcassistantextension) holds "Creality Raptor
+        // Pro Depth/IR/RGB Camera@N" interfaces, and
+        // AppleUserUSBHostHIDDevice holds the IMU interface, both the
+        // moment the device enumerates
+        // (2026-10-24-plan-uvc-devicecapture.md's own ioreg output:
+        // "UsbExclusiveOwner" = "pid 588, UVCAssistant" on every video
+        // interface node). DeviceCapture at the device level does not
+        // evict an interface-level exclusive owner — hence it made no
+        // difference. See the interface claim below for the actual fix.
         device_ = [[IOUSBHostDevice alloc] initWithIOService:service
-                                                    options:IOUSBHostObjectInitOptionsDeviceCapture
+                                                    options:IOUSBHostObjectInitOptionsNone
                                                       queue:nil
                                                       error:&error
                                             interestHandler:nil];
         if (device_ == nil) {
-            *why = "the USB device could not be captured: " + NsErrorText(error) +
-                   " (DeviceCapture needs root or com.apple.vm.device-access; run under sudo)";
+            *why = "the USB device could not be opened: " + NsErrorText(error) +
+                   " (stop the vendor daemon: it holds the device)";
             return false;
         }
         // Find the interface's own IOKit service directly by vendor/product/
-        // interface-number matching (FindInterfaceService — see its own
-        // comment for why this replaces walking the device's child services:
-        // hw-test found the child-walk approach fails to find this
-        // interface's registry node at all, even after a bounded retry,
-        // while --probe reads the same interface's descriptor bytes
-        // directly from the device object every time —
-        // 2026-10-24-plan-uvc-getcur-baseline.md, -iface-retry.md). Still
-        // retried, bounded, in case this correct API has its own brief
-        // publish delay right after claiming the top-level device.
-        constexpr int kInterfaceLookupAttempts = 10;
-        constexpr auto kInterfaceLookupRetryDelay = std::chrono::milliseconds(50);
-        io_service_t interface_service = 0;
-        for (int attempt = 0; attempt < kInterfaceLookupAttempts; ++attempt) {
-            if (attempt > 0) std::this_thread::sleep_for(kInterfaceLookupRetryDelay);
-            interface_service = FindInterfaceService(spec.interface_number);
-            if (interface_service != 0) break;
-        }
+        // interface-number matching (FindInterfaceService). The node
+        // reliably exists (confirmed via ioreg); no retry needed for the
+        // lookup itself — only the claim below needs one.
+        io_service_t interface_service = FindInterfaceService(spec.interface_number);
         if (interface_service == 0) {
-            *why = "interface " + std::to_string(spec.interface_number) + " is not on the device (retried " +
-                   std::to_string(kInterfaceLookupAttempts) + " times over ~" +
-                   std::to_string(kInterfaceLookupAttempts * kInterfaceLookupRetryDelay.count()) + "ms)";
+            *why = "interface " + std::to_string(spec.interface_number) + " is not on the device";
             return false;
         }
-        interface_ = [[IOUSBHostInterface alloc] initWithIOService:interface_service
-                                                            options:IOUSBHostObjectInitOptionsNone
-                                                              queue:nil
-                                                              error:&error
-                                                    interestHandler:nil];
+        // DeviceSeize, not None: the interface node's own
+        // "UsbExclusiveOwner" names a macOS system extension (UVCAssistant
+        // for video, AppleUserUSBHostHIDDevice for the IMU) that claims it
+        // the instant the device enumerates — independent of, and not
+        // affected by, any claim on the top-level device.
+        // IOUSBHostObjectInitOptionsDeviceSeize's own header comment: "will
+        // request the current owner of the underlying kernel service to
+        // close via kUSBHostMessageDeviceIsRequestingClose" — unlike
+        // DeviceCapture, its doc names no entitlement or root requirement,
+        // since it is a polite close request the current owner can honor,
+        // not a forced takeover. The close is necessarily asynchronous
+        // (UVCAssistant has to act on the message), so retry the claim
+        // itself, bounded, rather than assuming it is immediate.
+        constexpr int kInterfaceSeizeAttempts = 10;
+        constexpr auto kInterfaceSeizeRetryDelay = std::chrono::milliseconds(100);
+        for (int attempt = 0; attempt < kInterfaceSeizeAttempts && interface_ == nil; ++attempt) {
+            if (attempt > 0) std::this_thread::sleep_for(kInterfaceSeizeRetryDelay);
+            interface_ = [[IOUSBHostInterface alloc] initWithIOService:interface_service
+                                                                options:IOUSBHostObjectInitOptionsDeviceSeize
+                                                                  queue:nil
+                                                                  error:&error
+                                                        interestHandler:nil];
+        }
         IOObjectRelease(interface_service);
         if (interface_ == nil) {
-            *why = "interface " + std::to_string(spec.interface_number) + " could not be opened: " +
-                   NsErrorText(error);
+            *why = "interface " + std::to_string(spec.interface_number) + " could not be seized from its "
+                   "current owner: " + NsErrorText(error) + " (retried " +
+                   std::to_string(kInterfaceSeizeAttempts) + " times over ~" +
+                   std::to_string(kInterfaceSeizeAttempts * kInterfaceSeizeRetryDelay.count()) + "ms)";
             return false;
         }
         // Claiming an interface leaves it at its current alternate setting
