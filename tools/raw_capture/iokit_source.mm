@@ -255,6 +255,37 @@ public:
         return true;
     }
 
+    // Re-fetches the pipe for `endpoint_address` on the already-claimed
+    // interface, discarding whatever pipe object Open() returned. Apple's
+    // own IOUSBHostInterface docs say selectAlternateSetting: invalidates
+    // existing pipes because switching the active configuration is expected
+    // to; UVC's SET_CUR(VS_COMMIT_CONTROL) is the bulk-transfer analogue of
+    // that — "activate this stream configuration" — and hw-test found a
+    // pipe obtained before a successful negotiation still refuses reads
+    // afterward (2026-10-24-plan-uvc-probecommit.md: negotiation completed
+    // with no error, the read failed anyway, unchanged from before
+    // negotiation existed). Call after NegotiateUvcFormat succeeds, before
+    // the first Read().
+    bool RefreshPipe(int endpoint_address, std::string* why) {
+        if (interface_ == nil) {
+            *why = "no interface claimed; call Open() first";
+            return false;
+        }
+        if (pipe_ != nil) {
+            [pipe_ release];
+            pipe_ = nil;
+        }
+        NSError* error = nil;
+        pipe_ = [interface_ copyPipeWithAddress:static_cast<NSUInteger>(endpoint_address) error:&error];
+        if (pipe_ == nil) {
+            *why = "endpoint 0x" + std::to_string(endpoint_address) + " has no pipe after commit: " +
+                   NsErrorText(error);
+            return false;
+        }
+        [pipe_ clearStallWithError:nil];
+        return true;
+    }
+
     void Close() {
         if (pipe_ != nil) {
             [pipe_ release];
@@ -431,6 +462,9 @@ public:
                                              Table().probe_commit_control_length, error)) {
                 return false;
             }
+            // The commit may have invalidated the pipe Open() returned (see
+            // RefreshPipe's own comment) — fetch a fresh one before reading.
+            if (!handle_.RefreshPipe(spec.endpoint.endpoint_address, error)) return false;
             capacity_ = std::min<size_t>(static_cast<size_t>(spec.bytes_per_line) * spec.height, 4u << 20);
             capacity_ = std::max<size_t>(capacity_, 64u << 10);
         }
