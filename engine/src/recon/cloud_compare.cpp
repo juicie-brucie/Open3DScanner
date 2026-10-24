@@ -5,149 +5,137 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <unordered_map>
 #include <vector>
 
 namespace openscanner::recon {
 namespace {
 
-// A uniform voxel grid over a point set, searched in expanding Chebyshev
-// shells. Cell indices can be negative (a query point may sit outside the
-// set's bounding box), so cells are kept in a hash map keyed by the integer
-// cell coordinates rather than a dense array — memory is proportional to the
-// occupied cells, not the bounding volume.
-struct CellKey {
-    int x, y, z;
-    bool operator==(const CellKey& o) const { return x == o.x && y == o.y && z == o.z; }
-};
-struct CellHash {
-    std::size_t operator()(const CellKey& k) const {
-        // A simple 3-way mix; the coordinates are small integers.
-        std::uint64_t h = static_cast<std::uint32_t>(k.x);
-        h = h * 0x9E3779B97F4A7C15ull + static_cast<std::uint32_t>(k.y);
-        h = h * 0x9E3779B97F4A7C15ull + static_cast<std::uint32_t>(k.z);
-        return static_cast<std::size_t>(h ^ (h >> 29));
-    }
-};
+// Pack an integer cell coordinate triple into one key. Cell indices can be
+// negative (a query may sit outside the set's bounding box), so each axis is
+// biased into a 21-bit field. The cell counts are bounded (the auto-size and
+// ChooseCell both cap the per-axis span), so the fields never overflow.
+std::int64_t PackCell(int ix, int iy, int iz) {
+    constexpr std::int64_t kBias = 1 << 20;  // range [-2^20, 2^20) per axis
+    const std::int64_t x = ix + kBias, y = iy + kBias, z = iz + kBias;
+    return x | (y << 21) | (z << 42);
+}
 
-class Grid {
-public:
-    Grid(const std::vector<Point3>& points, double cell) : points_(points), cell_(cell) {
-        double min_x = std::numeric_limits<double>::infinity(), min_y = min_x, min_z = min_x;
-        double max_x = -min_x, max_y = -min_x, max_z = -min_x;
-        for (const Point3& p : points) {
-            min_x = std::min(min_x, p.x);
-            min_y = std::min(min_y, p.y);
-            min_z = std::min(min_z, p.z);
-            max_x = std::max(max_x, p.x);
-            max_y = std::max(max_y, p.y);
-            max_z = std::max(max_z, p.z);
-        }
-        ox_ = min_x;
-        oy_ = min_y;
-        oz_ = min_z;
-        // The ring count that spans the whole set: beyond it every cell is seen.
-        const double span = std::max({max_x - min_x, max_y - min_y, max_z - min_z, 0.0});
-        max_ring_ = static_cast<int>(span / cell_) + 2;
-        for (int i = 0; i < static_cast<int>(points.size()); ++i) {
-            cells_[CellOf(points[i])].push_back(i);
+double DistSq(const Point3& a, const Point3& b) {
+    const double dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+    return dx * dx + dy * dy + dz * dz;
+}
+
+void Bounds(const std::vector<Point3>& pts, double* mn, double* mx) {
+    for (int i = 0; i < 3; ++i) {
+        mn[i] = std::numeric_limits<double>::infinity();
+        mx[i] = -mn[i];
+    }
+    for (const Point3& p : pts) {
+        const double v[3] = {p.x, p.y, p.z};
+        for (int i = 0; i < 3; ++i) {
+            mn[i] = std::min(mn[i], v[i]);
+            mx[i] = std::max(mx[i], v[i]);
         }
     }
+}
 
-    // The squared distance to the nearest point, or false when the set is empty.
-    bool NearestSquared(const Point3& q, double* out_sq) const {
-        if (points_.empty()) return false;
-        const CellKey c = CellOf(q);
-        double best = std::numeric_limits<double>::infinity();
-        for (int r = 0; r <= max_ring_; ++r) {
-            // The closest a ring-r cell can lie to q is (r-1)*cell (q sits in
-            // its own cell, ring 0); once that exceeds the best, stop.
-            if (r >= 1) {
-                const double floor_dist = static_cast<double>(r - 1) * cell_;
-                if (floor_dist * floor_dist >= best) break;
-            }
-            ForEachInShell(c, r, [&](int idx) {
-                best = std::min(best, DistSq(q, points_[idx]));
-            });
-        }
-        *out_sq = best;
-        return best < std::numeric_limits<double>::infinity();
-    }
+// A cell sized to the cloud's density — about one point per cell on average —
+// so a nearest-neighbour query touches O(1) cells whether the cloud is dense or
+// sparse. (A span/constant cell would leave a sparse cloud with mostly-empty
+// cells and a shell walk that crosses hundreds of empty rings to reach a
+// neighbour.) Exactness never depends on the cell size; it only trades speed.
+double AutoCell(const std::vector<Point3>& pts) {
+    if (pts.empty()) return 1.0;
+    double mn[3], mx[3];
+    Bounds(pts, mn, mx);
+    const double span = std::max({mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2], 0.0});
+    if (span <= 0.0) return 1.0;  // all points coincide
+    const double per_axis = std::cbrt(static_cast<double>(pts.size()));
+    return std::max(span / std::max(1.0, per_axis), 1e-12);
+}
 
-    // Is there any point within `radius` of q?
-    bool AnyWithin(const Point3& q, double radius) const {
-        if (points_.empty()) return false;
-        const CellKey c = CellOf(q);
-        const double radius_sq = radius * radius;
-        const int rmax = static_cast<int>(radius / cell_) + 2;
-        bool found = false;
-        for (int r = 0; r <= rmax && !found; ++r) {
-            if (r >= 1 && static_cast<double>(r - 1) * cell_ > radius) break;
-            ForEachInShell(c, r, [&](int idx) {
-                if (!found && DistSq(q, points_[idx]) <= radius_sq) found = true;
-            });
-        }
-        return found;
-    }
-
-private:
-    CellKey CellOf(const Point3& p) const {
-        return CellKey{static_cast<int>(std::floor((p.x - ox_) / cell_)),
-                       static_cast<int>(std::floor((p.y - oy_) / cell_)),
-                       static_cast<int>(std::floor((p.z - oz_) / cell_))};
-    }
-
-    static double DistSq(const Point3& a, const Point3& b) {
-        const double dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
-        return dx * dx + dy * dy + dz * dz;
-    }
-
-    // Visit every stored point in the cells at Chebyshev ring exactly `r`.
-    template <typename Fn>
-    void ForEachInShell(const CellKey& c, int r, Fn&& fn) const {
-        for (int dx = -r; dx <= r; ++dx) {
-            for (int dy = -r; dy <= r; ++dy) {
-                for (int dz = -r; dz <= r; ++dz) {
-                    if (std::max({std::abs(dx), std::abs(dy), std::abs(dz)}) != r) continue;
-                    auto it = cells_.find(CellKey{c.x + dx, c.y + dy, c.z + dz});
-                    if (it == cells_.end()) continue;
-                    for (int idx : it->second) fn(idx);
-                }
-            }
-        }
-    }
-
-    const std::vector<Point3>& points_;
-    double cell_;
-    double ox_ = 0.0, oy_ = 0.0, oz_ = 0.0;
-    int max_ring_ = 1;
-    std::unordered_map<CellKey, std::vector<int>, CellHash> cells_;
-};
-
-// A grid cell sized so the whole-set ring count stays bounded even when tau is
-// tiny next to the cloud's extent. Exactness never depends on the cell size —
-// it comes from the expanding shells and the real distance tests — so a larger
-// cell only trades a little speed, never correctness.
-double ChooseCell(const std::vector<Point3>& b, double tau) {
-    double min_x = std::numeric_limits<double>::infinity(), min_y = min_x, min_z = min_x;
-    double max_x = -min_x, max_y = -min_x, max_z = -min_x;
-    for (const Point3& p : b) {
-        min_x = std::min(min_x, p.x);
-        min_y = std::min(min_y, p.y);
-        min_z = std::min(min_z, p.z);
-        max_x = std::max(max_x, p.x);
-        max_y = std::max(max_y, p.y);
-        max_z = std::max(max_z, p.z);
-    }
-    const double span = std::max({max_x - min_x, max_y - min_y, max_z - min_z, 0.0});
-    // Keep the per-axis ring count under this, so a tiny tau cannot make the
-    // shell walk span millions of empty rings.
-    constexpr double kMaxRingsPerAxis = 2048.0;
-    const double min_cell = span / kMaxRingsPerAxis;
-    return std::max(tau, std::max(min_cell, 1e-12));
+// The cell CompareClouds uses: tied to tau, but never so small relative to the
+// cloud's extent that the shell walk spans millions of empty rings. Exactness
+// is independent of this — only speed.
+double ChooseCell(const std::vector<Point3>& pts, double tau) {
+    return std::max(tau, AutoCell(pts));
 }
 
 }  // namespace
+
+NearestNeighborIndex::NearestNeighborIndex(const std::vector<Point3>& points, double cell)
+    : points_(points), cell_(cell > 0.0 ? cell : AutoCell(points)) {
+    double mn[3], mx[3];
+    Bounds(points, mn, mx);
+    ox_ = std::isfinite(mn[0]) ? mn[0] : 0.0;
+    oy_ = std::isfinite(mn[1]) ? mn[1] : 0.0;
+    oz_ = std::isfinite(mn[2]) ? mn[2] : 0.0;
+    const double span = points.empty() ? 0.0 : std::max({mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2], 0.0});
+    max_ring_ = static_cast<int>(span / cell_) + 2;
+    for (int i = 0; i < static_cast<int>(points.size()); ++i) {
+        cells_[CellKeyOf(points[i])].push_back(i);
+    }
+}
+
+std::int64_t NearestNeighborIndex::CellKeyOf(const Point3& p) const {
+    return PackCell(static_cast<int>(std::floor((p.x - ox_) / cell_)),
+                    static_cast<int>(std::floor((p.y - oy_) / cell_)),
+                    static_cast<int>(std::floor((p.z - oz_) / cell_)));
+}
+
+bool NearestNeighborIndex::Nearest(const Point3& q, double* dist, int* index) const {
+    if (points_.empty()) return false;
+    const int cx = static_cast<int>(std::floor((q.x - ox_) / cell_));
+    const int cy = static_cast<int>(std::floor((q.y - oy_) / cell_));
+    const int cz = static_cast<int>(std::floor((q.z - oz_) / cell_));
+    double best = std::numeric_limits<double>::infinity();
+    int best_idx = -1;
+    for (int r = 0; r <= max_ring_; ++r) {
+        // The closest a ring-r cell can lie to q is (r-1)*cell; once that
+        // exceeds the best, no further shell can improve it.
+        if (r >= 1) {
+            const double floor_dist = static_cast<double>(r - 1) * cell_;
+            if (floor_dist * floor_dist >= best) break;
+        }
+        for (int dx = -r; dx <= r; ++dx)
+            for (int dy = -r; dy <= r; ++dy)
+                for (int dz = -r; dz <= r; ++dz) {
+                    if (std::max({std::abs(dx), std::abs(dy), std::abs(dz)}) != r) continue;
+                    const auto it = cells_.find(PackCell(cx + dx, cy + dy, cz + dz));
+                    if (it == cells_.end()) continue;
+                    for (int idx : it->second) {
+                        const double d = DistSq(q, points_[idx]);
+                        if (d < best) { best = d; best_idx = idx; }
+                    }
+                }
+    }
+    if (best_idx < 0) return false;
+    if (dist) *dist = std::sqrt(best);
+    if (index) *index = best_idx;
+    return true;
+}
+
+bool NearestNeighborIndex::AnyWithin(const Point3& q, double radius) const {
+    if (points_.empty()) return false;
+    const int cx = static_cast<int>(std::floor((q.x - ox_) / cell_));
+    const int cy = static_cast<int>(std::floor((q.y - oy_) / cell_));
+    const int cz = static_cast<int>(std::floor((q.z - oz_) / cell_));
+    const double radius_sq = radius * radius;
+    const int rmax = static_cast<int>(radius / cell_) + 2;
+    for (int r = 0; r <= rmax; ++r) {
+        if (r >= 1 && static_cast<double>(r - 1) * cell_ > radius) break;
+        for (int dx = -r; dx <= r; ++dx)
+            for (int dy = -r; dy <= r; ++dy)
+                for (int dz = -r; dz <= r; ++dz) {
+                    if (std::max({std::abs(dx), std::abs(dy), std::abs(dz)}) != r) continue;
+                    const auto it = cells_.find(PackCell(cx + dx, cy + dy, cz + dz));
+                    if (it == cells_.end()) continue;
+                    for (int idx : it->second)
+                        if (DistSq(q, points_[idx]) <= radius_sq) return true;
+                }
+    }
+    return false;
+}
 
 std::vector<Point3> Positions(const std::vector<CloudPoint>& cloud) {
     std::vector<Point3> out;
@@ -163,14 +151,13 @@ CloudMetrics CompareClouds(const std::vector<Point3>& a, const std::vector<Point
     if (a.empty() || b.empty() || !(tau > 0.0)) return m;
 
     // A -> B nearest-neighbour statistics.
-    const Grid grid_b(b, ChooseCell(b, tau));
+    const NearestNeighborIndex index_b(b, ChooseCell(b, tau));
     double sum = 0.0, sum_sq = 0.0, worst = 0.0;
     for (const Point3& p : a) {
-        double nn_sq = 0.0;
-        if (!grid_b.NearestSquared(p, &nn_sq)) continue;
-        const double nn = std::sqrt(nn_sq);
+        double nn = 0.0;
+        if (!index_b.Nearest(p, &nn, nullptr)) continue;
         sum += nn;
-        sum_sq += nn_sq;
+        sum_sq += nn * nn;
         worst = std::max(worst, nn);
     }
     const double n = static_cast<double>(a.size());
@@ -179,10 +166,10 @@ CloudMetrics CompareClouds(const std::vector<Point3>& a, const std::vector<Point
     m.max_nn = worst;
 
     // Coverage: the fraction of B within tau of some A point.
-    const Grid grid_a(a, ChooseCell(a, tau));
+    const NearestNeighborIndex index_a(a, ChooseCell(a, tau));
     std::size_t covered = 0;
     for (const Point3& p : b) {
-        if (grid_a.AnyWithin(p, tau)) ++covered;
+        if (index_a.AnyWithin(p, tau)) ++covered;
     }
     m.coverage = static_cast<double>(covered) / static_cast<double>(b.size());
 
