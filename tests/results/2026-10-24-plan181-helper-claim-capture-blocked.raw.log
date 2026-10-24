@@ -1,0 +1,18 @@
+$ cd /Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+$ pwd
+/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw
+$ git rev-parse --abbrev-ref HEAD
+hw/next
+$ pgrep -x raw_capture raptor_shim scan_server raptor_client device_message_listener_test
+(no output, exit 1 — no conflicting process)
+$ scripts/hw-preflight.sh raw_capture
+hw-preflight: FAIL — newest source 'tools/raw_capture/descriptor_probe.cpp' is NEWER than binary 'build/tools/raw_capture/raw_capture' — rebuild (a header change counts; #107: a worker-only rebuild can leave a stale bundle copy).
+exit code: 1
+$ scripts/hw-postflight.sh 2026-10-24-plan181-helper-claim-capture-blocked '2026-10-24 06:15:47' raw_capture
+hw-postflight: no crash report for 'raw_capture' at/after 2026-10-24 06:15:47 — safe to record 'no crash report (checked DiagnosticReports for raw_capture at/after the run start)'.
+exit code: 0
+
+No helper install, --helper-status check, ioreg read, or capture invocation was
+attempted: the preflight gate failed before any of those steps, and per the
+hw-test agent's mandate a non-zero preflight exit means stop and report, not
+rebuild or work around by hand.
