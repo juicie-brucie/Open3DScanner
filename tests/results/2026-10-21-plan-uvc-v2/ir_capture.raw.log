@@ -1,0 +1,5 @@
+[capture] sink: tests/results/2026-10-21-plan-uvc-v2/ir.bin (16 bytes)
+[capture] stop: source-error
+[capture] detail: alternate setting 0 could not be selected: Unable to select alternate setting.
+[capture] frames: 0 (ir 0, depth 0, rgb 0), 0 record bytes
+EXIT=2

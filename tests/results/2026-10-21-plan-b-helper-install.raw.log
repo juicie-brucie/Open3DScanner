@@ -1,0 +1,10 @@
+/Users/brucemackay/DevReposiMac/Open3DScanner-wt-hw/build/tools/macos_helper/openscanner-helper: replacing existing signature
+signed with identity: -
+designated requirement:
+# designated => cdhash H"3fc0bedf9f57699218751b8a42828706afb408a1"
+8338
+install_user_agent: registered org.openscanner.helper in gui/501
+  plist:  /Users/brucemackay/Library/LaunchAgents/org.openscanner.helper.plist
+  log:    /Users/brucemackay/Library/Logs/openscanner-helper.log
+  verify: tools/macos_helper/install_user_agent.sh status
+exit=0
