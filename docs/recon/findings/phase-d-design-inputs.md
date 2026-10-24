@@ -6,7 +6,7 @@
 
 **Verdict**: The HID interface (interface 6, endpoint 0x85) **cannot carry laser/exposure control**. It is input-only.
 
-**Evidence** (from `tests/results/2026-10-21-plan178-probe.raw.log`):
+**Evidence** (from `tests/results/2026-10-21-plan-uvc-probe.raw.log`, PR #490):
 
 ```
 [probe] interface number=6 ... class=0x03 subclass=0x00 protocol=0x00 kind=hid
@@ -14,7 +14,7 @@
 [probe] control.report_descriptor_length=25
 ```
 
-The 25-byte HID report descriptor (from PR #490, operator's `--probe` run):
+The 25-byte HID report descriptor (line 56 of the uvc-probe raw):
 ```
 05 8C 09 01 A1 01 09 03 17 00 00 00 00 27 FF FF FF FF 75 20 95 3E 81 02 C0
 ```
@@ -41,7 +41,7 @@ Decoded:
 
 **Correction to row #189**: The original premise that HID carries laser/exposure control is **refuted** by this evidence. The control stays on the vendor RPC property channel or UVC extension units.
 
-**Confidence**: `[hw-confirmed: plan178-probe]` — the descriptor is from a live probe, not inferred.
+**Confidence**: `[hw-confirmed: plan-uvc-probe]` — the descriptor bytes are from a live probe (PR #490), not inferred.
 
 ---
 
@@ -59,33 +59,39 @@ Decoded:
 - The property map references light types (`property-semantics-row101.md`)
 - The RPC frame is exactly 4× the UVC frame size
 
-**Static refutation**:
+**Static evidence (serializer-level)**:
 
-The hypothesis is **refuted by static analysis** of the frame serializer (from `frame-codec.md` §10.5):
+The frame serializer is a pass-through (from `frame-codec.md` §10.5):
 
 > "The serializer does **not** split the frame — it is a pass-through. The band rule lives in the serializer."
 
-The serializer (`RPCServer::frameCallback`) copies fields from the PAL frame directly into the RPC reply array. There is **no aggregation logic** in the serializer. The PAL frame is delivered as-is, without composition or aggregation of multiple light states.
+The serializer (`RPCServer::frameCallback`) copies fields from the PAL frame directly into the RPC reply array. There is **no aggregation logic** in the serializer. The PAL frame is delivered as-is to the RPC layer.
 
-Further, `frame-geometry.md` §4 concludes:
+This refutes **serializer-level aggregation** — the serializer does not combine multiple frames.
+
+**Supporting evidence (geometry-level)**:
+
+`frame-geometry.md` §4 concludes:
 
 > "The RPC frame and UVC descriptors represent **different sensor modes**... The dimension mismatch is not a composition/upscale — it is a **different sensor mode**."
 
-The 1920×1200 RPC frame is a **single sensor mode** at full resolution, not a composition of four 960×600 light states. The 4× factor is due to the resolution difference (2× in width, 2× in height), not aggregation.
+The 1920×1200 RPC frame is a **single sensor mode** at full resolution. The 4× factor matches the resolution difference (2× in width, 2× in height), consistent with different sensor modes rather than aggregation.
 
 **What is evidenced**:
 - ✅ The RPC frame is 1920×1200×1 Y8 (single-plane, single sensor mode)
 - ✅ The UVC IR is 960×600×1 Y8 (single-plane, different sensor mode)
-- ✅ The serializer is a pass-through (no aggregation)
+- ✅ The serializer is a pass-through (no aggregation at the RPC layer)
 - ✅ `ob_set_ir_frame_light_type` is called, but it sets the light type for the stream, not per-frame aggregation
 - ✅ e10 (IR light type) is a per-frame value (mixed 3/4), not a per-stream constant
 
-**What is inferred**:
-- ❌ The RPC frame aggregates 4 light states — **refuted by static analysis**
+**What is not established**:
+- ❌ **Producer/PAL-level aggregation is not refuted** — a PAL frame could be composed from four 960×600 light states before reaching the serializer. The static evidence does not exclude this possibility.
 
-**Empirical test (not required, but definitive if needed)**:
+**Verdict**: The 4× aggregation hypothesis is **not supported by the evidence**. The static analysis shows different sensor modes and a pass-through serializer, but does not definitively rule out producer-level composition. The empirical test is the decider.
 
-If the static refutation is questioned, the empirical test would be:
+**Empirical test (decisive)**:
+
+The paired UVC/RPC comparison settles the question:
 
 1. **Precondition A (UVC frame, vendor stopped)**:
    - Stop RPCServer: `pkill -f RPCServer`
@@ -100,9 +106,9 @@ If the static refutation is questioned, the empirical test would be:
 3. **Compare**:
    - If RPC frame is 4× aggregated: the 2.3 MB frame would contain 4 distinct 960×600 regions with different light patterns
    - If RPC frame is a different sensor mode: the 2.3 MB frame is a single 1920×1200 image at full resolution
-   - **Expected result**: The RPC frame is a single 1920×1200 image (different sensor mode), **not** 4 aggregated light states
+   - **Decisive result**: The RPC frame is a single 1920×1200 image (different sensor mode), **not** 4 aggregated light states
 
-**Confidence**: `[inferred]` for the refutation (based on static analysis of the serializer); `[hw-confirmed: plan132-gapfree-captures]` for the frame dimensions.
+**Confidence**: `[inferred]` for the verdict (not supported by evidence, but not definitively refuted); `[hw-confirmed: plan132-gapfree-captures]` for the frame dimensions.
 
 ---
 
@@ -127,17 +133,17 @@ If the static refutation is questioned, the empirical test would be:
 | Question | Answer | Confidence |
 |----------|--------|------------|
 | Can HID carry laser/exposure control? | **No** — HID is input-only (no output/feature fields) | hw-confirmed |
-| Does the RPC frame aggregate 4 light states? | **No** — it's a different sensor mode (1920×1200 vs 960×600), not aggregation | inferred (static refutation) |
+| Does the RPC frame aggregate 4 light states? | **Not supported** — different sensor modes, serializer is pass-through, but producer-level aggregation not excluded | inferred (not refuted; empirical test is decider) |
 | What is the control path? | RPC property channel (primary) or UVC extension units (secondary) | inferred |
 
 ## Open Questions
 
 1. **OQ-201-1**: Which UVC Extension Unit controls map to which properties? (Requires REA or empirical testing.)
-2. **OQ-202-1**: If the static refutation is questioned, run the empirical test in §2 to confirm the RPC frame is a single sensor mode, not 4 aggregated light states. (Not required, but definitive.)
+2. **OQ-202-1**: Run the empirical test in §2 to definitively settle whether the RPC frame is a single sensor mode or 4 aggregated light states. The static evidence is insufficient to decide.
 
 ## References
 
-- `tests/results/2026-10-21-plan178-probe.raw.log` — HID descriptor (PR #490)
+- `tests/results/2026-10-21-plan-uvc-probe.raw.log` — HID descriptor bytes (PR #490)
 - `docs/recon/findings/rpc-endpoint-map.md` — interface mapping, e10 semantics
 - `docs/recon/findings/frame-codec.md` §10.5 — serializer is pass-through
 - `docs/recon/findings/frame-geometry.md` — RPC vs UVC dimensions, different sensor modes
@@ -148,6 +154,6 @@ If the static refutation is questioned, the empirical test would be:
 ---
 
 **Wall**: `docs/recon/**`
-**Status**: `[hw-confirmed]` §1 (HID input-only); `[inferred]` §2 (4× hypothesis refuted by static analysis); `[inferred]` §3 (control path summary)
-**Board rows**: #201 (HID input-only, settled), #202 (IR 4× hypothesis, flagged and refuted)
+**Status**: `[hw-confirmed]` §1 (HID input-only); `[inferred]` §2 (4× hypothesis not supported; empirical test is decider); `[inferred]` §3 (control path summary)
+**Board rows**: #201 (HID input-only, settled), #202 (IR 4× hypothesis, flagged; not supported by evidence)
 **Related**: #178 (probe), #183 (endpoint map), #194 (frame geometry), #101 (property semantics), #189 (original HID premise, corrected)
