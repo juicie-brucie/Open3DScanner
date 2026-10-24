@@ -31,6 +31,10 @@ bool ReadScannerInterfaces(std::vector<InterfaceObservation>* interfaces, std::s
     return false;
 }
 
+std::string DiagnoseVisibleInterfaces() {
+    return "not-configured: the IOKit interface diagnostic is macOS-only\n";
+}
+
 }  // namespace raw_capture
 
 #endif  // !__APPLE__

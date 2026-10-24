@@ -19,6 +19,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdarg>
+#include <cstdio>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -641,6 +643,99 @@ std::unique_ptr<CommandTransport> MakeLiveHidTransport(std::string* why) {
     }
     if (why) why->clear();
     return transport;
+}
+
+namespace {
+
+// Reads an integer IORegistry property, or `fallback` if absent/not an int.
+long RegistryInt(io_service_t service, CFStringRef key, long fallback) {
+    CFTypeRef value = IORegistryEntryCreateCFProperty(service, key, kCFAllocatorDefault, 0);
+    long out = fallback;
+    if (value != nullptr) {
+        if (CFGetTypeID(value) == CFNumberGetTypeID()) {
+            CFNumberGetValue(static_cast<CFNumberRef>(value), kCFNumberLongType, &out);
+        }
+        CFRelease(value);
+    }
+    return out;
+}
+
+// Reads a string IORegistry property into UTF-8, or "" if absent/not a string.
+std::string RegistryString(io_service_t service, CFStringRef key) {
+    CFTypeRef value = IORegistryEntryCreateCFProperty(service, key, kCFAllocatorDefault, 0);
+    std::string out;
+    if (value != nullptr) {
+        if (CFGetTypeID(value) == CFStringGetTypeID()) {
+            char buffer[256];
+            if (CFStringGetCString(static_cast<CFStringRef>(value), buffer, sizeof(buffer),
+                                   kCFStringEncodingUTF8)) {
+                out = buffer;
+            }
+        }
+        CFRelease(value);
+    }
+    return out;
+}
+
+}  // namespace
+
+std::string DiagnoseVisibleInterfaces() {
+    std::string out;
+    auto append = [&out](const char* fmt, ...) {
+        char buf[512];
+        va_list args;
+        va_start(args, fmt);
+        const int n = std::vsnprintf(buf, sizeof(buf), fmt, args);
+        va_end(args);
+        if (n > 0) out.append(buf, std::min<size_t>(static_cast<size_t>(n), sizeof(buf) - 1));
+    };
+
+    // Bare match: every IOUSBHostInterface on the system, no vendor/product/
+    // interface-number filter at all. The point is to see what THIS process
+    // can enumerate, versus what ioreg (privileged) sees.
+    CFMutableDictionaryRef matching = IOServiceMatching(kIOUSBHostInterfaceClassName);
+    if (matching == nullptr) {
+        return "[diag] IOServiceMatching(IOUSBHostInterface) returned null\n";
+    }
+    io_iterator_t iterator = 0;
+    const kern_return_t kr = IOServiceGetMatchingServices(MainPort(), matching, &iterator);
+    if (kr != KERN_SUCCESS) {
+        append("[diag] IOServiceGetMatchingServices failed: 0x%08x\n", kr);
+        return out;
+    }
+
+    const int scanner_vendor = Table().vendor_id;
+    const int scanner_product = Table().product_id;
+    int total = 0, scanner = 0;
+    io_service_t service = 0;
+    append("[diag] enumerating every IOUSBHostInterface visible to this process "
+           "(no filter); scanner is vid=0x%04X pid=0x%04X\n", scanner_vendor, scanner_product);
+    while ((service = IOIteratorNext(iterator)) != 0) {
+        ++total;
+        const long vendor = RegistryInt(service, CFSTR(kUSBVendorID), -1);
+        const long product = RegistryInt(service, CFSTR(kUSBProductID), -1);
+        const long iface = RegistryInt(service, CFSTR(kUSBInterfaceNumber), -1);
+        const std::string owner = RegistryString(service, CFSTR("UsbExclusiveOwner"));
+        const std::string product_name = RegistryString(service, CFSTR("USB Product Name"));
+        const bool is_scanner = (vendor == scanner_vendor && product == scanner_product);
+        if (is_scanner) ++scanner;
+        append("[diag]  vid=0x%04lX pid=0x%04lX interface=%ld owner=\"%s\" name=\"%s\"%s\n",
+               vendor, product, iface, owner.empty() ? "(none)" : owner.c_str(),
+               product_name.c_str(), is_scanner ? "  <-- SCANNER" : "");
+        IOObjectRelease(service);
+    }
+    IOObjectRelease(iterator);
+    append("[diag] total IOUSBHostInterface nodes visible: %d; of those, scanner's: %d\n",
+           total, scanner);
+    if (scanner == 0) {
+        append("[diag] VERDICT: the scanner's interfaces are INVISIBLE to this process, even with "
+               "no filter — a per-device/DriverKit visibility gate, not a matching bug. If other "
+               "cameras appear above but the scanner does not, the entitlement path is the fix.\n");
+    } else {
+        append("[diag] VERDICT: the scanner's interfaces ARE visible to this process (%d found) — "
+               "the blocker is in the matching filter or the seize, not raw visibility.\n", scanner);
+    }
+    return out;
 }
 
 }  // namespace raw_capture

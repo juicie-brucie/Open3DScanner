@@ -237,4 +237,15 @@ public:
 std::unique_ptr<FrameSource> MakeLiveUvcSource(StreamKind kind, std::string* why);
 std::unique_ptr<CommandTransport> MakeLiveHidTransport(std::string* why);
 
+// Diagnostic: enumerate every IOUSBHostInterface this process can see
+// system-wide, with NO vendor/product/interface-number filter, and print
+// each one's idVendor/idProduct/bInterfaceNumber/class plus its
+// UsbExclusiveOwner if any. Separates "our matching filter is wrong" from
+// "these nodes are invisible to this (unentitled) process entirely": if the
+// built-in camera's interfaces appear but the scanner's do not, it is a
+// per-device visibility gate, not a matching bug. Returns the human-readable
+// listing; on a non-macOS build, a named refusal. Read-only: no claim, no
+// seize, no open of any interface. (See the Phase D dossier, §2.)
+std::string DiagnoseVisibleInterfaces();
+
 }  // namespace raw_capture

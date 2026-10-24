@@ -45,6 +45,7 @@ void PrintUsage() {
     std::printf(
         "Usage:\n"
         "  raw_capture --table\n"
+        "  raw_capture --diag-interfaces   (list every USB interface this process can see)\n"
         "  raw_capture --probe [--descriptor-file <blob>]\n"
         "  raw_capture --probe --match [--descriptor-file <blob>]\n"
         "  raw_capture --probe --watch [--seconds N] [--descriptor-file <blob>]\n"
@@ -395,6 +396,10 @@ int main(int argc, char** argv) {
     const std::string command = argv[1];
     if (command == "--table") {
         PrintTable();
+        return 0;
+    }
+    if (command == "--diag-interfaces") {
+        std::fputs(raw_capture::DiagnoseVisibleInterfaces().c_str(), stdout);
         return 0;
     }
     if (command == "--probe") return RunProbe(argc, argv);
