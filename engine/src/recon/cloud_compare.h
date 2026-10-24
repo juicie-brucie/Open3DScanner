@@ -14,11 +14,47 @@
 // common frame and units the caller has already put them in.
 
 #include <cstddef>
+#include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 #include "recon/triangulate.h"
 
 namespace openscanner::recon {
+
+// A uniform-voxel nearest-neighbour index over a point set, searched in
+// expanding Chebyshev shells: exact, and near-O(1) per query for a locally
+// uniform cloud, so it scales to large (vendor-sized) clouds. One
+// implementation, shared by the A/B compare here and by the fusion/ICP stage
+// (pose.h's seam) — kept reusable in keeping with the recon stack's
+// "adaptability" goal.
+//
+// It holds a reference to the points; they must outlive the index.
+class NearestNeighborIndex {
+public:
+    // `cell` is the voxel size; pass <= 0 to auto-size it from the point
+    // spread. Exactness never depends on the cell size (the shells plus the
+    // real distance tests give that) — a larger cell only trades speed.
+    NearestNeighborIndex(const std::vector<Point3>& points, double cell);
+
+    bool empty() const { return points_.empty(); }
+
+    // The nearest stored point to q: its distance in *dist, its index in
+    // *index. False when the set is empty.
+    bool Nearest(const Point3& q, double* dist, int* index) const;
+
+    // Whether any stored point lies within `radius` of q.
+    bool AnyWithin(const Point3& q, double radius) const;
+
+private:
+    std::int64_t CellKeyOf(const Point3& p) const;
+
+    const std::vector<Point3>& points_;
+    double cell_ = 1.0;
+    double ox_ = 0.0, oy_ = 0.0, oz_ = 0.0;
+    int max_ring_ = 1;
+    std::unordered_map<std::int64_t, std::vector<int>> cells_;
+};
 
 struct CloudMetrics {
     std::size_t count_a = 0;
