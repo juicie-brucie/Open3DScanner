@@ -129,6 +129,42 @@ int main() {
         Check(selection.ok() && selection.alternate_setting == 1, "the IN alt carrying the endpoint wins");
     }
 
+    // --- row #198: selecting the IOUSBHostInterface node among the enumerated
+    //     candidates (the in-process replacement for the broken matching
+    //     dictionary). The scanner publishes seven interfaces under one
+    //     vid/pid, enumerated alongside a keyboard and a trackpad. ----------
+    {
+        const long kVid = 0x2BC5, kPid = 0x0C03;
+        const std::vector<rc::InterfaceCandidate> candidates = {
+            {0x05AC, 0x029F, 0},  // keyboard interface 0
+            {kVid, kPid, 0},  {kVid, kPid, 1}, {kVid, kPid, 2}, {kVid, kPid, 3},
+            {kVid, kPid, 4},  {kVid, kPid, 5}, {kVid, kPid, 6},
+            {0x05AC, 0x0265, 1},  // trackpad interface 1
+        };
+        Check(rc::SelectInterfaceCandidate(candidates, kVid, kPid, 1) == 2,
+              "interface 1 is the scanner's node, not the keyboard's interface 0/1");
+        Check(rc::SelectInterfaceCandidate(candidates, kVid, kPid, 3) == 4,
+              "interface 3 (the 960x600 IR stream) selects the right node");
+        Check(rc::SelectInterfaceCandidate(candidates, kVid, kPid, 6) == 7,
+              "the HID interface 6 selects the last scanner node");
+        Check(rc::SelectInterfaceCandidate(candidates, kVid, kPid, 9) == -1,
+              "an interface number no node carries is no match");
+        Check(rc::SelectInterfaceCandidate(candidates, 0x1234, 0x5678, 1) == -1,
+              "a different device is no match even at a present interface number");
+    }
+
+    // --- an absent property (-1) never matches a real wanted id -----------
+    {
+        const std::vector<rc::InterfaceCandidate> candidates = {
+            {-1, -1, -1},            // a node that published none of the three
+            {0x2BC5, 0x0C03, 1},
+        };
+        Check(rc::SelectInterfaceCandidate(candidates, 0x2BC5, 0x0C03, 1) == 1,
+              "the populated node matches, not the empty one");
+        Check(rc::SelectInterfaceCandidate({}, 0x2BC5, 0x0C03, 1) == -1,
+              "no candidates is no match");
+    }
+
     std::printf("[raw-capture-selection] %d check(s), %d failure(s)\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
 }

@@ -34,4 +34,25 @@ AlternateSelection ChooseStreamingAlternate(const std::vector<ProbeInterface>& i
                                             int interface_number, int endpoint_address,
                                             int current_alternate, int preferred_alternate);
 
+// Row #198: choose the IOUSBHostInterface node for one interface number.
+//
+// FindInterfaceService built a vendor/product/bInterfaceNumber matching
+// dictionary and asked IOServiceGetMatchingService for the node; on the
+// scanner that returned 0, fifteen retries running, even though the bare
+// IOUSBHostInterface enumeration (--diag-interfaces) saw all seven interfaces
+// with those exact property values (record #498). So the caller enumerates the
+// nodes itself and matches here, on the integer properties it read from each
+// one. This is the pure half — no IOKit types — so it is device-free testable.
+struct InterfaceCandidate {
+    long vendor_id = -1;         // kUSBVendorID; -1 when the property was absent
+    long product_id = -1;        // kUSBProductID
+    long interface_number = -1;  // bInterfaceNumber
+};
+
+// The index of the first candidate whose vendor, product and interface number
+// all equal the wanted values, or -1 when none matches. An absent property is
+// -1, so it never matches a real wanted id.
+int SelectInterfaceCandidate(const std::vector<InterfaceCandidate>& candidates, long want_vendor,
+                             long want_product, long want_interface);
+
 }  // namespace raw_capture
