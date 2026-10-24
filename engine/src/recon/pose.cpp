@@ -108,6 +108,7 @@ PoseEstimate KabschEstimator::Estimate(const std::vector<Correspondence>& pairs)
     // (for the degeneracy test).
     double M[9] = {0};
     double C[9] = {0};
+    double mag_sq = 0.0;  // Σ w |from|^2, the data's own coordinate scale
     for (const Correspondence& c : pairs) {
         if (!(c.weight > 0.0)) continue;
         const double ax = c.from.x - fc.x, ay = c.from.y - fc.y, az = c.from.z - fc.z;
@@ -118,12 +119,16 @@ PoseEstimate KabschEstimator::Estimate(const std::vector<Correspondence>& pairs)
         M[6] += w * az * bx; M[7] += w * az * by; M[8] += w * az * bz;
         C[0] += w * ax * ax; C[1] += w * ax * ay; C[2] += w * ax * az;
         C[4] += w * ay * ay; C[5] += w * ay * az; C[8] += w * az * az;
+        mag_sq += w * (c.from.x * c.from.x + c.from.y * c.from.y + c.from.z * c.from.z);
     }
     C[3] = C[1]; C[6] = C[2]; C[7] = C[5];
 
     // Degeneracy: the from-points must span at least two dimensions — a
     // collinear or coincident set leaves the rotation about that line/point
-    // undetermined.
+    // undetermined. The test is scale-relative (invariant to the choice of
+    // units): the collinearity check is a dimensionless ratio of eigenvalues,
+    // and the coincidence check compares the largest spread eigenvalue to the
+    // data's own coordinate scale (Σ w |from|^2), not an absolute threshold.
     {
         double a3[9];
         for (int i = 0; i < 9; ++i) a3[i] = C[i];
@@ -131,7 +136,11 @@ PoseEstimate KabschEstimator::Estimate(const std::vector<Correspondence>& pairs)
         JacobiEigen(a3, 3, w3, v3);
         double eig[3] = {w3[0], w3[1], w3[2]};
         std::sort(eig, eig + 3);  // ascending; eig[2] largest, eig[1] second
-        if (eig[2] < 1e-12 || eig[1] < 1e-9 * eig[2]) return out;
+        constexpr double kSpanRel = 1e-7;  // spread vs the data scale (relative)
+        constexpr double kFlatRel = 1e-9;  // second eigenvalue vs the largest (ratio)
+        if (eig[2] <= 0.0) return out;                            // no spread at all
+        if (eig[2] < kSpanRel * kSpanRel * mag_sq) return out;    // ~coincident (scale-relative)
+        if (eig[1] < kFlatRel * eig[2]) return out;               // ~collinear (ratio)
     }
 
     // Horn's quaternion method: the unit quaternion maximizing q^T N q (the
