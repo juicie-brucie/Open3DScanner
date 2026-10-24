@@ -10,6 +10,7 @@ add_library(openscanner_engine STATIC
     src/recon/fuse.cpp
     src/recon/mesh_surface.cpp
     src/recon/mesh_compare.cpp
+    src/recon/recon_pipeline.cpp
 )
 
 # Row #200: the laser-line extraction seed. Device-free; the recorded-frame
@@ -61,6 +62,14 @@ add_executable(mesh_compare_test src/recon/mesh_compare_test.cpp)
 target_link_libraries(mesh_compare_test PRIVATE openscanner_engine)
 target_include_directories(mesh_compare_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME mesh_compare_test COMMAND mesh_compare_test)
+
+# WO-B2: the end-to-end pipeline (fuse -> mesh, live + post-scan). Device-free;
+# the tool (tools/recon_pipeline) adds the RCRP front end, and the vendor-mesh
+# A/B is gated on the #207 paired recording.
+add_executable(recon_pipeline_test src/recon/recon_pipeline_test.cpp)
+target_link_libraries(recon_pipeline_test PRIVATE openscanner_engine)
+target_include_directories(recon_pipeline_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME recon_pipeline_test COMMAND recon_pipeline_test)
 
 target_include_directories(openscanner_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
