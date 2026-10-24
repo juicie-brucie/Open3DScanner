@@ -60,6 +60,104 @@ bool IsTimeout(NSError* error) {
     return error != nil && error.code == static_cast<NSInteger>(kIOReturnTimeout);
 }
 
+// UVC class-specific request codes (UVC 1.1 Table 4-75) and VideoStreaming
+// control selectors (UVC 1.1 Table 4-47's VS_PROBE_CONTROL/VS_COMMIT_CONTROL,
+// §4.3.1.1 / §4.3.1.2). Sent as a class request to the interface recipient
+// (bmRequestType), never the device — UVC control requests target whichever
+// VideoStreaming interface number is in wIndex.
+constexpr uint8_t kUvcRequestSetCur = 0x01;
+constexpr uint8_t kUvcRequestGetCur = 0x81;
+constexpr uint16_t kUvcVsProbeControl = 0x01;
+constexpr uint16_t kUvcVsCommitControl = 0x02;
+
+// UVC 1.1 Video Probe and Commit Control (UVC 1.1 §4.3.1.1 / Table 4-47,
+// 34 bytes) — mandatory negotiation on a VideoStreaming interface before the
+// device will accept reads on a streaming endpoint. Hw-test confirmed its
+// absence as the cause of "the endpoint read failed: Unable to send IO" on
+// every capture attempt (2026-10-24-plan-uvc-retest.md,
+// -clearstall.md): neither the alt-setting fix nor a clear-stall attempt
+// changed that error; this device simply refuses to stream until probed and
+// committed. The 34-byte length is read from the device's own VC_HEADER
+// (bcdUVC=0x0110, UVC 1.1 — descriptor_table.h's bcd_uvc), not assumed.
+struct VideoProbeCommitControl {
+    uint16_t bm_hint = 0;
+    uint8_t format_index = 0;
+    uint8_t frame_index = 0;
+    uint32_t frame_interval = 0;
+    uint16_t key_frame_rate = 0;
+    uint16_t p_frame_rate = 0;
+    uint16_t comp_quality = 0;
+    uint16_t comp_window_size = 0;
+    uint16_t delay = 0;
+    uint32_t max_video_frame_size = 0;
+    uint32_t max_payload_transfer_size = 0;
+    uint32_t clock_frequency = 0;
+    uint8_t framing_info = 0;
+    uint8_t preferred_version = 0;
+    uint8_t min_version = 0;
+    uint8_t max_version = 0;
+};
+
+void Put16(uint8_t* p, uint16_t v) {
+    p[0] = static_cast<uint8_t>(v & 0xff);
+    p[1] = static_cast<uint8_t>((v >> 8) & 0xff);
+}
+void Put32(uint8_t* p, uint32_t v) {
+    p[0] = static_cast<uint8_t>(v & 0xff);
+    p[1] = static_cast<uint8_t>((v >> 8) & 0xff);
+    p[2] = static_cast<uint8_t>((v >> 16) & 0xff);
+    p[3] = static_cast<uint8_t>((v >> 24) & 0xff);
+}
+uint16_t Get16(const uint8_t* p) { return static_cast<uint16_t>(p[0] | (p[1] << 8)); }
+uint32_t Get32(const uint8_t* p) {
+    return static_cast<uint32_t>(p[0]) | (static_cast<uint32_t>(p[1]) << 8) |
+           (static_cast<uint32_t>(p[2]) << 16) | (static_cast<uint32_t>(p[3]) << 24);
+}
+
+// Writes exactly kVideoProbeCommitControlSize (34) bytes to `buf`.
+void SerializeProbeCommit(const VideoProbeCommitControl& c, uint8_t* buf) {
+    Put16(buf + 0, c.bm_hint);
+    buf[2] = c.format_index;
+    buf[3] = c.frame_index;
+    Put32(buf + 4, c.frame_interval);
+    Put16(buf + 8, c.key_frame_rate);
+    Put16(buf + 10, c.p_frame_rate);
+    Put16(buf + 12, c.comp_quality);
+    Put16(buf + 14, c.comp_window_size);
+    Put16(buf + 16, c.delay);
+    Put32(buf + 18, c.max_video_frame_size);
+    Put32(buf + 22, c.max_payload_transfer_size);
+    Put32(buf + 26, c.clock_frequency);
+    buf[30] = c.framing_info;
+    buf[31] = c.preferred_version;
+    buf[32] = c.min_version;
+    buf[33] = c.max_version;
+}
+
+// Reads whatever prefix of the 34-byte layout `len` bytes actually cover —
+// a shorter reply (a UVC 1.0 device, 26 bytes) still yields its real fields
+// instead of an out-of-bounds read.
+VideoProbeCommitControl DeserializeProbeCommit(const uint8_t* buf, size_t len) {
+    VideoProbeCommitControl c;
+    if (len >= 2) c.bm_hint = Get16(buf + 0);
+    if (len >= 3) c.format_index = buf[2];
+    if (len >= 4) c.frame_index = buf[3];
+    if (len >= 8) c.frame_interval = Get32(buf + 4);
+    if (len >= 10) c.key_frame_rate = Get16(buf + 8);
+    if (len >= 12) c.p_frame_rate = Get16(buf + 10);
+    if (len >= 14) c.comp_quality = Get16(buf + 12);
+    if (len >= 16) c.comp_window_size = Get16(buf + 14);
+    if (len >= 18) c.delay = Get16(buf + 16);
+    if (len >= 22) c.max_video_frame_size = Get32(buf + 18);
+    if (len >= 26) c.max_payload_transfer_size = Get32(buf + 22);
+    if (len >= 30) c.clock_frequency = Get32(buf + 26);
+    if (len >= 31) c.framing_info = buf[30];
+    if (len >= 32) c.preferred_version = buf[31];
+    if (len >= 33) c.min_version = buf[32];
+    if (len >= 34) c.max_version = buf[33];
+    return c;
+}
+
 // Opens the device, the named interface, selects the alternate setting and
 // takes the named endpoint's pipe. Everything is released by Close().
 class UsbInterfaceHandle {
@@ -193,6 +291,80 @@ public:
         return true;
     }
 
+    // UVC 1.1 §4.3.1.1: GET_CUR(PROBE) to read the device's current
+    // negotiation state, overwrite only format/frame/interval, SET_CUR(PROBE)
+    // to propose it, GET_CUR(PROBE) again to read back what the device
+    // actually accepted (it may adjust dwMaxVideoFrameSize /
+    // dwMaxPayloadTransferSize), then SET_CUR(COMMIT) with the accepted
+    // struct — never the proposed one. Must be called after Open() succeeds
+    // and before the first Read().
+    bool NegotiateUvcFormat(int interface_number, int format_index, int frame_index,
+                             uint32_t frame_interval_100ns, int probe_commit_control_length,
+                             std::string* why) {
+        if (interface_ == nil) {
+            *why = "no interface claimed; call Open() first";
+            return false;
+        }
+        const NSUInteger length = static_cast<NSUInteger>(probe_commit_control_length);
+        auto send = [&](uint8_t request, uint16_t control_selector, NSMutableData* data,
+                         std::string* step_why) -> bool {
+            IOUSBDeviceRequest req;
+            req.bmRequestType = static_cast<uint8_t>(
+                (request == kUvcRequestGetCur ? kIOUSBDeviceRequestDirectionIn
+                                               : kIOUSBDeviceRequestDirectionOut) |
+                kIOUSBDeviceRequestTypeClass | kIOUSBDeviceRequestRecipientInterface);
+            req.bRequest = request;
+            req.wValue = static_cast<uint16_t>(control_selector << 8);
+            req.wIndex = static_cast<uint16_t>(interface_number);
+            req.wLength = static_cast<uint16_t>(length);
+            NSError* error = nil;
+            NSUInteger moved = 0;
+            if (![interface_ sendDeviceRequest:req
+                                           data:data
+                               bytesTransferred:&moved
+                              completionTimeout:1.0
+                                          error:&error]) {
+                *step_why = NsErrorText(error);
+                return false;
+            }
+            return true;
+        };
+
+        std::string step_why;
+        NSMutableData* probe_data = [NSMutableData dataWithLength:length];
+        if (!send(kUvcRequestGetCur, kUvcVsProbeControl, probe_data, &step_why)) {
+            *why = "GET_CUR(VS_PROBE_CONTROL) failed: " + step_why;
+            return false;
+        }
+        VideoProbeCommitControl proposed = DeserializeProbeCommit(
+            static_cast<const uint8_t*>(probe_data.bytes), probe_data.length);
+        proposed.format_index = static_cast<uint8_t>(format_index);
+        proposed.frame_index = static_cast<uint8_t>(frame_index);
+        proposed.frame_interval = frame_interval_100ns;
+        proposed.bm_hint = 0x01;  // bit 0: dwFrameInterval is the field we are specifying
+
+        std::vector<uint8_t> wire(length, 0);
+        SerializeProbeCommit(proposed, wire.data());
+        NSMutableData* set_data = [NSMutableData dataWithBytes:wire.data() length:length];
+        if (!send(kUvcRequestSetCur, kUvcVsProbeControl, set_data, &step_why)) {
+            *why = "SET_CUR(VS_PROBE_CONTROL) failed: " + step_why;
+            return false;
+        }
+
+        // Read back what the device actually accepted — the commit step
+        // must use the device's own accepted struct, not the one proposed.
+        NSMutableData* accepted_data = [NSMutableData dataWithLength:length];
+        if (!send(kUvcRequestGetCur, kUvcVsProbeControl, accepted_data, &step_why)) {
+            *why = "GET_CUR(VS_PROBE_CONTROL) (read-back) failed: " + step_why;
+            return false;
+        }
+        if (!send(kUvcRequestSetCur, kUvcVsCommitControl, accepted_data, &step_why)) {
+            *why = "SET_CUR(VS_COMMIT_CONTROL) failed: " + step_why;
+            return false;
+        }
+        return true;
+    }
+
 private:
     IOUSBHostDevice* device_ = nil;
     IOUSBHostInterface* interface_ = nil;
@@ -212,6 +384,9 @@ std::string MissingStreamFields(const StreamSpec& spec) {
     if (spec.pixel_format == 0) add("pixel_format");
     if (spec.bytes_per_line == 0) add("bytes_per_line");
     if (spec.width == 0 || spec.height == 0) add("width/height");
+    if (spec.format_index == kUnset) add("format_index");
+    if (spec.frame_index == kUnset) add("frame_index");
+    if (spec.frame_interval_100ns == 0) add("frame_interval_100ns");
     return missing;
 }
 
@@ -248,6 +423,14 @@ public:
         if (assembler_ == nullptr) {
             assembler_ = std::make_unique<UvcAssembler>(spec.bytes_per_line * spec.height);
             if (!handle_.Open(spec.endpoint, error)) return false;
+            // UVC 1.1 §4.3.1.1: the device refuses streaming reads until this
+            // negotiation completes (hw-test-confirmed; see the struct's own
+            // comment). Must happen after Open(), before the first Read().
+            if (!handle_.NegotiateUvcFormat(spec.endpoint.interface_number, spec.format_index,
+                                             spec.frame_index, spec.frame_interval_100ns,
+                                             Table().probe_commit_control_length, error)) {
+                return false;
+            }
             capacity_ = std::min<size_t>(static_cast<size_t>(spec.bytes_per_line) * spec.height, 4u << 20);
             capacity_ = std::max<size_t>(capacity_, 64u << 10);
         }
