@@ -8,7 +8,7 @@ Reconcile the contradiction:
 - RPC frame: `Bin(2304000)` bytes
 - #174 reads it as 1920×1200×1
 - #175 reads it as 960×600×4 or 480×300×16
-- UVC table: IR = 960×600 (576,000 bytes), depth = 480×300 (144,000 bytes)
+- UVC table: IR = 960×600 (576,000 bytes), depth = 480×300 stride-padded (252,000 bytes)
 
 What is the RPC frame's true geometry, and how does it relate to the UVC descriptors?
 
