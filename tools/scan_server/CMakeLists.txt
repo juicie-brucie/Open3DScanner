@@ -34,6 +34,13 @@ add_executable(model_ply_test model_ply_test.cpp)
 target_link_libraries(model_ply_test PRIVATE openscanner_engine)
 add_test(NAME model_ply_test COMMAND model_ply_test)
 
+# Hardware-free test for the local-first project archive and the network copy
+# (UI project save + SMB-share upload): small synthetic clouds, a temp cache
+# root and a temp share, the multi-object layout and the guard rails.
+add_executable(project_save_test project_save_test.cpp)
+target_link_libraries(project_save_test PRIVATE openscanner_engine)
+add_test(NAME project_save_test COMMAND project_save_test)
+
 # Hardware-free test for the per-client broadcast counters (row #163): a real
 # loopback server, fast clients, the 1-vs-8 fan-out, and a stalled client that
 # exercises the drop and the send timeout.

@@ -103,12 +103,14 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
 }
 
 - (void)webView:(WKWebView*)webView didFailProvisionalNavigation:(WKNavigation*)navigation withError:(NSError*)error {
-    (void)webView; (void)navigation; (void)error;
+    (void)webView; (void)navigation;
+    QuitTrace("app", "didFailProvisionalNavigation: %s", error ? [[error localizedDescription] UTF8String] : "nil");
     [self retryPageLoadSoon];
 }
 
 - (void)webView:(WKWebView*)webView didFinishNavigation:(WKNavigation*)navigation {
     (void)webView; (void)navigation;
+    QuitTrace("app", "didFinishNavigation url=%s", [[webView.URL absoluteString] UTF8String]);
     self.retryCount = 0;
 }
 
@@ -131,10 +133,37 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
     return in_use;
 }
 
+// Device-free UI mode: OPENSCANNER_SYNTHETIC=1 makes the app drive the
+// worker's synthetic (animated-sphere) source instead of the scanner, so the
+// whole app UI can be built and tried without a physical device or the SDK.
+- (BOOL)syntheticMode {
+    const char* env = std::getenv("OPENSCANNER_SYNTHETIC");
+    return (env != nullptr && env[0] != '\0' && std::strcmp(env, "0") != 0);
+}
+
 - (void)startWorker {
     NSString* workerPath = [self resolveWorkerPath];
     if (workerPath.length == 0) {
         [self surfaceError:@"scan_server not found in the app bundle or OPENSCANNER_SCAN_SERVER."];
+        return;
+    }
+    NSString* portStr = [NSString stringWithFormat:@"%ld", (long)self.port];
+    if ([self syntheticMode]) {
+        if ([self isPortInUse:self.port]) {
+            [self surfaceError:[NSString stringWithFormat:
+                @"Port %ld is already in use by another process.", (long)self.port]];
+            return;
+        }
+        self.worker = [[NSTask alloc] init];
+        self.worker.launchPath = workerPath;
+        self.worker.arguments = @[@"--synthetic", portStr];
+        [self installWorkerTerminationHandler];
+        @try {
+            [self.worker launch];
+            QuitTrace("app", "synthetic worker launched pid=%d", self.worker.processIdentifier);
+        } @catch (NSException* e) {
+            [self surfaceError:[NSString stringWithFormat:@"Could not start the worker: %@", e.reason]];
+        }
         return;
     }
     NSString* library = [self resolveLibraryPath];
@@ -168,10 +197,24 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
     self.worker = [[NSTask alloc] init];
     self.worker.launchPath = workerPath;
     self.worker.arguments = @[@"--live-worker", port, library, seconds];
+    [self installWorkerTerminationHandler];
+    @try {
+        [self.worker launch];
+        QuitTrace("app", "worker launched pid=%d path=%s", self.worker.processIdentifier,
+                  [workerPath UTF8String]);
+    } @catch (NSException* e) {
+        QuitTrace("app", "worker launch threw: %s", [e.reason UTF8String]);
+        [self surfaceError:[NSString stringWithFormat:@"Could not start the capture worker: %@", e.reason]];
+    }
+}
+
+// The worker-exit handler, shared by the live and synthetic launch paths:
+// completes a pending quit, restarts on a reconnect, or reports an
+// unexpected exit. NSTask fires it off the main thread, so every AppKit
+// touch hops back to the main queue.
+- (void)installWorkerTerminationHandler {
     __weak OpenScannerAppDelegate* weakSelf = self;
     self.worker.terminationHandler = ^(NSTask* task) {
-        // NSTask fires this off the main thread; every AppKit call below
-        // must hop back to the main queue.
         int status = task.terminationStatus;
         QuitTrace("app", "worker terminationHandler: pid=%d status=%d reason=%ld", task.processIdentifier, status,
                   (long)task.terminationReason);
@@ -193,24 +236,16 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
                 [self startWorker];
                 [self reloadPageIfNeeded];
             } else if (status == 0) {
-                // A designed session end (bounded session length) is a clean
+                // The scan ran for the app-open cycle and the worker exited
+                // cleanly (operator "finish", or the stream ending) — a clean
                 // exit, not a crash.
-                self.window.title = [NSString stringWithFormat:@"OpenScanner — session ended (%ld s)",
-                                                               (long)self.sessionSeconds];
+                self.window.title = @"OpenScanner — scan ended";
             } else {
                 [self surfaceError:[NSString stringWithFormat:@"Capture worker exited unexpectedly (status %d).",
                                                               status]];
             }
         });
     };
-    @try {
-        [self.worker launch];
-        QuitTrace("app", "worker launched pid=%d path=%s", self.worker.processIdentifier,
-                  [workerPath UTF8String]);
-    } @catch (NSException* e) {
-        QuitTrace("app", "worker launch threw: %s", [e.reason UTF8String]);
-        [self surfaceError:[NSString stringWithFormat:@"Could not start the capture worker: %@", e.reason]];
-    }
 }
 
 - (void)surfaceError:(NSString*)message {
@@ -232,7 +267,9 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
     if (!self.reloadAfterRestart) return;
     self.reloadAfterRestart = NO;
     self.retryCount = 0;
-    [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+    // Wait for the restarted worker's listener so the splash stays up rather
+    // than flashing an error page during the new bring-up.
+    [self loadPageWhenServing:0];
 }
 
 - (void)restartWorker {
@@ -250,48 +287,47 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
     NSAlert* alert = [[NSAlert alloc] init];
     alert.messageText = @"OpenScanner Settings";
     alert.informativeText = @"Applied on OK; the worker restarts and the page reloads for a port change. "
-                             @"Quit always runs the full teardown.";
+                             @"The scan runs for the whole app-open cycle; Quit always runs the full teardown.";
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
 
-    NSView* accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 260, 56)];
-    NSTextField* portLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 32, 80, 20)];
+    NSView* accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 260, 28)];
+    NSTextField* portLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 4, 80, 20)];
     portLabel.stringValue = @"Port";
     portLabel.editable = NO;
     portLabel.bezeled = NO;
     portLabel.drawsBackground = NO;
-    NSTextField* portField = [[NSTextField alloc] initWithFrame:NSMakeRect(90, 30, 160, 24)];
+    NSTextField* portField = [[NSTextField alloc] initWithFrame:NSMakeRect(90, 2, 160, 24)];
     portField.stringValue = [NSString stringWithFormat:@"%ld", (long)self.port];
-    NSTextField* secsLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 4, 80, 20)];
-    secsLabel.stringValue = @"Session (s)";
-    secsLabel.editable = NO;
-    secsLabel.bezeled = NO;
-    secsLabel.drawsBackground = NO;
-    NSTextField* secsField = [[NSTextField alloc] initWithFrame:NSMakeRect(90, 2, 160, 24)];
-    secsField.stringValue = [NSString stringWithFormat:@"%ld", (long)self.sessionSeconds];
     [accessory addSubview:portLabel];
     [accessory addSubview:portField];
-    [accessory addSubview:secsLabel];
-    [accessory addSubview:secsField];
     alert.accessoryView = accessory;
 
     if ([alert runModal] != NSAlertFirstButtonReturn) return;
     NSInteger oldPort = self.port;
     NSInteger port = portField.stringValue.integerValue;
-    NSInteger secs = secsField.stringValue.integerValue;
-    if (port < 1 || port > 65535 || secs < 1 || secs > 3600) {
-        [self surfaceError:@"Port must be 1–65535 and session length 1–3600 seconds."];
+    if (port < 1 || port > 65535) {
+        [self surfaceError:@"Port must be 1–65535."];
         return;
     }
     self.reloadAfterRestart = (oldPort != port);
     self.port = port;
-    self.sessionSeconds = secs;
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     [defaults setInteger:port forKey:@"OpenScannerPort"];
-    [defaults setInteger:secs forKey:@"OpenScannerSessionSeconds"];
     self.pageURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%ld/", (long)port]];
-    self.window.title = [NSString stringWithFormat:@"OpenScanner — port %ld, session %ld s",
-                                                   (long)port, (long)secs];
+    self.window.title = [NSString stringWithFormat:@"OpenScanner — port %ld", (long)port];
+    [self restartWorker];
+}
+
+// "Connect / Refresh scanner": tear the worker down and start it again, which
+// re-runs device discovery and SDK bring-up. This is the honest way to
+// re-acquire a scanner that was absent or unplugged at launch; the graceful
+// SIGTERM teardown runs first so the SDK is never left mid-session.
+- (void)reconnectScanner:(id)sender {
+    (void)sender;
+    self.reloadAfterRestart = YES;
+    self.window.title = @"OpenScanner — reconnecting…";
+    [self.webView loadHTMLString:[self startingSplashHtml] baseURL:nil];
     [self restartWorker];
 }
 
@@ -305,6 +341,10 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
     [menuBar addItem:appItem];
     NSMenu* appMenu = [[NSMenu alloc] init];
     [appMenu addItemWithTitle:@"Settings…" action:@selector(showSettings:) keyEquivalent:@","];
+    // Reconnect = re-run the worker's device bring-up (the "connect / refresh
+    // scanner" action). The web UI also has a button for it, but the real
+    // device re-open is the app's job since it supervises the worker process.
+    [appMenu addItemWithTitle:@"Reconnect Scanner" action:@selector(reconnectScanner:) keyEquivalent:@"r"];
     [appMenu addItem:[NSMenuItem separatorItem]];
     [appMenu addItemWithTitle:@"Quit OpenScanner" action:@selector(terminate:) keyEquivalent:@"q"];
     appItem.submenu = appMenu;
@@ -317,8 +357,9 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     NSInteger savedPort = [defaults integerForKey:@"OpenScannerPort"];
     self.port = (savedPort >= 1 && savedPort <= 65535) ? savedPort : 8787;
-    NSInteger savedSecs = [defaults integerForKey:@"OpenScannerSessionSeconds"];
-    self.sessionSeconds = (savedSecs >= 1 && savedSecs <= 3600) ? savedSecs : 300;
+    // 0 = unbounded: the worker streams for the whole app-open cycle and only
+    // stops on operator "finish" or on Quit (graceful SIGTERM teardown).
+    self.sessionSeconds = 0;
 
     NSRect frame = NSMakeRect(0, 0, 1200, 800);
     self.window = [[NSWindow alloc] initWithContentRect:frame
@@ -329,28 +370,73 @@ static void QuitTrace(const char* who, const char* fmt, ...) {
     self.window.title = @"OpenScanner";
     self.window.delegate = self;
 
+    // Dark background everywhere so the window is never a bare white panel —
+    // not before the first paint, and not if a page load fails mid-retry. The
+    // page's own background is #111; match it here. drawsBackground=NO lets the
+    // dark window show through the WebKit view during loads (the private KVC
+    // key is the long-standing way to do this on macOS).
+    NSColor* dark = [NSColor colorWithCalibratedRed:0.067 green:0.067 blue:0.071 alpha:1.0];
+    self.window.backgroundColor = dark;
+
     WKWebViewConfiguration* config = [[WKWebViewConfiguration alloc] init];
     self.webView = [[WKWebView alloc] initWithFrame:frame configuration:config];
     self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     self.webView.navigationDelegate = self;
+    @try { [self.webView setValue:@NO forKey:@"drawsBackground"]; } @catch (NSException* e) { (void)e; }
+    if ([self.webView respondsToSelector:@selector(setUnderPageBackgroundColor:)]) {
+        self.webView.underPageBackgroundColor = dark;
+    }
     self.window.contentView = self.webView;
 
     self.pageURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%ld/", (long)self.port]];
     self.retryCount = 0;
-    self.window.title = [NSString stringWithFormat:@"OpenScanner — port %ld, session %ld s",
-                                                   (long)self.port, (long)self.sessionSeconds];
+    self.window.title = [NSString stringWithFormat:@"OpenScanner — port %ld", (long)self.port];
 
     [self.window center];
     [self.window makeKeyAndOrderFront:nil];
     [NSApp activateIgnoringOtherApps:YES];
 
-    // Spawn after launch has completed; the navigation retries until the
-    // listener answers. Any error dialog then happens in a fully launched
-    // app (menu and Quit already present) rather than blocking the launch.
+    // A dark "starting" splash shown immediately, so the operator sees branded
+    // feedback during the seconds of scanner/SDK bring-up before the worker's
+    // page is served — rather than a blank window.
+    [self.webView loadHTMLString:[self startingSplashHtml] baseURL:nil];
+
+    // Spawn after launch has completed, then load the page only once the
+    // worker is actually listening — the splash stays up during bring-up
+    // instead of flashing WebKit's error page on each early retry.
     dispatch_async(dispatch_get_main_queue(), ^{
         [self startWorker];
-        [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+        [self loadPageWhenServing:0];
     });
+}
+
+// Poll the loopback until the worker's listener answers, then load the page.
+// Keeps the dark splash visible meanwhile. Bounded (~2 min) like the WebKit
+// retry path; if the worker died, startWorker has already surfaced an error.
+- (void)loadPageWhenServing:(NSInteger)attempt {
+    if (self.pageURL == nil) return;
+    if ([self isPortInUse:self.port]) {
+        QuitTrace("app", "worker is serving (after %ld polls); loading page", (long)attempt);
+        self.retryCount = 0;
+        [self.webView loadRequest:[NSURLRequest requestWithURL:self.pageURL]];
+        return;
+    }
+    if (attempt >= 240) return;  // ~2 min at 0.5 s
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [self loadPageWhenServing:attempt + 1];
+    });
+}
+
+- (NSString*)startingSplashHtml {
+    return @"<!doctype html><html><head><meta charset='utf-8'><style>"
+            "html,body{margin:0;height:100%;background:#111;color:#eee;"
+            "font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;"
+            "display:flex;align-items:center;justify-content:center;}"
+            ".box{text-align:center;opacity:.85}.t{font-size:15px;font-weight:600}"
+            ".s{font-size:12px;color:#8aa;margin-top:6px}</style></head><body>"
+            "<div class='box'><div class='t'>Starting OpenScanner…</div>"
+            "<div class='s'>connecting to the scanner</div></div></body></html>";
 }
 
 // Instrumented rerun (row #73b): the graceful path starts correctly

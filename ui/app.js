@@ -94,6 +94,20 @@
     return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1]);
   }
 
+  function scaling(x, y, z) {
+    return new Float32Array([x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1]);
+  }
+
+  function rotationX(a) {
+    const c = Math.cos(a), s = Math.sin(a);
+    return new Float32Array([1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]);
+  }
+
+  function rotationY(a) {
+    const c = Math.cos(a), s = Math.sin(a);
+    return new Float32Array([c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]);
+  }
+
   // --- WebSocket data stream -----------------------------------------------
 
   let pointCount = 0;
@@ -120,6 +134,10 @@
   let viewCenter = [0, 0, 0];
   let viewDistance = 4.2;
   let viewRadius = 1.0;
+  let viewAzimuth = 0;      // horizontal orbit angle (radians)
+  let viewElevation = 0;    // vertical orbit angle (radians)
+  let viewUserControlled = false; // true once user has panned/orbited/zoomed
+  let showAxes = true;      // draw the world-origin XYZ triad
 
   // Coverage (G2): voxel sets over our own live data, updated per cloud frame
   // and per pose message. The update logic lives in ui/coverage.js; row #160's
@@ -169,8 +187,9 @@
     }
     const rms = Math.sqrt(sumSq / count);
     const radius = Math.max(rms * 2.0, 0.001);  // ~2 sigma covers the dense cluster.
-    if (cameraMode !== "follow") viewCenter = [cx, cy, cz];
     viewRadius = radius;
+    if (viewUserControlled) return; // user has taken the camera; keep their viewpoint
+    if (cameraMode !== "follow") viewCenter = [cx, cy, cz];
     // Distance needed to fit `radius` within the vertical half-FOV, plus
     // headroom so the cloud isn't touching the viewport edges.
     viewDistance = (radius / Math.tan(fovRad() / 2)) * 1.6;
@@ -205,6 +224,7 @@
 
     ws.onopen = () => {
       connectionState = "connected";
+      viewUserControlled = false; // let auto-fit run for the new session
     };
     ws.onclose = () => {
       connectionState = "disconnected";
@@ -219,6 +239,10 @@
       if (typeof event.data === "string") {
         let msg = null;
         try { msg = JSON.parse(event.data); } catch (e) { msg = null; }
+        if (msg && msg.type === "project_result") {
+          handleProjectResult(msg);
+          return;
+        }
         if (msg && msg.type === "full_mesh_start") {
           fullMeshAccum = new Float32Array(msg.total * 3);
           fullMeshReceived = 0;
@@ -229,6 +253,10 @@
           if (fullMeshAccum) {
             renderer.upload(fullMeshAccum);
             updateViewFit(fullMeshAccum, fullMeshReceived);
+            // Full mesh can be millions of points — skip density-colour
+            // computation here (would allocate ~75 MB) and fall back to
+            // the depth-gradient path for the final view.
+            renderer.resetDensityColors();
             pointCount = fullMeshReceived;
             lastFrameId = -1;
             framesReceived++;
@@ -272,8 +300,8 @@
       lastFrameId = frameId;
       framesReceived++;
 
-      coverage.observe(frame.positions, count, viewRadius);
-      renderer.uploadOverlay(coverage.underPositions);
+      const { densityColors } = coverage.observe(frame.positions, count, viewRadius);
+      renderer.uploadDensityColors(densityColors);
 
       // Row #142: age at receipt = server clock now - the frame's t_capture;
       // the render delay is added when draw() actually renders it. t_capture
@@ -348,6 +376,7 @@
 
   function updateControlsFromStatus() {
     const connected = connectionState === "connected" && latestStatus !== null;
+    updateProjectFromStatus();
     btnStartPause.disabled = !connected;
     btnFinish.disabled = !connected || latestStatus.state === "idle";
     autoExposureCheckbox.disabled = !connected;
@@ -397,6 +426,180 @@
   fovNormalBtn.addEventListener("click", () => sendCommand({ cmd: "set_fov", value: "normal" }));
   fovWideBtn.addEventListener("click", () => sendCommand({ cmd: "set_fov", value: "wide" }));
 
+  // --- View toggles: reset + axis triad ------------------------------------
+  const btnResetView = document.getElementById("btn-reset-view");
+  if (btnResetView) btnResetView.addEventListener("click", resetView);
+  const showAxesCheckbox = document.getElementById("show-axes");
+  if (showAxesCheckbox) showAxesCheckbox.addEventListener("change", () => {
+    showAxes = showAxesCheckbox.checked;
+  });
+
+  // --- Project: save objects locally, mirror to a network share ------------
+  // The server owns the files (it holds the scan data and runs on the scan
+  // machine); these controls are just intents sent over the same socket, so a
+  // phone/laptop viewing remotely drives the same project the scan host writes.
+  const projectCurrent = document.getElementById("project-current");
+  const projectNameInput = document.getElementById("project-name");
+  const objectNameInput = document.getElementById("object-name");
+  const projectObjectsEl = document.getElementById("project-objects");
+  const projectResultEl = document.getElementById("project-result");
+  const projectRootEl = document.getElementById("project-root");
+  const networkDestInput = document.getElementById("network-dest");
+  const btnSaveObject = document.getElementById("btn-save-object");
+  const btnReconnect = document.getElementById("btn-reconnect");
+  const btnUpload = document.getElementById("btn-upload");
+  let networkDestSeeded = false;
+
+  function setProjectResult(text, ok) {
+    if (!projectResultEl) return;
+    projectResultEl.textContent = text || "";
+    projectResultEl.className = "result " + (text ? (ok ? "ok" : "err") : "");
+  }
+
+  if (btnSaveObject) btnSaveObject.addEventListener("click", () => {
+    // Empty name -> server fills a timestamp default. The chosen project
+    // becomes the current one, so later objects land alongside it.
+    sendCommand({
+      cmd: "save_project",
+      project: projectNameInput ? projectNameInput.value.trim() : "",
+      object: objectNameInput ? objectNameInput.value.trim() : "",
+    });
+    setProjectResult("Saving…", true);
+    if (objectNameInput) objectNameInput.value = "";
+  });
+
+  if (btnReconnect) btnReconnect.addEventListener("click", () => {
+    sendCommand({ cmd: "reconnect" });
+    setProjectResult("Reconnecting…", true);
+  });
+
+  if (networkDestInput) networkDestInput.addEventListener("change", () => {
+    sendCommand({ cmd: "set_network_dest", dest: networkDestInput.value.trim() });
+  });
+
+  if (btnUpload) btnUpload.addEventListener("click", () => {
+    if (networkDestInput && networkDestInput.value.trim()) {
+      sendCommand({ cmd: "set_network_dest", dest: networkDestInput.value.trim() });
+    }
+    sendCommand({ cmd: "upload_project" });
+    setProjectResult("Uploading…", true);
+  });
+
+  // The server's reply to a save/upload: show the outcome and refresh the
+  // object list. A fresh status broadcast follows and updates the rest.
+  function handleProjectResult(msg) {
+    if (msg.action === "save") {
+      if (msg.ok) {
+        setProjectResult("Saved " + msg.object + " (" + msg.points + " pts) to " + msg.project, true);
+        if (projectNameInput && !projectNameInput.value.trim()) projectNameInput.value = msg.project;
+        renderObjects(msg.objects || []);
+      } else {
+        setProjectResult(msg.message || "Save failed", false);
+      }
+    } else if (msg.action === "upload") {
+      if (msg.ok) setProjectResult("Uploaded to " + msg.dest, true);
+      else setProjectResult(msg.message || "Upload failed", false);
+    }
+  }
+
+  function renderObjects(objects) {
+    if (!projectObjectsEl) return;
+    if (!objects || objects.length === 0) { projectObjectsEl.innerHTML = ""; return; }
+    projectObjectsEl.innerHTML = objects
+      .map((o) => '<div class="obj">• ' + escapeHtml(o) + "</div>")
+      .join("");
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+
+  function updateProjectFromStatus() {
+    if (!latestStatus) return;
+    if (projectCurrent) {
+      projectCurrent.textContent = latestStatus.project
+        ? ('Project "' + latestStatus.project + '" — ' + (latestStatus.projectObjects || 0) + " object(s)")
+        : "No project yet";
+    }
+    if (projectRootEl && latestStatus.projectsRoot) {
+      projectRootEl.textContent = "Cache: " + latestStatus.projectsRoot;
+    }
+    // Seed the network field once from the server so every client shows the
+    // configured destination, but never clobber what the operator is typing.
+    if (networkDestInput && !networkDestSeeded && document.activeElement !== networkDestInput) {
+      if (latestStatus.networkDest) networkDestInput.value = latestStatus.networkDest;
+      networkDestSeeded = true;
+    }
+  }
+
+  // --- Orbit / pan / zoom controls -----------------------------------------
+  // Left-drag: orbit freely (azimuth + elevation around viewCenter).
+  // Right-drag (or Shift + left-drag): pan (move viewCenter laterally).
+  // Scroll wheel: zoom (adjust viewDistance).
+  // "Reset view" (button / R key) returns to the auto-fit framing.
+  function resetView() {
+    viewAzimuth = 0;
+    viewElevation = 0;
+    viewUserControlled = false; // let auto-fit re-frame the current cloud
+  }
+  {
+    let dragStart = null;
+    let dragIsPan = false;
+
+    canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    canvas.addEventListener("mousedown", (e) => {
+      if (e.button !== 0 && e.button !== 2) return;
+      dragStart = { x: e.clientX, y: e.clientY };
+      // Right button, or Shift + left, pans; a plain left-drag orbits.
+      dragIsPan = (e.button === 2) || (e.button === 0 && e.shiftKey);
+      e.preventDefault();
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (dragStart === null) return;
+      const dx = e.clientX - dragStart.x;
+      const dy = e.clientY - dragStart.y;
+      dragStart = { x: e.clientX, y: e.clientY };
+      viewUserControlled = true;
+
+      if (!dragIsPan) {
+        const sensitivity = 0.005;
+        viewAzimuth  += dx * sensitivity;
+        viewElevation = Math.max(-Math.PI / 2 + 0.01,
+                        Math.min( Math.PI / 2 - 0.01,
+                        viewElevation + dy * sensitivity));
+      } else {
+        // Pan: translate viewCenter along camera right (affected by azimuth)
+        // and screen-vertical (world Y, compensated for the Y-flip).
+        const panFactor = (viewRadius * 2) / canvas.height;
+        const cosAz = Math.cos(viewAzimuth), sinAz = Math.sin(viewAzimuth);
+        viewCenter[0] -= dx * panFactor * cosAz;
+        viewCenter[2] += dx * panFactor * sinAz;
+        viewCenter[1] -= dy * panFactor;
+      }
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      if (e.button === 0 || e.button === 2) dragStart = null;
+    });
+
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      viewUserControlled = true;
+      const factor = e.deltaY > 0 ? 1.12 : (1 / 1.12);
+      viewDistance = Math.max(viewRadius * 0.1, viewDistance * factor);
+    }, { passive: false });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "r" || e.key === "R") {
+        if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+        resetView();
+      }
+    });
+  }
+
   // --- Render loop (decoupled from the data rate) --------------------------
 
   let renderFrames = 0;
@@ -416,9 +619,18 @@
     const near = Math.max(viewDistance - viewRadius * 4, viewDistance * 0.01, 0.001);
     const far = viewDistance + viewRadius * 4;
     const proj = perspective(fovRad(), aspect, near, far);
-    const view = translation(-viewCenter[0], -viewCenter[1], -viewCenter[2] - viewDistance);
+    // Y-flip (SDK Y-down → WebGL Y-up), camera pullback, orbit, then center.
+    const view = multiply(scaling(1, -1, 1),
+                 multiply(translation(0, 0, -viewDistance),
+                 multiply(rotationX(-viewElevation),
+                 multiply(rotationY(-viewAzimuth),
+                 translation(-viewCenter[0], -viewCenter[1], -viewCenter[2])))));
     const matrix = multiply(proj, view);
-    renderer.draw(matrix, brightness, pointCount, coverage.overlayPointCount());
+    renderer.draw(matrix, brightness, pointCount);
+    // The global XYZ coordinate system: a world-origin triad sized to the
+    // current data so there is always a fixed spatial reference the free
+    // rotation turns around. Drawn after the cloud, same matrix.
+    if (showAxes && renderer.drawAxes) renderer.drawAxes(matrix, Math.max(viewRadius, 1e-3));
     // Row #142: the frame just went to the GPU — that is its render time.
     if (pendingAge !== null) {
       frameAge.noteRendered(pendingAge.ageMs, pendingAge.receiptPerfMs, performance.now());
@@ -474,6 +686,7 @@
     hud.innerHTML =
       '<span class="label">backend</span>  <span class="value">' + (renderer ? renderer.name : "--") + "</span>\n" +
       '<span class="label">status</span>  <span class="value">' + connectionState + "</span>\n" +
+      '<span class="label">scanner</span> <span class="value">' + (latestStatus ? latestStatus.device : "--") + "</span>\n" +
       '<span class="label">scan</span>    <span class="value">' + scanState + " (" + scanMode + ")</span>\n" +
       '<span class="label">frame age</span> <span class="' + ageClass + '">' + ageText + "</span>\n" +
       '<span class="label">          </span> <span class="label">tick&rarr;render, server clock</span>\n' +

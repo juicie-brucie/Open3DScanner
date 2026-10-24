@@ -25,12 +25,30 @@ const Coverage = (function () {
     return Math.pow(2, Math.ceil(Math.log2(raw)));
   }
 
+  // Maps per-voxel hit count → RGB colour on a red→orange→green→blue gradient.
+  // log2 scale saturating at 256 hits: 1 hit = red, ~8 = orange, ~64 = green,
+  // 256+ = blue. Scale-independent: works regardless of voxel size or tick rate.
+  function densityColor(count) {
+    const t = Math.min(1.0, Math.log2(count + 1) / 8.0);
+    const stops = [
+      [1.00, 0.15, 0.10],  // red   (sparse / just started)
+      [1.00, 0.55, 0.00],  // orange
+      [0.10, 0.85, 0.30],  // green
+      [0.15, 0.55, 1.00],  // blue  (dense / well covered)
+    ];
+    const scaled = t * 3;
+    const lo = Math.min(Math.floor(scaled), 2);
+    const s = scaled - lo;
+    const a = stops[lo], b = stops[lo + 1];
+    return [a[0] + s * (b[0] - a[0]), a[1] + s * (b[1] - a[1]), a[2] + s * (b[2] - a[2])];
+  }
+
   class Tracker {
     constructor(budget) {
       this.budget = budget > 0 ? budget : DEFAULT_BUDGET;
       this.cell = null;
       this.visited = new Set();
-      this.seen = new Set();
+      this.seen = new Map(); // key → hit count (drives per-point density colours)
       this.underCount = 0;
       this.underPositions = new Float32Array(0);
       this.resets = 0;
@@ -82,18 +100,20 @@ const Coverage = (function () {
       return this.markVisited(x, y, z);
     }
 
-    // A cloud snapshot. Marks seen voxels, builds the bounded red overlay,
-    // counts every under-covered point (not just the overlay's), and marks
-    // the newly observed patch as visited — the live-session trigger.
+    // A cloud snapshot. Accumulates per-voxel hit counts, builds a per-point
+    // density colour buffer (red→orange→green→blue), maintains the under-covered
+    // overlay for the HUD count, and marks the newly observed patch as visited.
     observe(positions, count, radiusHint) {
       const cell = this.scale(radiusHint);
       const under = [];
       let underTotal = 0, newPoints = 0, nx = 0, ny = 0, nz = 0;
+      const densityColors = new Float32Array(count * 3);
       for (let i = 0; i < count; i++) {
         const x = positions[i * 3], y = positions[i * 3 + 1], z = positions[i * 3 + 2];
         const key = voxelKey(x, y, z, cell);
-        if (!this.seen.has(key)) {
-          this.seen.add(key);
+        const prev = this.seen.get(key) || 0;
+        this.seen.set(key, prev + 1);
+        if (prev === 0) {
           newPoints++;
           nx += x; ny += y; nz += z;
         }
@@ -101,11 +121,15 @@ const Coverage = (function () {
           underTotal++;
           if (under.length < this.budget) under.push(x, y, z);
         }
+        const c = densityColor(prev + 1);
+        densityColors[i * 3] = c[0];
+        densityColors[i * 3 + 1] = c[1];
+        densityColors[i * 3 + 2] = c[2];
       }
       this.underCount = underTotal;
       this.underPositions = new Float32Array(under);
       if (newPoints > 0) this.markVisited(nx / newPoints, ny / newPoints, nz / newPoints);
-      return { newPoints: newPoints, underCount: underTotal };
+      return { newPoints, underCount: underTotal, densityColors };
     }
 
     // What the renderer may draw from underPositions — the bounded overlay,
@@ -117,7 +141,7 @@ const Coverage = (function () {
     percentCovered() {
       if (this.seen.size === 0) return 0;
       let visited = 0;
-      for (const key of this.seen) if (this.visited.has(key)) visited++;
+      for (const key of this.seen.keys()) if (this.visited.has(key)) visited++;
       return (100 * visited) / this.seen.size;
     }
 
@@ -134,7 +158,7 @@ const Coverage = (function () {
     }
   }
 
-  return { Tracker: Tracker, voxelKey: voxelKey, DEFAULT_BUDGET: DEFAULT_BUDGET };
+  return { Tracker, voxelKey, DEFAULT_BUDGET };
 })();
 
 // Node (the arithmetic test) — the browser gets the global above.
