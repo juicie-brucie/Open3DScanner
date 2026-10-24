@@ -229,43 +229,54 @@ public:
             return false;
         }
         // Find the interface's own IOKit service directly by vendor/product/
-        // interface-number matching (FindInterfaceService). The node
-        // reliably exists (confirmed via ioreg); no retry needed for the
-        // lookup itself — only the claim below needs one.
-        io_service_t interface_service = FindInterfaceService(spec.interface_number);
-        if (interface_service == 0) {
-            *why = "interface " + std::to_string(spec.interface_number) + " is not on the device";
-            return false;
-        }
-        // DeviceSeize, not None: the interface node's own
+        // interface-number matching (FindInterfaceService), then claim it
+        // with DeviceSeize — not None — because the node's own
         // "UsbExclusiveOwner" names a macOS system extension (UVCAssistant
         // for video, AppleUserUSBHostHIDDevice for the IMU) that claims it
-        // the instant the device enumerates — independent of, and not
-        // affected by, any claim on the top-level device.
+        // the instant the device enumerates, independent of anything
+        // claimed on the top-level device.
         // IOUSBHostObjectInitOptionsDeviceSeize's own header comment: "will
         // request the current owner of the underlying kernel service to
         // close via kUSBHostMessageDeviceIsRequestingClose" — unlike
         // DeviceCapture, its doc names no entitlement or root requirement,
         // since it is a polite close request the current owner can honor,
-        // not a forced takeover. The close is necessarily asynchronous
-        // (UVCAssistant has to act on the message), so retry the claim
-        // itself, bounded, rather than assuming it is immediate.
-        constexpr int kInterfaceSeizeAttempts = 10;
-        constexpr auto kInterfaceSeizeRetryDelay = std::chrono::milliseconds(100);
-        for (int attempt = 0; attempt < kInterfaceSeizeAttempts && interface_ == nil; ++attempt) {
-            if (attempt > 0) std::this_thread::sleep_for(kInterfaceSeizeRetryDelay);
+        // not a forced takeover.
+        //
+        // Both the find and the open are retried together, bounded: a
+        // static ioreg snapshot (taken well after a prior run had already
+        // settled) showed the node present, but that does not prove it is
+        // there at the exact instant a fresh process opens the device —
+        // hw-test found the lookup itself fail outright, on its first and
+        // only attempt, with no retry wrapping it
+        // (2026-10-24-plan-uvc-seize.md). The original registry-publish-
+        // race hypothesis from earlier in this investigation may still be
+        // real, layered underneath the UVCAssistant ownership issue, so
+        // retry the whole find-then-seize sequence rather than assuming
+        // either half is reliable on its own.
+        constexpr int kInterfaceClaimAttempts = 15;
+        constexpr auto kInterfaceClaimRetryDelay = std::chrono::milliseconds(100);
+        std::string last_why;
+        for (int attempt = 0; attempt < kInterfaceClaimAttempts && interface_ == nil; ++attempt) {
+            if (attempt > 0) std::this_thread::sleep_for(kInterfaceClaimRetryDelay);
+            io_service_t interface_service = FindInterfaceService(spec.interface_number);
+            if (interface_service == 0) {
+                last_why = "interface " + std::to_string(spec.interface_number) + " is not on the device";
+                continue;
+            }
             interface_ = [[IOUSBHostInterface alloc] initWithIOService:interface_service
                                                                 options:IOUSBHostObjectInitOptionsDeviceSeize
                                                                   queue:nil
                                                                   error:&error
                                                         interestHandler:nil];
+            IOObjectRelease(interface_service);
+            if (interface_ == nil) {
+                last_why = "interface " + std::to_string(spec.interface_number) +
+                           " could not be seized from its current owner: " + NsErrorText(error);
+            }
         }
-        IOObjectRelease(interface_service);
         if (interface_ == nil) {
-            *why = "interface " + std::to_string(spec.interface_number) + " could not be seized from its "
-                   "current owner: " + NsErrorText(error) + " (retried " +
-                   std::to_string(kInterfaceSeizeAttempts) + " times over ~" +
-                   std::to_string(kInterfaceSeizeAttempts * kInterfaceSeizeRetryDelay.count()) + "ms)";
+            *why = last_why + " (retried " + std::to_string(kInterfaceClaimAttempts) + " times over ~" +
+                   std::to_string(kInterfaceClaimAttempts * kInterfaceClaimRetryDelay.count()) + "ms)";
             return false;
         }
         // Claiming an interface leaves it at its current alternate setting
