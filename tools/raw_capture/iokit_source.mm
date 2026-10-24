@@ -44,6 +44,19 @@ mach_port_t MainPort() {
 #pragma clang diagnostic pop
 }
 
+// Reads an integer IORegistry property, or `fallback` if absent/not an int.
+long RegistryInt(io_service_t service, CFStringRef key, long fallback) {
+    CFTypeRef value = IORegistryEntryCreateCFProperty(service, key, kCFAllocatorDefault, 0);
+    long out = fallback;
+    if (value != nullptr) {
+        if (CFGetTypeID(value) == CFNumberGetTypeID()) {
+            CFNumberGetValue(static_cast<CFNumberRef>(value), kCFNumberLongType, &out);
+        }
+        CFRelease(value);
+    }
+    return out;
+}
+
 io_service_t FindScannerService() {
     CFMutableDictionaryRef matching = IOServiceMatching(kIOUSBDeviceClassName);
     if (matching == nullptr) return 0;
@@ -58,38 +71,76 @@ io_service_t FindScannerService() {
     return IOServiceGetMatchingService(MainPort(), matching);
 }
 
-// Finds a specific interface's own IOKit service directly, by vendor/product
-// ID and interface number. Built with the exact same low-level
-// IOServiceMatching + CFDictionarySetValue pattern as FindScannerService()
-// above — not IOUSBHostInterface's own
-// createMatchingDictionaryWithVendorID:...interfaceNumber:... convenience
-// method, which hw-test found returns no match (interface_service == 0) 15
-// retries running, even though `ioreg -p IOService` independently confirmed
-// a fully "registered, matched, active" IOUSBHostInterface node with those
-// exact idVendor/idProduct/bInterfaceNumber property values
-// (2026-10-24-plan-uvc-findseize.md, -devicecapture.md). Whatever that
-// convenience method builds differs from this in some way that keeps it
-// from matching; this uses the identical shape already proven to work for
-// the device-level lookup, with the class name and the interface-number key
-// string both taken from IOKit's own headers
-// (kIOUSBHostInterfaceClassName="IOUSBHostInterface",
-// kUSBInterfaceNumber="bInterfaceNumber" via
-// IOUSBHostFamilyDefinitions.h/USBSpec.h) rather than assumed.
-io_service_t FindInterfaceService(int interface_number) {
+// Finds a specific interface's own IOKit service by enumerating every
+// IOUSBHostInterface node in-process and matching vendor/product/interface
+// number on the registry properties — the same enumeration --diag-interfaces
+// proves can see all seven scanner interfaces (record #498).
+//
+// The earlier form built a vendor/product/bInterfaceNumber matching dictionary
+// (IOServiceMatching + CFDictionarySetValue) and asked
+// IOServiceGetMatchingService for the node; on the scanner that returned 0,
+// fifteen retries running, even though those exact idVendor/idProduct/
+// bInterfaceNumber values were present on a "registered, matched, active" node
+// that both `ioreg -p IOService` and the bare enumeration saw
+// (2026-10-24-plan-uvc-findseize.md, record #498). Whatever that filtered
+// match did differently, the in-process enumeration does not depend on it. The
+// pure match lives in SelectInterfaceCandidate (uvc_selection.h) so it is
+// device-free testable; this function only reads the properties and owns the
+// io_service_t references.
+//
+// Returns the matching service (a +1 reference the caller releases), or 0.
+// When `debug` is set it prints the wanted filter and every enumerated
+// candidate to stderr — the dump the capture rerun wants.
+io_service_t FindInterfaceService(int interface_number, bool debug) {
     CFMutableDictionaryRef matching = IOServiceMatching(kIOUSBHostInterfaceClassName);
     if (matching == nullptr) return 0;
-    int vendor = Table().vendor_id;
-    int product = Table().product_id;
-    CFNumberRef vendor_ref = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &vendor);
-    CFNumberRef product_ref = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &product);
-    CFNumberRef interface_ref = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &interface_number);
-    if (vendor_ref) CFDictionarySetValue(matching, CFSTR(kUSBVendorID), vendor_ref);
-    if (product_ref) CFDictionarySetValue(matching, CFSTR(kUSBProductID), product_ref);
-    if (interface_ref) CFDictionarySetValue(matching, CFSTR(kUSBInterfaceNumber), interface_ref);
-    if (vendor_ref) CFRelease(vendor_ref);
-    if (product_ref) CFRelease(product_ref);
-    if (interface_ref) CFRelease(interface_ref);
-    return IOServiceGetMatchingService(MainPort(), matching);
+    io_iterator_t iterator = 0;
+    const kern_return_t kr = IOServiceGetMatchingServices(MainPort(), matching, &iterator);
+    if (kr != KERN_SUCCESS) {
+        if (debug) std::fprintf(stderr, "[uvc] IOServiceGetMatchingServices failed: 0x%08x\n", kr);
+        return 0;
+    }
+
+    const long want_vendor = Table().vendor_id;
+    const long want_product = Table().product_id;
+    std::vector<io_service_t> services;
+    std::vector<InterfaceCandidate> candidates;
+    for (io_service_t service = 0; (service = IOIteratorNext(iterator)) != 0;) {
+        InterfaceCandidate candidate;
+        candidate.vendor_id = RegistryInt(service, CFSTR(kUSBVendorID), -1);
+        candidate.product_id = RegistryInt(service, CFSTR(kUSBProductID), -1);
+        candidate.interface_number = RegistryInt(service, CFSTR(kUSBInterfaceNumber), -1);
+        services.push_back(service);
+        candidates.push_back(candidate);
+    }
+    IOObjectRelease(iterator);
+
+    const int index =
+        SelectInterfaceCandidate(candidates, want_vendor, want_product, interface_number);
+
+    if (debug) {
+        std::fprintf(stderr,
+                     "[uvc] interface lookup: want vid=0x%04lX pid=0x%04lX interface=%d; "
+                     "%zu IOUSBHostInterface node(s) enumerated:\n",
+                     want_vendor, want_product, interface_number, candidates.size());
+        for (size_t i = 0; i < candidates.size(); ++i) {
+            std::fprintf(stderr, "[uvc]   [%zu] vid=0x%04lX pid=0x%04lX interface=%ld%s\n", i,
+                         candidates[i].vendor_id, candidates[i].product_id,
+                         candidates[i].interface_number,
+                         static_cast<int>(i) == index ? "  <-- match" : "");
+        }
+        if (index < 0) std::fprintf(stderr, "[uvc]   no node matched the wanted interface\n");
+    }
+
+    io_service_t chosen = 0;
+    for (size_t i = 0; i < services.size(); ++i) {
+        if (static_cast<int>(i) == index) {
+            chosen = services[i];  // hand the iterator's +1 reference to the caller
+        } else {
+            IOObjectRelease(services[i]);
+        }
+    }
+    return chosen;
 }
 
 std::string NsErrorText(NSError* error) {
@@ -266,7 +317,7 @@ public:
         std::string last_why;
         for (int attempt = 0; attempt < kInterfaceClaimAttempts && interface_ == nil; ++attempt) {
             if (attempt > 0) std::this_thread::sleep_for(kInterfaceClaimRetryDelay);
-            io_service_t interface_service = FindInterfaceService(spec.interface_number);
+            io_service_t interface_service = FindInterfaceService(spec.interface_number, /*debug=*/attempt == 0);
             if (interface_service == 0) {
                 last_why = "interface " + std::to_string(spec.interface_number) + " is not on the device";
                 continue;
@@ -992,19 +1043,6 @@ std::unique_ptr<CommandTransport> MakeLiveHidTransport(std::string* why) {
 }
 
 namespace {
-
-// Reads an integer IORegistry property, or `fallback` if absent/not an int.
-long RegistryInt(io_service_t service, CFStringRef key, long fallback) {
-    CFTypeRef value = IORegistryEntryCreateCFProperty(service, key, kCFAllocatorDefault, 0);
-    long out = fallback;
-    if (value != nullptr) {
-        if (CFGetTypeID(value) == CFNumberGetTypeID()) {
-            CFNumberGetValue(static_cast<CFNumberRef>(value), kCFNumberLongType, &out);
-        }
-        CFRelease(value);
-    }
-    return out;
-}
 
 // Reads a string IORegistry property into UTF-8, or "" if absent/not a string.
 std::string RegistryString(io_service_t service, CFStringRef key) {

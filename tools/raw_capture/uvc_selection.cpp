@@ -105,4 +105,16 @@ AlternateSelection ChooseStreamingAlternate(const std::vector<ProbeInterface>& i
     return selection;
 }
 
+int SelectInterfaceCandidate(const std::vector<InterfaceCandidate>& candidates, long want_vendor,
+                             long want_product, long want_interface) {
+    for (size_t i = 0; i < candidates.size(); ++i) {
+        const InterfaceCandidate& candidate = candidates[i];
+        if (candidate.vendor_id == want_vendor && candidate.product_id == want_product &&
+            candidate.interface_number == want_interface) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
 }  // namespace raw_capture
